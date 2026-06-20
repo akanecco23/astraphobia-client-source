@@ -1,15 +1,11 @@
-import { buildEntityState, startEntityTrailTracking, stopEntityTrailTracking, getAnimalPosition, extractPosition, calculateDirection, calculateDistance } from './movement.js';
-import { showNotification } from '../ui/interaction.js';
 import { getOrCreateCanvas } from '../ui/radar.js';
+import { getAnimalPosition, extractPosition, calculateDirection, calculateDistance, buildEntityState } from './movement.js';
+import { drawEntityTrail } from './entitytrail.js';
 import { getViewportScale, dragState, state } from '../core.js';
 import { findEntityById } from './autofarm.js';
 import { isValidEntity } from '../utils.js';
+import { showNotification } from '../ui/interaction.js';
 
-window.entityTrailColor = {
-  r: 255,
-  g: 150,
-  b: 0
-};
 window.espEnabled = false;
 window.espColors = {
   close: "#ff0000",
@@ -25,82 +21,7 @@ window.espTrackedEntityId = null;
 window.espMode = "players";
 
 
-function toggleEntityTrail() {
-  if (window.entityTrailEnabled) {
-    window.entityTrailEnabled = false;
-    window.entityTrailTargetId = null;
-    stopEntityTrailTracking();
-    window.entityTrailHistory = [];
-    showNotification("Trail stopped");
-    refreshUI();
-    return;
-  }
-  const playerData = buildEntityState();
-  const hasNearbyPlayers = playerData && playerData.players && playerData.players.length > 0;
-  if (!hasNearbyPlayers) {
-    showNotification("No players nearby to trace");
-    return;
-  }
-  const targetPlayerId = playerData.players[0].id;
-  const targetPlayerName = playerData.players[0].entity?.name || "ID:" + targetPlayerId;
-  window.entityTrailEnabled = true;
-  window.entityTrailTargetId = targetPlayerId;
-  window.entityTrailHistory = [];
-  startEntityTrailTracking();
-  showNotification("Tracing: " + targetPlayerName);
-  refreshUI();
-}
 function refreshUI() {}
-function drawEntityTrail(ctx, canvas, playerPos, zoomScale) {
-  if (!window.entityTrailEnabled || window.entityTrailHistory.length < 2) {
-    return;
-  }
-  const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2;
-  const currentTime = Date.now();
-  const trailDuration = 30000;
-  const {
-    r: red,
-    g: green,
-    b: blue
-  } = window.entityTrailColor;
-  for (let i = 1; i < window.entityTrailHistory.length; i++) {
-    const prevPoint = window.entityTrailHistory[i - 1];
-    const currPoint = window.entityTrailHistory[i];
-    const age = state.currentTime - currPoint.time;
-    const opacity = Math.max(0.05, 1 - age / trailDuration);
-    const startX = centerX + (prevPoint.x - playerPos.x) * zoomScale;
-    const startY = centerY + (prevPoint.y - playerPos.y) * zoomScale;
-    const endX = centerX + (currPoint.x - playerPos.x) * zoomScale;
-    const endY = centerY + (currPoint.y - playerPos.y) * zoomScale;
-    const progress = i / window.entityTrailHistory.length;
-    ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.lineTo(endX, endY);
-    ctx.strokeStyle = "rgba(" + red + "," + green + "," + blue + "," + opacity + ")";
-    ctx.lineWidth = 1.5 + progress * 1.5;
-    ctx.stroke();
-  }
-  for (let j = 0; j < window.entityTrailHistory.length; j += 5) {
-    const historyPoint = window.entityTrailHistory[j];
-    const pointAge = state.currentTime - historyPoint.time;
-    const pointOpacity = Math.max(0.1, 1 - pointAge / trailDuration);
-    const pointX = centerX + (historyPoint.x - playerPos.x) * zoomScale;
-    const pointY = centerY + (historyPoint.y - playerPos.y) * zoomScale;
-    ctx.fillStyle = "rgba(" + red + "," + green + "," + blue + "," + pointOpacity + ")";
-    ctx.beginPath();
-    ctx.arc(pointX, pointY, 2, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  if (window.entityTrailHistory.length > 0) {
-    const lastTrailPosition = window.entityTrailHistory[window.entityTrailHistory.length - 1];
-    const calculatedXOffset = centerX + (lastTrailPosition.x - playerPos.x) * zoomScale;
-    const calculatedYOffset = centerY + (lastTrailPosition.y - playerPos.y) * zoomScale;
-    ctx.fillStyle = "rgb(" + red + "," + green + "," + blue + ")";
-    ctx.font = "bold 10px monospace";
-    ctx.fillText("TRAIL (" + window.entityTrailHistory.length + " pts)", calculatedXOffset + 8, calculatedYOffset - 8);
-  }
-}
 function renderLoop() {
   const overlayCanvas = getOrCreateCanvas("ast-overlay", 999997);
   const overlayCtx = overlayCanvas.getContext("2d");
@@ -441,4 +362,4 @@ function toggleEsp() {
   showNotification(window.espEnabled ? "ESP enabled" : "ESP disabled");
 }
 
-export { toggleEntityTrail, refreshUI, drawEntityTrail, renderLoop, drawESP, drawTrackerLine, drawRadar, renderEspLoop, toggleEsp };
+export { refreshUI, renderLoop, drawESP, drawTrackerLine, drawRadar, renderEspLoop, toggleEsp };

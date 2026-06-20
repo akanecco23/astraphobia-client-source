@@ -1,7 +1,7 @@
 {
   "_meta": {
     "version": "1.9",
-    "lastUpdated": "2026-06-20T07:21:58.101Z",
+    "lastUpdated": "2026-06-20T09:35:22.777Z",
     "description": "Edit name/module fields to customize. Params/locals are ordered by position."
   },
   "functions": {
@@ -474,21 +474,21 @@
     },
     "global::_0x557bee": {
       "name": "startEntityTrailTracking",
-      "module": "features_movement",
+      "module": "features_entitytrail",
       "fingerprintHash": "0::0::1::0::1::0::0::4::14::::Date|_0x12acaf|_0x3a0d26|_0xac32f6|window::Date.now|_0x3396f0|_0x3e379f|_0x4c6311|_0xe9b4e3|clearInterval|if|setInterval|window.entityTrailHistory.push|window.entityTrailHistory.shift",
       "params": [],
       "locals": []
     },
     "global::_0xeee3a7": {
       "name": "stopEntityTrailTracking",
-      "module": "features_movement",
+      "module": "features_entitytrail",
       "fingerprintHash": "0::0::1::0::0::0::0::0::2::::::clearInterval|if",
       "params": [],
       "locals": []
     },
     "global::_0x4c1cbc": {
       "name": "toggleEntityTrail",
-      "module": "features_esp",
+      "module": "features_entitytrail",
       "fingerprintHash": "0::0::1::0::1::0::0::2::19::\"::_0x499a7b|window::_0x231a0f|_0x4c6311|_0x54177c|_0x557bee|_0xeee3a7|if",
       "params": [],
       "locals": [
@@ -650,7 +650,7 @@
     },
     "global::_0x1766f6": {
       "name": "drawEntityTrail",
-      "module": "features_esp",
+      "module": "features_entitytrail",
       "fingerprintHash": "4::1::1::0::1::1::0::1::40::\"::Date|Math|_0x1e55fc|_0x20dcf6|_0x295366|_0x2b70f4|_0x338f40|_0x467821|_0x5b01cb|window::Date.now|Math.max|_0x1e55fc.arc|_0x1e55fc.beginPath|_0x1e55fc.lineTo|_0x1e55fc.moveTo|_0x1e55fc.stroke|for|if|rgba",
       "params": [
         "ctx",
@@ -1537,7 +1537,7 @@
     },
     "global::_0x279c25": {
       "name": "trailIntervalId",
-      "module": "features_movement"
+      "module": "features_entitytrail"
     },
     "global/_0x557bee/anon::_0x2084ef": {
       "name": "targetEntityId",
@@ -1553,11 +1553,11 @@
     },
     "global/_0x557bee/anon::_0x12acaf": {
       "name": "lastTrailPoint",
-      "module": "core"
+      "module": "features_entitytrail"
     },
     "global/_0x1766f6::_0x5b01cb": {
       "name": "lastTrailPosition",
-      "module": "core"
+      "module": "features_entitytrail"
     },
     "global/_0x1766f6::_0x3f8ce8": {
       "name": "calculatedXOffset",
@@ -2761,7 +2761,7 @@
     },
     "global/_0x304642::_0x28cb12": {
       "name": "trailColorPicker",
-      "module": "core"
+      "module": "features_entitytrail"
     },
     "global/_0x304642::_0x342aca": {
       "name": "traceKeyInput",

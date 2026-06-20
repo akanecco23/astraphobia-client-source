@@ -26,7 +26,11 @@
     },
     "features_esp": {
       "path": "features/esp",
-      "description": "ESP overlays, entity trails, minimap"
+      "description": "ESP overlays, player boxes, health bars, minimap radar"
+    },
+    "features_entitytrail": {
+      "path": "features/entitytrail",
+      "description": "Entity trail tracking, trail rendering, trail history"
     },
     "features_movement": {
       "path": "features/movement",

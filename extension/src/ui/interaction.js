@@ -3,7 +3,6 @@ import { state } from '../core.js';
 import { uiaudioState } from './audio.js';
 import { simulatePointerMove } from '../features/movement.js';
 import { toggleLock } from '../features/aimbot.js';
-import { toggleEntityTrail } from '../features/esp.js';
 
 function simulateTextInput(selector, textToType) {
   const inputElement = document.querySelector(selector);
@@ -343,21 +342,6 @@ document.addEventListener("keydown", inputEvent_2 => {
   if (inputEvent_2.key.toLowerCase() === window.lockKey.toLowerCase()) {
     inputEvent_2.preventDefault();
     toggleLock();
-  }
-}, true);
-document.addEventListener("keydown", inputEvent_3 => {
-  if (inputEvent_3.target.matches("input,textarea,select,[contenteditable]")) {
-    return;
-  }
-  if (inputEvent_3.repeat) {
-    return;
-  }
-  const entityTraceKey = window.entityTraceKey.toLowerCase();
-  const itemKey = inputEvent_3.key.toLowerCase();
-  const itemCode = inputEvent_3.code.toLowerCase();
-  if (itemKey === entityTraceKey || itemCode === entityTraceKey || itemCode === "key" + entityTraceKey) {
-    inputEvent_3.preventDefault();
-    toggleEntityTrail();
   }
 }, true);
 

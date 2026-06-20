@@ -13,7 +13,6 @@ import { addTrackToPlaylist } from '../storage.js';
 import { state } from '../core.js';
 
 window.lockKey = "t";
-window.entityTraceKey = "h";
 
 
 let pressedKeyQ = "q";

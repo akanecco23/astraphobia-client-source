@@ -109,16 +109,6 @@ function initializeApplication() {
 window.lockEnabled = false;
 window.lockTargetId = null;
 window.lockKey = "t";
-window.entityTrailColor = {
-  r: 255,
-  g: 150,
-  b: 0
-};
-window.entityTrailEnabled = false;
-window.entityTrailTargetId = null;
-window.entityTrailHistory = [];
-window.entityTrailMaxLength = 200;
-window.entityTrailRecordInterval = 100;
 window.entityTraceKey = "h";
 window.espEnabled = false;
 window.espColors = {

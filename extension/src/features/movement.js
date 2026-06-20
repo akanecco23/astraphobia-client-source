@@ -1,15 +1,8 @@
 import { getGameCanvas } from '../ui/radar.js';
 import { showNotification, simulateClick } from '../ui/interaction.js';
 import { getFirstAnimal, getEntityManager, state } from '../core.js';
-import { getGameState, findEntityById } from './autofarm.js';
+import { getGameState } from './autofarm.js';
 import { isValidEntity } from '../utils.js';
-
-window.entityTrailEnabled = false;
-window.entityTrailTargetId = null;
-window.entityTrailHistory = [];
-window.entityTrailMaxLength = 200;
-window.entityTrailRecordInterval = 100;
-
 
 let currentAngleIndex = 0;
 const angleSteps = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
@@ -183,48 +176,6 @@ function buildEntityState() {
     };
   }
 }
-let trailIntervalId = null;
-function startEntityTrailTracking() {
-  if (trailIntervalId) {
-    clearInterval(trailIntervalId);
-    trailIntervalId = null;
-  }
-  trailIntervalId = setInterval(() => {
-    if (!window.entityTrailEnabled || !window.entityTrailTargetId) {
-      return;
-    }
-    const targetEntityId = findEntityById(window.entityTrailTargetId);
-    if (!targetEntityId) {
-      const gameState = buildEntityState();
-      if (gameState && gameState.players && gameState.players.length > 0) {
-        window.entityTrailTargetId = gameState.players[0].id;
-      }
-      return;
-    }
-    const targetEntityPosition = extractPosition(targetEntityId);
-    if (!targetEntityPosition) {
-      return;
-    }
-    const lastTrailPoint = window.entityTrailHistory[window.entityTrailHistory.length - 1];
-    if (lastTrailPoint && calculateDistance(lastTrailPoint.x, lastTrailPoint.y, targetEntityPosition.x, targetEntityPosition.y) < 5) {
-      return;
-    }
-    window.entityTrailHistory.push({
-      x: targetEntityPosition.x,
-      y: targetEntityPosition.y,
-      time: Date.now()
-    });
-    if (window.entityTrailHistory.length > window.entityTrailMaxLength) {
-      window.entityTrailHistory.shift();
-    }
-  }, window.entityTrailRecordInterval);
-}
-function stopEntityTrailTracking() {
-  if (trailIntervalId) {
-    clearInterval(trailIntervalId);
-    trailIntervalId = null;
-  }
-}
 function moveAndClickElement(targetX, targetY, shouldClick) {
   const element = getGameCanvas();
   if (!element) {
@@ -276,4 +227,4 @@ function moveAndClickElement(targetX, targetY, shouldClick) {
   }
 }
 
-export { startAutoPointerMovement, stopAutoPointerMovement, toggleAutoPointerMovement, simulatePointerMove, getAnimalPosition, extractPosition, calculateDirection, calculateDistance, buildEntityState, startEntityTrailTracking, stopEntityTrailTracking, moveAndClickElement };
+export { startAutoPointerMovement, stopAutoPointerMovement, toggleAutoPointerMovement, simulatePointerMove, getAnimalPosition, extractPosition, calculateDirection, calculateDistance, buildEntityState, moveAndClickElement };
