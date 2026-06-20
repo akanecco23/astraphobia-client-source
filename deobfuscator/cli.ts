@@ -34,6 +34,7 @@ import { renameVariables } from "./renamer.js";
 import { MappingStore } from "./mapping.js";
 import _generate from "@babel/generator";
 import { VERSIONS } from "./types.js";
+import * as prettier from "prettier";
 import { LLMClient } from "./llm.js";
 import { resolve, join } from "path";
 import { program } from "commander";
@@ -355,6 +356,32 @@ async function processVersion(
   }
 
   copyExtras(repoPath, srcDir);
+
+  // Format generated extension files with Prettier
+  const formatFiles = async (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const fullPath = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        await formatFiles(fullPath);
+      } else if (entry.name.endsWith(".js") || entry.name.endsWith(".json")) {
+        try {
+          const raw = readFileSync(fullPath, "utf-8");
+          const formatted = await prettier.format(raw, {
+            filepath: fullPath,
+          });
+          writeFileSync(fullPath, formatted, "utf-8");
+        } catch (e) {
+          log(
+            "warn",
+            `  Prettier failed for ${fullPath}: ${(e as Error).message}`,
+          );
+        }
+      }
+    }
+  };
+  await formatFiles(srcDir);
+  log("info", "  Formatted with Prettier");
+
   log(
     "info",
     `=== Version ${version} done: ${splitResult.modules.length} modules ===`,
