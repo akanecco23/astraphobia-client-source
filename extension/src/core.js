@@ -105,6 +105,34 @@ function initializeApplication() {
     autoDodgeLoop();
   }, 1000);
 }
+window.lockEnabled = false;
+window.lockTargetId = null;
+window.lockKey = "t";
+window.entityTrailColor = {
+  r: 255,
+  g: 150,
+  b: 0
+};
+window.entityTrailEnabled = false;
+window.entityTrailTargetId = null;
+window.entityTrailHistory = [];
+window.entityTrailMaxLength = 200;
+window.entityTrailRecordInterval = 100;
+window.entityTraceKey = "h";
+window.espEnabled = false;
+window.espColors = {
+  close: "#ff0000",
+  medium: "#ffff00",
+  far: "#00ffff",
+  veryFar: "#00ff00",
+  tracked: "#ff00ff",
+  foodClose: "#00ff00",
+  foodMedium: "#88ff88",
+  foodFar: "#44cc44"
+};
+window.espTrackedEntityId = null;
+window.espMode = "players";
+window.autoDodgeEnabled = false;
 
 export const state = {
   currentTime: 0,

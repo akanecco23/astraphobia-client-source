@@ -615,12 +615,13 @@ export async function splitIntoModules(
   const ast = parseCode(code);
 
   const allDecls: {
-    type: "variable" | "function";
+    type: "variable" | "function" | "expression";
     name: string;
     code: string;
     node: t.Node;
   }[] = [];
   const allFuncNames = new Set<string>();
+  let exprCounter = 0;
 
   for (const stmt of ast.program.body) {
     if (t.isFunctionDeclaration(stmt)) {
@@ -650,6 +651,16 @@ export async function splitIntoModules(
         });
         if (isFunc) allFuncNames.add(name);
       }
+    } else if (t.isExpressionStatement(stmt)) {
+      const code = (generate as any)(stmt).code;
+      if (code.trim().length === 0) continue;
+      const name = `__expr_${exprCounter++}`;
+      allDecls.push({
+        type: "expression",
+        name,
+        code,
+        node: stmt,
+      });
     }
   }
 
@@ -660,9 +671,10 @@ export async function splitIntoModules(
 
   const funcDecls = allDecls.filter((d) => d.type === "function");
   const varDecls = allDecls.filter((d) => d.type === "variable");
+  const exprDecls = allDecls.filter((d) => d.type === "expression");
   log(
     "info",
-    `Found ${allDecls.length} declarations (${funcDecls.length} functions, ${varDecls.length} variables)`,
+    `Found ${allDecls.length} declarations (${funcDecls.length} functions, ${varDecls.length} variables, ${exprDecls.length} expressions)`,
   );
 
   const nameToModule: Record<string, string> = {};
@@ -980,6 +992,16 @@ export async function splitIntoModules(
     }
   }
 
+  for (const expr of exprDecls) {
+    let mod = guessModuleFromStrings(expr.code);
+    if (mod === "farm") mod = "features_autofarm";
+    if (mod === "chat") mod = "features_chat";
+    if (mod === "adblock") mod = "features_adblock";
+    if (mod === "rendering") mod = "features_esp";
+    if (mod === "movement") mod = "features_movement";
+    nameToModule[expr.name] = mod;
+  }
+
   const modules: Record<string, { names: string[]; deps: Set<string> }> = {};
   const allModNames = new Set(Object.values(nameToModule));
   for (const modName of allModNames) {
@@ -1007,6 +1029,22 @@ export async function splitIntoModules(
     for (const fn of users) {
       const fnMod = nameToModule[fn];
       if (fnMod && fnMod !== varMod) modules[fnMod]!.deps.add(varMod);
+    }
+  }
+
+  for (const expr of exprDecls) {
+    const exprMod = nameToModule[expr.name];
+    if (!exprMod) continue;
+    const callRe = /\b([A-Za-z_$][\w$]*)\s*\(/g;
+    let m: RegExpExecArray | null = callRe.exec(expr.code);
+    while (m !== null) {
+      if (m[1] && allFuncNames.has(m[1])) {
+        const calledMod = nameToModule[m[1]];
+        if (calledMod && calledMod !== exprMod) {
+          modules[exprMod]!.deps.add(calledMod);
+        }
+      }
+      m = callRe.exec(expr.code);
     }
   }
 
@@ -1084,13 +1122,25 @@ export async function splitIntoModules(
       `export { ${allExports.join(", ")} };`,
       "",
     ].join("\n");
-    moduleFiles.push({
-      name: modName,
-      path: `${MODULE_PATHS[modName] ?? modName}.js`,
-      code: optimizeLetToConst(rawCode),
-      exports: allExports,
-      imports: [...mod.deps],
-    });
+    const existingMod = moduleFiles.find(
+      (m) => m.path === `${MODULE_PATHS[modName] ?? modName}.js`,
+    );
+    if (existingMod) {
+      existingMod.code =
+        existingMod.code.trimEnd() + "\n\n" + bodies.join("\n") + "\n";
+      existingMod.exports = [
+        ...new Set([...existingMod.exports, ...allExports]),
+      ];
+      existingMod.imports = [...new Set([...existingMod.imports, ...mod.deps])];
+    } else {
+      moduleFiles.push({
+        name: modName,
+        path: `${MODULE_PATHS[modName] ?? modName}.js`,
+        code: optimizeLetToConst(rawCode),
+        exports: allExports,
+        imports: [...mod.deps],
+      });
+    }
   }
 
   fixSharedMutableState(moduleFiles);

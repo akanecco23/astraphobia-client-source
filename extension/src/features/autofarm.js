@@ -419,5 +419,23 @@ function toggleMinimapSize() {
     showNotification("Small minimap enabled");
   }
 }
+window.autoFarmActive = false;
+window.autoFarmMode = "nearest";
+window.autoFarmRange = 3000;
+window.autoFarmBoost = true;
+window.autoFarmEvolve = true;
+window.autoFarmAvoidPlayers = true;
+window.autoFarmAvoidDistance = 800;
+window.autoFarmStats = {
+  collected: 0,
+  startTime: 0
+};
+window.autoFarmPatrolPoints = [];
+window.autoFarmPatrolIndex = 0;
+window.autoFarmCurrentTarget = null;
+window.autoFarmTargetStartTime = 0;
+window.autoFarmSkipIds = new Set();
+window.autoFarmSkipClearTime = 0;
+window.autoFarmSkipAreas = [];
 
 export { getGameState, findEntityById, markAreaAsFailed, isAreaSkipped, findBestFoodCluster, triggerRandomEvolve, checkStuckCondition, setupPatrolRoute, autoFarmLoop, startAutoFarm, stopAutoFarm, toggleMinimapSize };

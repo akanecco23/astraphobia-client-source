@@ -1,11 +1,11 @@
 import { simulateTextInput, showNotification, initAutofillName, typeChatMessage, initializeTextInterceptor, makeElementDraggable, showHalloweenCodeModal } from './interaction.js';
 import { startRepeatingTask, stopChatTimer } from '../features/chat.js';
 import { generateRandomString } from '../utils.js';
-import { toggleAutoPointerMovement } from '../features/movement.js';
+import { toggleAutoPointerMovement, simulatePointerMove } from '../features/movement.js';
 import { initAntiDetection } from '../features/antidetection.js';
 import { initializeAstraVision } from '../features/xray.js';
 import { toggleMinimapSize, setupPatrolRoute, startAutoFarm, stopAutoFarm } from '../features/autofarm.js';
-import { toggleEsp } from '../features/esp.js';
+import { toggleEsp, toggleEntityTrail } from '../features/esp.js';
 import { trackNearestPlayer, clearTracking, toggleLock, enableAutoDodge, disableAutoDodge } from '../features/aimbot.js';
 import { applyTheme, initBackgroundImage } from './theme.js';
 import { audioPlayer, musicPlaylist, youtubePlayer, pausePlayback, resumePlayback, resetPlayback, isPlaying, playNextOrRandom, playPrevious, updateMusicPanel, uiaudioState } from './audio.js';
@@ -629,5 +629,111 @@ function togglePanelsVisibility() {
     }
   });
 }
+document.addEventListener("keydown", inputEvent => {
+  if (inputEvent.target.matches("input,textarea,select,[contenteditable]")) {
+    return;
+  }
+  if (inputEvent.repeat) {
+    return;
+  }
+  if (inputEvent.key.toLowerCase() === pressedKeyQ.toLowerCase()) {
+    inputEvent.preventDefault();
+    inputEvent.stopPropagation();
+    simulatePointerMove("left");
+  }
+  if (inputEvent.key.toLowerCase() === pressedKeyE.toLowerCase()) {
+    inputEvent.preventDefault();
+    inputEvent.stopPropagation();
+    simulatePointerMove("right");
+  }
+}, true);
+document.addEventListener("keydown", inputEvent_2 => {
+  if (inputEvent_2.target.matches("input,textarea,select,[contenteditable]")) {
+    return;
+  }
+  if (inputEvent_2.repeat) {
+    return;
+  }
+  if (inputEvent_2.key.toLowerCase() === window.lockKey.toLowerCase()) {
+    inputEvent_2.preventDefault();
+    toggleLock();
+  }
+}, true);
+document.addEventListener("keydown", inputEvent_3 => {
+  if (inputEvent_3.target.matches("input,textarea,select,[contenteditable]")) {
+    return;
+  }
+  if (inputEvent_3.repeat) {
+    return;
+  }
+  const entityTraceKey = window.entityTraceKey.toLowerCase();
+  const itemKey = inputEvent_3.key.toLowerCase();
+  const itemCode = inputEvent_3.code.toLowerCase();
+  if (itemKey === entityTraceKey || itemCode === entityTraceKey || itemCode === "key" + entityTraceKey) {
+    inputEvent_3.preventDefault();
+    toggleEntityTrail();
+  }
+}, true);
+document.addEventListener("keydown", event => {
+  if (event.target.matches("input,textarea,select")) {
+    return;
+  }
+  if (event.key === "F3") {
+    event.preventDefault();
+    trackNearestPlayer();
+  }
+  if (event.key === "F4") {
+    event.preventDefault();
+    clearTracking();
+  }
+});
+document.addEventListener("keydown", event_2 => {
+  if (event_2.target.matches("input,textarea,select")) {
+    return;
+  }
+  if (event_2.key === "F5") {
+    event_2.preventDefault();
+    if (window.autoFarmActive) {
+      stopAutoFarm();
+      const autoFarmButton = document.getElementById("autoFarmBtn");
+      if (autoFarmButton) {
+        autoFarmButton.textContent = "Auto Farm";
+        autoFarmButton.classList.remove("toggle-on");
+      }
+    } else {
+      const farmModeSelect = document.getElementById("farmModeSelect");
+      startAutoFarm(farmModeSelect ? farmModeSelect.value : "nearest");
+      const autoFarmButton_2 = document.getElementById("autoFarmBtn");
+      if (autoFarmButton_2) {
+        autoFarmButton_2.textContent = "Stop Farm";
+        autoFarmButton_2.classList.add("toggle-on");
+      }
+    }
+  }
+});
+document.addEventListener("keydown", keyboardEvent => {
+  if (keyboardEvent.key === pressedKey && !keyboardEvent.repeat && !keyboardEvent.target.matches("input,textarea,button,select")) {
+    keyboardEvent.preventDefault();
+    togglePanelsVisibility();
+  }
+});
+window.addEventListener("load", () => {
+  setTimeout(() => {
+    initAntiDetection();
+    initBackgroundImage();
+  }, 1000);
+  setInterval(() => {
+    if (window.__ss?.states) {
+      for (const gameInstance of window.__ss.states) {
+        if (state.gameInstance?.gameScene?.myAnimals?.length > 0) {
+          state.animalData = state.gameInstance.gameScene;
+          state.gameInstance = state.gameInstance.gameScene.game;
+          window.__cachedEM = null;
+          break;
+        }
+      }
+    }
+  }, 2000);
+});
 
 export { createToolsPanel, createVisionPanel, createCombatPanel, createAutomationPanel, createSettingsPanel, createMusicPanel, createUpdateHistoryPanel };
