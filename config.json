@@ -1,0 +1,13 @@
+{
+  "target_repo": "https://github.com/astraphobiaaa/Astraphobia-Client-V1.9",
+  "repo_name": "1.9",
+  "clone_dir": "./.clone",
+  "src_dir": "./extension",
+  "mappings_dir": "./.mappings",
+  "diffs_dir": "./diffs",
+  "target_file": "content.js",
+  "llm": {
+    "enabled": true,
+    "batch_size": 50
+  }
+}

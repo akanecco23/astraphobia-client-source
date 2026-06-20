@@ -1,0 +1,44 @@
+{
+  "_meta": {
+    "version": null,
+    "lastUpdated": "2026-06-18T23:24:52.104Z",
+    "description": "LLM-generated AST transforms. Edit to customize."
+  },
+  "transforms": [
+    {
+      "type": "unwrap_iife",
+      "description": "Unwrap immediately-invoked function expression",
+      "target": "program",
+      "params": {}
+    },
+    {
+      "type": "unwrap_iife",
+      "description": "Remove the outer immediately invoked function expression to flatten the scope.",
+      "target": "Program",
+      "params": {}
+    },
+    {
+      "type": "hoist_declarations",
+      "description": "Move function declarations to the top of the scope for better readability.",
+      "target": "FunctionDeclaration",
+      "params": {}
+    },
+    {
+      "type": "extract_constant",
+      "description": "Extract the CSS style string into a named constant to clean up the _0x54177c function.",
+      "target": "Literal",
+      "params": {
+        "value": "\n      position: fixed; top: 16px; right: 16px;..."
+      }
+    },
+    {
+      "type": "group_variables",
+      "description": "Group related state variables like _0x50810d and _0x4f433f used for notification throttling.",
+      "target": "VariableDeclaration",
+      "params": {
+        "variables": ["_0x50810d", "_0x4f433f"]
+      }
+    }
+  ],
+  "moduleAssignments": {}
+}

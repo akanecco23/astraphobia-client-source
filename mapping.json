@@ -1,0 +1,2787 @@
+{
+  "_meta": {
+    "version": "1.9",
+    "lastUpdated": "2026-06-20T00:30:03.590Z",
+    "description": "Edit name/module fields to customize. Params/locals are ordered by position."
+  },
+  "functions": {
+    "global::_0x83775b": {
+      "name": "simulateTextInput",
+      "module": "ui_interaction",
+      "fingerprintHash": "2::0::1::0::1::0::0::3::15::\"::_0x20905e|_0x2b5144|document::Event|InputEvent|_0x1d9877|_0x2b5144.dispatchEvent|_0x2b5144.focus|document.querySelector|if|setTimeout",
+      "params": [
+        "selector",
+        "textToType"
+      ],
+      "locals": [
+        "inputElement",
+        "currentIndex"
+      ]
+    },
+    "global/_0x83775b::_0x1d9877": {
+      "name": "typeNextCharacter",
+      "module": "",
+      "fingerprintHash": "0::0::1::0::1::0::0::1::7::\"::_0x20905e|_0x2b5144::Event|InputEvent|_0x2b5144.dispatchEvent|if|setTimeout",
+      "params": [],
+      "locals": []
+    },
+    "global::_0x3bde45": {
+      "name": "wrapWithProxy",
+      "module": "core",
+      "fingerprintHash": "3::0::0::0::0::0::0::0::4::::_0xe897ef::Proxy|_0xe897ef.set",
+      "params": [
+        "targetObject",
+        "propertyKey",
+        "handler"
+      ],
+      "locals": [
+        "originalValue",
+        "proxyValue"
+      ]
+    },
+    "global::_0x54177c": {
+      "name": "showNotification",
+      "module": "ui_interaction",
+      "fingerprintHash": "1::0::1::0::1::0::0::1::30::\"|'::Date|_0x404279|document::Date.now|_0x404279.remove|document.body.appendChild|document.createElement|if|requestAnimationFrame|setTimeout|translateX|var",
+      "params": [
+        "message"
+      ],
+      "locals": [
+        "notificationTime",
+        "notificationElement"
+      ]
+    },
+    "global::_0x36210f": {
+      "name": "isYoutubeUrl",
+      "module": "ui_audio",
+      "fingerprintHash": "1::0::0::0::0::0::0::1::1::::i::i.test",
+      "params": [
+        "url"
+      ],
+      "locals": []
+    },
+    "global::_0x1a70da": {
+      "name": "getYoutubeVideoId",
+      "module": "ui_audio",
+      "fingerprintHash": "1::0::1::1::0::0::0::4::5::\"::_0x28f992|youtu|youtube::URL|_0x28f992.hostname.includes|_0x28f992.pathname.slice|_0x28f992.pathname.split|_0x28f992.pathname.startsWith|_0x28f992.searchParams.get|catch|if|split",
+      "params": [
+        "url",
+        "error"
+      ],
+      "locals": [
+        "parsedUrl"
+      ]
+    },
+    "global::_0x26a9e5": {
+      "name": "ensureYoutubeApiReady",
+      "module": "ui_audio",
+      "fingerprintHash": "1::1::1::1::1::0::0::2::17::\"::_0x170d78|_0x42b605|document|window|www::_0x1fb114|_0x4c6fae|catch|document.createElement|document.getElementById|document.head.appendChild|function|if|while|window._astYtReadyCallbacks.push",
+      "params": [
+        "callback"
+      ],
+      "locals": [
+        null,
+        "originalReadyHandler"
+      ]
+    },
+    "global::_0x3b469d": {
+      "name": "getYoutubeHostElement",
+      "module": "ui_audio",
+      "fingerprintHash": "0::0::1::0::1::0::0::1::13::\"::_0x3d1eb0|document::document.body.appendChild|document.createElement|document.getElementById|if",
+      "params": [],
+      "locals": [
+        "hostElement"
+      ]
+    },
+    "global::_0x4887e1": {
+      "name": "playYoutubeVideo",
+      "module": "ui_audio",
+      "fingerprintHash": "1::0::1::1::1::1::0::2::17::\"::Math|YT|_0x11e6e3|_0x378f93|_0x447761|_0x50c77b|window::Math.round|YT.Player|_0x26a9e5|_0x378f93.target.setVolume|_0x3b469d|_0x50c77b.loadVideoById|_0x50c77b.setVolume|_0xe3adcc|catch|if",
+      "params": [
+        "videoId"
+      ],
+      "locals": []
+    },
+    "global::_0x5e3bc3": {
+      "name": "stopChatTimer",
+      "module": "features_chat",
+      "fingerprintHash": "0::0::1::0::0::0::0::0::3::::::clearInterval|if",
+      "params": [],
+      "locals": [
+        "chatInterval"
+      ]
+    },
+    "global::_0x346d7e": {
+      "name": "typeChatMessage",
+      "module": "ui_interaction",
+      "fingerprintHash": "1::0::1::0::1::0::0::2::19::\"::_0x21f5b6|_0x4c3b93|_0x5a73db|document::Event|InputEvent|_0x21f5b6.click|_0x406740|_0x5a73db.blur|_0x5a73db.dispatchEvent|_0x5a73db.focus|document.querySelector|if|setTimeout",
+      "params": [
+        "messageText"
+      ],
+      "locals": [
+        "chatInputElement",
+        "charIndex"
+      ]
+    },
+    "global/_0x346d7e::_0x406740": {
+      "name": "typeNextCharacter",
+      "module": "",
+      "fingerprintHash": "0::0::1::0::1::0::0::1::12::\"::_0x21f5b6|_0x4c3b93|_0x5a73db|document::Event|InputEvent|_0x21f5b6.click|_0x5a73db.blur|_0x5a73db.dispatchEvent|document.querySelector|if|setTimeout",
+      "params": [],
+      "locals": []
+    },
+    "global::_0x4bc606": {
+      "name": "initializeTextInterceptor",
+      "module": "ui_interaction",
+      "fingerprintHash": "0::1::1::1::1::0::0::17::35::\"::Number|Reflect|String|TextEncoder|_0x2cafd5|_0x4c5aed|_0x4dc517|_0xb56f05|_0xe2e2f8|document::Number.parseInt|String.fromCharCode|String.fromCodePoint|_0xb30fa8|_0xb56f05.replace|function|if|switch|u|x",
+      "params": [],
+      "locals": [
+        "actionCodes",
+        "originalEncode",
+        "currentTimestamp",
+        "encodedChars",
+        "decodedChar",
+        "decodedCode",
+        "switchKey",
+        "obfuscatedName",
+        "obfuscatedName2",
+        "obfuscatedKeys",
+        "shadowElementKey",
+        "entitiesListKey",
+        "packetSenderKey",
+        "contextArgument",
+        "processedData"
+      ]
+    },
+    "global/_0x4bc606::_0xb30fa8": {
+      "name": "unescapeString",
+      "module": "",
+      "fingerprintHash": "1::0::1::0::0::0::0::15::16::\"::Number|String|_0xb56f05::Number.parseInt|String.fromCharCode|String.fromCodePoint|_0xb56f05.replace|if|switch|u|x",
+      "params": [
+        "inputString"
+      ],
+      "locals": []
+    },
+    "global::_0x20b078": {
+      "name": "isPlaying",
+      "module": "ui_audio",
+      "fingerprintHash": "0::0::1::1::1::0::0::3::3::\"::YT|_0x50c77b|_0xe024e2|window::_0x50c77b.getPlayerState|catch|if",
+      "params": [
+        "error"
+      ],
+      "locals": []
+    },
+    "global::_0x47bca1": {
+      "name": "playNextOrRandom",
+      "module": "ui_audio",
+      "fingerprintHash": "0::0::1::0::0::1::0::1::2::::Math|_0x11e6e3::Math.floor|Math.random|_0x5d9dc6|if",
+      "params": [],
+      "locals": []
+    },
+    "global::_0x3568e4": {
+      "name": "playPrevious",
+      "module": "ui_audio",
+      "fingerprintHash": "0::0::1::0::0::0::0::1::2::::_0x11e6e3::_0x5d9dc6|if",
+      "params": [],
+      "locals": []
+    },
+    "global::_0x2dcba2": {
+      "name": "addTrackToPlaylist",
+      "module": "storage",
+      "fingerprintHash": "2::0::1::0::1::0::1::1::6::\"::JSON|_0x11e6e3|_0x52b448|localStorage::JSON.stringify|_0x11e6e3.push|_0x52b448.split|_0x54177c|_0xe3adcc|if|localStorage.setItem|pop|split",
+      "params": [
+        "trackUrl",
+        "trackName"
+      ],
+      "locals": []
+    },
+    "global::_0x327097": {
+      "name": "removeTrackFromPlaylist",
+      "module": "storage",
+      "fingerprintHash": "1::0::1::0::1::0::1::0::5::\"::JSON|_0x11e6e3|localStorage::JSON.stringify|_0x11e6e3.splice|_0x43201a|_0xe3adcc|if|localStorage.setItem",
+      "params": [
+        "indexToRemove"
+      ],
+      "locals": []
+    },
+    "global::_0x3cfb48": {
+      "name": "stopAllPlayback",
+      "module": "ui_audio",
+      "fingerprintHash": "0::0::1::1::0::0::0::0::5::::_0x50c77b|_0xe024e2::_0x50c77b.stopVideo|_0xe024e2.pause|catch|if",
+      "params": [
+        "audioError",
+        "youtubeStopError"
+      ],
+      "locals": []
+    },
+    "global::_0x5d9dc6": {
+      "name": "playTrack",
+      "module": "ui_audio",
+      "fingerprintHash": "1::0::1::0::0::1::0::4::28::\"::Math|_0x11e6e3|_0x5112dc|_0xe024e2::Audio|_0x1a70da|_0x36210f|_0x3cfb48|_0x4887e1|_0x54177c|_0xe024e2.play|_0xe3adcc|catch|if",
+      "params": [
+        "trackIndex"
+      ],
+      "locals": [
+        "currentTrack",
+        "youtubeVideoId"
+      ]
+    },
+    "global::_0x42d42f": {
+      "name": "pausePlayback",
+      "module": "ui_audio",
+      "fingerprintHash": "0::0::1::1::0::0::0::0::3::\"::_0x50c77b|_0xe024e2::_0x50c77b.pauseVideo|_0xe024e2.pause|_0xe3adcc|catch|if",
+      "params": [
+        "youtubePauseError"
+      ],
+      "locals": []
+    },
+    "global::_0x273e45": {
+      "name": "resumePlayback",
+      "module": "ui_audio",
+      "fingerprintHash": "0::0::1::1::0::0::0::0::4::\"::_0x11e6e3|_0x50c77b|_0xe024e2::_0x50c77b.playVideo|_0x5d9dc6|_0xe024e2.play|_0xe3adcc|catch|if",
+      "params": [
+        "youtubePlayError"
+      ],
+      "locals": []
+    },
+    "global::_0x43201a": {
+      "name": "resetPlayback",
+      "module": "ui_audio",
+      "fingerprintHash": "0::0::1::1::0::0::0::0::5::\"::_0x50c77b|_0xe024e2::_0x50c77b.stopVideo|_0xe024e2.pause|_0xe3adcc|catch|if",
+      "params": [
+        "youtubeResetError"
+      ],
+      "locals": []
+    },
+    "global::_0xe3adcc": {
+      "name": "updateMusicPanel",
+      "module": "ui_audio",
+      "fingerprintHash": "0::0::1::0::1::0::0::1::42::\"::_0x11e6e3|_0x1c77c3|_0x2a95ba|_0x2dc0b8|_0x3a0e25|_0x415202|_0x42f11e|_0x5161c1|_0x5ed2c7|document::_0x11e6e3.forEach|_0x20b078|_0x2dc0b8.classList.toggle|_0x3a0e25.querySelector|_0x415202.querySelectorAll|_0x42f11e.name.substring|_0x5ed2c7.classList.toggle|document.createElement|document.getElementById|if",
+      "params": [],
+      "locals": [
+        "musicPanel",
+        "isCurrentlyPlaying",
+        "playButton",
+        "trackNameDisplay",
+        "trackListContainer",
+        "loopButton",
+        "shuffleButton"
+      ]
+    },
+    "global::_0x1fa40d": {
+      "name": "getGameCanvas",
+      "module": "ui_radar",
+      "fingerprintHash": "0::0::0::0::1::0::0::1::1::\"::document::document.querySelector",
+      "params": [],
+      "locals": []
+    },
+    "global::_0xc66695": {
+      "name": "startAutoPointerMovement",
+      "module": "features_movement",
+      "fingerprintHash": "0::0::1::0::1::1::0::2::11::\"::Math|_0x137b43|_0x324c37|window::Math.cos|Math.round|Math.sin|MouseEvent|_0x137b43.dispatchEvent|_0x1fa40d|_0x54177c|if|setInterval",
+      "params": [],
+      "locals": [
+        "canvas"
+      ]
+    },
+    "global::_0x303c8f": {
+      "name": "stopAutoPointerMovement",
+      "module": "features_movement",
+      "fingerprintHash": "0::0::1::0::0::0::0::0::2::::::clearInterval|if",
+      "params": [],
+      "locals": []
+    },
+    "global::_0x59bfcd": {
+      "name": "toggleAutoPointerMovement",
+      "module": "features_movement",
+      "fingerprintHash": "0::0::1::0::0::0::0::0::2::::::_0x303c8f|_0xc66695|if",
+      "params": [],
+      "locals": []
+    },
+    "global::_0x2c31c3": {
+      "name": "simulatePointerMove",
+      "module": "features_movement",
+      "fingerprintHash": "1::0::1::0::1::0::0::1::7::\"::_0x1c3963|_0x28c0f7::MouseEvent|_0x1c3963.dispatchEvent|_0x1c3963.getBoundingClientRect|_0x1fa40d|if",
+      "params": [
+        "direction"
+      ],
+      "locals": [
+        "targetElement",
+        "rect",
+        "centerX",
+        "centerY",
+        "targetX"
+      ]
+    },
+    "global::_0x22fcd1": {
+      "name": "getAllPropertyNames",
+      "module": "utils",
+      "fingerprintHash": "1::0::0::0::0::0::0::1::1::::Object::Object.getOwnPropertyNames|Object.getPrototypeOf",
+      "params": [],
+      "locals": []
+    },
+    "global::_0x4f5c1a": {
+      "name": "isValidEntity",
+      "module": "utils",
+      "fingerprintHash": "1::0::1::0::0::0::0::6::6::::_0x525c10::if",
+      "params": [
+        "entity"
+      ],
+      "locals": []
+    },
+    "global::_0xee4f7d": {
+      "name": "getGameState",
+      "module": "features_autofarm",
+      "fingerprintHash": "0::1::1::1::1::0::0::6::9::::Object|_0x2ea4fd|_0x54e550|window::Object.keys|catch|for|if",
+      "params": [
+        "error"
+      ],
+      "locals": [
+        "states",
+        "stateIndex",
+        "managerKey"
+      ]
+    },
+    "global::_0x195d07": {
+      "name": "getEntityManager",
+      "module": "core",
+      "fingerprintHash": "1::1::1::0::1::0::0::5::10::\"::Array|Object|_0x39e1f5|_0x3e0600|window::Array.isArray|Object.keys|_0xee4f7d|for|if",
+      "params": [
+        "gameState"
+      ],
+      "locals": [
+        "entityManager",
+        "propertyKey",
+        "propertyValue"
+      ]
+    },
+    "global::_0x26a367": {
+      "name": "getFirstAnimal",
+      "module": "core",
+      "fingerprintHash": "0::0::1::1::0::0::0::5::6::::_0x265e97::_0xee4f7d|catch|if",
+      "params": [
+        "error"
+      ],
+      "locals": [
+        "gameState"
+      ]
+    },
+    "global::_0x200c10": {
+      "name": "getAnimalPosition",
+      "module": "features_movement",
+      "fingerprintHash": "0::0::1::1::0::0::0::3::5::::_0x5d8a92|_0xff999f::_0x26a367|catch|if",
+      "params": [
+        "error"
+      ],
+      "locals": [
+        "animal",
+        "position"
+      ]
+    },
+    "global::_0x3e379f": {
+      "name": "extractPosition",
+      "module": "features_movement",
+      "fingerprintHash": "1::0::1::0::0::0::0::2::2::::_0x425d62::if",
+      "params": [
+        "entity"
+      ],
+      "locals": []
+    },
+    "global::_0x175295": {
+      "name": "calculateDirection",
+      "module": "features_movement",
+      "fingerprintHash": "1::0::1::0::0::1::0::2::14::::Math|_0x1493da::Math.abs|Math.cos|Math.sin|Math.sqrt|if",
+      "params": [
+        "entity"
+      ],
+      "locals": [
+        "dirX",
+        "dirY",
+        "rotation",
+        "magnitude"
+      ]
+    },
+    "global::_0x3396f0": {
+      "name": "findEntityById",
+      "module": "features_autofarm",
+      "fingerprintHash": "1::1::1::1::0::0::0::4::12::::Array|Object|_0x1ddb7d|_0x3f8ff4|_0x3fab19|_0x448d35::Array.isArray|Object.keys|_0x195d07|_0x3f8ff4.entitiesList.find|_0x448d35.find|_0xee4f7d|catch|for|if",
+      "params": [
+        "entityId",
+        "error"
+      ],
+      "locals": [
+        "gameState",
+        "worldData",
+        "entity",
+        "roomId",
+        "animals"
+      ]
+    },
+    "global::_0x29f143": {
+      "name": "initAdBlocker",
+      "module": "features_adblock",
+      "fingerprintHash": "0::0::1::0::1::0::0::1::20::\"::_0x1137dc|_0x2e7f7c|_0x844fbe|div|document|sidebar::_0x1137dc.remove|_0x1137dc.removeAttribute|_0x293d62|_0x844fbe.forEach|document.querySelector|document.querySelectorAll|forEach|has|if|not",
+      "params": [],
+      "locals": [
+        "adSelectors"
+      ]
+    },
+    "global/_0x29f143::_0x293d62": {
+      "name": "removeAds",
+      "module": "",
+      "fingerprintHash": "0::0::1::0::1::0::0::0::12::\"::_0x1137dc|_0x2e7f7c|_0x844fbe|div|document::_0x1137dc.remove|_0x1137dc.removeAttribute|_0x844fbe.forEach|document.querySelector|document.querySelectorAll|forEach|if",
+      "params": [],
+      "locals": []
+    },
+    "global::_0x471b3f": {
+      "name": "initAutofillName",
+      "module": "ui_interaction",
+      "fingerprintHash": "0::0::1::0::1::0::0::2::15::\"::_0x25d52f|document|localStorage::Event|_0x211fc9|_0x25d52f.addEventListener|_0x25d52f.dispatchEvent|clearInterval|document.querySelector|if|localStorage.getItem|localStorage.setItem|setInterval",
+      "params": [],
+      "locals": [
+        "savedName",
+        "nameInput",
+        "inputCheckInterval"
+      ]
+    },
+    "global/_0x471b3f::_0x211fc9": {
+      "name": "applyAutofill",
+      "module": "",
+      "fingerprintHash": "0::0::1::0::1::0::0::1::7::\"::_0x25d52f|localStorage::Event|_0x25d52f.addEventListener|_0x25d52f.dispatchEvent|if|localStorage.setItem",
+      "params": [],
+      "locals": []
+    },
+    "global::_0x929c68": {
+      "name": "startRepeatingTask",
+      "module": "features_chat",
+      "fingerprintHash": "2::0::1::0::0::0::0::0::4::::::_0x346d7e|clearInterval|if|setInterval",
+      "params": [
+        "taskData",
+        "intervalSeconds"
+      ],
+      "locals": [
+        "chatInterval"
+      ]
+    },
+    "global::_0x5db1c0": {
+      "name": "updateLockButtonUI",
+      "module": "ui_radar",
+      "fingerprintHash": "0::0::1::0::1::0::0::0::3::\"::_0x15c29f|document|window::_0x15c29f.classList.toggle|document.getElementById|if",
+      "params": [],
+      "locals": [
+        "lockButton"
+      ]
+    },
+    "global::_0x557bee": {
+      "name": "startEntityTrailTracking",
+      "module": "features_movement",
+      "fingerprintHash": "0::0::1::0::1::0::0::4::14::::Date|_0x12acaf|_0x3a0d26|_0xac32f6|window::Date.now|_0x3396f0|_0x3e379f|_0x4c6311|_0xe9b4e3|clearInterval|if|setInterval|window.entityTrailHistory.push|window.entityTrailHistory.shift",
+      "params": [],
+      "locals": []
+    },
+    "global::_0xeee3a7": {
+      "name": "stopEntityTrailTracking",
+      "module": "features_movement",
+      "fingerprintHash": "0::0::1::0::0::0::0::0::2::::::clearInterval|if",
+      "params": [],
+      "locals": []
+    },
+    "global::_0x4c1cbc": {
+      "name": "toggleEntityTrail",
+      "module": "features_esp",
+      "fingerprintHash": "0::0::1::0::1::0::0::2::19::\"::_0x499a7b|window::_0x231a0f|_0x4c6311|_0x54177c|_0x557bee|_0xeee3a7|if",
+      "params": [],
+      "locals": [
+        "playerData",
+        "hasNearbyPlayers",
+        "targetPlayerId",
+        "targetPlayerName"
+      ]
+    },
+    "global::_0x231a0f": {
+      "name": "refreshUI",
+      "module": "features_esp",
+      "fingerprintHash": "0::0::0::0::0::0::0::0::0::::::",
+      "params": [],
+      "locals": []
+    },
+    "global::_0x1d251c": {
+      "name": "drawRadar",
+      "module": "features_esp",
+      "fingerprintHash": "3::1::1::0::1::1::0::1::93::\"::Date|Math|_0x15a9bf|_0x1ec2d3|_0x23a9ba|_0x3782c7|_0x4e44d5|_0x539702|_0x5769b3|_0x90a762|window::_0x3782c7.arc|_0x3782c7.beginPath|_0x3782c7.fill|_0x3782c7.lineTo|_0x3782c7.moveTo|_0x3782c7.roundRect|_0x3782c7.stroke|for|if|rgba",
+      "params": [
+        "ctx",
+        "canvas",
+        "gameState"
+      ],
+      "locals": [
+        "radarSize",
+        "radarX",
+        "radarY",
+        "worldScale",
+        "pixelScale",
+        "circleRadiusFactor",
+        "entitiesToDraw"
+      ]
+    },
+    "global::_0xc69ec1": {
+      "name": "initRadarDrag",
+      "module": "ui_radar",
+      "fingerprintHash": "0::0::1::0::1::0::0::3::18::\"::_0x15e36f|_0x2646db|_0x2852d4|_0x539702|_0xe5e40e|document|window::_0x15e36f.preventDefault|_0x2646db.preventDefault|_0xe5e40e.preventDefault|_0xe5e40e.stopPropagation|document.addEventListener|if",
+      "params": [],
+      "locals": []
+    },
+    "global::_0x1ccf6c": {
+      "name": "renderEspLoop",
+      "module": "features_esp",
+      "fingerprintHash": "0::0::1::0::1::0::0::1::14::\"::_0x1a36eb|_0x213487|_0x428160|document|window::_0x1a36eb.getContext|_0x200c10|_0x213487.clearRect|_0x428160.getContext|_0x4a19c2|_0x4c6311|clearRect|document.getElementById|if|requestAnimationFrame",
+      "params": [],
+      "locals": [
+        "overlayElement",
+        "espCanvas",
+        "espCtx",
+        "currentGameState",
+        "playerData",
+        "renderSettings"
+      ]
+    },
+    "global::_0x512c5e": {
+      "name": "toggleEsp",
+      "module": "features_esp",
+      "fingerprintHash": "0::0::0::0::1::0::0::0::2::\"::window::_0x54177c",
+      "params": [],
+      "locals": []
+    },
+    "global::_0x381c04": {
+      "name": "trackNearestPlayer",
+      "module": "features_aimbot",
+      "fingerprintHash": "0::0::1::0::1::0::0::0::4::\"::_0x3726ca|window::_0x4c6311|_0x54177c|if",
+      "params": [],
+      "locals": [
+        "gameData"
+      ]
+    },
+    "global::_0xe9b4e3": {
+      "name": "calculateDistance",
+      "module": "features_movement",
+      "fingerprintHash": "4::0::0::0::0::1::0::1::1::::Math::Math.sqrt",
+      "params": [
+        "x1",
+        "y1",
+        "x2",
+        "y2"
+      ],
+      "locals": []
+    },
+    "global::_0x4c6311": {
+      "name": "buildEntityState",
+      "module": "features_movement",
+      "fingerprintHash": "0::1::1::1::0::1::0::3::25::::Math|_0x1cd949|_0x1e3218|_0x25ea21|_0x28fec9|_0x2c1d3d|_0x3e0d11|_0x44455a|_0x466baf|_0x4c441f|_0x5bbddd|_0x5e97cc|_0xa05356::Math.atan2|Math.sqrt|_0x195d07|_0x200c10|_0x26a367|_0x3e379f|_0x466baf.entities.push|_0xee4f7d|for|if",
+      "params": [
+        "error"
+      ],
+      "locals": [
+        "rawState",
+        "parsedState",
+        "localPlayer",
+        "localPos",
+        "gameState",
+        "entitiesList",
+        "i",
+        "entity",
+        "entityPos",
+        "dx",
+        "dy",
+        "distance",
+        "entityData"
+      ]
+    },
+    "global::_0x2e9af3": {
+      "name": "getViewportScale",
+      "module": "core",
+      "fingerprintHash": "0::0::1::1::1::0::0::2::3::::_0x252486|game|scale|window::catch|find|if",
+      "params": [
+        "err"
+      ],
+      "locals": [
+        "stateWithViewport"
+      ]
+    },
+    "global::_0x4810b1": {
+      "name": "updateLockLoop",
+      "module": "features_aimbot",
+      "fingerprintHash": "0::0::1::1::1::1::0::5::42::\"::Math|_0x309817|_0x359d30|_0x39e266|_0xb9401c|_0xfb87db|window::Math.sqrt|_0x1fa40d|_0x200c10|_0x3396f0|_0x39e266.getBoundingClientRect|_0x3e379f|_0x54177c|_0x5db1c0|if|requestAnimationFrame",
+      "params": [],
+      "locals": [
+        "targetEntity",
+        "targetPos",
+        "currentPos",
+        "canvas",
+        "rect",
+        "centerX",
+        "centerY",
+        "relX",
+        "relY",
+        "distToTarget",
+        "predictedX",
+        "predictedY",
+        "velX",
+        "velY",
+        "predictionFactor",
+        "finalRelX",
+        "finalRelY",
+        "finalDist",
+        "multiplier",
+        "maxOffset",
+        "scaledX",
+        "scaledY",
+        "scaledDist"
+      ]
+    },
+    "global::_0x40d5b2": {
+      "name": "toggleLock",
+      "module": "features_aimbot",
+      "fingerprintHash": "0::0::1::0::1::0::0::0::10::\"::_0x1c7e44|window::_0x4c6311|_0x54177c|_0x5db1c0|if",
+      "params": [],
+      "locals": [
+        "currentState",
+        "targetName"
+      ]
+    },
+    "global::_0x1766f6": {
+      "name": "drawEntityTrail",
+      "module": "features_esp",
+      "fingerprintHash": "4::1::1::0::1::1::0::1::40::\"::Date|Math|_0x1e55fc|_0x20dcf6|_0x295366|_0x2b70f4|_0x338f40|_0x467821|_0x5b01cb|window::Date.now|Math.max|_0x1e55fc.arc|_0x1e55fc.beginPath|_0x1e55fc.lineTo|_0x1e55fc.moveTo|_0x1e55fc.stroke|for|if|rgba",
+      "params": [
+        "ctx",
+        "canvas",
+        "playerPos",
+        "zoomScale"
+      ],
+      "locals": [
+        "centerX",
+        "centerY",
+        "currentTime",
+        "trailDuration",
+        "red",
+        "green",
+        "blue",
+        "i",
+        "prevPoint",
+        "currPoint",
+        "age",
+        "opacity",
+        "startX",
+        "startY",
+        "endX",
+        "endY",
+        "progress",
+        "j",
+        "historyPoint",
+        "pointAge",
+        "pointOpacity",
+        "pointX",
+        "pointY"
+      ]
+    },
+    "global::_0x4a19c2": {
+      "name": "getOrCreateCanvas",
+      "module": "ui_radar",
+      "fingerprintHash": "2::0::1::0::1::0::0::1::21::\"::_0x289858|_0x414801|_0x4eba8a|document|window::_0x1fa40d|_0x4eba8a.getBoundingClientRect|document.body.appendChild|document.createElement|document.getElementById|if",
+      "params": [
+        "canvasId",
+        "zIndex"
+      ],
+      "locals": [
+        "canvasElement",
+        "gameViewport",
+        "rect"
+      ]
+    },
+    "global::_0x383947": {
+      "name": "renderLoop",
+      "module": "features_esp",
+      "fingerprintHash": "0::0::1::0::1::0::0::0::6::\"::_0x145be3|_0x49b741|window::_0x145be3.clearRect|_0x1766f6|_0x200c10|_0x2e9af3|_0x49b741.getContext|_0x4a19c2|if|requestAnimationFrame",
+      "params": [],
+      "locals": [
+        "overlayCanvas",
+        "overlayCtx",
+        "currentPlayerPos"
+      ]
+    },
+    "global::_0x1442bf": {
+      "name": "drawESP",
+      "module": "features_esp",
+      "fingerprintHash": "5::0::1::1::1::1::0::1::59::\"::Math|_0x1343eb|_0x259ab4|_0x2e69dc|_0x302f38|_0x49cb8c|_0x519a0c|_0xf83071|window::Math.round|_0x2e69dc.forEach|_0x302f38.beginPath|_0x302f38.fillText|_0x302f38.lineTo|_0x302f38.moveTo|_0x302f38.strokeRect|catch|if|toString",
+      "params": [
+        "ctx",
+        "gameState",
+        "offsetX",
+        "offsetY",
+        "scale",
+        "err"
+      ],
+      "locals": [
+        "myPos",
+        "espMode",
+        "trackedId",
+        "entities",
+        "viewCenterX",
+        "viewCenterY",
+        "viewport"
+      ]
+    },
+    "global::_0x3e9f64": {
+      "name": "drawTrackerLine",
+      "module": "features_esp",
+      "fingerprintHash": "4::0::1::0::1::1::0::4::86::\"::Date|Math|_0x159f34|_0x24f5e4|_0x2f610b|_0x3dcec5|_0x4bc1b1|_0x5c0c6c|window::Date.now|Math.sin|_0x175295|_0x3396f0|_0x3e379f|_0x4f5c1a|_0x5c0c6c.beginPath|_0x5c0c6c.moveTo|_0xe9b4e3|if",
+      "params": [
+        "ctx",
+        "canvas",
+        "playerPos",
+        "zoomScale"
+      ],
+      "locals": [
+        "trackedEntity",
+        "entityPos",
+        "centerX",
+        "centerY",
+        "diffX",
+        "diffY",
+        "targetX",
+        "targetY",
+        "distance",
+        "entityDir",
+        "pulse",
+        "markerSize",
+        "arrowLength",
+        "angle"
+      ]
+    },
+    "global::_0x445932": {
+      "name": "clearTracking",
+      "module": "features_aimbot",
+      "fingerprintHash": "0::0::0::0::1::0::0::0::2::\"::window::_0x54177c",
+      "params": [],
+      "locals": []
+    },
+    "global::_0x4e9453": {
+      "name": "simulateClick",
+      "module": "ui_interaction",
+      "fingerprintHash": "2::0::1::0::1::0::0::1::5::\"::_0x27cb9c::PointerEvent|_0x1fa40d|_0x27cb9c.dispatchEvent|if|setTimeout",
+      "params": [
+        "clientX",
+        "clientY"
+      ],
+      "locals": [
+        "targetElement"
+      ]
+    },
+    "global::_0x594e7a": {
+      "name": "moveAndClickElement",
+      "module": "features_movement",
+      "fingerprintHash": "3::0::1::0::1::1::0::2::28::\"::Math|_0x129d7f|_0x1c93ef|_0x28bcfa::Math.min|Math.sqrt|MouseEvent|_0x1fa40d|_0x200c10|_0x28bcfa.dispatchEvent|_0x28bcfa.getBoundingClientRect|_0x4e9453|if",
+      "params": [
+        "targetX",
+        "targetY",
+        "shouldClick"
+      ],
+      "locals": [
+        "element",
+        "playerPosition",
+        "rect",
+        "centerX",
+        "centerY",
+        "diffX",
+        "diffY",
+        "distance",
+        "multiplier",
+        "scaledX",
+        "scaledY",
+        "maxRadius",
+        "scaledDistance",
+        "clampRatio",
+        "finalX",
+        "finalY"
+      ]
+    },
+    "global::_0x4a3fbe": {
+      "name": "autoDodgeLoop",
+      "module": "features_aimbot",
+      "fingerprintHash": "0::1::1::1::1::1::0::7::65::::Date|Math|_0x103958|_0x1ce36|_0x1e84ea|_0x2933b2|_0x4d11de|_0x4e99a1|_0x4f628f|_0x50a437|_0x54591a|window::Date.now|_0x195d07|_0x1e84ea.push|_0x200c10|_0x4f5c1a|_0xe9b4e3|_0xee4f7d|forEach|if|setTimeout",
+      "params": [],
+      "locals": [
+        "currentPos",
+        "gameState",
+        "worldData",
+        "myAnimal",
+        "nearbyEntities",
+        "now",
+        "hasMoved",
+        "distFromLastPos",
+        "sumX",
+        "sumY"
+      ]
+    },
+    "global::_0x2dc734": {
+      "name": "enableAutoDodge",
+      "module": "features_aimbot",
+      "fingerprintHash": "0::0::1::0::1::0::0::0::7::\"::window::_0x4a3fbe|_0x54177c|if",
+      "params": [],
+      "locals": []
+    },
+    "global/anon::_0x598662": {
+      "name": "updateObjectProperty",
+      "module": "",
+      "fingerprintHash": "3::0::0::0::0::0::0::0::3::::_0xe897ef::_0x39e0e7|_0xe897ef.set",
+      "params": [],
+      "locals": []
+    },
+    "global::_0x1c6df6": {
+      "name": "initializeAstraVision",
+      "module": "features_xray",
+      "fingerprintHash": "0::1::1::1::0::0::0::2::16::\"::Object|_0x49cb8c|_0x54e550|_0x594069|console|plugins|shadow::Object.getOwnPropertyNames|_0x49cb8c.viewport.clampZoom|_0x54177c|_0x54e550.terrainManager.shadow.setShadowSize|_0x594069.startsWith|for|if|setInterval|setTimeout|shadow.setShadowSize",
+      "params": [],
+      "locals": []
+    },
+    "global::_0x2b8801": {
+      "name": "showHalloweenCodeModal",
+      "module": "ui_interaction",
+      "fingerprintHash": "1::0::1::0::1::0::0::0::77::\"::_0x2e2371|_0x2e65d6|_0x31a3f1|document|localStorage::_0x2e2371.querySelector|_0x2e2371.remove|_0x2e65d6.value.trim|_0x54177c|document.body.appendChild|document.createElement|if|localStorage.setItem|rgba|setTimeout",
+      "params": [
+        "onUnlockCallback"
+      ],
+      "locals": [
+        "modalOverlay",
+        "codeInput"
+      ]
+    },
+    "global/_0x2b8801::_0x3ac585": {
+      "name": "closeModal",
+      "module": "",
+      "fingerprintHash": "0::0::0::0::1::0::0::0::2::\"::_0x2e2371::_0x2e2371.remove|setTimeout",
+      "params": [],
+      "locals": []
+    },
+    "global::_0x918bac": {
+      "name": "makeElementDraggable",
+      "module": "ui_interaction",
+      "fingerprintHash": "1::0::1::0::1::1::0::2::27::\"::Math|_0x4adb17|_0x4ba172|_0x6c6667|_0x9990bf|document::Math.abs|_0x4adb17.target.closest|_0x6c6667.stopImmediatePropagation|_0x9990bf.addEventListener|_0x9990bf.getBoundingClientRect|document.addEventListener|document.removeEventListener|if|includes",
+      "params": [
+        "draggableElement"
+      ],
+      "locals": [
+        "offsetX",
+        "offsetY",
+        "isDragging",
+        "hasMoved"
+      ]
+    },
+    "global::_0x128623": {
+      "name": "disableAutoDodge",
+      "module": "features_aimbot",
+      "fingerprintHash": "0::0::0::0::1::0::0::0::2::\"::window::_0x54177c",
+      "params": [],
+      "locals": []
+    },
+    "global::_0x298595": {
+      "name": "markAreaAsFailed",
+      "module": "features_autofarm",
+      "fingerprintHash": "2::0::1::0::1::0::0::0::8::\"::Date|_0x13e8e7|_0x26454d|_0x2f2b7f|window::Date.now|_0x54177c|_0xe9b4e3|if|window.autoFarmSkipAreas.filter|window.autoFarmSkipAreas.find|window.autoFarmSkipAreas.push",
+      "params": [
+        "posX",
+        "posY"
+      ],
+      "locals": [
+        "currentTime",
+        "existingArea"
+      ]
+    },
+    "global::_0x4f831f": {
+      "name": "isAreaSkipped",
+      "module": "features_autofarm",
+      "fingerprintHash": "2::0::0::0::1::0::0::1::3::::Date|_0x3f4c1d|_0x43e713|window::Date.now|_0xe9b4e3|window.autoFarmSkipAreas.filter|window.autoFarmSkipAreas.some",
+      "params": [
+        "x",
+        "y"
+      ],
+      "locals": [
+        "now"
+      ]
+    },
+    "global::_0x3be0ee": {
+      "name": "findNearestEntity",
+      "module": "features_aimbot",
+      "fingerprintHash": "1::0::1::1::1::0::0::5::19::::_0x248d3b|_0x25147c|_0x55c51b|window::_0x195d07|_0x4f5c1a|_0x4f831f|_0xe9b4e3|_0xee4f7d|catch|forEach|if|window.autoFarmSkipIds.has",
+      "params": [
+        "range",
+        "error"
+      ],
+      "locals": [
+        "gameState",
+        "worldData",
+        "playerAnimal",
+        "playerX",
+        "playerY",
+        "nearestEntity",
+        "minDistance"
+      ]
+    },
+    "global::_0x326ace": {
+      "name": "findEntitiesInRange",
+      "module": "features_aimbot",
+      "fingerprintHash": "1::0::1::1::1::0::0::5::17::::_0x2004fb|_0x3dc84d|_0x4af3d3|_0x549f74|_0x5a46e4|_0x5d3f7d|window::_0x195d07|_0x4af3d3.push|_0x4af3d3.sort|_0x4f5c1a|_0x4f831f|_0xe9b4e3|_0xee4f7d|forEach|if|window.autoFarmSkipIds.has",
+      "params": [
+        "searchRange",
+        "err"
+      ],
+      "locals": [
+        "state",
+        "world",
+        "myAnimal",
+        "myX",
+        "myY",
+        "entitiesInRange"
+      ]
+    },
+    "global::_0x1f935a": {
+      "name": "findBestFoodCluster",
+      "module": "features_autofarm",
+      "fingerprintHash": "2::0::1::0::1::0::0::2::15::::_0x14eec0|_0x30c2d6|_0xfe1141|window::_0x326ace|_0xe9b4e3|_0xfe1141.forEach|if",
+      "params": [
+        "radius",
+        "rangeOverride"
+      ],
+      "locals": [
+        "foodPoints",
+        "bestCluster",
+        "maxCount"
+      ]
+    },
+    "global::_0x194f14": {
+      "name": "calculateAvoidanceVector",
+      "module": "features_aimbot",
+      "fingerprintHash": "0::0::1::1::1::1::0::6::22::::Math|_0x2332ff|_0x3373cc|_0x5d08c2|_0x694b3e|window::Math.max|Math.sqrt|_0x195d07|_0x200c10|_0x4f5c1a|_0xe9b4e3|_0xee4f7d|catch|forEach|if",
+      "params": [
+        "error"
+      ],
+      "locals": [
+        "myPosition",
+        "avoidX",
+        "avoidY",
+        "gameState",
+        "worldData",
+        "myAnimal"
+      ]
+    },
+    "global::_0x19f429": {
+      "name": "triggerRandomEvolve",
+      "module": "features_autofarm",
+      "fingerprintHash": "0::0::1::1::1::1::0::3::11::\"::Date|Math|_0x1f0de7|_0x2b75ff|document|window::Date.now|KeyboardEvent|Math.floor|Math.random|String|_0x1f0de7.dispatchEvent|_0x1fa40d|_0x2b75ff.charCodeAt|forEach|if",
+      "params": [],
+      "locals": [
+        "now",
+        "gameCanvas",
+        "randomDigit",
+        "keyEventData"
+      ]
+    },
+    "global::_0x5b0545": {
+      "name": "checkStuckCondition",
+      "module": "features_autofarm",
+      "fingerprintHash": "1::0::1::0::1::1::0::3::18::::Date|Math|_0x273b42|_0x447765|window::Date.now|Math.cos|Math.random|Math.sin|_0x298595|_0x594e7a|_0xe9b4e3|if|window.autoFarmSkipIds.add",
+      "params": [
+        "currentPos"
+      ],
+      "locals": [
+        "currentTime",
+        "randomAngle"
+      ]
+    },
+    "global::_0x4da1b2": {
+      "name": "setupPatrolRoute",
+      "module": "features_autofarm",
+      "fingerprintHash": "0::1::1::0::1::1::0::1::8::::Math|_0x234654|window::Math.cos|Math.sin|_0x200c10|for|if|window.autoFarmPatrolPoints.push",
+      "params": [],
+      "locals": [
+        "centerPos",
+        "i",
+        "angle"
+      ]
+    },
+    "global::_0x47c542": {
+      "name": "autoFarmLoop",
+      "module": "features_autofarm",
+      "fingerprintHash": "0::0::1::1::1::1::0::5::83::\"::Date|Math|_0x131d2f|_0x1e5760|_0x2c7d36|_0x32086e|_0x43d3dd|_0x470123|_0x4ae20c|_0x4d3adb|console|document|window::Date.now|Math.random|_0x200c10|_0x298595|_0x470123.classList.remove|document.getElementById|if|setTimeout|window.autoFarmSkipIds.add|window.autoFarmSkipIds.clear",
+      "params": [],
+      "locals": [
+        null,
+        "currentTarget",
+        "autoFarmButton",
+        "playerOffset",
+        "shouldBoost",
+        "targetX",
+        "targetY",
+        "minDistance",
+        "nearestTarget"
+      ]
+    },
+    "global::_0x48ec1b": {
+      "name": "startAutoFarm",
+      "module": "features_autofarm",
+      "fingerprintHash": "1::0::1::0::1::0::0::0::17::\"::Date|window::Date.now|_0x47c542|_0x4da1b2|_0x54177c|if|started|window.autoFarmSkipIds.clear",
+      "params": [
+        "farmMode"
+      ],
+      "locals": []
+    },
+    "global::_0x3b7612": {
+      "name": "stopAutoFarm",
+      "module": "features_autofarm",
+      "fingerprintHash": "0::0::0::0::1::0::0::0::3::\"::Date|window::Date.now|_0x54177c|toFixed",
+      "params": [],
+      "locals": []
+    },
+    "global::_0x9d9819": {
+      "name": "toggleMinimapSize",
+      "module": "features_autofarm",
+      "fingerprintHash": "0::0::1::0::0::0::0::1::10::\"::_0x54e550|pivot|scale::_0x54177c|_0x54e550.minimap.pivot.set|_0x54e550.minimap.scale.set|if",
+      "params": [],
+      "locals": []
+    },
+    "global::_0x46aafa": {
+      "name": "initAntiDetection",
+      "module": "features_antidetection",
+      "fingerprintHash": "0::1::1::1::1::0::0::7::40::\"::Function|Object|_0x2cd8bc|_0x2e8c5c|_0x39e1f5|_0x41564c|_0x4b1aea|_0x54e550|_0x552f13|_0x5e68f6|_0xe897ef|_vnode|config|document|window::Object.getOwnPropertyNames|_0x2e8c5c.apply|_0x39e0e7|_0x598662|_0xe897ef.get|_0xe897ef.set|apply|construct|for|if",
+      "params": [],
+      "locals": []
+    },
+    "global/_0x918bac/anon::_0x54657d": {
+      "name": "handleMouseMove",
+      "module": "",
+      "fingerprintHash": "1::0::1::0::1::1::0::0::5::\"::Math|_0x4adb17|_0x4ba172|_0x9990bf::Math.abs|if",
+      "params": [],
+      "locals": []
+    },
+    "global/_0x918bac/anon::_0x5daec8": {
+      "name": "handleMouseUp",
+      "module": "",
+      "fingerprintHash": "0::0::0::0::1::0::0::0::4::\"::_0x9990bf|document::document.removeEventListener",
+      "params": [],
+      "locals": []
+    },
+    "global::_0x76bc6d": {
+      "name": "applyTheme",
+      "module": "ui_theme",
+      "fingerprintHash": "1::0::0::0::1::0::1::0::7::\"::JSON|Object|_0x1c92f3|_0x25a23a|document|localStorage::JSON.parse|Object.entries|_0x25a23a.style.setProperty|forEach|localStorage.getItem|localStorage.setItem",
+      "params": [
+        "themeName"
+      ],
+      "locals": [
+        "rootElement",
+        "savedThemes",
+        "themeDefinitions"
+      ]
+    },
+    "global::_0x5a24a6": {
+      "name": "initBackgroundImage",
+      "module": "ui_theme",
+      "fingerprintHash": "0::0::1::0::1::0::0::1::9::\"::_0x30a6b6|document|localStorage::_0x188444|_0x30a6b6.style.setProperty|clearInterval|document.querySelector|if|localStorage.getItem|setInterval|url",
+      "params": [],
+      "locals": [
+        "backgroundImageUrl",
+        "bgCheckInterval"
+      ]
+    },
+    "global/_0x5a24a6::_0x188444": {
+      "name": "updateBackgroundImage",
+      "module": "",
+      "fingerprintHash": "0::0::1::0::1::0::0::0::2::\"::_0x30a6b6|document::_0x30a6b6.style.setProperty|document.querySelector|if|url",
+      "params": [],
+      "locals": []
+    },
+    "global::_0x1dec9d": {
+      "name": "injectStyles",
+      "module": "ui_theme",
+      "fingerprintHash": "0::0::0::0::1::0::0::0::189::\"|'::_0x4b4e90|btn|div|document::document.createElement|document.head.appendChild|not|rgba|translateX|var",
+      "params": [],
+      "locals": [
+        "styleElement"
+      ]
+    },
+    "global::_0x2e4ab1": {
+      "name": "createToolsPanel",
+      "module": "ui",
+      "fingerprintHash": "0::0::1::0::1::0::0::2::108::\"::_0x11f32a|_0x18a535|_0x1c20a8|_0x24791d|_0x265cc1|_0x40f2b7|_0x44edd8|_0x475a27|_0x58c365|_0x5e316c|_0xc118bb|_0xc2b2e|_0xd74c84|_0xe1df53|document::_0x1c20a8.stopPropagation|_0x346d7e|_0x54177c|_0x58c365.querySelector|_0x5e3bc3|_0xd74c84.classList.remove|document.body.appendChild|document.createElement|if|parseInt",
+      "params": [],
+      "locals": [
+        "toolsPanel"
+      ]
+    },
+    "global::_0x26c9bd": {
+      "name": "createVisionPanel",
+      "module": "ui",
+      "fingerprintHash": "0::0::1::0::1::0::0::5::142::\"::_0x1bac72|_0x25ae3f|_0x330383|_0x3c80e9|_0x3e5a2b|_0x3f2f7c|_0x48c305|_0x52cd3e|_0x54e550|_0x56bed0|_0x59b859|_0x5ed1e1|_0x791e3b|document|window::Boost|Close|Far|Medium|Nearest|Untrack|_0x330383.querySelector|document.body.appendChild|document.createElement|var",
+      "params": [],
+      "locals": [
+        "visionPanel"
+      ]
+    },
+    "global::_0x304642": {
+      "name": "createCombatPanel",
+      "module": "ui",
+      "fingerprintHash": "0::0::0::0::1::0::0::1::46::\"::_0x157c33|_0x28cb12|_0x2d5b73|_0x342aca|_0x43ebcd|_0x4b917e|_0x4e8a6e|_0x5a96e5|_0x5c4168|_0xa16d07|_0xa9bf4b|document|window::Key|_0x157c33.addEventListener|_0x2d5b73.stopPropagation|_0x40d5b2|_0x5c4168.querySelector|_0xa16d07.preventDefault|document.body.appendChild|document.createElement|var|window.lockKey.toUpperCase",
+      "params": [],
+      "locals": [
+        "combatPanel",
+        "combatBody",
+        "isCombatPanelMinimized",
+        "lockButton",
+        "lockKeyInput"
+      ]
+    },
+    "global::_0x234614": {
+      "name": "createAutomationPanel",
+      "module": "ui",
+      "fingerprintHash": "0::0::1::0::1::0::0::1::65::\"::_0x1060ab|_0x144b8a|_0x22e31c|_0x2e8def|_0x32a60c|_0x3715e8|_0x46feab|_0x4b9ecb|_0x50f0a6|_0x545b39|_0x54888c|_0x680989|_0xf9395b|document|window::Farm|_0x128623|_0x2dc734|_0x2e8def.stopPropagation|_0x46feab.classList.add|_0x46feab.classList.remove|_0x4b9ecb.querySelector|document.body.appendChild|document.createElement|if",
+      "params": [],
+      "locals": [
+        "automationPanel",
+        "automationBody",
+        "isAutomationPanelMinimized",
+        "autoDodgeButton"
+      ]
+    },
+    "global::_0x1dc426": {
+      "name": "createSettingsPanel",
+      "module": "ui",
+      "fingerprintHash": "0::0::1::0::1::1::1::5::181::\"::JSON|Object|_0x11a0fb|_0x2b4702|_0x3d0447|_0x4f8e55|_0x52ddce|_0x58f229|_0xaaa4cf|_0xb7a9bf|_0xba2ad2|_0xcea1ec|_0xe0b7f1|document|localStorage::_0x11a0fb.toUpperCase|_0x2b4702.addEventListener|_0x3d0447.key.toUpperCase|_0x3d0447.preventDefault|_0xb7a9bf.querySelector|_0xcea1ec.stopPropagation|document.body.appendChild|document.createElement|localStorage.getItem|var",
+      "params": [],
+      "locals": [
+        "settingsPanel",
+        null,
+        null,
+        null,
+        null,
+        "themeSelectElement"
+      ]
+    },
+    "global/_0x1dc426::_0x19be6a": {
+      "name": "renderCustomThemeList",
+      "module": "",
+      "fingerprintHash": "0::0::1::0::1::0::1::0::34::\"::JSON|Object|_0x1b4eff|_0x25f5ca|_0x43aed6|_0x4f8e55|_0x52ddce|_0xb7a9bf|document|localStorage::JSON.parse|Object.keys|_0x19be6a|_0x1b4eff.forEach|_0x43aed6.querySelectorAll|_0x54177c|_0x76bc6d|_0xb7a9bf.querySelector|document.createElement|localStorage.getItem",
+      "params": [],
+      "locals": []
+    },
+    "global/_0x1dc426/anon::_0x193071": {
+      "name": "adjustHexColor",
+      "module": "",
+      "fingerprintHash": "1::0::0::0::0::1::0::1::4::\"::Math|_0x52607b::Math.min|_0x52607b.slice|join|map|padStart|parseInt|toString",
+      "params": [],
+      "locals": []
+    },
+    "global::_0x5c50aa": {
+      "name": "createMusicPanel",
+      "module": "ui",
+      "fingerprintHash": "0::0::1::1::1::1::0::3::109::\"::Math|_0x11e6e3|_0x12dba3|_0x22d34b|_0x22dd4b|_0x241959|_0x331e32|_0x33d517|_0x37e43e|_0x50c77b|_0x57b53f|_0xe024e2|document|localStorage|value::_0x33d517.querySelector|_0x3568e4|_0x37e43e.stopPropagation|_0x43201a|_0x47bca1|document.body.appendChild|document.createElement|if|name|var",
+      "params": [],
+      "locals": [
+        "musicPanel"
+      ]
+    },
+    "global::_0x1b192d": {
+      "name": "createUpdateHistoryPanel",
+      "module": "ui",
+      "fingerprintHash": "0::0::0::0::1::0::0::1::21::\"::_0x1269e1|_0x4f0565|_0x5a9e9e|document::Vision|_0x1269e1.querySelector|_0x5a9e9e.stopPropagation|_0x918bac|document.body.appendChild|document.createElement|name",
+      "params": [],
+      "locals": [
+        "updatePanel",
+        "updateBody",
+        "isMinimized"
+      ]
+    },
+    "global::_0x5143d0": {
+      "name": "generateRandomString",
+      "module": "utils",
+      "fingerprintHash": "1::1::0::0::0::1::0::1::6::::Math|String::Math.floor|Math.random|String.fromCodePoint|for",
+      "params": [],
+      "locals": []
+    },
+    "global::_0x190997": {
+      "name": "togglePanelsVisibility",
+      "module": "ui",
+      "fingerprintHash": "0::0::1::0::1::0::0::1::7::\"::_0x1bbf1e|_0x32f352|_0x3bbd7d|document::_0x32f352.forEach|document.getElementById|if",
+      "params": [],
+      "locals": []
+    },
+    "global::_0x8379a5": {
+      "name": "initializeApplication",
+      "module": "core",
+      "fingerprintHash": "0::0::1::0::1::0::0::1::22::\"::localStorage::_0x1dc426|_0x1dec9d|_0x234614|_0x26c9bd|_0x2e4ab1|_0x304642|_0x76bc6d|if|localStorage.getItem|setTimeout",
+      "params": [],
+      "locals": []
+    }
+  },
+  "variables": {
+    "global/_0x5143d0::_0x46edd1": {
+      "name": "stringLength",
+      "module": "core"
+    },
+    "global/_0x5143d0::_0x3e98a6": {
+      "name": "resultString",
+      "module": "core"
+    },
+    "global/_0x5143d0::_0x5d018b": {
+      "name": "index",
+      "module": "core"
+    },
+    "global/_0x5143d0::_0x3b9b2b": {
+      "name": "randomCodePoint",
+      "module": "core"
+    },
+    "global::_0xe897ef": {
+      "name": "metadataMap",
+      "module": "core"
+    },
+    "global::_0x4f433f": {
+      "name": "currentTime",
+      "module": "core"
+    },
+    "global::_0x1397e2": {
+      "name": "isVideoPlaying",
+      "module": "features_adblock"
+    },
+    "global/_0x29f143/anon/anon::_0x13de20": {
+      "name": "elementSelector",
+      "module": "core"
+    },
+    "global/_0x29f143/anon/anon/anon::_0x1137dc": {
+      "name": "targetElement",
+      "module": "core"
+    },
+    "global/_0x29f143/anon::_0x2e7f7c": {
+      "name": "leftSidebarElement",
+      "module": "core"
+    },
+    "global::_0x24da22": {
+      "name": "isMuted",
+      "module": "ui_audio"
+    },
+    "global::_0xa0d346": {
+      "name": "chatInterval",
+      "module": "features_chat"
+    },
+    "global::_0x5c0874": {
+      "name": "isLooping",
+      "module": "core"
+    },
+    "global/_0x346d7e/anon::_0x21f5b6": {
+      "name": "sendButton",
+      "module": "core"
+    },
+    "global::_0x35200b": {
+      "name": "isInitialized",
+      "module": "ui_interaction"
+    },
+    "global/_0x4bc606/_0xb30fa8/anon::_0x3d237a": {
+      "name": "context",
+      "module": "core"
+    },
+    "global/_0x4bc606/_0xb30fa8/anon::_0x1b931b": {
+      "name": "octalValue",
+      "module": "core"
+    },
+    "global/_0x4bc606/_0xb30fa8/anon::_0x105ced": {
+      "name": "hexValue1",
+      "module": "core"
+    },
+    "global/_0x4bc606/_0xb30fa8/anon::_0x4449d4": {
+      "name": "hexValue2",
+      "module": "core"
+    },
+    "global/_0x4bc606/_0xb30fa8/anon::_0x146a8d": {
+      "name": "hexValue3",
+      "module": "core"
+    },
+    "global/_0x4bc606/_0xb30fa8/anon::_0x300da1": {
+      "name": "codePoint",
+      "module": "core"
+    },
+    "global/_0x4bc606/anon::_0x53f7ce": {
+      "name": "inputData",
+      "module": "core"
+    },
+    "global/_0x4bc606/anon::_0xe2e2f8": {
+      "name": "patternList",
+      "module": "core"
+    },
+    "global/_0x4bc606/anon::_0x542c0e": {
+      "name": "patternIndex",
+      "module": "core"
+    },
+    "global/_0x4bc606/anon::_0x4c5aed": {
+      "name": "regexMatch",
+      "module": "core"
+    },
+    "global/_0x4bc606/anon::_0x7d5f8f": {
+      "name": "actionMethod",
+      "module": "core"
+    },
+    "global/_0x4bc606::_0x4dc517": {
+      "name": "inputMaxLengthObserver",
+      "module": "core"
+    },
+    "global::_0xe024e2": {
+      "name": "audioPlayer",
+      "module": "ui_audio"
+    },
+    "global::_0x11e6e3": {
+      "name": "musicPlaylist",
+      "module": "ui_audio"
+    },
+    "global::_0x34e192": {
+      "name": "currentTrackIndex",
+      "module": "core"
+    },
+    "global::_0x82b800": {
+      "name": "musicVolume",
+      "module": "ui_audio"
+    },
+    "global::_0x372809": {
+      "name": "isMusicLoopEnabled",
+      "module": "ui_audio"
+    },
+    "global::_0x1beb97": {
+      "name": "isMusicShuffleEnabled",
+      "module": "ui_audio"
+    },
+    "global::_0x50c77b": {
+      "name": "youtubePlayer",
+      "module": "ui_audio"
+    },
+    "global::_0x474d39": {
+      "name": "isYtApiLoaded",
+      "module": "ui_audio"
+    },
+    "global::_0x2befde": {
+      "name": "isAutofillInitialized",
+      "module": "ui_audio"
+    },
+    "global::_0x2c1b4f": {
+      "name": "audioSourceType",
+      "module": "ui_audio"
+    },
+    "global/_0x26a9e5::_0x170d78": {
+      "name": "scriptElement",
+      "module": "core"
+    },
+    "global/_0x26a9e5/anon::_0x27658c": {
+      "name": "uninitializedVar1",
+      "module": "core"
+    },
+    "global/_0x26a9e5/anon::_0x42b605": {
+      "name": "readyCallbacks",
+      "module": "core"
+    },
+    "global/_0x26a9e5/anon::_0x437128": {
+      "name": "currentCallback",
+      "module": "core"
+    },
+    "global/_0x26a9e5/anon::_0x26083f": {
+      "name": "uninitializedVar2",
+      "module": "core"
+    },
+    "global/_0x4887e1/anon::_0x9b56e2": {
+      "name": "playerContainerId",
+      "module": "core"
+    },
+    "global/_0x4887e1/anon::_0x553363": {
+      "name": "playerInstance",
+      "module": "core"
+    },
+    "global/_0x4887e1/anon/anon::_0x378f93": {
+      "name": "audioPlayerEvent",
+      "module": "core"
+    },
+    "global/_0x4887e1/anon/anon::_0x13bf1c": {
+      "name": "unusedVariable",
+      "module": "core"
+    },
+    "global/_0x4887e1/anon/anon::_0x447761": {
+      "name": "youtubePlayerEvent",
+      "module": "core"
+    },
+    "global/_0xe3adcc/anon::_0x42f11e": {
+      "name": "event",
+      "module": "core"
+    },
+    "global/_0xe3adcc/anon::_0x28084c": {
+      "name": "targetElement",
+      "module": "core"
+    },
+    "global/_0xe3adcc/anon::_0x415202": {
+      "name": "containerDiv",
+      "module": "core"
+    },
+    "global/_0xe3adcc/anon::_0x463340": {
+      "name": "isToggledOn",
+      "module": "core"
+    },
+    "global::_0x5effa1": {
+      "name": "animationIntervalId",
+      "module": "core"
+    },
+    "global::_0x4e2625": {
+      "name": "currentAngleIndex",
+      "module": "features_movement"
+    },
+    "global::_0x324c37": {
+      "name": "angleSteps",
+      "module": "features_movement"
+    },
+    "global::_0x59da9a": {
+      "name": "orbitRadius",
+      "module": "features_movement"
+    },
+    "global/_0xc66695/anon::_0x58eee8": {
+      "name": "angleRadians",
+      "module": "core"
+    },
+    "global/_0xc66695/anon::_0x243bba": {
+      "name": "offsetX",
+      "module": "core"
+    },
+    "global/_0xc66695/anon::_0x1728cc": {
+      "name": "offsetY",
+      "module": "core"
+    },
+    "global::_0x44edd8": {
+      "name": "pressedKeyQ",
+      "module": "ui"
+    },
+    "global::_0x11f32a": {
+      "name": "pressedKeyE",
+      "module": "ui"
+    },
+    "global::_0x27a986": {
+      "name": "offsetValue",
+      "module": "features_movement"
+    },
+    "global::_0x49cb8c": {
+      "name": "gameInstance",
+      "module": "core"
+    },
+    "global::_0x16054b": {
+      "name": "appState",
+      "module": "features_antidetection"
+    },
+    "global::_0x54e550": {
+      "name": "animalData",
+      "module": "core"
+    },
+    "global::_0x5611c7": {
+      "name": "isActive",
+      "module": "core"
+    },
+    "global::_0x43c36b": {
+      "name": "isMinimapSmall",
+      "module": "core"
+    },
+    "global/anon::_0x5d5f16": {
+      "name": "targetObject",
+      "module": "core"
+    },
+    "global::_0x39e1f5": {
+      "name": "configStore",
+      "module": "core"
+    },
+    "global/_0x3396f0/anon::_0x3fab19": {
+      "name": "selectedItem",
+      "module": "core"
+    },
+    "global/_0x3396f0/anon::_0x1ddb7d": {
+      "name": "currentItem",
+      "module": "core"
+    },
+    "global/_0x4c6311/anon::_0x1cd949": {
+      "name": "firstItem",
+      "module": "core"
+    },
+    "global/_0x4c6311/anon::_0x5bbddd": {
+      "name": "secondItem",
+      "module": "core"
+    },
+    "global/_0x4c6311/anon::_0x1e3218": {
+      "name": "itemA",
+      "module": "core"
+    },
+    "global/_0x4c6311/anon::_0x44455a": {
+      "name": "itemB",
+      "module": "core"
+    },
+    "global/_0x2e9af3/anon::_0x2c204e": {
+      "name": "gameContext",
+      "module": "core"
+    },
+    "global::_0x405e2d": {
+      "name": "isProcessed",
+      "module": "core"
+    },
+    "global/_0x4810b1::_0x1438a3": {
+      "name": "scaleFactor",
+      "module": "core"
+    },
+    "global/_0x4810b1::_0x636caf": {
+      "name": "context",
+      "module": "core"
+    },
+    "global::_0x279c25": {
+      "name": "trailIntervalId",
+      "module": "features_movement"
+    },
+    "global/_0x557bee/anon::_0x2084ef": {
+      "name": "targetEntityId",
+      "module": "core"
+    },
+    "global/_0x557bee/anon::_0x3a0d26": {
+      "name": "gameState",
+      "module": "core"
+    },
+    "global/_0x557bee/anon::_0xac32f6": {
+      "name": "targetEntityPosition",
+      "module": "core"
+    },
+    "global/_0x557bee/anon::_0x12acaf": {
+      "name": "lastTrailPoint",
+      "module": "core"
+    },
+    "global/_0x1766f6::_0x5b01cb": {
+      "name": "lastTrailPosition",
+      "module": "core"
+    },
+    "global/_0x1766f6::_0x3f8ce8": {
+      "name": "calculatedXOffset",
+      "module": "core"
+    },
+    "global/_0x1766f6::_0x26eb9d": {
+      "name": "calculatedYOffset",
+      "module": "core"
+    },
+    "global/_0x1442bf/anon::_0x259ab4": {
+      "name": "targetEntity",
+      "module": "core"
+    },
+    "global/_0x1442bf/anon::_0x26657a": {
+      "name": "deltaX",
+      "module": "core"
+    },
+    "global/_0x1442bf/anon::_0x9f3bb7": {
+      "name": "deltaY",
+      "module": "core"
+    },
+    "global/_0x1442bf/anon::_0x1d096a": {
+      "name": "screenPosX",
+      "module": "core"
+    },
+    "global/_0x1442bf/anon::_0x2ab963": {
+      "name": "screenPosY",
+      "module": "core"
+    },
+    "global/_0x1442bf/anon::_0x2d0075": {
+      "name": "isTracked",
+      "module": "core"
+    },
+    "global/_0x1442bf/anon::_0x387486": {
+      "name": "boxSize",
+      "module": "core"
+    },
+    "global/_0x1442bf/anon::_0x2ab574": {
+      "name": "espColor",
+      "module": "core"
+    },
+    "global/_0x1442bf/anon::_0x34fe82": {
+      "name": "boxOffset",
+      "module": "core"
+    },
+    "global/_0x3e9f64::_0x12b1f6": {
+      "name": "rectWidth",
+      "module": "core"
+    },
+    "global/_0x3e9f64::_0x56c05c": {
+      "name": "rectHeight",
+      "module": "core"
+    },
+    "global/_0x3e9f64::_0x1c8292": {
+      "name": "rectX",
+      "module": "core"
+    },
+    "global/_0x3e9f64::_0x279ce5": {
+      "name": "rectY",
+      "module": "core"
+    },
+    "global/_0x3e9f64::_0x4cd295": {
+      "name": "arrowAngle",
+      "module": "core"
+    },
+    "global/_0x3e9f64::_0x13854e": {
+      "name": "arrowCenterX",
+      "module": "core"
+    },
+    "global/_0x3e9f64::_0x180922": {
+      "name": "arrowCenterY",
+      "module": "core"
+    },
+    "global::_0x539702": {
+      "name": "dragState",
+      "module": "core"
+    },
+    "global/_0x1d251c/anon::_0x23a9ba": {
+      "name": "targetEntity",
+      "module": "core"
+    },
+    "global/_0x1d251c/anon::_0x345345": {
+      "name": "diffX",
+      "module": "core"
+    },
+    "global/_0x1d251c/anon::_0x1f6fc7": {
+      "name": "diffY",
+      "module": "core"
+    },
+    "global/_0x1d251c/anon::_0x5eed4f": {
+      "name": "screenX",
+      "module": "core"
+    },
+    "global/_0x1d251c/anon::_0x41afc5": {
+      "name": "screenY",
+      "module": "core"
+    },
+    "global/_0x1d251c/anon::_0x3d52a4": {
+      "name": "espColor",
+      "module": "core"
+    },
+    "global/_0x1d251c/anon::_0x561a12": {
+      "name": "circleRadius",
+      "module": "core"
+    },
+    "global/_0x1d251c::_0x5265ad": {
+      "name": "targetEntityId",
+      "module": "core"
+    },
+    "global/_0x1d251c::_0x1ec2d3": {
+      "name": "targetEntity",
+      "module": "core"
+    },
+    "global/_0x1d251c::_0x499c56": {
+      "name": "deltaX",
+      "module": "core"
+    },
+    "global/_0x1d251c::_0x59fc7e": {
+      "name": "deltaY",
+      "module": "core"
+    },
+    "global/_0x1d251c::_0xdc5572": {
+      "name": "canvasX",
+      "module": "core"
+    },
+    "global/_0x1d251c::_0x3574d1": {
+      "name": "canvasY",
+      "module": "core"
+    },
+    "global/_0x1d251c::_0x33eaa1": {
+      "name": "opacityPulse",
+      "module": "core"
+    },
+    "global/_0x1d251c::_0x5b58c9": {
+      "name": "colorRed",
+      "module": "core"
+    },
+    "global/_0x1d251c::_0x117ce0": {
+      "name": "colorGreen",
+      "module": "core"
+    },
+    "global/_0x1d251c::_0x2a6d1b": {
+      "name": "colorBlue",
+      "module": "core"
+    },
+    "global/_0x1d251c::_0x4a5ce6": {
+      "name": "rgbString",
+      "module": "core"
+    },
+    "global/_0x1d251c/anon::_0x90a762": {
+      "name": "entity",
+      "module": "core"
+    },
+    "global/_0x1d251c/anon::_0x829f0a": {
+      "name": "entityIndex",
+      "module": "core"
+    },
+    "global/_0x1d251c/anon::_0x324515": {
+      "name": "drawX",
+      "module": "core"
+    },
+    "global/_0x1d251c/anon::_0x7d7c73": {
+      "name": "drawY",
+      "module": "core"
+    },
+    "global/_0xc69ec1/anon::_0xe5e40e": {
+      "name": "updateRadarBounds",
+      "module": "core"
+    },
+    "global/_0xc69ec1/anon::_0x2852d4": {
+      "name": "radarBounds",
+      "module": "core"
+    },
+    "global/_0xc69ec1/anon::_0x15e36f": {
+      "name": "mouseMoveEvent",
+      "module": "core"
+    },
+    "global/_0xc69ec1/anon::_0x2646db": {
+      "name": "mouseUpEvent",
+      "module": "core"
+    },
+    "global::_0x37e715": {
+      "name": "isTextInterceptorInitialized",
+      "module": "core"
+    },
+    "global::_0x1c76a8": {
+      "name": "maxDistance",
+      "module": "features_aimbot"
+    },
+    "global::_0x5bbd4b": {
+      "name": "maxDistanceThreshold",
+      "module": "features_aimbot"
+    },
+    "global::_0x5523db": {
+      "name": "lastPositionTimestamp",
+      "module": "features_aimbot"
+    },
+    "global::_0x1ce36": {
+      "name": "currentCoordinates",
+      "module": "features_aimbot"
+    },
+    "global::_0x1f3123": {
+      "name": "iterationCounter",
+      "module": "features_aimbot"
+    },
+    "global::_0x4b9b2f": {
+      "name": "previousPositionTimestamp",
+      "module": "features_aimbot"
+    },
+    "global::_0x103958": {
+      "name": "dataBuffer",
+      "module": "features_aimbot"
+    },
+    "global/_0x4a3fbe/anon::_0x50a437": {
+      "name": "targetEntity",
+      "module": "core"
+    },
+    "global/_0x4a3fbe/anon::_0xcc2665": {
+      "name": "targetX",
+      "module": "core"
+    },
+    "global/_0x4a3fbe/anon::_0x44a8b1": {
+      "name": "targetY",
+      "module": "core"
+    },
+    "global/_0x4a3fbe/anon::_0x197acb": {
+      "name": "distanceToTarget",
+      "module": "core"
+    },
+    "global/_0x4a3fbe/anon::_0x4d11de": {
+      "name": "sourceEntity",
+      "module": "core"
+    },
+    "global/_0x4a3fbe/anon::_0xd54f68": {
+      "name": "deltaX",
+      "module": "core"
+    },
+    "global/_0x4a3fbe/anon::_0x19c3ec": {
+      "name": "deltaY",
+      "module": "core"
+    },
+    "global/_0x4a3fbe/anon::_0x4f1f76": {
+      "name": "magnitude",
+      "module": "core"
+    },
+    "global/_0x4a3fbe/anon::_0x184985": {
+      "name": "normalizedDistance",
+      "module": "core"
+    },
+    "global/_0x4a3fbe::_0x198e31": {
+      "name": "magnitude",
+      "module": "core"
+    },
+    "global/_0x4a3fbe::_0x3a3a66": {
+      "name": "arrowAngle",
+      "module": "core"
+    },
+    "global/_0x4a3fbe::_0x25ce12": {
+      "name": "previousAngle",
+      "module": "core"
+    },
+    "global/_0x4a3fbe::_0x794afd": {
+      "name": "maxProjection",
+      "module": "core"
+    },
+    "global/_0x4a3fbe::_0x49ba55": {
+      "name": "angleOffset",
+      "module": "core"
+    },
+    "global/_0x4a3fbe::_0x55b874": {
+      "name": "rotatedAngle",
+      "module": "core"
+    },
+    "global/_0x4a3fbe/anon::_0x169f8a": {
+      "name": "currentAngle",
+      "module": "core"
+    },
+    "global/_0x4a3fbe::_0x510f5f": {
+      "name": "currentProjection",
+      "module": "core"
+    },
+    "global/_0x4a3fbe/anon::_0x4e99a1": {
+      "name": "positionEntity",
+      "module": "core"
+    },
+    "global/_0x4a3fbe::_0x23ebf0": {
+      "name": "isDistanceExceeded",
+      "module": "core"
+    },
+    "global::_0x5e1f40": {
+      "name": "proximityLimit",
+      "module": "features_autofarm"
+    },
+    "global::_0x34ef1d": {
+      "name": "maxFailCount",
+      "module": "features_autofarm"
+    },
+    "global::_0x5df77c": {
+      "name": "timeoutDuration",
+      "module": "features_autofarm"
+    },
+    "global::_0x5c2707": {
+      "name": "lastEventTimestamp",
+      "module": "features_autofarm"
+    },
+    "global::_0xbc4ff7": {
+      "name": "eventIntervalThreshold",
+      "module": "features_autofarm"
+    },
+    "global/_0x298595/anon::_0x13e8e7": {
+      "name": "timestamp",
+      "module": "core"
+    },
+    "global/_0x298595/anon::_0x26454d": {
+      "name": "position",
+      "module": "core"
+    },
+    "global/_0x4f831f/anon::_0x43e713": {
+      "name": "lastUpdateTime",
+      "module": "core"
+    },
+    "global/_0x4f831f/anon::_0x3f4c1d": {
+      "name": "skippedElement",
+      "module": "core"
+    },
+    "global/_0x3be0ee/anon::_0x248d3b": {
+      "name": "targetEntity",
+      "module": "core"
+    },
+    "global/_0x3be0ee/anon::_0x5424f8": {
+      "name": "posX",
+      "module": "core"
+    },
+    "global/_0x3be0ee/anon::_0x4b99d0": {
+      "name": "posY",
+      "module": "core"
+    },
+    "global/_0x3be0ee/anon::_0x2ad819": {
+      "name": "distance",
+      "module": "core"
+    },
+    "global/_0x326ace/anon::_0x2004fb": {
+      "name": "targetEntity",
+      "module": "core"
+    },
+    "global/_0x326ace/anon::_0x279de3": {
+      "name": "posX",
+      "module": "core"
+    },
+    "global/_0x326ace/anon::_0x544fd3": {
+      "name": "posY",
+      "module": "core"
+    },
+    "global/_0x326ace/anon::_0x1bd261": {
+      "name": "distance",
+      "module": "core"
+    },
+    "global/_0x326ace/anon::_0x5d3f7d": {
+      "name": "entityA",
+      "module": "core"
+    },
+    "global/_0x326ace/anon::_0x3dc84d": {
+      "name": "entityB",
+      "module": "core"
+    },
+    "global/_0x1f935a/anon::_0x14eec0": {
+      "name": "calculateAveragePosition",
+      "module": "core"
+    },
+    "global/_0x1f935a/anon::_0x340b6c": {
+      "name": "elementCount",
+      "module": "core"
+    },
+    "global/_0x1f935a/anon::_0x147fa9": {
+      "name": "totalX",
+      "module": "core"
+    },
+    "global/_0x1f935a/anon::_0x47fa1f": {
+      "name": "totalY",
+      "module": "core"
+    },
+    "global/_0x1f935a/anon/anon::_0x30c2d6": {
+      "name": "targetPosition",
+      "module": "core"
+    },
+    "global/_0x194f14/anon::_0x3373cc": {
+      "name": "targetEntity",
+      "module": "core"
+    },
+    "global/_0x194f14/anon::_0x382d15": {
+      "name": "targetX",
+      "module": "core"
+    },
+    "global/_0x194f14/anon::_0x564370": {
+      "name": "targetY",
+      "module": "core"
+    },
+    "global/_0x194f14/anon::_0x4d4c3a": {
+      "name": "distanceToTarget",
+      "module": "core"
+    },
+    "global/_0x194f14/anon::_0x4a1b04": {
+      "name": "deltaX",
+      "module": "core"
+    },
+    "global/_0x194f14/anon::_0x459055": {
+      "name": "deltaY",
+      "module": "core"
+    },
+    "global/_0x194f14/anon::_0x96e622": {
+      "name": "hypotenuse",
+      "module": "core"
+    },
+    "global/_0x194f14/anon::_0x1313da": {
+      "name": "avoidanceFactor",
+      "module": "core"
+    },
+    "global::_0x54c7e6": {
+      "name": "lastUpdateTimestamp",
+      "module": "features_autofarm"
+    },
+    "global/_0x19f429/anon::_0x1f0de7": {
+      "name": "targetElement",
+      "module": "core"
+    },
+    "global/_0x19f429/anon::_0x26731a": {
+      "name": "context",
+      "module": "core"
+    },
+    "global::_0x40a00d": {
+      "name": "isAutoFarmActive",
+      "module": "features_autofarm"
+    },
+    "global::_0x447765": {
+      "name": "currentPosition",
+      "module": "features_autofarm"
+    },
+    "global::_0x1dd5c4": {
+      "name": "lastProcessedIndex",
+      "module": "features_autofarm"
+    },
+    "global::_0x2742cf": {
+      "name": "randomAngle",
+      "module": "features_autofarm"
+    },
+    "global::_0x1644fa": {
+      "name": "pointerMoveOffset",
+      "module": "features_autofarm"
+    },
+    "global/_0x47c542::_0xaa70f": {
+      "name": "currentTime",
+      "module": "core"
+    },
+    "global/_0x47c542::_0x4ae20c": {
+      "name": "nearbyFoodSource",
+      "module": "core"
+    },
+    "global/_0x47c542::_0x4d3adb": {
+      "name": "randomTarget",
+      "module": "core"
+    },
+    "global/_0x47c542::_0x32086e": {
+      "name": "specificTarget",
+      "module": "core"
+    },
+    "global/_0x47c542::_0x131d2f": {
+      "name": "currentPatrolPoint",
+      "module": "core"
+    },
+    "global/_0x47c542::_0x28e2cb": {
+      "name": "shouldApplyBoost",
+      "module": "core"
+    },
+    "global/_0x47c542::_0x12cc87": {
+      "name": "errorMessage",
+      "module": "core"
+    },
+    "global::_0x17ffed": {
+      "name": "isYoutubeApiReady",
+      "module": "features_antidetection"
+    },
+    "global/anon::_0x2e8c5c": {
+      "name": "cacheStore",
+      "module": "core"
+    },
+    "global/anon::_0x3fba72": {
+      "name": "propertyName",
+      "module": "core"
+    },
+    "global/anon::_0x39e0e7": {
+      "name": "ProxyConstructor",
+      "module": "core"
+    },
+    "global/anon::_0x4b1aea": {
+      "name": "lookupGetter",
+      "module": "core"
+    },
+    "global/anon/anon::_0xe6de58": {
+      "name": "dataStore",
+      "module": "core"
+    },
+    "global/anon/anon::_0x517436": {
+      "name": "dataKey",
+      "module": "core"
+    },
+    "global/anon/anon::_0x5ac063": {
+      "name": "initialValue",
+      "module": "core"
+    },
+    "global/anon/anon::_0x47432c": {
+      "name": "wrappedValue",
+      "module": "core"
+    },
+    "global/anon/anon::_0x42283c": {
+      "name": "thisContext",
+      "module": "core"
+    },
+    "global/anon/anon::_0x265267": {
+      "name": "argsKey",
+      "module": "core"
+    },
+    "global/anon/anon::_0x5372e6": {
+      "name": "bindingContext",
+      "module": "core"
+    },
+    "global/anon/anon::_0xbddf86": {
+      "name": "constructorFunc",
+      "module": "core"
+    },
+    "global/anon/anon::_0x2babe1": {
+      "name": "constructorArgs",
+      "module": "core"
+    },
+    "global/anon/anon::_0x23e9bc": {
+      "name": "targetFunction",
+      "module": "core"
+    },
+    "global/anon/anon::_0x331e76": {
+      "name": "functionArgs",
+      "module": "core"
+    },
+    "global/anon/anon::_0x38a1f2": {
+      "name": "functionContext",
+      "module": "core"
+    },
+    "global/anon::_0x33145c": {
+      "name": "lastExecutionTimestamp",
+      "module": "core"
+    },
+    "global/anon/anon::_0x349554": {
+      "name": "bindTargetContext",
+      "module": "core"
+    },
+    "global/anon/anon::_0x59d02a": {
+      "name": "argumentsList",
+      "module": "core"
+    },
+    "global/anon/anon::_0x5e68f6": {
+      "name": "processedData",
+      "module": "core"
+    },
+    "global/anon/anon::_0x552f13": {
+      "name": "obfuscatedKeys",
+      "module": "core"
+    },
+    "global/anon/anon/anon::_0x41564c": {
+      "name": "obfuscatedName1",
+      "module": "core"
+    },
+    "global/anon/anon/anon::_0x2cd8bc": {
+      "name": "obfuscatedName2",
+      "module": "core"
+    },
+    "global/anon/anon/anon::_0x29209b": {
+      "name": "functionKey",
+      "module": "core"
+    },
+    "global/anon/anon/anon::_0x4e8144": {
+      "name": "shadowElementKey",
+      "module": "core"
+    },
+    "global/anon/anon/anon::_0x1fa6e6": {
+      "name": "entitiesListKey",
+      "module": "core"
+    },
+    "global/anon/anon/anon::_0x35975f": {
+      "name": "packetSenderKey",
+      "module": "core"
+    },
+    "global/anon/anon/anon::_0x3100f5": {
+      "name": "gameStore",
+      "module": "core"
+    },
+    "global/anon/anon::_0x219634": {
+      "name": "animalCheckInterval",
+      "module": "core"
+    },
+    "global/anon/anon/anon::_0x39e974": {
+      "name": "firstMyAnimal",
+      "module": "core"
+    },
+    "global/anon::_0x50104c": {
+      "name": "keyA",
+      "module": "core"
+    },
+    "global/anon::_0x594069": {
+      "name": "keyB",
+      "module": "core"
+    },
+    "global/anon::_0x271002": {
+      "name": "errorMessage",
+      "module": "core"
+    },
+    "global/_0x2b8801/anon::_0x3a787f": {
+      "name": "inputValue",
+      "module": "core"
+    },
+    "global/_0x2b8801/anon::_0x31a3f1": {
+      "name": "event",
+      "module": "core"
+    },
+    "global/_0x918bac/anon::_0x4adb17": {
+      "name": "event",
+      "module": "core"
+    },
+    "global/_0x918bac/anon::_0x6c6667": {
+      "name": "clickEvent",
+      "module": "core"
+    },
+    "global/_0x76bc6d::_0xddf513": {
+      "name": "themeColor",
+      "module": "core"
+    },
+    "global/_0x76bc6d::_0x1c92f3": {
+      "name": "themeValue",
+      "module": "core"
+    },
+    "global/_0x76bc6d/anon::_0x39afed": {
+      "name": "cssPropertyName",
+      "module": "core"
+    },
+    "global/_0x76bc6d/anon::_0x3a39cc": {
+      "name": "cssPropertyValue",
+      "module": "core"
+    },
+    "global/_0x5a24a6/anon::_0x30a6b6": {
+      "name": "homeBackgroundElement",
+      "module": "core"
+    },
+    "global/_0x2e4ab1::_0xc2b2e": {
+      "name": "mainBodyElement",
+      "module": "core"
+    },
+    "global/_0x2e4ab1::_0x56cf56": {
+      "name": "isVisible",
+      "module": "core"
+    },
+    "global/_0x2e4ab1/anon::_0x1c20a8": {
+      "name": "event",
+      "module": "core"
+    },
+    "global/_0x2e4ab1/anon::_0x3d9f46": {
+      "name": "chatMessage",
+      "module": "core"
+    },
+    "global/_0x2e4ab1::_0xd74c84": {
+      "name": "autoChatButton",
+      "module": "core"
+    },
+    "global/_0x2e4ab1/anon::_0x50afa4": {
+      "name": "messageText",
+      "module": "core"
+    },
+    "global/_0x2e4ab1/anon::_0x10419c": {
+      "name": "delayValue",
+      "module": "core"
+    },
+    "global/_0x2e4ab1::_0x265cc1": {
+      "name": "patchButton",
+      "module": "core"
+    },
+    "global/_0x2e4ab1/anon::_0x505580": {
+      "name": "randomString",
+      "module": "core"
+    },
+    "global/_0x2e4ab1::_0x18a535": {
+      "name": "spinButton",
+      "module": "core"
+    },
+    "global/_0x2e4ab1::_0x24791d": {
+      "name": "spinKeyInput",
+      "module": "core"
+    },
+    "global/_0x2e4ab1::_0xc118bb": {
+      "name": "lastPressedKey",
+      "module": "core"
+    },
+    "global/_0x2e4ab1/anon::_0x40f2b7": {
+      "name": "keydownEvent",
+      "module": "core"
+    },
+    "global/_0x2e4ab1/anon::_0xe1df53": {
+      "name": "keyupEvent",
+      "module": "core"
+    },
+    "global/_0x2e4ab1::_0x5e316c": {
+      "name": "turnLeftInput",
+      "module": "core"
+    },
+    "global/_0x2e4ab1::_0x475a27": {
+      "name": "turnRightInput",
+      "module": "core"
+    },
+    "global/_0x2e4ab1/anon::_0x5d2e0a": {
+      "name": "clickEvent",
+      "module": "core"
+    },
+    "global/_0x2e4ab1/anon::_0x4abf7b": {
+      "name": "contextMenuEvent",
+      "module": "core"
+    },
+    "global/_0x2e4ab1::_0x575376": {
+      "name": "savedNameDisplay",
+      "module": "core"
+    },
+    "global/_0x2e4ab1::_0x305a8a": {
+      "name": "setNameButton",
+      "module": "core"
+    },
+    "global/_0x2e4ab1::_0x338fb3": {
+      "name": "clearNameButton",
+      "module": "core"
+    },
+    "global/_0x2e4ab1/anon::_0x44c251": {
+      "name": "userName",
+      "module": "core"
+    },
+    "global/_0x26c9bd::_0x3c80e9": {
+      "name": "visionBodyElement",
+      "module": "core"
+    },
+    "global/_0x26c9bd::_0x557153": {
+      "name": "isVisionHidden",
+      "module": "core"
+    },
+    "global/_0x26c9bd/anon::_0x3f2f7c": {
+      "name": "event",
+      "module": "core"
+    },
+    "global/_0x26c9bd/anon::_0x1bac72": {
+      "name": "clickEvent",
+      "module": "core"
+    },
+    "global/_0x26c9bd::_0x52cd3e": {
+      "name": "astraVisionButton",
+      "module": "core"
+    },
+    "global/_0x26c9bd::_0x791e3b": {
+      "name": "smallMinimapButton",
+      "module": "core"
+    },
+    "global/_0x26c9bd::_0x48c305": {
+      "name": "espButton",
+      "module": "core"
+    },
+    "global/_0x26c9bd::_0x59b859": {
+      "name": "espModeSelect",
+      "module": "core"
+    },
+    "global/_0x26c9bd/anon::_0x25ae3f": {
+      "name": "changeEvent",
+      "module": "core"
+    },
+    "global/_0x26c9bd::_0x5ed1e1": {
+      "name": "espColorsToggleButton",
+      "module": "core"
+    },
+    "global/_0x26c9bd::_0x56bed0": {
+      "name": "espColorsSection",
+      "module": "core"
+    },
+    "global/_0x26c9bd::_0x3e5a2b": {
+      "name": "espColorsArrow",
+      "module": "core"
+    },
+    "global/_0x26c9bd::_0x46a6d3": {
+      "name": "isEspColorsExpanded",
+      "module": "core"
+    },
+    "global/_0x26c9bd::_0x4f791f": {
+      "name": "espColorSettings",
+      "module": "core"
+    },
+    "global/_0x26c9bd/anon::_0x59e106": {
+      "name": "elementId",
+      "module": "core"
+    },
+    "global/_0x26c9bd/anon::_0x33e659": {
+      "name": "colorKey",
+      "module": "core"
+    },
+    "global/_0x26c9bd/anon::_0x5446d2": {
+      "name": "targetElement",
+      "module": "core"
+    },
+    "global/_0x26c9bd/anon/anon::_0x41f914": {
+      "name": "colorInputEvent",
+      "module": "core"
+    },
+    "global/_0x304642/anon::_0x2d5b73": {
+      "name": "toggleEvent",
+      "module": "core"
+    },
+    "global/_0x304642/anon::_0xa16d07": {
+      "name": "lockKeyEvent",
+      "module": "core"
+    },
+    "global/_0x304642/anon::_0x4e8a6e": {
+      "name": "colorPickerEvent",
+      "module": "core"
+    },
+    "global/_0x304642/anon::_0xa9bf4b": {
+      "name": "colorValue",
+      "module": "core"
+    },
+    "global/_0x304642/anon::_0x5a96e5": {
+      "name": "traceKeyEvent",
+      "module": "core"
+    },
+    "global/_0x234614::_0x144b8a": {
+      "name": "autoFarmButton",
+      "module": "core"
+    },
+    "global/_0x234614::_0x680989": {
+      "name": "farmModeSelect",
+      "module": "core"
+    },
+    "global/_0x234614/anon::_0x50f0a6": {
+      "name": "farmModeChangeEvent",
+      "module": "core"
+    },
+    "global/_0x234614::_0x22e31c": {
+      "name": "farmBoostToggle",
+      "module": "core"
+    },
+    "global/_0x234614::_0x32a60c": {
+      "name": "farmEvolveToggle",
+      "module": "core"
+    },
+    "global/_0x234614::_0x1060ab": {
+      "name": "farmAvoidToggle",
+      "module": "core"
+    },
+    "global/_0x234614::_0x54888c": {
+      "name": "farmBoostLabel",
+      "module": "core"
+    },
+    "global/_0x234614/anon::_0x545b39": {
+      "name": "autoFarmToggleEvent",
+      "module": "core"
+    },
+    "global/_0x234614::_0x3715e8": {
+      "name": "farmEvolveLabel",
+      "module": "core"
+    },
+    "global/_0x234614/anon::_0x3d3579": {
+      "name": "autoCollectToggleEvent",
+      "module": "core"
+    },
+    "global/_0x234614::_0x3ce86c": {
+      "name": "farmAvoidLabel",
+      "module": "core"
+    },
+    "global/_0x234614/anon::_0x442655": {
+      "name": "autoSellToggleEvent",
+      "module": "core"
+    },
+    "global/_0x1dc426::_0xaaa4cf": {
+      "name": "settingsBodyElement",
+      "module": "core"
+    },
+    "global/_0x1dc426::_0x61bbbd": {
+      "name": "isSettingsCollapsed",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon::_0xcea1ec": {
+      "name": "clickEvent",
+      "module": "core"
+    },
+    "global/_0x1dc426::_0x2b4702": {
+      "name": "toggleKeyInput",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon::_0x3d0447": {
+      "name": "keyboardEvent",
+      "module": "core"
+    },
+    "global/_0x1dc426::_0x58f229": {
+      "name": "bgUrlInput",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon::_0x483ec8": {
+      "name": "backgroundUrl",
+      "module": "core"
+    },
+    "global/_0x1dc426::_0x44295a": {
+      "name": "currentTheme",
+      "module": "core"
+    },
+    "global/_0x1dc426::_0x41c9f6": {
+      "name": "customThemes",
+      "module": "core"
+    },
+    "global/_0x1dc426::_0xba2ad2": {
+      "name": "presetThemes",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon::_0xe0b7f1": {
+      "name": "themeChangeEvent",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon::_0x49cd07": {
+      "name": "selectedThemeValue",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon::_0x4f8e55": {
+      "name": "customThemeListElement",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon::_0x25f5ca": {
+      "name": "noThemesMessageElement",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon::_0x4f4cd1": {
+      "name": "customThemesData",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon::_0x1b4eff": {
+      "name": "themeKeys",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon/anon::_0x338a5b": {
+      "name": "currentTheme",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon/anon::_0x43aed6": {
+      "name": "themeContainer",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon/anon::_0x115ff9": {
+      "name": "isThemeActive",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon/anon/anon::_0x46f3a2": {
+      "name": "customThemes",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon::_0x16cfd0": {
+      "name": "themeNameInput",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon::_0x4dfdbf": {
+      "name": "availableThemes",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon::_0xf8428f": {
+      "name": "accountValue",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon::_0x59ebe9": {
+      "name": "backgroundColor",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon::_0x512772": {
+      "name": "panelColor",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon::_0x2e3195": {
+      "name": "redChannel",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon::_0x41a97e": {
+      "name": "greenChannel",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon::_0x9b8293": {
+      "name": "blueChannel",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon/anon::_0x52607b": {
+      "name": "hexColorCode",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon/anon::_0x2eafd7": {
+      "name": "redChannel",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon/anon::_0x587608": {
+      "name": "greenChannel",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon/anon::_0x3ce3ef": {
+      "name": "blueChannel",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon/anon/anon::_0x15a406": {
+      "name": "colorChannelValue",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon::_0x264fbf": {
+      "name": "themeConfig",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon::_0x3a1ad0": {
+      "name": "customThemes",
+      "module": "core"
+    },
+    "global/_0x1dc426::_0x45ef2f": {
+      "name": "customThemeToggleBtn",
+      "module": "core"
+    },
+    "global/_0x1dc426::_0x1537f6": {
+      "name": "customThemeSection",
+      "module": "core"
+    },
+    "global/_0x1dc426::_0x5be62e": {
+      "name": "customThemeArrow",
+      "module": "core"
+    },
+    "global/_0x1dc426::_0x3c1639": {
+      "name": "isCustomThemeSectionExpanded",
+      "module": "core"
+    },
+    "global/_0x1dc426::_0x2d2686": {
+      "name": "myThemesToggleBtn",
+      "module": "core"
+    },
+    "global/_0x1dc426::_0x34f4f5": {
+      "name": "myThemesSection",
+      "module": "core"
+    },
+    "global/_0x1dc426::_0x50fd19": {
+      "name": "myThemesArrow",
+      "module": "core"
+    },
+    "global/_0x1dc426::_0x4c9e79": {
+      "name": "isThemesExpanded",
+      "module": "core"
+    },
+    "global/_0x5c50aa::_0x57b53f": {
+      "name": "musicBodyElement",
+      "module": "core"
+    },
+    "global/_0x5c50aa::_0xa6caec": {
+      "name": "isMusicHidden",
+      "module": "core"
+    },
+    "global/_0x5c50aa/anon::_0x37e43e": {
+      "name": "event",
+      "module": "core"
+    },
+    "global/_0x5c50aa::_0x12dba3": {
+      "name": "musicPlayButton",
+      "module": "core"
+    },
+    "global/_0x5c50aa::_0x241959": {
+      "name": "musicLoopButton",
+      "module": "core"
+    },
+    "global/_0x5c50aa::_0x22d34b": {
+      "name": "musicShuffleButton",
+      "module": "core"
+    },
+    "global/_0x5c50aa::_0x22dd4b": {
+      "name": "musicVolumeControl",
+      "module": "core"
+    },
+    "global/_0x5c50aa/anon::_0x331e32": {
+      "name": "volumeChangeEvent",
+      "module": "core"
+    },
+    "global/_0x5c50aa/anon::_0xb1c7ad": {
+      "name": "unusedVariable",
+      "module": "core"
+    },
+    "global/_0x5c50aa/anon::_0x2afc5e": {
+      "name": "musicUrl",
+      "module": "core"
+    },
+    "global/_0x5c50aa/anon::_0x1c595b": {
+      "name": "musicName",
+      "module": "core"
+    },
+    "global/_0x1b192d/anon::_0x5a9e9e": {
+      "name": "event",
+      "module": "core"
+    },
+    "global::_0x11a0fb": {
+      "name": "pressedKey",
+      "module": "ui"
+    },
+    "global/_0x190997::_0x32f352": {
+      "name": "panelIds",
+      "module": "core"
+    },
+    "global/_0x190997::_0x1bbf1e": {
+      "name": "deepToolsPanelElement",
+      "module": "core"
+    },
+    "global/_0x190997::_0x519eee": {
+      "name": "isPanelVisible",
+      "module": "core"
+    },
+    "global/_0x190997/anon::_0x4d2020": {
+      "name": "elementId",
+      "module": "core"
+    },
+    "global/_0x190997/anon::_0x3bbd7d": {
+      "name": "targetElement",
+      "module": "core"
+    },
+    "global::_0x36c68e": {
+      "name": "isToggled",
+      "module": "core"
+    },
+    "global/anon::_0x3a6d8": {
+      "name": "inputEvent",
+      "module": "core"
+    },
+    "global/anon::_0x102029": {
+      "name": "inputEvent",
+      "module": "core"
+    },
+    "global/anon::_0x2f33b7": {
+      "name": "inputEvent",
+      "module": "core"
+    },
+    "global/anon::_0x3aeb74": {
+      "name": "entityTraceKey",
+      "module": "core"
+    },
+    "global/anon::_0x2834d8": {
+      "name": "itemKey",
+      "module": "core"
+    },
+    "global/anon::_0xdaf56d": {
+      "name": "itemCode",
+      "module": "core"
+    },
+    "global/anon::_0x58f708": {
+      "name": "event",
+      "module": "core"
+    },
+    "global/anon::_0x5265ac": {
+      "name": "event",
+      "module": "core"
+    },
+    "global/anon::_0x4967a7": {
+      "name": "autoFarmButton",
+      "module": "core"
+    },
+    "global/anon::_0x35cd14": {
+      "name": "farmModeSelect",
+      "module": "core"
+    },
+    "global/anon::_0x59bc02": {
+      "name": "autoFarmButton",
+      "module": "core"
+    },
+    "global/anon::_0x493690": {
+      "name": "keyboardEvent",
+      "module": "core"
+    },
+    "global::_0x54d452": {
+      "name": "bodyMutationObserver",
+      "module": "core"
+    },
+    "global/anon/anon::_0x384a7c": {
+      "name": "gameInstance",
+      "module": "core"
+    },
+    "global::_0x50810d": {
+      "name": "currentValue",
+      "module": "ui_interaction"
+    },
+    "global/_0xc66695/anon::_0x2b9090": {
+      "name": "radius",
+      "module": "core"
+    },
+    "global/_0x4a3fbe::_0x43dc21": {
+      "name": "anglePresets",
+      "module": "core"
+    },
+    "global/anon/anon::_0x169bb8": {
+      "name": "contextArgument",
+      "module": "core"
+    },
+    "global/_0x918bac/anon/anon::_0x4ba172": {
+      "name": "currentMouseEvent",
+      "module": "core"
+    },
+    "global/_0x304642::_0x28cb12": {
+      "name": "trailColorPicker",
+      "module": "core"
+    },
+    "global/_0x304642::_0x342aca": {
+      "name": "traceKeyInput",
+      "module": "core"
+    },
+    "global/_0x234614/anon::_0x2e8def": {
+      "name": "event",
+      "module": "core"
+    },
+    "global/_0x1dc426/anon/anon::_0x5f3fca": {
+      "name": "isHalloweenTheme",
+      "module": "core"
+    },
+    "global/_0x4a3fbe::_0x2b7650": {
+      "name": "dataContainer",
+      "module": "core"
+    },
+    "global::_0x188dda": {
+      "name": "counter",
+      "module": "features_autofarm"
+    }
+  }
+}
