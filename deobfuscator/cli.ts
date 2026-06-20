@@ -164,53 +164,90 @@ async function processVersion(
   mapping.data._meta.version = version;
   mapping.save();
 
-  if (llmConfig.enabled) {
-    log("info", "Generating module assignments via LLM");
-    const llm = new LLMClient(llmConfig);
-    const splitterConfig = loadSplitterConfig();
+  const splitterConfig = loadSplitterConfig();
+  const validModules = new Set(Object.keys(splitterConfig.modules));
 
-    const funcDecls: { name: string; code: string }[] = [];
-    const varDecls: { name: string; code: string }[] = [];
-    const windowProps: string[] = [];
+  const funcDecls: { name: string; code: string }[] = [];
+  const varDecls: { name: string; code: string }[] = [];
+  const windowProps: string[] = [];
 
-    const ast = parseCode(renamedCode);
-    for (const stmt of ast.program.body) {
-      if (t.isFunctionDeclaration(stmt) && stmt.id) {
-        funcDecls.push({
-          name: stmt.id.name,
-          code: (generate as any)(stmt).code,
-        });
-      } else if (t.isVariableDeclaration(stmt)) {
-        for (const decl of stmt.declarations) {
-          if (t.isIdentifier(decl.id)) {
-            const isFunc =
-              t.isFunctionExpression(decl.init) ||
-              t.isArrowFunctionExpression(decl.init);
-            (isFunc ? funcDecls : varDecls).push({
-              name: decl.id.name,
-              code: `${stmt.kind} ${(generate as any)(decl).code};`,
-            });
-          }
+  const ast = parseCode(renamedCode);
+  for (const stmt of ast.program.body) {
+    if (t.isFunctionDeclaration(stmt) && stmt.id) {
+      funcDecls.push({
+        name: stmt.id.name,
+        code: (generate as any)(stmt).code,
+      });
+    } else if (t.isVariableDeclaration(stmt)) {
+      for (const decl of stmt.declarations) {
+        if (t.isIdentifier(decl.id)) {
+          const isFunc =
+            t.isFunctionExpression(decl.init) ||
+            t.isArrowFunctionExpression(decl.init);
+          (isFunc ? funcDecls : varDecls).push({
+            name: decl.id.name,
+            code: `${stmt.kind} ${(generate as any)(decl).code};`,
+          });
         }
-      } else if (
-        t.isExpressionStatement(stmt) &&
-        t.isAssignmentExpression(stmt.expression) &&
-        stmt.expression.operator === "=" &&
-        t.isMemberExpression(stmt.expression.left) &&
-        t.isIdentifier(stmt.expression.left.object) &&
-        stmt.expression.left.object.name === "window" &&
-        t.isIdentifier(stmt.expression.left.property)
-      ) {
-        windowProps.push(stmt.expression.left.property.name);
       }
+    } else if (
+      t.isExpressionStatement(stmt) &&
+      t.isAssignmentExpression(stmt.expression) &&
+      stmt.expression.operator === "=" &&
+      t.isMemberExpression(stmt.expression.left) &&
+      t.isIdentifier(stmt.expression.left.object) &&
+      stmt.expression.left.object.name === "window" &&
+      t.isIdentifier(stmt.expression.left.property)
+    ) {
+      windowProps.push(stmt.expression.left.property.name);
     }
+  }
 
+  let assignedFuncs = 0;
+  let assignedVars = 0;
+  for (const f of funcDecls) {
+    const existing = Object.values(mapping.data.functions).find(
+      (e) => e.name === f.name,
+    );
+    if (existing?.module && validModules.has(existing.module)) assignedFuncs++;
+  }
+  for (const v of varDecls) {
+    const existing = Object.values(mapping.data.variables).find(
+      (e) => e.name === v.name,
+    );
+    if (existing?.module && validModules.has(existing.module)) assignedVars++;
+  }
+
+  const totalItems = funcDecls.length + varDecls.length;
+  const assignedItems = assignedFuncs + assignedVars;
+  const cacheRatio = totalItems > 0 ? assignedItems / totalItems : 0;
+
+  if (llmConfig.enabled && cacheRatio < 0.9) {
+    const missingFuncs = funcDecls.filter((f) => {
+      const existing = Object.values(mapping.data.functions).find(
+        (e) => e.name === f.name,
+      );
+      return !existing?.module || !validModules.has(existing.module);
+    });
+    const missingVars = varDecls.filter((v) => {
+      const existing = Object.values(mapping.data.variables).find(
+        (e) => e.name === v.name,
+      );
+      return !existing?.module || !validModules.has(existing.module);
+    });
+
+    log(
+      "info",
+      `Module assignment cache: ${assignedItems}/${totalItems} cached (${Math.round(cacheRatio * 100)}%), ${missingFuncs.length + missingVars.length} need LLM`,
+    );
+
+    const llm = new LLMClient(llmConfig);
     const { functionAssignments, variableAssignments, windowPropAssignments } =
       await generateModuleAssignments(
         llm,
         {
-          functions: funcDecls,
-          variables: varDecls,
+          functions: missingFuncs,
+          variables: missingVars,
           windowProps,
         },
         splitterConfig,
@@ -225,15 +262,22 @@ async function processVersion(
       }
     }
     for (const [name, mod] of Object.entries(variableAssignments)) {
-      if (mapping.data.variables[name]) {
-        mapping.data.variables[name]!.module = mod;
+      const existing = Object.values(mapping.data.variables).find(
+        (e) => e.name === name,
+      );
+      if (existing) {
+        existing.module = mod;
       }
     }
     mapping.save();
+  } else if (llmConfig.enabled) {
+    log(
+      "info",
+      `Module assignment cache: ${assignedItems}/${totalItems} cached (${Math.round(cacheRatio * 100)}%), skipping LLM`,
+    );
   }
 
   log("info", "Splitting into modules");
-  const splitterConfig = loadSplitterConfig();
   const splitResult = await splitIntoModules(
     renamedCode,
     mapping,
