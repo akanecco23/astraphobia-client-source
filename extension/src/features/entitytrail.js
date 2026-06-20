@@ -8,16 +8,6 @@ import { findEntityById } from "./autofarm.js";
 import { refreshUI } from "./esp.js";
 import { state } from "../core.js";
 
-window.entityTrailColor = {
-  r: 255,
-  g: 150,
-  b: 0,
-};
-window.entityTrailEnabled = false;
-window.entityTrailTargetId = null;
-window.entityTrailHistory = [];
-window.entityTrailMaxLength = 200;
-window.entityTrailRecordInterval = 100;
 window.entityTraceKey = "h";
 
 let trailIntervalId = null;

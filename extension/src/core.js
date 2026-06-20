@@ -22,7 +22,6 @@ import { initAutofillName } from "./ui/interaction.js";
 import { getGameState } from "./features/autofarm.js";
 import { initAdBlocker } from "./features/adblock.js";
 import { initRadarDrag } from "./ui/radar.js";
-
 let metadataMap = new WeakMap();
 function wrapWithProxy(targetObject, propertyKey, handler) {
   const originalValue = targetObject[propertyKey];
@@ -30,7 +29,6 @@ function wrapWithProxy(targetObject, propertyKey, handler) {
   metadataMap.set(proxyValue, originalValue);
   targetObject[propertyKey] = proxyValue;
 }
-
 const configStore = {};
 function getEntityManager(gameState) {
   if (!gameState) {
@@ -99,7 +97,6 @@ let dragState = {
   x: null,
   y: 20,
 };
-
 let isToggled = false;
 function initializeApplication() {
   if (isToggled) {
@@ -128,23 +125,6 @@ function initializeApplication() {
     autoDodgeLoop();
   }, 1000);
 }
-window.lockEnabled = false;
-window.lockTargetId = null;
-window.lockKey = "t";
-window.entityTraceKey = "h";
-window.espEnabled = false;
-window.espColors = {
-  close: "#ff0000",
-  medium: "#ffff00",
-  far: "#00ffff",
-  veryFar: "#00ff00",
-  tracked: "#ff00ff",
-  foodClose: "#00ff00",
-  foodMedium: "#88ff88",
-  foodFar: "#44cc44",
-};
-window.espTrackedEntityId = null;
-window.espMode = "players";
 document.addEventListener("keydown", (event) => {
   if (event.target.matches("input,textarea,select")) {
     return;
@@ -158,25 +138,6 @@ document.addEventListener("keydown", (event) => {
     clearTracking();
   }
 });
-window.autoDodgeEnabled = false;
-window.autoFarmActive = false;
-window.autoFarmMode = "nearest";
-window.autoFarmRange = 3000;
-window.autoFarmBoost = true;
-window.autoFarmEvolve = true;
-window.autoFarmAvoidPlayers = true;
-window.autoFarmAvoidDistance = 800;
-window.autoFarmStats = {
-  collected: 0,
-  startTime: 0,
-};
-window.autoFarmPatrolPoints = [];
-window.autoFarmPatrolIndex = 0;
-window.autoFarmCurrentTarget = null;
-window.autoFarmTargetStartTime = 0;
-window.autoFarmSkipIds = new Set();
-window.autoFarmSkipClearTime = 0;
-window.autoFarmSkipAreas = [];
 document.addEventListener("keydown", (keyboardEvent) => {
   if (
     keyboardEvent.key === pressedKey &&
@@ -205,7 +166,6 @@ window.addEventListener("load", () => {
     }
   }, 2000);
 });
-
 export const state = {
   currentTime: 0,
   isLooping: false,
@@ -217,7 +177,6 @@ export const state = {
   isMinimapSmall: false,
   isTextInterceptorInitialized: false,
 };
-
 export {
   wrapWithProxy,
   getEntityManager,

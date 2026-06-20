@@ -3,6 +3,7 @@ import type { ModuleFile, SplitResult, SplitterConfig } from "./types.js";
 import { MappingStore } from "./mapping.js";
 import { parseCode } from "./ast-utils.js";
 import _generate from "@babel/generator";
+import { parse } from "@babel/parser";
 import * as t from "@babel/types";
 import { log } from "./logger.js";
 
@@ -114,6 +115,90 @@ function collectWindowInits(
       if (!inits.some((i) => i.trim() === statement.trim())) {
         inits.push(statement);
       }
+    }
+  }
+
+  // Build a map of which prop should end up in which module.
+  const propTarget = new Map<string, ModuleFile>();
+  for (const [mod, inits] of initsByModule) {
+    for (const init of inits) {
+      const match = init.match(/^window\.([A-Za-z_$][\w$]*)\s*=/);
+      if (match) {
+        propTarget.set(match[1]!, mod);
+      }
+    }
+  }
+
+  // Remove window init assignments that belong to another module.
+  for (const mod of moduleFiles) {
+    const modAst = parse(mod.code, {
+      sourceType: "module",
+      allowReturnOutsideFunction: true,
+    });
+    let removed = false;
+    modAst.program.body = modAst.program.body.filter((stmt) => {
+      if (
+        !t.isExpressionStatement(stmt) ||
+        !t.isAssignmentExpression(stmt.expression) ||
+        stmt.expression.operator !== "="
+      )
+        return true;
+      const left = stmt.expression.left;
+      if (
+        !t.isMemberExpression(left) ||
+        !t.isIdentifier(left.object) ||
+        left.object.name !== "window" ||
+        !t.isIdentifier(left.property)
+      )
+        return true;
+      const target = propTarget.get(left.property.name);
+      if (target && target !== mod) {
+        removed = true;
+        return false;
+      }
+      return true;
+    });
+    if (removed) {
+      mod.code = (generate as any)(modAst, {
+        compact: false,
+        retainLines: false,
+        comments: true,
+      }).code;
+    }
+  }
+
+  // Skip adding inits that are already present in their target module.
+  for (const [mod, inits] of initsByModule) {
+    const modAst = parse(mod.code, {
+      sourceType: "module",
+      allowReturnOutsideFunction: true,
+    });
+    const existing = new Set<string>();
+    for (const stmt of modAst.program.body) {
+      if (
+        !t.isExpressionStatement(stmt) ||
+        !t.isAssignmentExpression(stmt.expression) ||
+        stmt.expression.operator !== "="
+      )
+        continue;
+      const left = stmt.expression.left;
+      if (
+        t.isMemberExpression(left) &&
+        t.isIdentifier(left.object) &&
+        left.object.name === "window" &&
+        t.isIdentifier(left.property)
+      ) {
+        existing.add(left.property.name);
+      }
+    }
+    const filtered = inits.filter((init) => {
+      const match = init.match(/^window\.([A-Za-z_$][\w$]*)\s*=/);
+      return !match || !existing.has(match[1]!);
+    });
+    if (filtered.length === 0) {
+      initsByModule.delete(mod);
+    } else {
+      initsByModule.set(mod, filtered);
     }
   }
 
