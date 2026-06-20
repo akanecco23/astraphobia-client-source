@@ -1,14 +1,19 @@
-import { findEntityById, getGameState, isAreaSkipped } from './autofarm.js';
-import { showNotification } from '../ui/interaction.js';
-import { getGameCanvas, updateLockButtonUI } from '../ui/radar.js';
-import { getAnimalPosition, extractPosition, buildEntityState, calculateDistance, moveAndClickElement } from './movement.js';
-import { isProcessed, getEntityManager, state } from '../core.js';
-import { isValidEntity } from '../utils.js';
+import {
+  getAnimalPosition,
+  extractPosition,
+  buildEntityState,
+  calculateDistance,
+  moveAndClickElement,
+} from "./movement.js";
+import { findEntityById, getGameState, isAreaSkipped } from "./autofarm.js";
+import { getGameCanvas, updateLockButtonUI } from "../ui/radar.js";
+import { isProcessed, getEntityManager, state } from "../core.js";
+import { showNotification } from "../ui/interaction.js";
+import { isValidEntity } from "../utils.js";
 
 window.lockEnabled = false;
 window.lockTargetId = null;
 window.autoDodgeEnabled = false;
-
 
 function updateLockLoop() {
   if (!isProcessed) {
@@ -71,12 +76,14 @@ function updateLockLoop() {
       scaledX *= scaleFactor;
       scaledY *= scaleFactor;
     }
-    canvas.dispatchEvent(new MouseEvent("pointermove", {
-      clientX: centerX + scaledX,
-      clientY: centerY + scaledY,
-      bubbles: true,
-      view: window
-    }));
+    canvas.dispatchEvent(
+      new MouseEvent("pointermove", {
+        clientX: centerX + scaledX,
+        clientY: centerY + scaledY,
+        bubbles: true,
+        view: window,
+      }),
+    );
   } catch (context) {}
 }
 function toggleLock() {
@@ -86,10 +93,15 @@ function toggleLock() {
     showNotification("Lock released");
   } else {
     const currentState = buildEntityState();
-    if (currentState && currentState.players && currentState.players.length > 0) {
+    if (
+      currentState &&
+      currentState.players &&
+      currentState.players.length > 0
+    ) {
       window.lockEnabled = true;
       window.lockTargetId = currentState.players[0].id;
-      const targetName = currentState.players[0].entity?.name || "ID:" + window.lockTargetId;
+      const targetName =
+        currentState.players[0].entity?.name || "ID:" + window.lockTargetId;
       showNotification("Locked: " + targetName);
     } else {
       showNotification("No players to lock on");
@@ -101,7 +113,10 @@ function trackNearestPlayer() {
   const gameData = buildEntityState();
   if (gameData && gameData.players && gameData.players.length > 0) {
     window.espTrackedEntityId = gameData.players[0].id;
-    showNotification("Tracking: " + (gameData.players[0].entity?.name || window.espTrackedEntityId));
+    showNotification(
+      "Tracking: " +
+        (gameData.players[0].entity?.name || window.espTrackedEntityId),
+    );
   } else {
     showNotification("No players nearby");
   }
@@ -137,21 +152,36 @@ function autoDodgeLoop() {
       return;
     }
     let nearbyEntities = [];
-    (worldData.entitiesList || []).forEach(targetEntity => {
-      if (!targetEntity || targetEntity.id === myAnimal.id || !isValidEntity(targetEntity)) {
+    (worldData.entitiesList || []).forEach((targetEntity) => {
+      if (
+        !targetEntity ||
+        targetEntity.id === myAnimal.id ||
+        !isValidEntity(targetEntity)
+      ) {
         return;
       }
-      const targetX = targetEntity.position?._x !== undefined ? targetEntity.position._x : targetEntity.position?.x;
-      const targetY = targetEntity.position?._y !== undefined ? targetEntity.position._y : targetEntity.position?.y;
+      const targetX =
+        targetEntity.position?._x !== undefined
+          ? targetEntity.position._x
+          : targetEntity.position?.x;
+      const targetY =
+        targetEntity.position?._y !== undefined
+          ? targetEntity.position._y
+          : targetEntity.position?.y;
       if (targetX == null || targetY == null) {
         return;
       }
-      const distanceToTarget = calculateDistance(currentPos.x, currentPos.y, targetX, targetY);
+      const distanceToTarget = calculateDistance(
+        currentPos.x,
+        currentPos.y,
+        targetX,
+        targetY,
+      );
       if (distanceToTarget < maxDistance) {
         nearbyEntities.push({
           x: targetX,
           y: targetY,
-          dist: distanceToTarget
+          dist: distanceToTarget,
         });
       }
     });
@@ -166,7 +196,12 @@ function autoDodgeLoop() {
     if (now - previousPositionTimestamp > 600) {
       previousPositionTimestamp = now;
       if (currentCoordinates) {
-        const distFromLastPos = calculateDistance(currentPos.x, currentPos.y, currentCoordinates.x, currentCoordinates.y);
+        const distFromLastPos = calculateDistance(
+          currentPos.x,
+          currentPos.y,
+          currentCoordinates.x,
+          currentCoordinates.y,
+        );
         if (distFromLastPos < 20) {
           iterationCounter++;
           hasMoved = true;
@@ -177,19 +212,20 @@ function autoDodgeLoop() {
       }
       currentCoordinates = {
         x: currentPos.x,
-        y: currentPos.y
+        y: currentPos.y,
       };
     }
     let sumX = 0;
     let sumY = 0;
-    nearbyEntities.forEach(sourceEntity => {
+    nearbyEntities.forEach((sourceEntity) => {
       const deltaX = currentPos.x - sourceEntity.x;
       const deltaY = currentPos.y - sourceEntity.y;
       const magnitude = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
       if (magnitude > 0.01) {
-        const normalizedDistance = (maxDistance - sourceEntity.dist) / maxDistance;
-        sumX += deltaX / magnitude * normalizedDistance;
-        sumY += deltaY / magnitude * normalizedDistance;
+        const normalizedDistance =
+          (maxDistance - sourceEntity.dist) / maxDistance;
+        sumX += (deltaX / magnitude) * normalizedDistance;
+        sumY += (deltaY / magnitude) * normalizedDistance;
       }
     });
     let magnitude = Math.sqrt(sumX * sumX + sumY * sumY);
@@ -202,17 +238,31 @@ function autoDodgeLoop() {
     sumY /= magnitude;
     let arrowAngle = Math.atan2(sumY, sumX);
     if (hasMoved && iterationCounter >= 1) {
-      const anglePresets = [Math.PI / 4, -Math.PI / 4, Math.PI / 2, -Math.PI / 2, Math.PI * 3 / 4, -Math.PI * 3 / 4];
+      const anglePresets = [
+        Math.PI / 4,
+        -Math.PI / 4,
+        Math.PI / 2,
+        -Math.PI / 2,
+        (Math.PI * 3) / 4,
+        (-Math.PI * 3) / 4,
+      ];
       let previousAngle = arrowAngle;
       let maxProjection = -Infinity;
       for (const angleOffset of anglePresets) {
         const rotatedAngle = arrowAngle + angleOffset;
-        if (dataBuffer.some(currentAngle => Math.abs(currentAngle - rotatedAngle) < 0.3) && iterationCounter < 5) {
+        if (
+          dataBuffer.some(
+            (currentAngle) => Math.abs(currentAngle - rotatedAngle) < 0.3,
+          ) &&
+          iterationCounter < 5
+        ) {
           continue;
         }
         let currentProjection = 0;
-        nearbyEntities.forEach(positionEntity => {
-          currentProjection -= Math.cos(rotatedAngle) * (positionEntity.x - currentPos.x) + Math.sin(rotatedAngle) * (positionEntity.y - currentPos.y);
+        nearbyEntities.forEach((positionEntity) => {
+          currentProjection -=
+            Math.cos(rotatedAngle) * (positionEntity.x - currentPos.x) +
+            Math.sin(rotatedAngle) * (positionEntity.y - currentPos.y);
         });
         if (currentProjection > maxProjection) {
           maxProjection = currentProjection;
@@ -230,11 +280,16 @@ function autoDodgeLoop() {
         dataBuffer = [];
       }
     }
-    const isDistanceExceeded = now - lastPositionTimestamp > maxDistanceThreshold;
+    const isDistanceExceeded =
+      now - lastPositionTimestamp > maxDistanceThreshold;
     if (isDistanceExceeded) {
       lastPositionTimestamp = now;
     }
-    moveAndClickElement(currentPos.x + Math.cos(arrowAngle) * 2000, currentPos.y + Math.sin(arrowAngle) * 2000, isDistanceExceeded);
+    moveAndClickElement(
+      currentPos.x + Math.cos(arrowAngle) * 2000,
+      currentPos.y + Math.sin(arrowAngle) * 2000,
+      isDistanceExceeded,
+    );
   } catch (dataContainer) {}
 }
 function enableAutoDodge() {
@@ -261,17 +316,38 @@ function findNearestEntity(range) {
     if (!worldData || !playerAnimal) {
       return null;
     }
-    const playerX = playerAnimal.position._x !== undefined ? playerAnimal.position._x : playerAnimal.position.x;
-    const playerY = playerAnimal.position._y !== undefined ? playerAnimal.position._y : playerAnimal.position.y;
+    const playerX =
+      playerAnimal.position._x !== undefined
+        ? playerAnimal.position._x
+        : playerAnimal.position.x;
+    const playerY =
+      playerAnimal.position._y !== undefined
+        ? playerAnimal.position._y
+        : playerAnimal.position.y;
     let nearestEntity = null;
     let minDistance = Infinity;
-    (worldData.entitiesList || []).forEach(targetEntity => {
-      if (!targetEntity || targetEntity.id === playerAnimal.id || window.autoFarmSkipIds.has(targetEntity.id)) {
+    (worldData.entitiesList || []).forEach((targetEntity) => {
+      if (
+        !targetEntity ||
+        targetEntity.id === playerAnimal.id ||
+        window.autoFarmSkipIds.has(targetEntity.id)
+      ) {
         return;
       }
-      const posX = targetEntity.position?._x !== undefined ? targetEntity.position._x : targetEntity.position?.x;
-      const posY = targetEntity.position?._y !== undefined ? targetEntity.position._y : targetEntity.position?.y;
-      if (posX == null || posY == null || isValidEntity(targetEntity) || isAreaSkipped(posX, posY)) {
+      const posX =
+        targetEntity.position?._x !== undefined
+          ? targetEntity.position._x
+          : targetEntity.position?.x;
+      const posY =
+        targetEntity.position?._y !== undefined
+          ? targetEntity.position._y
+          : targetEntity.position?.y;
+      if (
+        posX == null ||
+        posY == null ||
+        isValidEntity(targetEntity) ||
+        isAreaSkipped(posX, posY)
+      ) {
         return;
       }
       const distance = calculateDistance(playerX, playerY, posX, posY);
@@ -282,7 +358,7 @@ function findNearestEntity(range) {
           x: posX,
           y: posY,
           distance: distance,
-          entity: targetEntity
+          entity: targetEntity,
         };
       }
     });
@@ -300,16 +376,37 @@ function findEntitiesInRange(searchRange) {
     if (!world || !myAnimal) {
       return [];
     }
-    const myX = myAnimal.position._x !== undefined ? myAnimal.position._x : myAnimal.position.x;
-    const myY = myAnimal.position._y !== undefined ? myAnimal.position._y : myAnimal.position.y;
+    const myX =
+      myAnimal.position._x !== undefined
+        ? myAnimal.position._x
+        : myAnimal.position.x;
+    const myY =
+      myAnimal.position._y !== undefined
+        ? myAnimal.position._y
+        : myAnimal.position.y;
     const entitiesInRange = [];
-    (world.entitiesList || []).forEach(targetEntity => {
-      if (!targetEntity || targetEntity.id === myAnimal.id || window.autoFarmSkipIds.has(targetEntity.id)) {
+    (world.entitiesList || []).forEach((targetEntity) => {
+      if (
+        !targetEntity ||
+        targetEntity.id === myAnimal.id ||
+        window.autoFarmSkipIds.has(targetEntity.id)
+      ) {
         return;
       }
-      const posX = targetEntity.position?._x !== undefined ? targetEntity.position._x : targetEntity.position?.x;
-      const posY = targetEntity.position?._y !== undefined ? targetEntity.position._y : targetEntity.position?.y;
-      if (posX == null || posY == null || isValidEntity(targetEntity) || isAreaSkipped(posX, posY)) {
+      const posX =
+        targetEntity.position?._x !== undefined
+          ? targetEntity.position._x
+          : targetEntity.position?.x;
+      const posY =
+        targetEntity.position?._y !== undefined
+          ? targetEntity.position._y
+          : targetEntity.position?.y;
+      if (
+        posX == null ||
+        posY == null ||
+        isValidEntity(targetEntity) ||
+        isAreaSkipped(posX, posY)
+      ) {
         return;
       }
       const distance = calculateDistance(myX, myY, posX, posY);
@@ -319,11 +416,13 @@ function findEntitiesInRange(searchRange) {
           x: posX,
           y: posY,
           distance: distance,
-          entity: targetEntity
+          entity: targetEntity,
         });
       }
     });
-    return entitiesInRange.sort((entityA, entityB) => entityA.distance - entityB.distance);
+    return entitiesInRange.sort(
+      (entityA, entityB) => entityA.distance - entityB.distance,
+    );
   } catch (err) {
     return [];
   }
@@ -332,14 +431,14 @@ function calculateAvoidanceVector() {
   if (!window.autoFarmAvoidPlayers) {
     return {
       x: 0,
-      y: 0
+      y: 0,
     };
   }
   const myPosition = getAnimalPosition();
   if (!myPosition) {
     return {
       x: 0,
-      y: 0
+      y: 0,
     };
   }
   let avoidX = 0;
@@ -351,35 +450,63 @@ function calculateAvoidanceVector() {
     if (!worldData || !myAnimal) {
       return {
         x: 0,
-        y: 0
+        y: 0,
       };
     }
-    (worldData.entitiesList || []).forEach(targetEntity => {
-      if (!targetEntity || targetEntity.id === myAnimal.id || !isValidEntity(targetEntity)) {
+    (worldData.entitiesList || []).forEach((targetEntity) => {
+      if (
+        !targetEntity ||
+        targetEntity.id === myAnimal.id ||
+        !isValidEntity(targetEntity)
+      ) {
         return;
       }
-      const targetX = targetEntity.position?._x !== undefined ? targetEntity.position._x : targetEntity.position?.x;
-      const targetY = targetEntity.position?._y !== undefined ? targetEntity.position._y : targetEntity.position?.y;
+      const targetX =
+        targetEntity.position?._x !== undefined
+          ? targetEntity.position._x
+          : targetEntity.position?.x;
+      const targetY =
+        targetEntity.position?._y !== undefined
+          ? targetEntity.position._y
+          : targetEntity.position?.y;
       if (targetX == null || targetY == null) {
         return;
       }
-      const distanceToTarget = calculateDistance(myPosition.x, myPosition.y, targetX, targetY);
+      const distanceToTarget = calculateDistance(
+        myPosition.x,
+        myPosition.y,
+        targetX,
+        targetY,
+      );
       if (distanceToTarget < window.autoFarmAvoidDistance) {
         const deltaX = myPosition.x - targetX;
         const deltaY = myPosition.y - targetY;
         const hypotenuse = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-        const avoidanceFactor = (window.autoFarmAvoidDistance - Math.max(distanceToTarget, 50)) / window.autoFarmAvoidDistance;
+        const avoidanceFactor =
+          (window.autoFarmAvoidDistance - Math.max(distanceToTarget, 50)) /
+          window.autoFarmAvoidDistance;
         if (hypotenuse > 0) {
-          avoidX += deltaX / hypotenuse * avoidanceFactor * 500;
-          avoidY += deltaY / hypotenuse * avoidanceFactor * 500;
+          avoidX += (deltaX / hypotenuse) * avoidanceFactor * 500;
+          avoidY += (deltaY / hypotenuse) * avoidanceFactor * 500;
         }
       }
     });
   } catch (error) {}
   return {
     x: avoidX,
-    y: avoidY
+    y: avoidY,
   };
 }
 
-export { updateLockLoop, toggleLock, trackNearestPlayer, clearTracking, autoDodgeLoop, enableAutoDodge, disableAutoDodge, findNearestEntity, findEntitiesInRange, calculateAvoidanceVector };
+export {
+  updateLockLoop,
+  toggleLock,
+  trackNearestPlayer,
+  clearTracking,
+  autoDodgeLoop,
+  enableAutoDodge,
+  disableAutoDodge,
+  findNearestEntity,
+  findEntitiesInRange,
+  calculateAvoidanceVector,
+};

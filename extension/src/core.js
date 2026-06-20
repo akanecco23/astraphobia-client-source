@@ -1,12 +1,27 @@
-import { getGameState } from './features/autofarm.js';
-import { applyTheme, initBackgroundImage, injectStyles } from './ui/theme.js';
-import { createToolsPanel, createVisionPanel, createCombatPanel, createAutomationPanel, createSettingsPanel, createMusicPanel, createUpdateHistoryPanel, pressedKey, togglePanelsVisibility } from './ui/panels.js';
-import { initAdBlocker } from './features/adblock.js';
-import { initRadarDrag } from './ui/radar.js';
-import { initAutofillName } from './ui/interaction.js';
-import { renderLoop, renderEspLoop } from './features/esp.js';
-import { updateLockLoop, autoDodgeLoop, trackNearestPlayer, clearTracking } from './features/aimbot.js';
-import { initAntiDetection } from './features/antidetection.js';
+import {
+  createToolsPanel,
+  createVisionPanel,
+  createCombatPanel,
+  createAutomationPanel,
+  createSettingsPanel,
+  createMusicPanel,
+  createUpdateHistoryPanel,
+  pressedKey,
+  togglePanelsVisibility,
+} from "./ui/panels.js";
+import {
+  updateLockLoop,
+  autoDodgeLoop,
+  trackNearestPlayer,
+  clearTracking,
+} from "./features/aimbot.js";
+import { applyTheme, initBackgroundImage, injectStyles } from "./ui/theme.js";
+import { initAntiDetection } from "./features/antidetection.js";
+import { renderLoop, renderEspLoop } from "./features/esp.js";
+import { initAutofillName } from "./ui/interaction.js";
+import { getGameState } from "./features/autofarm.js";
+import { initAdBlocker } from "./features/adblock.js";
+import { initRadarDrag } from "./ui/radar.js";
 
 let metadataMap = new WeakMap();
 function wrapWithProxy(targetObject, propertyKey, handler) {
@@ -36,7 +51,12 @@ function getEntityManager(gameState) {
   }
   for (const propertyKey of Object.keys(gameState)) {
     const propertyValue = gameState[propertyKey];
-    if (propertyValue && typeof propertyValue === "object" && !Array.isArray(propertyValue) && (propertyValue.entitiesList || propertyValue.entitiesById)) {
+    if (
+      propertyValue &&
+      typeof propertyValue === "object" &&
+      !Array.isArray(propertyValue) &&
+      (propertyValue.entitiesList || propertyValue.entitiesById)
+    ) {
       window.__cachedEM = propertyValue;
       return propertyValue;
     }
@@ -62,7 +82,9 @@ function getFirstAnimal() {
 }
 function getViewportScale() {
   try {
-    const stateWithViewport = window.__ss?.states?.find(gameContext => gameContext?.gameScene?.game?.viewport?.scale?.x);
+    const stateWithViewport = window.__ss?.states?.find(
+      (gameContext) => gameContext?.gameScene?.game?.viewport?.scale?.x,
+    );
     if (stateWithViewport) {
       return stateWithViewport.gameScene.game.viewport.scale.x;
     }
@@ -75,7 +97,7 @@ let dragState = {
   offsetX: 0,
   offsetY: 0,
   x: null,
-  y: 20
+  y: 20,
 };
 
 let isToggled = false;
@@ -119,11 +141,11 @@ window.espColors = {
   tracked: "#ff00ff",
   foodClose: "#00ff00",
   foodMedium: "#88ff88",
-  foodFar: "#44cc44"
+  foodFar: "#44cc44",
 };
 window.espTrackedEntityId = null;
 window.espMode = "players";
-document.addEventListener("keydown", event => {
+document.addEventListener("keydown", (event) => {
   if (event.target.matches("input,textarea,select")) {
     return;
   }
@@ -146,7 +168,7 @@ window.autoFarmAvoidPlayers = true;
 window.autoFarmAvoidDistance = 800;
 window.autoFarmStats = {
   collected: 0,
-  startTime: 0
+  startTime: 0,
 };
 window.autoFarmPatrolPoints = [];
 window.autoFarmPatrolIndex = 0;
@@ -155,8 +177,12 @@ window.autoFarmTargetStartTime = 0;
 window.autoFarmSkipIds = new Set();
 window.autoFarmSkipClearTime = 0;
 window.autoFarmSkipAreas = [];
-document.addEventListener("keydown", keyboardEvent => {
-  if (keyboardEvent.key === pressedKey && !keyboardEvent.repeat && !keyboardEvent.target.matches("input,textarea,button,select")) {
+document.addEventListener("keydown", (keyboardEvent) => {
+  if (
+    keyboardEvent.key === pressedKey &&
+    !keyboardEvent.repeat &&
+    !keyboardEvent.target.matches("input,textarea,button,select")
+  ) {
     keyboardEvent.preventDefault();
     togglePanelsVisibility();
   }
@@ -189,7 +215,17 @@ export const state = {
   animalData: null,
   isActive: false,
   isMinimapSmall: false,
-  isTextInterceptorInitialized: false
+  isTextInterceptorInitialized: false,
 };
 
-export { wrapWithProxy, getEntityManager, getFirstAnimal, getViewportScale, initializeApplication, metadataMap, configStore, isProcessed, dragState };
+export {
+  wrapWithProxy,
+  getEntityManager,
+  getFirstAnimal,
+  getViewportScale,
+  initializeApplication,
+  metadataMap,
+  configStore,
+  isProcessed,
+  dragState,
+};

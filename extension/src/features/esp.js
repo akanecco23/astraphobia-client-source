@@ -1,10 +1,16 @@
-import { getOrCreateCanvas } from '../ui/radar.js';
-import { getAnimalPosition, extractPosition, calculateDirection, calculateDistance, buildEntityState } from './movement.js';
-import { drawEntityTrail } from './entitytrail.js';
-import { getViewportScale, dragState, state } from '../core.js';
-import { findEntityById } from './autofarm.js';
-import { isValidEntity } from '../utils.js';
-import { showNotification } from '../ui/interaction.js';
+import {
+  getAnimalPosition,
+  extractPosition,
+  calculateDirection,
+  calculateDistance,
+  buildEntityState,
+} from "./movement.js";
+import { getViewportScale, dragState, state } from "../core.js";
+import { showNotification } from "../ui/interaction.js";
+import { drawEntityTrail } from "./entitytrail.js";
+import { getOrCreateCanvas } from "../ui/radar.js";
+import { findEntityById } from "./autofarm.js";
+import { isValidEntity } from "../utils.js";
 
 window.espEnabled = false;
 window.espColors = {
@@ -15,11 +21,10 @@ window.espColors = {
   tracked: "#ff00ff",
   foodClose: "#00ff00",
   foodMedium: "#88ff88",
-  foodFar: "#44cc44"
+  foodFar: "#44cc44",
 };
 window.espTrackedEntityId = null;
 window.espMode = "players";
-
 
 function refreshUI() {}
 function renderLoop() {
@@ -28,7 +33,12 @@ function renderLoop() {
   overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
   const currentPlayerPos = getAnimalPosition();
   if (currentPlayerPos && window.entityTrailEnabled) {
-    drawEntityTrail(overlayCtx, overlayCanvas, currentPlayerPos, getViewportScale());
+    drawEntityTrail(
+      overlayCtx,
+      overlayCanvas,
+      currentPlayerPos,
+      getViewportScale(),
+    );
   }
   requestAnimationFrame(renderLoop);
 }
@@ -39,7 +49,8 @@ function drawESP(ctx, gameState, offsetX, offsetY, scale) {
   const myPos = gameState.myPos;
   const espMode = window.espMode;
   const trackedId = window.espTrackedEntityId;
-  let entities = espMode === "players" ? gameState.players || [] : gameState.food || [];
+  let entities =
+    espMode === "players" ? gameState.players || [] : gameState.food || [];
   let viewCenterX = 0;
   let viewCenterY = 0;
   try {
@@ -51,7 +62,7 @@ function drawESP(ctx, gameState, offsetX, offsetY, scale) {
       }
     }
   } catch (err) {}
-  entities.forEach(targetEntity => {
+  entities.forEach((targetEntity) => {
     const deltaX = targetEntity.x - myPos.x;
     const deltaY = targetEntity.y - myPos.y;
     const screenPosX = offsetX + deltaX * scale - viewCenterX;
@@ -60,17 +71,44 @@ function drawESP(ctx, gameState, offsetX, offsetY, scale) {
     const boxSize = 20;
     let espColor;
     if (espMode === "players") {
-      espColor = isTracked ? window.espColors.tracked : targetEntity.distance < 500 ? window.espColors.close : targetEntity.distance < 1500 ? window.espColors.medium : targetEntity.distance < 3000 ? window.espColors.far : window.espColors.veryFar;
+      espColor = isTracked
+        ? window.espColors.tracked
+        : targetEntity.distance < 500
+          ? window.espColors.close
+          : targetEntity.distance < 1500
+            ? window.espColors.medium
+            : targetEntity.distance < 3000
+              ? window.espColors.far
+              : window.espColors.veryFar;
       ctx.strokeStyle = espColor;
       ctx.lineWidth = isTracked ? 3 : 2;
-      ctx.strokeRect(screenPosX - boxSize / 2, screenPosY - boxSize / 2, boxSize, boxSize);
+      ctx.strokeRect(
+        screenPosX - boxSize / 2,
+        screenPosY - boxSize / 2,
+        boxSize,
+        boxSize,
+      );
       ctx.fillStyle = espColor;
       ctx.font = "bold 11px monospace";
-      ctx.fillText(targetEntity.entity?.entityName || targetEntity.entity?.name || "ID:" + targetEntity.id, screenPosX - boxSize / 2, screenPosY - boxSize / 2 - 8);
+      ctx.fillText(
+        targetEntity.entity?.entityName ||
+          targetEntity.entity?.name ||
+          "ID:" + targetEntity.id,
+        screenPosX - boxSize / 2,
+        screenPosY - boxSize / 2 - 8,
+      );
       ctx.font = "10px monospace";
-      ctx.fillText(Math.round(targetEntity.distance).toString(), screenPosX - boxSize / 2, screenPosY + boxSize / 2 + 13);
+      ctx.fillText(
+        Math.round(targetEntity.distance).toString(),
+        screenPosX - boxSize / 2,
+        screenPosY + boxSize / 2 + 13,
+      );
       if (targetEntity.entity?.visibleFishLevel != null) {
-        ctx.fillText("Lvl:" + targetEntity.entity.visibleFishLevel, screenPosX - boxSize / 2, screenPosY + boxSize / 2 + 24);
+        ctx.fillText(
+          "Lvl:" + targetEntity.entity.visibleFishLevel,
+          screenPosX - boxSize / 2,
+          screenPosY + boxSize / 2 + 24,
+        );
       }
       if (window.lockEnabled && window.lockTargetId === targetEntity.id) {
         ctx.strokeStyle = "#ff0000";
@@ -99,14 +137,28 @@ function drawESP(ctx, gameState, offsetX, offsetY, scale) {
       ctx.stroke();
       ctx.globalAlpha = 1;
     } else {
-      espColor = targetEntity.distance < 300 ? window.espColors.foodClose : targetEntity.distance < 1000 ? window.espColors.foodMedium : window.espColors.foodFar;
+      espColor =
+        targetEntity.distance < 300
+          ? window.espColors.foodClose
+          : targetEntity.distance < 1000
+            ? window.espColors.foodMedium
+            : window.espColors.foodFar;
       ctx.strokeStyle = espColor;
       ctx.lineWidth = 1.5;
-      ctx.strokeRect(screenPosX - boxSize / 2, screenPosY - boxSize / 2, boxSize, boxSize);
+      ctx.strokeRect(
+        screenPosX - boxSize / 2,
+        screenPosY - boxSize / 2,
+        boxSize,
+        boxSize,
+      );
       if (targetEntity.distance < 1000) {
         ctx.fillStyle = espColor;
         ctx.font = "9px monospace";
-        ctx.fillText(Math.round(targetEntity.distance).toString(), screenPosX + boxSize / 2 + 3, screenPosY + 3);
+        ctx.fillText(
+          Math.round(targetEntity.distance).toString(),
+          screenPosX + boxSize / 2 + 3,
+          screenPosY + 3,
+        );
       }
     }
   });
@@ -133,7 +185,12 @@ function drawTrackerLine(ctx, canvas, playerPos, zoomScale) {
   const diffY = entityPos.y - playerPos.y;
   const targetX = centerX + diffX * zoomScale;
   const targetY = centerY + diffY * zoomScale;
-  const distance = calculateDistance(playerPos.x, playerPos.y, entityPos.x, entityPos.y);
+  const distance = calculateDistance(
+    playerPos.x,
+    playerPos.y,
+    entityPos.x,
+    entityPos.y,
+  );
   const entityDir = calculateDirection(trackedEntity);
   const pulse = Math.sin(Date.now() / 200) * 0.3 + 0.7;
   const markerSize = 40;
@@ -147,27 +204,53 @@ function drawTrackerLine(ctx, canvas, playerPos, zoomScale) {
   ctx.setLineDash([]);
   ctx.strokeStyle = "rgba(255,0,255," + pulse + ")";
   ctx.lineWidth = 3;
-  ctx.strokeRect(targetX - markerSize / 2, targetY - markerSize / 2, markerSize, markerSize);
+  ctx.strokeRect(
+    targetX - markerSize / 2,
+    targetY - markerSize / 2,
+    markerSize,
+    markerSize,
+  );
   const arrowLength = 50;
   const angle = Math.atan2(entityDir.dirY, entityDir.dirX);
   ctx.beginPath();
   ctx.moveTo(targetX, targetY);
-  ctx.lineTo(targetX + entityDir.dirX * arrowLength, targetY + entityDir.dirY * arrowLength);
+  ctx.lineTo(
+    targetX + entityDir.dirX * arrowLength,
+    targetY + entityDir.dirY * arrowLength,
+  );
   ctx.strokeStyle = "#ff00ff";
   ctx.lineWidth = 2;
   ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(targetX + entityDir.dirX * arrowLength, targetY + entityDir.dirY * arrowLength);
-  ctx.lineTo(targetX + entityDir.dirX * arrowLength - Math.cos(angle - 0.4) * 10, targetY + entityDir.dirY * arrowLength - Math.sin(angle - 0.4) * 10);
-  ctx.moveTo(targetX + entityDir.dirX * arrowLength, targetY + entityDir.dirY * arrowLength);
-  ctx.lineTo(targetX + entityDir.dirX * arrowLength - Math.cos(angle + 0.4) * 10, targetY + entityDir.dirY * arrowLength - Math.sin(angle + 0.4) * 10);
+  ctx.moveTo(
+    targetX + entityDir.dirX * arrowLength,
+    targetY + entityDir.dirY * arrowLength,
+  );
+  ctx.lineTo(
+    targetX + entityDir.dirX * arrowLength - Math.cos(angle - 0.4) * 10,
+    targetY + entityDir.dirY * arrowLength - Math.sin(angle - 0.4) * 10,
+  );
+  ctx.moveTo(
+    targetX + entityDir.dirX * arrowLength,
+    targetY + entityDir.dirY * arrowLength,
+  );
+  ctx.lineTo(
+    targetX + entityDir.dirX * arrowLength - Math.cos(angle + 0.4) * 10,
+    targetY + entityDir.dirY * arrowLength - Math.sin(angle + 0.4) * 10,
+  );
   ctx.strokeStyle = "#ff00ff";
   ctx.lineWidth = 2;
   ctx.stroke();
   const rectWidth = 180;
   const rectHeight = 70;
-  const rectX = Math.min(targetX + markerSize / 2 + 10, canvas.width - rectWidth - 5);
-  const rectY = Math.max(5, Math.min(targetY - rectHeight / 2, canvas.height - rectHeight - 5));
+  const rectX = Math.min(
+    targetX + markerSize / 2 + 10,
+    canvas.width - rectWidth - 5,
+  );
+  const rectY = Math.max(
+    5,
+    Math.min(targetY - rectHeight / 2, canvas.height - rectHeight - 5),
+  );
   ctx.fillStyle = "rgba(0,0,0,0.85)";
   ctx.strokeStyle = "rgba(255,0,255," + pulse + ")";
   ctx.lineWidth = 1.5;
@@ -180,14 +263,28 @@ function drawTrackerLine(ctx, canvas, playerPos, zoomScale) {
   ctx.fillText("TRACKING", rectX + 8, rectY + 18);
   ctx.fillStyle = "#ffffff";
   ctx.font = "11px monospace";
-  ctx.fillText((trackedEntity.name || "Entity " + window.espTrackedEntityId).substring(0, 18), rectX + 8, rectY + 34);
+  ctx.fillText(
+    (trackedEntity.name || "Entity " + window.espTrackedEntityId).substring(
+      0,
+      18,
+    ),
+    rectX + 8,
+    rectY + 34,
+  );
   ctx.fillStyle = "#ff00ff";
   ctx.font = "bold 14px monospace";
   ctx.fillText(Math.round(distance) + " units", rectX + 8, rectY + 52);
-  if (targetX < 0 || targetX > canvas.width || targetY < 0 || targetY > canvas.height) {
+  if (
+    targetX < 0 ||
+    targetX > canvas.width ||
+    targetY < 0 ||
+    targetY > canvas.height
+  ) {
     const arrowAngle = Math.atan2(targetY - centerY, targetX - centerX);
-    const arrowCenterX = centerX + Math.cos(arrowAngle) * (canvas.width / 2 - 40);
-    const arrowCenterY = centerY + Math.sin(arrowAngle) * (canvas.height / 2 - 40);
+    const arrowCenterX =
+      centerX + Math.cos(arrowAngle) * (canvas.width / 2 - 40);
+    const arrowCenterY =
+      centerY + Math.sin(arrowAngle) * (canvas.height / 2 - 40);
     ctx.fillStyle = "rgba(0,0,0,0.85)";
     ctx.beginPath();
     ctx.roundRect(arrowCenterX - 40, arrowCenterY - 15, 80, 30, 4);
@@ -196,16 +293,29 @@ function drawTrackerLine(ctx, canvas, playerPos, zoomScale) {
     ctx.lineWidth = 1.5;
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(arrowCenterX + Math.cos(arrowAngle) * 20, arrowCenterY + Math.sin(arrowAngle) * 20);
-    ctx.lineTo(arrowCenterX - Math.cos(arrowAngle - 0.5) * 10, arrowCenterY - Math.sin(arrowAngle - 0.5) * 10);
-    ctx.lineTo(arrowCenterX - Math.cos(arrowAngle + 0.5) * 10, arrowCenterY - Math.sin(arrowAngle + 0.5) * 10);
+    ctx.moveTo(
+      arrowCenterX + Math.cos(arrowAngle) * 20,
+      arrowCenterY + Math.sin(arrowAngle) * 20,
+    );
+    ctx.lineTo(
+      arrowCenterX - Math.cos(arrowAngle - 0.5) * 10,
+      arrowCenterY - Math.sin(arrowAngle - 0.5) * 10,
+    );
+    ctx.lineTo(
+      arrowCenterX - Math.cos(arrowAngle + 0.5) * 10,
+      arrowCenterY - Math.sin(arrowAngle + 0.5) * 10,
+    );
     ctx.closePath();
     ctx.fillStyle = "#ff00ff";
     ctx.fill();
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 11px monospace";
     ctx.textAlign = "center";
-    ctx.fillText(Math.round(distance).toString(), arrowCenterX, arrowCenterY + 4);
+    ctx.fillText(
+      Math.round(distance).toString(),
+      arrowCenterX,
+      arrowCenterY + 4,
+    );
     ctx.textAlign = "left";
   }
 }
@@ -225,7 +335,7 @@ function drawRadar(ctx, canvas, gameState) {
     x: radarX,
     y: radarY,
     w: radarSize,
-    h: radarSize + 22
+    h: radarSize + 22,
   };
   ctx.fillStyle = "rgba(20,20,20,0.9)";
   ctx.beginPath();
@@ -242,9 +352,19 @@ function drawRadar(ctx, canvas, gameState) {
   ctx.moveTo(radarX, radarY + radarSize / 2);
   ctx.lineTo(radarX + radarSize, radarY + radarSize / 2);
   ctx.stroke();
-  for (let circleRadiusFactor = 0.25; circleRadiusFactor <= 1; circleRadiusFactor += 0.25) {
+  for (
+    let circleRadiusFactor = 0.25;
+    circleRadiusFactor <= 1;
+    circleRadiusFactor += 0.25
+  ) {
     ctx.beginPath();
-    ctx.arc(radarX + radarSize / 2, radarY + radarSize / 2, radarSize / 2 * circleRadiusFactor, 0, Math.PI * 2);
+    ctx.arc(
+      radarX + radarSize / 2,
+      radarY + radarSize / 2,
+      (radarSize / 2) * circleRadiusFactor,
+      0,
+      Math.PI * 2,
+    );
     ctx.strokeStyle = "rgba(60,60,60," + (0.2 + circleRadiusFactor * 0.1) + ")";
     ctx.stroke();
   }
@@ -252,22 +372,47 @@ function drawRadar(ctx, canvas, gameState) {
   ctx.beginPath();
   ctx.arc(radarX + radarSize / 2, radarY + radarSize / 2, 4, 0, Math.PI * 2);
   ctx.fill();
-  const entitiesToDraw = window.espMode === "players" ? gameState.players || [] : gameState.food || [];
-  entitiesToDraw.forEach(targetEntity => {
+  const entitiesToDraw =
+    window.espMode === "players"
+      ? gameState.players || []
+      : gameState.food || [];
+  entitiesToDraw.forEach((targetEntity) => {
     const diffX = targetEntity.x - gameState.myPos.x;
     const diffY = targetEntity.y - gameState.myPos.y;
-    let screenX = Math.max(radarX + 2, Math.min(radarX + radarSize - 2, radarX + radarSize / 2 + diffX * pixelScale));
-    let screenY = Math.max(radarY + 2, Math.min(radarY + radarSize - 2, radarY + radarSize / 2 + diffY * pixelScale));
+    let screenX = Math.max(
+      radarX + 2,
+      Math.min(
+        radarX + radarSize - 2,
+        radarX + radarSize / 2 + diffX * pixelScale,
+      ),
+    );
+    let screenY = Math.max(
+      radarY + 2,
+      Math.min(
+        radarY + radarSize - 2,
+        radarY + radarSize / 2 + diffY * pixelScale,
+      ),
+    );
     let espColor;
     let circleRadius;
     if (window.espMode === "players") {
-      espColor = targetEntity.distance < 500 ? window.espColors.close : targetEntity.distance < 1500 ? window.espColors.medium : targetEntity.distance < 3000 ? window.espColors.far : "#888";
+      espColor =
+        targetEntity.distance < 500
+          ? window.espColors.close
+          : targetEntity.distance < 1500
+            ? window.espColors.medium
+            : targetEntity.distance < 3000
+              ? window.espColors.far
+              : "#888";
       circleRadius = 3;
     } else {
       espColor = window.espColors.foodClose;
       circleRadius = 1.5;
     }
-    if (window.espTrackedEntityId && targetEntity.id === window.espTrackedEntityId) {
+    if (
+      window.espTrackedEntityId &&
+      targetEntity.id === window.espTrackedEntityId
+    ) {
       espColor = window.espColors.tracked;
       circleRadius = 4;
     }
@@ -287,13 +432,25 @@ function drawRadar(ctx, canvas, gameState) {
       if (targetEntity) {
         const deltaX = targetEntity.x - gameState.myPos.x;
         const deltaY = targetEntity.y - gameState.myPos.y;
-        const canvasX = Math.max(radarX + 2, Math.min(radarX + radarSize - 2, radarX + radarSize / 2 + deltaX * pixelScale));
-        const canvasY = Math.max(radarY + 2, Math.min(radarY + radarSize - 2, radarY + radarSize / 2 + deltaY * pixelScale));
+        const canvasX = Math.max(
+          radarX + 2,
+          Math.min(
+            radarX + radarSize - 2,
+            radarX + radarSize / 2 + deltaX * pixelScale,
+          ),
+        );
+        const canvasY = Math.max(
+          radarY + 2,
+          Math.min(
+            radarY + radarSize - 2,
+            radarY + radarSize / 2 + deltaY * pixelScale,
+          ),
+        );
         const opacityPulse = Math.sin(Date.now() / 200) * 0.3 + 0.7;
         const {
           r: colorRed,
           g: colorGreen,
-          b: colorBlue
+          b: colorBlue,
         } = window.entityTrailColor;
         const rgbString = colorRed + "," + colorGreen + "," + colorBlue;
         ctx.strokeStyle = "rgba(" + rgbString + "," + opacityPulse + ")";
@@ -315,8 +472,24 @@ function drawRadar(ctx, canvas, gameState) {
           ctx.lineWidth = 1;
           ctx.beginPath();
           window.entityTrailHistory.forEach((entity, entityIndex) => {
-            const drawX = Math.max(radarX + 2, Math.min(radarX + radarSize - 2, radarX + radarSize / 2 + (entity.x - gameState.myPos.x) * pixelScale));
-            const drawY = Math.max(radarY + 2, Math.min(radarY + radarSize - 2, radarY + radarSize / 2 + (entity.y - gameState.myPos.y) * pixelScale));
+            const drawX = Math.max(
+              radarX + 2,
+              Math.min(
+                radarX + radarSize - 2,
+                radarX +
+                  radarSize / 2 +
+                  (entity.x - gameState.myPos.x) * pixelScale,
+              ),
+            );
+            const drawY = Math.max(
+              radarY + 2,
+              Math.min(
+                radarY + radarSize - 2,
+                radarY +
+                  radarSize / 2 +
+                  (entity.y - gameState.myPos.y) * pixelScale,
+              ),
+            );
             if (entityIndex === 0) {
               ctx.moveTo(drawX, drawY);
             } else {
@@ -335,13 +508,19 @@ function drawRadar(ctx, canvas, gameState) {
   ctx.fillStyle = "#888";
   ctx.font = "10px monospace";
   ctx.fillText("RADAR", radarX + 5, radarY + radarSize + 14);
-  ctx.fillText((window.espMode === "players" ? "P:" : "F:") + entitiesToDraw.length, radarX + radarSize - 50, radarY + radarSize + 14);
+  ctx.fillText(
+    (window.espMode === "players" ? "P:" : "F:") + entitiesToDraw.length,
+    radarX + radarSize - 50,
+    radarY + radarSize + 14,
+  );
 }
 function renderEspLoop() {
   if (!window.espEnabled) {
     const overlayElement = document.getElementById("esp-overlay");
     if (overlayElement) {
-      overlayElement.getContext("2d").clearRect(0, 0, overlayElement.width, overlayElement.height);
+      overlayElement
+        .getContext("2d")
+        .clearRect(0, 0, overlayElement.width, overlayElement.height);
     }
     requestAnimationFrame(renderEspLoop);
     return;
@@ -352,7 +531,13 @@ function renderEspLoop() {
   const currentGameState = buildEntityState();
   const playerData = getAnimalPosition();
   const renderSettings = getViewportScale();
-  drawESP(espCtx, currentGameState, espCanvas.width / 2, espCanvas.height / 2, renderSettings);
+  drawESP(
+    espCtx,
+    currentGameState,
+    espCanvas.width / 2,
+    espCanvas.height / 2,
+    renderSettings,
+  );
   drawTrackerLine(espCtx, espCanvas, playerData, renderSettings);
   drawRadar(espCtx, espCanvas, currentGameState);
   requestAnimationFrame(renderEspLoop);
@@ -362,4 +547,12 @@ function toggleEsp() {
   showNotification(window.espEnabled ? "ESP enabled" : "ESP disabled");
 }
 
-export { refreshUI, renderLoop, drawESP, drawTrackerLine, drawRadar, renderEspLoop, toggleEsp };
+export {
+  refreshUI,
+  renderLoop,
+  drawESP,
+  drawTrackerLine,
+  drawRadar,
+  renderEspLoop,
+  toggleEsp,
+};

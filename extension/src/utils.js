@@ -1,4 +1,3 @@
-
 function generateRandomString(stringLength) {
   let resultString = "";
   for (let index = 0; index < stringLength; index++) {
@@ -7,8 +6,11 @@ function generateRandomString(stringLength) {
   }
   return resultString;
 }
-const getAllPropertyNames = targetObject => {
-  return [...Object.getOwnPropertyNames(Object.getPrototypeOf(targetObject)), ...Object.getOwnPropertyNames(targetObject)];
+const getAllPropertyNames = (targetObject) => {
+  return [
+    ...Object.getOwnPropertyNames(Object.getPrototypeOf(targetObject)),
+    ...Object.getOwnPropertyNames(targetObject),
+  ];
 };
 function isValidEntity(entity) {
   if (!entity) {

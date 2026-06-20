@@ -1,8 +1,8 @@
-import { getGameCanvas } from '../ui/radar.js';
-import { showNotification, simulateClick } from '../ui/interaction.js';
-import { getFirstAnimal, getEntityManager, state } from '../core.js';
-import { getGameState } from './autofarm.js';
-import { isValidEntity } from '../utils.js';
+import { showNotification, simulateClick } from "../ui/interaction.js";
+import { getFirstAnimal, getEntityManager, state } from "../core.js";
+import { getGameCanvas } from "../ui/radar.js";
+import { getGameState } from "./autofarm.js";
+import { isValidEntity } from "../utils.js";
 
 let currentAngleIndex = 0;
 const angleSteps = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
@@ -18,14 +18,16 @@ function startAutoPointerMovement() {
   }
   state.animationIntervalId = setInterval(() => {
     const radius = angleSteps[currentAngleIndex];
-    const angleRadians = Math.PI * 2 * radius / 360;
+    const angleRadians = (Math.PI * 2 * radius) / 360;
     const offsetX = Math.round(orbitRadius * Math.sin(angleRadians));
     const offsetY = Math.round(orbitRadius * Math.cos(angleRadians));
-    canvas.dispatchEvent(new MouseEvent("pointermove", {
-      clientX: window.innerWidth / 2 + offsetX,
-      clientY: window.innerHeight / 2 + offsetY,
-      bubbles: true
-    }));
+    canvas.dispatchEvent(
+      new MouseEvent("pointermove", {
+        clientX: window.innerWidth / 2 + offsetX,
+        clientY: window.innerHeight / 2 + offsetY,
+        bubbles: true,
+      }),
+    );
     currentAngleIndex = (currentAngleIndex + 1) % angleSteps.length;
   }, 15);
 }
@@ -51,13 +53,16 @@ function simulatePointerMove(direction) {
   const rect = targetElement.getBoundingClientRect();
   const centerX = rect.left + rect.width / 2;
   const centerY = rect.top + rect.height / 2;
-  const targetX = direction === "left" ? centerX - offsetValue : centerX + offsetValue;
-  targetElement.dispatchEvent(new MouseEvent("pointermove", {
-    clientX: targetX,
-    clientY: centerY,
-    bubbles: true,
-    view: window
-  }));
+  const targetX =
+    direction === "left" ? centerX - offsetValue : centerX + offsetValue;
+  targetElement.dispatchEvent(
+    new MouseEvent("pointermove", {
+      clientX: targetX,
+      clientY: centerY,
+      bubbles: true,
+      view: window,
+    }),
+  );
 }
 function getAnimalPosition() {
   try {
@@ -68,7 +73,7 @@ function getAnimalPosition() {
     const position = animal.position;
     return {
       x: position._x !== undefined ? position._x : position.x,
-      y: position._y !== undefined ? position._y : position.y
+      y: position._y !== undefined ? position._y : position.y,
     };
   } catch (error) {
     return null;
@@ -79,15 +84,17 @@ function extractPosition(entity) {
     return null;
   }
   return {
-    x: entity.position._x !== undefined ? entity.position._x : entity.position.x,
-    y: entity.position._y !== undefined ? entity.position._y : entity.position.y
+    x:
+      entity.position._x !== undefined ? entity.position._x : entity.position.x,
+    y:
+      entity.position._y !== undefined ? entity.position._y : entity.position.y,
   };
 }
 function calculateDirection(entity) {
   if (!entity) {
     return {
       dirX: 1,
-      dirY: 0
+      dirY: 0,
     };
   }
   let dirX = 0;
@@ -111,7 +118,7 @@ function calculateDirection(entity) {
   }
   return {
     dirX: dirX,
-    dirY: dirY
+    dirY: dirY,
   };
 }
 function calculateDistance(x1, y1, x2, y2) {
@@ -131,7 +138,7 @@ function buildEntityState() {
       myPos: localPos,
       entities: [],
       players: [],
-      food: []
+      food: [],
     };
     const entitiesList = parsedState.entitiesList || [];
     for (let i = 0; i < entitiesList.length; i++) {
@@ -139,7 +146,10 @@ function buildEntityState() {
       if (!entity || entity.id === localPlayer.id) {
         continue;
       }
-      if (localPlayer.playerRoomId && entity.playerRoomId === localPlayer.playerRoomId) {
+      if (
+        localPlayer.playerRoomId &&
+        entity.playerRoomId === localPlayer.playerRoomId
+      ) {
         continue;
       }
       const entityPos = extractPosition(entity);
@@ -157,8 +167,8 @@ function buildEntityState() {
         angle: Math.atan2(dy, dx),
         entity: {
           ...entity,
-          name: entity.entityName || entity.name || null
-        }
+          name: entity.entityName || entity.name || null,
+        },
       };
       gameState.entities.push(entityData);
       if (entity.type === 1 || isValidEntity(entity)) {
@@ -167,12 +177,14 @@ function buildEntityState() {
         gameState.food.push(entityData);
       }
     }
-    gameState.players.sort((firstItem, secondItem) => firstItem.distance - secondItem.distance);
+    gameState.players.sort(
+      (firstItem, secondItem) => firstItem.distance - secondItem.distance,
+    );
     gameState.food.sort((itemA, itemB) => itemA.distance - itemB.distance);
     return gameState;
   } catch (error) {
     return {
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -216,15 +228,28 @@ function moveAndClickElement(targetX, targetY, shouldClick) {
   }
   const finalX = centerX + scaledX;
   const finalY = centerY + scaledY;
-  element.dispatchEvent(new MouseEvent("pointermove", {
-    clientX: finalX,
-    clientY: finalY,
-    bubbles: true,
-    view: window
-  }));
+  element.dispatchEvent(
+    new MouseEvent("pointermove", {
+      clientX: finalX,
+      clientY: finalY,
+      bubbles: true,
+      view: window,
+    }),
+  );
   if (shouldClick) {
     simulateClick(finalX, finalY);
   }
 }
 
-export { startAutoPointerMovement, stopAutoPointerMovement, toggleAutoPointerMovement, simulatePointerMove, getAnimalPosition, extractPosition, calculateDirection, calculateDistance, buildEntityState, moveAndClickElement };
+export {
+  startAutoPointerMovement,
+  stopAutoPointerMovement,
+  toggleAutoPointerMovement,
+  simulatePointerMove,
+  getAnimalPosition,
+  extractPosition,
+  calculateDirection,
+  calculateDistance,
+  buildEntityState,
+  moveAndClickElement,
+};

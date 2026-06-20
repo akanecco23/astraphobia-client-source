@@ -1,6 +1,6 @@
-import { showNotification } from './interaction.js';
-import { removeTrackFromPlaylist } from '../storage.js';
-import { state } from '../core.js';
+import { removeTrackFromPlaylist } from "../storage.js";
+import { showNotification } from "./interaction.js";
+import { state } from "../core.js";
 
 let audioPlayer = null;
 let musicPlaylist = JSON.parse(localStorage.getItem("musicPlaylist") || "[]");
@@ -22,7 +22,15 @@ function getYoutubeVideoId(url) {
       return parsedUrl.pathname.slice(1).split("/")[0] || null;
     }
     if (parsedUrl.hostname.includes("youtube.com")) {
-      return parsedUrl.searchParams.get("v") || (parsedUrl.pathname.startsWith("/embed/") ? parsedUrl.pathname.split("/embed/")[1]?.split("/")[0] : null) || (parsedUrl.pathname.startsWith("/shorts/") ? parsedUrl.pathname.split("/shorts/")[1]?.split("/")[0] : null);
+      return (
+        parsedUrl.searchParams.get("v") ||
+        (parsedUrl.pathname.startsWith("/embed/")
+          ? parsedUrl.pathname.split("/embed/")[1]?.split("/")[0]
+          : null) ||
+        (parsedUrl.pathname.startsWith("/shorts/")
+          ? parsedUrl.pathname.split("/shorts/")[1]?.split("/")[0]
+          : null)
+      );
     }
   } catch (error) {}
   return null;
@@ -68,7 +76,8 @@ function getYoutubeHostElement() {
   if (!hostElement) {
     hostElement = document.createElement("div");
     hostElement.id = "ast-youtube-host";
-    hostElement.style.cssText = "position:fixed;left:-99999px;top:-99999px;width:1px;height:1px;opacity:0;pointer-events:none;";
+    hostElement.style.cssText =
+      "position:fixed;left:-99999px;top:-99999px;width:1px;height:1px;opacity:0;pointer-events:none;";
     document.body.appendChild(hostElement);
   }
   return hostElement;
@@ -95,18 +104,20 @@ function playYoutubeVideo(videoId) {
         disablekb: 1,
         fs: 0,
         modestbranding: 1,
-        rel: 0
+        rel: 0,
       },
       events: {
-        onReady: audioPlayerEvent => {
+        onReady: (audioPlayerEvent) => {
           try {
-            audioPlayerEvent.target.setVolume(Math.round(uiaudioState.musicVolume * 100));
+            audioPlayerEvent.target.setVolume(
+              Math.round(uiaudioState.musicVolume * 100),
+            );
             audioPlayerEvent.target.playVideo();
           } catch (unusedVariable) {}
           audioSourceType = "youtube";
           updateMusicPanel();
         },
-        onStateChange: youtubePlayerEvent => {
+        onStateChange: (youtubePlayerEvent) => {
           if (!window.YT) {
             return;
           }
@@ -119,11 +130,14 @@ function playYoutubeVideo(videoId) {
               updateMusicPanel();
             }
           }
-          if (youtubePlayerEvent.data === YT.PlayerState.PLAYING || youtubePlayerEvent.data === YT.PlayerState.PAUSED) {
+          if (
+            youtubePlayerEvent.data === YT.PlayerState.PLAYING ||
+            youtubePlayerEvent.data === YT.PlayerState.PAUSED
+          ) {
             updateMusicPanel();
           }
-        }
-      }
+        },
+      },
     });
   });
 }
@@ -239,7 +253,11 @@ function playNextOrRandom() {
   if (!musicPlaylist.length) {
     return;
   }
-  playTrack(uiaudioState.isMusicShuffleEnabled ? Math.floor(Math.random() * musicPlaylist.length) : state.currentTrackIndex + 1);
+  playTrack(
+    uiaudioState.isMusicShuffleEnabled
+      ? Math.floor(Math.random() * musicPlaylist.length)
+      : state.currentTrackIndex + 1,
+  );
 }
 function playPrevious() {
   if (!musicPlaylist.length) {
@@ -265,24 +283,43 @@ function updateMusicPanel() {
     loopButton.classList.toggle("toggle-on", uiaudioState.isMusicLoopEnabled);
   }
   if (shuffleButton) {
-    shuffleButton.classList.toggle("toggle-on", uiaudioState.isMusicShuffleEnabled);
+    shuffleButton.classList.toggle(
+      "toggle-on",
+      uiaudioState.isMusicShuffleEnabled,
+    );
   }
   if (trackNameDisplay) {
-    trackNameDisplay.textContent = musicPlaylist.length ? musicPlaylist[state.currentTrackIndex]?.name || "Track " + (state.currentTrackIndex + 1) : "No tracks";
+    trackNameDisplay.textContent = musicPlaylist.length
+      ? musicPlaylist[state.currentTrackIndex]?.name ||
+        "Track " + (state.currentTrackIndex + 1)
+      : "No tracks";
   }
   if (trackListContainer) {
     trackListContainer.innerHTML = "";
     musicPlaylist.forEach((event, targetElement) => {
       const containerDiv = document.createElement("div");
-      containerDiv.style.cssText = "display:flex;gap:4px;margin-bottom:3px;align-items:center;";
-      const isToggledOn = targetElement === state.currentTrackIndex && (audioPlayer || youtubePlayer);
-      containerDiv.innerHTML = "\n          <button class=\"ast-btn" + (isToggledOn ? " toggle-on" : "") + "\" style=\"flex:1;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;\" title=\"" + event.name + "\">" + event.name.substring(0, 22) + "</button>\n          <button class=\"ast-btn\" style=\"width:28px;margin:0;text-align:center;padding:6px 4px;color:#f44336;flex-shrink:0;\">X</button>";
-      containerDiv.querySelectorAll("button")[0].onclick = () => playTrack(targetElement);
-      containerDiv.querySelectorAll("button")[1].onclick = () => removeTrackFromPlaylist(targetElement);
+      containerDiv.style.cssText =
+        "display:flex;gap:4px;margin-bottom:3px;align-items:center;";
+      const isToggledOn =
+        targetElement === state.currentTrackIndex &&
+        (audioPlayer || youtubePlayer);
+      containerDiv.innerHTML =
+        '\n          <button class="ast-btn' +
+        (isToggledOn ? " toggle-on" : "") +
+        '" style="flex:1;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;" title="' +
+        event.name +
+        '">' +
+        event.name.substring(0, 22) +
+        '</button>\n          <button class="ast-btn" style="width:28px;margin:0;text-align:center;padding:6px 4px;color:#f44336;flex-shrink:0;">X</button>';
+      containerDiv.querySelectorAll("button")[0].onclick = () =>
+        playTrack(targetElement);
+      containerDiv.querySelectorAll("button")[1].onclick = () =>
+        removeTrackFromPlaylist(targetElement);
       trackListContainer.appendChild(containerDiv);
     });
     if (!musicPlaylist.length) {
-      trackListContainer.innerHTML = "<div style=\"font-size:11px;color:#555;text-align:center;padding:6px 0;\">No tracks yet</div>";
+      trackListContainer.innerHTML =
+        '<div style="font-size:11px;color:#555;text-align:center;padding:6px 0;">No tracks yet</div>';
     }
   }
 }
@@ -291,7 +328,25 @@ export const uiaudioState = {
   isMuted: false,
   musicVolume: parseFloat(localStorage.getItem("musicVolume") || "0.5"),
   isMusicLoopEnabled: localStorage.getItem("musicLoop") !== "false",
-  isMusicShuffleEnabled: localStorage.getItem("musicShuffle") === "true"
+  isMusicShuffleEnabled: localStorage.getItem("musicShuffle") === "true",
 };
 
-export { isYoutubeUrl, getYoutubeVideoId, ensureYoutubeApiReady, getYoutubeHostElement, playYoutubeVideo, stopAllPlayback, playTrack, pausePlayback, resumePlayback, resetPlayback, isPlaying, playNextOrRandom, playPrevious, updateMusicPanel, audioPlayer, musicPlaylist, youtubePlayer };
+export {
+  isYoutubeUrl,
+  getYoutubeVideoId,
+  ensureYoutubeApiReady,
+  getYoutubeHostElement,
+  playYoutubeVideo,
+  stopAllPlayback,
+  playTrack,
+  pausePlayback,
+  resumePlayback,
+  resetPlayback,
+  isPlaying,
+  playNextOrRandom,
+  playPrevious,
+  updateMusicPanel,
+  audioPlayer,
+  musicPlaylist,
+  youtubePlayer,
+};

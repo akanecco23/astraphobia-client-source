@@ -1,5 +1,5 @@
-import { typeChatMessage } from '../ui/interaction.js';
-import { state } from '../core.js';
+import { typeChatMessage } from "../ui/interaction.js";
+import { state } from "../core.js";
 
 let chatInterval = null;
 function startRepeatingTask(taskData, intervalSeconds) {

@@ -1,15 +1,23 @@
-import { musicPlaylist, updateMusicPanel, resetPlayback, uiaudioState } from './ui/audio.js';
-import { showNotification } from './ui/interaction.js';
-import { state } from './core.js';
+import {
+  musicPlaylist,
+  updateMusicPanel,
+  resetPlayback,
+  uiaudioState,
+} from "./ui/audio.js";
+import { showNotification } from "./ui/interaction.js";
+import { state } from "./core.js";
 
 function addTrackToPlaylist(trackUrl, trackName) {
   if (!trackUrl) {
     return;
   }
-  trackName = trackName || trackUrl.split("/").pop().split("?")[0] || "Track " + (musicPlaylist.length + 1);
+  trackName =
+    trackName ||
+    trackUrl.split("/").pop().split("?")[0] ||
+    "Track " + (musicPlaylist.length + 1);
   musicPlaylist.push({
     url: trackUrl,
-    name: trackName
+    name: trackName,
   });
   localStorage.setItem("musicPlaylist", JSON.stringify(musicPlaylist));
   updateMusicPanel();
