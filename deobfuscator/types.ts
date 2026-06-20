@@ -96,6 +96,29 @@ export interface SplitResult {
   entry: string;
 }
 
+export interface SplitterModuleDef {
+  path: string;
+  description?: string;
+}
+
+export interface SplitterBootstrapConfig {
+  exactNames: string[];
+  prefixes: string[];
+  suffixes: string[];
+  minCallees: number;
+}
+
+export interface SplitterConfig {
+  _meta: {
+    version: string | null;
+    lastUpdated: string | null;
+    description: string;
+  };
+  modules: Record<string, SplitterModuleDef>;
+  bootstrap: SplitterBootstrapConfig;
+  scoreThreshold: number;
+}
+
 export interface LLMConfig {
   enabled?: boolean;
   api_base?: string;

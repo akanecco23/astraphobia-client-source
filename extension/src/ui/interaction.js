@@ -1,6 +1,9 @@
 import { getGameCanvas } from './radar.js';
 import { state } from '../core.js';
 import { uiaudioState } from './audio.js';
+import { simulatePointerMove } from '../features/movement.js';
+import { toggleLock } from '../features/aimbot.js';
+import { toggleEntityTrail } from '../features/esp.js';
 
 function simulateTextInput(selector, textToType) {
   const inputElement = document.querySelector(selector);
@@ -312,5 +315,50 @@ function makeElementDraggable(draggableElement) {
     }
   });
 }
+document.addEventListener("keydown", inputEvent => {
+  if (inputEvent.target.matches("input,textarea,select,[contenteditable]")) {
+    return;
+  }
+  if (inputEvent.repeat) {
+    return;
+  }
+  if (inputEvent.key.toLowerCase() === pressedKeyQ.toLowerCase()) {
+    inputEvent.preventDefault();
+    inputEvent.stopPropagation();
+    simulatePointerMove("left");
+  }
+  if (inputEvent.key.toLowerCase() === pressedKeyE.toLowerCase()) {
+    inputEvent.preventDefault();
+    inputEvent.stopPropagation();
+    simulatePointerMove("right");
+  }
+}, true);
+document.addEventListener("keydown", inputEvent_2 => {
+  if (inputEvent_2.target.matches("input,textarea,select,[contenteditable]")) {
+    return;
+  }
+  if (inputEvent_2.repeat) {
+    return;
+  }
+  if (inputEvent_2.key.toLowerCase() === window.lockKey.toLowerCase()) {
+    inputEvent_2.preventDefault();
+    toggleLock();
+  }
+}, true);
+document.addEventListener("keydown", inputEvent_3 => {
+  if (inputEvent_3.target.matches("input,textarea,select,[contenteditable]")) {
+    return;
+  }
+  if (inputEvent_3.repeat) {
+    return;
+  }
+  const entityTraceKey = window.entityTraceKey.toLowerCase();
+  const itemKey = inputEvent_3.key.toLowerCase();
+  const itemCode = inputEvent_3.code.toLowerCase();
+  if (itemKey === entityTraceKey || itemCode === entityTraceKey || itemCode === "key" + entityTraceKey) {
+    inputEvent_3.preventDefault();
+    toggleEntityTrail();
+  }
+}, true);
 
 export { simulateTextInput, showNotification, initAutofillName, typeChatMessage, initializeTextInterceptor, simulateClick, showHalloweenCodeModal, makeElementDraggable };

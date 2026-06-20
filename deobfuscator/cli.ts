@@ -10,12 +10,21 @@ import {
   statSync,
 } from "fs";
 import {
+  applyRenames,
+  extractVariables,
+  isObfuscated,
+  parseCode,
+} from "./ast-utils.js";
+import {
+  loadSplitterConfig,
+  generateModuleAssignments,
+} from "./splitter-config.js";
+import {
   loadConfig,
   resolveLLMConfig,
   resolvePath,
   getRoot,
 } from "./config.js";
-import { applyRenames, extractVariables, isObfuscated } from "./ast-utils.js";
 import { applyTransforms, generateTransforms } from "./transformer.js";
 import { deobfuscate, copyExtras } from "./deobfuscator.js";
 import { splitIntoModules } from "./splitter.js";
@@ -23,11 +32,17 @@ import type { TransformsFile } from "./types.js";
 import { cloneOrUpdate } from "./downloader.js";
 import { renameVariables } from "./renamer.js";
 import { MappingStore } from "./mapping.js";
+import _generate from "@babel/generator";
 import { VERSIONS } from "./types.js";
+import { LLMClient } from "./llm.js";
 import { resolve, join } from "path";
 import { program } from "commander";
+import * as t from "@babel/types";
 import { log } from "./logger.js";
 import { dirname } from "path";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const generate = (_generate as any).default ?? _generate;
 import * as Diff from "diff";
 import "dotenv/config";
 
@@ -149,8 +164,81 @@ async function processVersion(
   mapping.data._meta.version = version;
   mapping.save();
 
+  if (llmConfig.enabled) {
+    log("info", "Generating module assignments via LLM");
+    const llm = new LLMClient(llmConfig);
+    const splitterConfig = loadSplitterConfig();
+
+    const funcDecls: { name: string; code: string }[] = [];
+    const varDecls: { name: string; code: string }[] = [];
+    const windowProps: string[] = [];
+
+    const ast = parseCode(renamedCode);
+    for (const stmt of ast.program.body) {
+      if (t.isFunctionDeclaration(stmt) && stmt.id) {
+        funcDecls.push({
+          name: stmt.id.name,
+          code: (generate as any)(stmt).code,
+        });
+      } else if (t.isVariableDeclaration(stmt)) {
+        for (const decl of stmt.declarations) {
+          if (t.isIdentifier(decl.id)) {
+            const isFunc =
+              t.isFunctionExpression(decl.init) ||
+              t.isArrowFunctionExpression(decl.init);
+            (isFunc ? funcDecls : varDecls).push({
+              name: decl.id.name,
+              code: `${stmt.kind} ${(generate as any)(decl).code};`,
+            });
+          }
+        }
+      } else if (
+        t.isExpressionStatement(stmt) &&
+        t.isAssignmentExpression(stmt.expression) &&
+        stmt.expression.operator === "=" &&
+        t.isMemberExpression(stmt.expression.left) &&
+        t.isIdentifier(stmt.expression.left.object) &&
+        stmt.expression.left.object.name === "window" &&
+        t.isIdentifier(stmt.expression.left.property)
+      ) {
+        windowProps.push(stmt.expression.left.property.name);
+      }
+    }
+
+    const { functionAssignments, variableAssignments, windowPropAssignments } =
+      await generateModuleAssignments(
+        llm,
+        {
+          functions: funcDecls,
+          variables: varDecls,
+          windowProps,
+        },
+        splitterConfig,
+      );
+
+    for (const [name, mod] of Object.entries(functionAssignments)) {
+      const existing = Object.values(mapping.data.functions).find(
+        (e) => e.name === name,
+      );
+      if (existing) {
+        existing.module = mod;
+      }
+    }
+    for (const [name, mod] of Object.entries(variableAssignments)) {
+      if (mapping.data.variables[name]) {
+        mapping.data.variables[name]!.module = mod;
+      }
+    }
+    mapping.save();
+  }
+
   log("info", "Splitting into modules");
-  const splitResult = await splitIntoModules(renamedCode, mapping, llmConfig);
+  const splitterConfig = loadSplitterConfig();
+  const splitResult = await splitIntoModules(
+    renamedCode,
+    mapping,
+    splitterConfig,
+  );
 
   mkdirSync(srcDir, { recursive: true });
 

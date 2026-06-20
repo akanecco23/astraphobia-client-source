@@ -4,6 +4,13 @@ import { getFirstAnimal, getEntityManager, state } from '../core.js';
 import { getGameState, findEntityById } from './autofarm.js';
 import { isValidEntity } from '../utils.js';
 
+window.entityTrailEnabled = false;
+window.entityTrailTargetId = null;
+window.entityTrailHistory = [];
+window.entityTrailMaxLength = 200;
+window.entityTrailRecordInterval = 100;
+
+
 let currentAngleIndex = 0;
 const angleSteps = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
 const orbitRadius = 300;

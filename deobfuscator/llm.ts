@@ -364,6 +364,51 @@ export class LLMClient {
     }
   }
 
+  async chat(
+    prompt: string,
+    opts?: {
+      systemPrompt?: string;
+      maxTokens?: number;
+      temperature?: number;
+    },
+  ): Promise<string> {
+    if (!this.enabled || !this.apiKey) return "";
+    try {
+      const resp = await this.fetchWithBackoff(
+        `${this.apiBase}/chat/completions`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${this.apiKey}`,
+          },
+          body: JSON.stringify({
+            model: this.model,
+            messages: [
+              {
+                role: "system",
+                content:
+                  opts?.systemPrompt ??
+                  "You are a helpful assistant. You ONLY output valid JSON.",
+              },
+              { role: "user", content: prompt },
+            ],
+            max_tokens: opts?.maxTokens ?? this.maxTokens,
+            temperature: opts?.temperature ?? this.temperature,
+          }),
+        },
+      );
+      if (!resp.ok) throw new Error(`API ${resp.status}: ${await resp.text()}`);
+      const data = (await resp.json()) as {
+        choices?: { message?: { content?: string } }[];
+      };
+      return data.choices?.[0]?.message?.content ?? "";
+    } catch (e) {
+      log("error", `LLM chat error: ${(e as Error).message}`);
+      return "";
+    }
+  }
+
   async assignModule(
     funcCode: string,
     funcName: string,

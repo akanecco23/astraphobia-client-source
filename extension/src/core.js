@@ -1,11 +1,12 @@
 import { getGameState } from './features/autofarm.js';
 import { applyTheme, initBackgroundImage, injectStyles } from './ui/theme.js';
-import { createToolsPanel, createVisionPanel, createCombatPanel, createAutomationPanel, createSettingsPanel, createMusicPanel, createUpdateHistoryPanel } from './ui/panels.js';
+import { createToolsPanel, createVisionPanel, createCombatPanel, createAutomationPanel, createSettingsPanel, createMusicPanel, createUpdateHistoryPanel, pressedKey, togglePanelsVisibility } from './ui/panels.js';
 import { initAdBlocker } from './features/adblock.js';
 import { initRadarDrag } from './ui/radar.js';
 import { initAutofillName } from './ui/interaction.js';
 import { renderLoop, renderEspLoop } from './features/esp.js';
-import { updateLockLoop, autoDodgeLoop } from './features/aimbot.js';
+import { updateLockLoop, autoDodgeLoop, trackNearestPlayer, clearTracking } from './features/aimbot.js';
+import { initAntiDetection } from './features/antidetection.js';
 
 let metadataMap = new WeakMap();
 function wrapWithProxy(targetObject, propertyKey, handler) {
@@ -132,7 +133,62 @@ window.espColors = {
 };
 window.espTrackedEntityId = null;
 window.espMode = "players";
+document.addEventListener("keydown", event => {
+  if (event.target.matches("input,textarea,select")) {
+    return;
+  }
+  if (event.key === "F3") {
+    event.preventDefault();
+    trackNearestPlayer();
+  }
+  if (event.key === "F4") {
+    event.preventDefault();
+    clearTracking();
+  }
+});
 window.autoDodgeEnabled = false;
+window.autoFarmActive = false;
+window.autoFarmMode = "nearest";
+window.autoFarmRange = 3000;
+window.autoFarmBoost = true;
+window.autoFarmEvolve = true;
+window.autoFarmAvoidPlayers = true;
+window.autoFarmAvoidDistance = 800;
+window.autoFarmStats = {
+  collected: 0,
+  startTime: 0
+};
+window.autoFarmPatrolPoints = [];
+window.autoFarmPatrolIndex = 0;
+window.autoFarmCurrentTarget = null;
+window.autoFarmTargetStartTime = 0;
+window.autoFarmSkipIds = new Set();
+window.autoFarmSkipClearTime = 0;
+window.autoFarmSkipAreas = [];
+document.addEventListener("keydown", keyboardEvent => {
+  if (keyboardEvent.key === pressedKey && !keyboardEvent.repeat && !keyboardEvent.target.matches("input,textarea,button,select")) {
+    keyboardEvent.preventDefault();
+    togglePanelsVisibility();
+  }
+});
+window.addEventListener("load", () => {
+  setTimeout(() => {
+    initAntiDetection();
+    initBackgroundImage();
+  }, 1000);
+  setInterval(() => {
+    if (window.__ss?.states) {
+      for (const gameInstance of window.__ss.states) {
+        if (state.gameInstance?.gameScene?.myAnimals?.length > 0) {
+          state.animalData = state.gameInstance.gameScene;
+          state.gameInstance = state.gameInstance.gameScene.game;
+          window.__cachedEM = null;
+          break;
+        }
+      }
+    }
+  }, 2000);
+});
 
 export const state = {
   currentTime: 0,

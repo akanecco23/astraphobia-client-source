@@ -1,4 +1,5 @@
-import type { ModuleFile, SplitResult, LLMConfig } from "./types.js";
+import { isBootstrapFunction as isBootstrapFromConfig } from "./splitter-config.js";
+import type { ModuleFile, SplitResult, SplitterConfig } from "./types.js";
 import { MappingStore } from "./mapping.js";
 import { parseCode } from "./ast-utils.js";
 import _generate from "@babel/generator";
@@ -8,249 +9,64 @@ import { log } from "./logger.js";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const generate = (_generate as any).default ?? _generate;
 
-const STRING_THEMES: Record<string, string[]> = {
-  ui: [
-    "button",
-    "div",
-    "span",
-    "class",
-    "style",
-    "css",
-    "html",
-    "layout",
-    "panel",
-    "toggle",
-    "theme",
-    "color",
-    "display",
-    "label",
-    "icon",
-    "text",
-    "font",
-    "width",
-    "height",
-    "margin",
-    "padding",
-    "pointer",
-    "menu",
-    "dropdown",
-    "checkbox",
-    "radio",
-    "input",
-    "select",
-    "option",
-    "modal",
-    "dialog",
-    "tooltip",
-    "scroll",
-    "overlay",
-    "sidebar",
-    "header",
-    "footer",
-    "container",
-    "wrapper",
-    "section",
-    "grid",
-    "flex",
-  ],
-  chat: ["chat", "message", "msg", "spam", "autoChat", "chatMessage", "typing"],
-  farm: [
-    "farm",
-    "autoFarm",
-    "food",
-    "coin",
-    "pearl",
-    "score",
-    "xp",
-    "level",
-    "evolve",
-    "biome",
-    "animal",
-    "foodSource",
-    "collect",
-  ],
-  network: [
-    "socket",
-    "packet",
-    "websocket",
-    "connect",
-    "disconnect",
-    "ping",
-    "pong",
-    "encode",
-    "decode",
-    "binary",
-    "buffer",
-    "stream",
-  ],
-  movement: [
-    "move",
-    "position",
-    "angle",
-    "speed",
-    "velocity",
-    "direction",
-    "rotation",
-    "mouse",
-    "drag",
-    "waypoint",
-    "destination",
-    "distance",
-    "radius",
-  ],
-  rendering: [
-    "canvas",
-    "ctx",
-    "draw",
-    "render",
-    "sprite",
-    "texture",
-    "animation",
-    "frame",
-    "tick",
-    "paint",
-    "fill",
-    "stroke",
-    "shape",
-    "circle",
-    "rect",
-    "alpha",
-    "opacity",
-  ],
-  storage: [
-    "localStorage",
-    "sessionStorage",
-    "storage",
-    "save",
-    "load",
-    "config",
-    "settings",
-    "preference",
-    "cache",
-    "store",
-  ],
-  adblock: ["ad", "block", "blocker", "hide", "banner"],
-  utils: ["randomString", "utility", "helper"],
-};
-
-const PATTERN_THEMES: Record<string, RegExp[]> = {
-  ui: [
-    /querySelector\s*\(/,
-    /getElementById\s*\(/,
-    /createElement\s*\(/,
-    /addEventListener\s*\(/,
-    /classList\./,
-    /innerHTML\b/,
-    /textContent\b/,
-    /\.style\b/,
-    /dispatchEvent\s*\(/,
-    /el-input/,
-    /\.name-input/,
-    /\.play-game/,
-  ],
-  farm: [/autoFarm/i, /foodSource/i, /biome/i, /evolve/i, /\.animal/i],
-  movement: [
-    /setInterval\s*\(/,
-    /clearInterval\s*\(/,
-    /distance\s*\(/,
-    /Math\.sqrt/,
-    /mouse/,
-    /position/i,
-  ],
-  rendering: [
-    /getContext\s*\(/,
-    /fillRect/,
-    /strokeRect/,
-    /beginPath/,
-    /arc\s*\(/,
-    /lineTo/,
-    /moveTo/,
-    /fillStyle/,
-    /strokeStyle/,
-    /globalAlpha/,
-    /rgba\s*\(/,
-    /rgb\s*\(/,
-  ],
-  storage: [
-    /localStorage\./,
-    /sessionStorage\./,
-    /getItem\s*\(/,
-    /setItem\s*\(/,
-  ],
-  network: [
-    /WebSocket\b/,
-    /onmessage\b/,
-    /\.send\s*\(/,
-    /onopen\b/,
-    /onclose\b/,
-    /onerror\b/,
-  ],
-  adblock: [/\.ad[s_-]/i, /blocker/i, /adblock/i, /\.ads\b/i],
-  chat: [/chat/i, /message/i, /spam/i],
-  utils: [/randomString/i, /propertyNames/i, /isValidEntity/i],
-};
-
-const PREFIX_MODULE: Record<string, string> = {
-  dom: "ui",
-  safe: "storage",
-  iter: "core",
-  calc: "core",
-  fn: "core",
-};
-
-function guessModuleFromName(name: string): string | null {
-  const prefix = name.split("_")[0];
-  if (prefix && prefix in PREFIX_MODULE) return PREFIX_MODULE[prefix]!;
-  return null;
-}
-
-function guessModuleFromStrings(code: string): string {
+function guessModuleFromConfig(
+  code: string,
+  name: string,
+  config: SplitterConfig,
+): string {
+  const moduleNames = Object.keys(config.modules);
   const scores: Record<string, number> = {};
 
-  for (const [theme, keywords] of Object.entries(STRING_THEMES)) {
+  for (const modName of moduleNames) {
     let score = 0;
+    const keywords = modName.split(/[_\-\s]+/);
     for (const kw of keywords) {
+      if (kw.length < 3) continue;
       const re = new RegExp(kw, "gi");
       const matches = code.match(re);
-      if (matches) score += matches.length;
+      if (matches) score += matches.length * 2;
     }
-    scores[theme] = (scores[theme] ?? 0) + score;
+    const def = config.modules[modName];
+    if (def?.description) {
+      for (const descWord of def.description.split(/[,\s]+/)) {
+        if (descWord.length < 3) continue;
+        const re = new RegExp(descWord, "gi");
+        const matches = code.match(re);
+        if (matches) score += matches.length;
+      }
+    }
+    if (score > 0) scores[modName] = score;
   }
 
-  for (const [theme, patterns] of Object.entries(PATTERN_THEMES)) {
-    for (const pat of patterns) {
-      if (pat.test(code)) scores[theme] = (scores[theme] ?? 0) + 10;
+  if (name) {
+    const nameLower = name.toLowerCase();
+    for (const modName of moduleNames) {
+      const keywords = modName.split(/[_\-\s]+/);
+      for (const kw of keywords) {
+        if (kw.length >= 3 && nameLower.includes(kw.toLowerCase())) {
+          scores[modName] = (scores[modName] ?? 0) + 5;
+        }
+      }
     }
   }
 
-  let bestTheme = "core";
+  let bestModule = "core";
   let bestScore = 0;
-  for (const [theme, score] of Object.entries(scores)) {
+  for (const [mod, score] of Object.entries(scores)) {
     if (score > bestScore) {
       bestScore = score;
-      bestTheme = theme;
+      bestModule = mod;
     }
   }
 
-  return bestScore >= 5 ? bestTheme : "core";
+  return bestScore >= config.scoreThreshold ? bestModule : "core";
 }
 
-const FUNCTION_BOOTSTRAP_RE =
-  /^(initialize|setup|start|run|main)\w*[a-z]Application$|^init$/;
-
-function isBootstrapFunction(declName: string, calls: Set<string>): boolean {
-  if (declName === "initializeApplication") return true;
-  if (FUNCTION_BOOTSTRAP_RE.test(declName) && calls.size >= 5) return true;
-  return false;
-}
-
-function isUiInteraction(declCode: string): boolean {
-  return /querySelector|getElementById|createElement|addEventListener/.test(
-    declCode,
-  );
-}
-
-function collectWindowInits(code: string, moduleFiles: ModuleFile[]): void {
+function collectWindowInits(
+  code: string,
+  moduleFiles: ModuleFile[],
+  config: SplitterConfig,
+): void {
   const windowInits: { propName: string; statement: string }[] = [];
 
   const ast = parseCode(code);
@@ -273,30 +89,13 @@ function collectWindowInits(code: string, moduleFiles: ModuleFile[]): void {
   if (windowInits.length === 0) return;
 
   const initsByModule = new Map<ModuleFile, string[]>();
-
-  const WINDOW_PROP_MODULE: Record<string, string> = {
-    autoFarm: "features_autofarm",
-    autoDodge: "features_aimbot",
-    lockEnabled: "features_aimbot",
-    lockTargetId: "features_aimbot",
-    lockKey: "ui",
-    entityTrail: "features_esp",
-    entityTraceKey: "ui",
-    esp: "features_esp",
-  };
+  const moduleNames = Object.keys(config.modules);
 
   for (const { propName, statement } of windowInits) {
-    let targetModName: string | null = null;
-    for (const [prefix, modName] of Object.entries(WINDOW_PROP_MODULE)) {
-      if (propName === prefix || propName.startsWith(prefix)) {
-        targetModName = modName;
-        break;
-      }
-    }
-
     let bestMod: ModuleFile | null = null;
-    if (targetModName) {
-      bestMod = moduleFiles.find((m) => m.name === targetModName) ?? null;
+    const guessMod = guessModuleFromConfig(propName, propName, config);
+    if (guessMod !== "core") {
+      bestMod = moduleFiles.find((m) => m.name === guessMod) ?? null;
     }
     if (!bestMod) {
       const re = new RegExp(`window\\.${propName}\\b`);
@@ -399,29 +198,9 @@ function relativePath(from: string, to: string): string {
   return result;
 }
 
-const MODULE_PATHS: Record<string, string> = {
-  core: "core",
-  utils: "utils",
-  storage: "storage",
-  chat: "features/chat",
-  adblock: "features/adblock",
-  farm: "features/autofarm",
-  movement: "features/movement",
-  rendering: "features/esp",
-  ui: "ui/panels",
-  features_aimbot: "features/aimbot",
-  features_xray: "features/xray",
-  features_antidetection: "features/antidetection",
-  features_movement: "features/movement",
-  features_esp: "features/esp",
-  features_autofarm: "features/autofarm",
-  features_adblock: "features/adblock",
-  features_chat: "features/chat",
-  ui_interaction: "ui/interaction",
-  ui_audio: "ui/audio",
-  ui_radar: "ui/radar",
-  ui_theme: "ui/theme",
-};
+function getModulePath(config: SplitterConfig, modName: string): string {
+  return config.modules[modName]?.path ?? modName;
+}
 
 function replaceOutsideStrings(
   code: string,
@@ -610,7 +389,7 @@ function fixSharedMutableState(modules: ModuleFile[]): void {
 export async function splitIntoModules(
   code: string,
   mapping: MappingStore,
-  _llmConfig?: LLMConfig & { enabled: boolean; concurrency: number },
+  config: SplitterConfig,
 ): Promise<SplitResult> {
   const ast = parseCode(code);
 
@@ -700,37 +479,13 @@ export async function splitIntoModules(
     }
   }
 
-  // Migrate old module name prefixes in mapping
-  const MODULE_MIGRATIONS: Record<string, string> = {
-    cheats_aimbot: "features_aimbot",
-    cheats_xray: "features_xray",
-    cheats_antidetection: "features_antidetection",
-    cheats_movement: "features_movement",
-    chat: "features_chat",
-    farm: "features_autofarm",
-    adblock: "features_adblock",
-    rendering: "features_esp",
-    movement: "features_movement",
-  };
-  for (const fn of Object.values(mapping.data.functions)) {
-    if (fn.module && fn.module in MODULE_MIGRATIONS) {
-      fn.module = MODULE_MIGRATIONS[fn.module]!;
-    }
-  }
-  for (const v of Object.values(mapping.data.variables)) {
-    if (v.module && v.module in MODULE_MIGRATIONS) {
-      v.module = MODULE_MIGRATIONS[v.module]!;
-    }
-  }
-  mapping.save();
-
   for (const decl of funcDecls) {
     const existing = Object.values(mapping.data.functions).find(
       (e) => e.name === decl.name,
     );
     const calls = callGraph.get(decl.name) ?? new Set();
 
-    if (isBootstrapFunction(decl.name, calls)) {
+    if (isBootstrapFromConfig(config, decl.name, calls.size)) {
       nameToModule[decl.name] = "core";
       if (existing) {
         existing.module = "core";
@@ -742,64 +497,17 @@ export async function splitIntoModules(
     if (
       existing?.module &&
       existing.module !== "" &&
-      existing.module !== "core"
+      config.modules[existing.module]
     ) {
       nameToModule[decl.name] = existing.module;
       continue;
     }
-    const heuristic = guessModuleFromStrings(decl.code);
-    const nameHint = guessModuleFromName(decl.name);
-    let assigned = heuristic !== "core" ? heuristic : (nameHint ?? "core");
 
-    if (decl.name === "initRadarDrag" && isUiInteraction(decl.code)) {
-      assigned = "ui";
-    }
-    if (
-      decl.name.startsWith("launch") ||
-      decl.name.endsWith("OnLoad") ||
-      decl.name.endsWith("Bootstrap")
-    ) {
-      assigned = "core";
-    }
-
+    const assigned = guessModuleFromConfig(decl.code, decl.name, config);
     nameToModule[decl.name] = assigned;
     if (existing) {
       existing.module = assigned;
       mapping.save();
-    }
-  }
-
-  // Fix obviously wrong assignments based on function name semantics.
-  for (const decl of funcDecls) {
-    const mod = nameToModule[decl.name];
-    const n = decl.name;
-    if (!mod || mod === "core") continue;
-    if (
-      mod === "storage" &&
-      /entity|game|animal|player|state|manager|property|valid|getAll|detect|anti/i.test(
-        n,
-      ) &&
-      !/track|playlist|shuffle|music|add|remove|storage/i.test(n)
-    ) {
-      nameToModule[decl.name] = /valid|getAll|property/i.test(n)
-        ? "utils"
-        : "core";
-    }
-    if (
-      mod === "ui" &&
-      /adblock|^initAd|removeAd|hideAd/i.test(n) &&
-      !/canvas|draw|render|paint|fill|stroke|youtube|music|radar|drag/i.test(n)
-    ) {
-      nameToModule[decl.name] = "features_adblock";
-    }
-    if (
-      mod === "movement" &&
-      /drag|click|element|pointer|mouse|canvas|draw|render/i.test(n) &&
-      !/move|position|direction|distance|velocity|speed|angle|vector|dodge|track|entity|animal/i.test(
-        n,
-      )
-    ) {
-      nameToModule[decl.name] = "ui";
     }
   }
 
@@ -814,9 +522,22 @@ export async function splitIntoModules(
   }
 
   for (const vDecl of varDecls) {
+    const existing =
+      mapping.data.variables[
+        Object.keys(mapping.data.variables).find(
+          (k) => mapping.data.variables[k]?.name === vDecl.name,
+        ) ?? ""
+      ];
+    if (existing?.module && config.modules[existing.module]) {
+      nameToModule[vDecl.name] = existing.module;
+      continue;
+    }
+
     const users = varUsage.get(vDecl.name);
     if (!users || users.size === 0) {
-      nameToModule[vDecl.name] = "core";
+      const assigned = guessModuleFromConfig(vDecl.code, vDecl.name, config);
+      nameToModule[vDecl.name] = assigned;
+      if (existing) existing.module = assigned;
       continue;
     }
 
@@ -828,177 +549,17 @@ export async function splitIntoModules(
 
     if (userModules.size === 1) {
       nameToModule[vDecl.name] = [...userModules][0]!;
-    } else if (userModules.size > 1) {
-      nameToModule[vDecl.name] = "core";
     } else {
-      nameToModule[vDecl.name] = "core";
+      const assigned = guessModuleFromConfig(vDecl.code, vDecl.name, config);
+      nameToModule[vDecl.name] = assigned;
     }
 
-    const existing =
-      mapping.data.variables[
-        Object.keys(mapping.data.variables).find(
-          (k) => mapping.data.variables[k]?.name === vDecl.name,
-        ) ?? ""
-      ];
     if (existing) existing.module = nameToModule[vDecl.name]!;
   }
   mapping.save();
 
-  // Split UI functions into sub-modules
-  const UI_SUB_MODULES: Record<string, RegExp> = {
-    ui_interaction:
-      /^(simulateTextInput|showNotification|initAutofillName|typeChatMessage|initializeTextInterceptor|simulateClick|showHalloweenCodeModal|makeElementDraggable)/,
-    ui_audio:
-      /^(ensureYoutubeApiReady|getYoutubeHostElement|playYoutubeVideo|playTrack|updateMusicPanel|stopAllPlayback|pausePlayback|resumePlayback|resetPlayback|isPlaying|playNextOrRandom|playPrevious|isYoutubeUrl|getYoutubeVideoId)/,
-    ui_radar:
-      /^(getGameCanvas|updateLockButtonUI|getOrCreateCanvas|initRadarDrag)/,
-    ui_theme: /^(applyTheme|initBackgroundImage|injectStyles)/,
-  };
-
-  // Split feature functions into sub-modules
-  const FEATURE_SUB_MODULES: Record<string, RegExp> = {
-    features_aimbot:
-      /^(toggleLock|updateLockLoop|trackNearestPlayer|clearTracking|enableAutoDodge|disableAutoDodge|autoDodgeLoop|findNearestEntity|findEntitiesInRange|calculateAvoidanceVector)/,
-    features_xray: /^(initializeAstraVision)/,
-    features_antidetection: /^(initAntiDetection)/,
-    features_movement:
-      /^(startAutoPointerMovement|stopAutoPointerMovement|getAnimalPosition|extractPosition|calculateDirection|calculateDistance|buildEntityState|moveAndClickElement|toggleAutoPointerMovement)/,
-    features_esp:
-      /^(toggleEsp|toggleEntityTrail|refreshUI|startEntityTrailTracking|stopEntityTrailTracking|toggleMinimapSize)/,
-    features_chat: /^(startRepeatingTask|stopChatTimer)/,
-  };
-
-  const UTILS_RE = /^(generateRandomString|getAllPropertyNames|isValidEntity)$/;
-
-  for (const decl of funcDecls) {
-    const mod = nameToModule[decl.name];
-    if (!mod) continue;
-
-    if (mod === "ui") {
-      let assigned = false;
-      for (const [subMod, pattern] of Object.entries(UI_SUB_MODULES)) {
-        if (pattern.test(decl.name)) {
-          nameToModule[decl.name] = subMod;
-          assigned = true;
-          break;
-        }
-      }
-      if (!assigned) nameToModule[decl.name] = "ui";
-    }
-
-    if (mod === "movement") {
-      let assigned = false;
-      for (const [subMod, pattern] of Object.entries(FEATURE_SUB_MODULES)) {
-        if (pattern.test(decl.name)) {
-          nameToModule[decl.name] = subMod;
-          assigned = true;
-          break;
-        }
-      }
-      if (!assigned) nameToModule[decl.name] = "features_movement";
-    }
-
-    if (mod === "rendering") {
-      nameToModule[decl.name] = "features_esp";
-    }
-
-    if (mod === "farm") {
-      nameToModule[decl.name] = "features_autofarm";
-    }
-
-    if (mod === "adblock") {
-      nameToModule[decl.name] = "features_adblock";
-    }
-
-    if (mod === "chat") {
-      nameToModule[decl.name] = "features_chat";
-    }
-
-    if (mod === "core" || mod === "storage") {
-      if (UTILS_RE.test(decl.name)) {
-        nameToModule[decl.name] = "utils";
-      } else {
-        let reassigned = false;
-        for (const [subMod, pattern] of Object.entries(UI_SUB_MODULES)) {
-          if (pattern.test(decl.name)) {
-            nameToModule[decl.name] = subMod;
-            reassigned = true;
-            break;
-          }
-        }
-        if (!reassigned) {
-          for (const [subMod, pattern] of Object.entries(FEATURE_SUB_MODULES)) {
-            if (pattern.test(decl.name)) {
-              nameToModule[decl.name] = subMod;
-              reassigned = true;
-              break;
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // Re-assign variables after sub-module splitting so they follow their functions
-  for (const vDecl of varDecls) {
-    const users = varUsage.get(vDecl.name);
-    if (!users || users.size === 0) {
-      nameToModule[vDecl.name] = "core";
-      continue;
-    }
-    const userModules = new Set<string>();
-    for (const fn of users) {
-      const mod = nameToModule[fn];
-      if (mod) userModules.add(mod);
-    }
-    if (userModules.size === 1) {
-      nameToModule[vDecl.name] = [...userModules][0]!;
-    } else if (userModules.size > 1) {
-      nameToModule[vDecl.name] = "core";
-    } else {
-      nameToModule[vDecl.name] = "core";
-    }
-    const existing =
-      mapping.data.variables[
-        Object.keys(mapping.data.variables).find(
-          (k) => mapping.data.variables[k]?.name === vDecl.name,
-        ) ?? ""
-      ];
-    if (existing) existing.module = nameToModule[vDecl.name]!;
-  }
-
-  // Override variable assignments for vars that belong in specific modules
-  // regardless of multi-module usage
-  const VAR_MODULE_OVERRIDES: Record<string, string> = {
-    audioPlayer: "ui_audio",
-    musicPlaylist: "ui_audio",
-    musicVolume: "ui_audio",
-    isMusicLoopEnabled: "ui_audio",
-    isMusicShuffleEnabled: "ui_audio",
-    youtubePlayer: "ui_audio",
-    audioSourceType: "ui_audio",
-    isMuted: "ui_audio",
-  };
-  for (const [vName, targetMod] of Object.entries(VAR_MODULE_OVERRIDES)) {
-    if (nameToModule[vName]) {
-      nameToModule[vName] = targetMod;
-      const existing =
-        mapping.data.variables[
-          Object.keys(mapping.data.variables).find(
-            (k) => mapping.data.variables[k]?.name === vName,
-          ) ?? ""
-        ];
-      if (existing) existing.module = targetMod;
-    }
-  }
-
   for (const expr of exprDecls) {
-    let mod = guessModuleFromStrings(expr.code);
-    if (mod === "farm") mod = "features_autofarm";
-    if (mod === "chat") mod = "features_chat";
-    if (mod === "adblock") mod = "features_adblock";
-    if (mod === "rendering") mod = "features_esp";
-    if (mod === "movement") mod = "features_movement";
+    const mod = guessModuleFromConfig(expr.code, "", config);
     nameToModule[expr.name] = mod;
   }
 
@@ -1077,8 +638,8 @@ export async function splitIntoModules(
         }
       }
       if (usedInThisMod.size > 0) {
-        const depPath = MODULE_PATHS[dep] ?? dep;
-        const currentPath = MODULE_PATHS[modName] ?? modName;
+        const depPath = getModulePath(config, dep);
+        const currentPath = getModulePath(config, modName);
         const rel = relativePath(currentPath, depPath);
         const prefix = rel.startsWith("..") ? "" : "./";
         imports.push(
@@ -1123,7 +684,7 @@ export async function splitIntoModules(
       "",
     ].join("\n");
     const existingMod = moduleFiles.find(
-      (m) => m.path === `${MODULE_PATHS[modName] ?? modName}.js`,
+      (m) => m.path === `${getModulePath(config, modName)}.js`,
     );
     if (existingMod) {
       existingMod.code =
@@ -1135,7 +696,7 @@ export async function splitIntoModules(
     } else {
       moduleFiles.push({
         name: modName,
-        path: `${MODULE_PATHS[modName] ?? modName}.js`,
+        path: `${getModulePath(config, modName)}.js`,
         code: optimizeLetToConst(rawCode),
         exports: allExports,
         imports: [...mod.deps],
@@ -1145,7 +706,7 @@ export async function splitIntoModules(
 
   fixSharedMutableState(moduleFiles);
 
-  collectWindowInits(code, moduleFiles);
+  collectWindowInits(code, moduleFiles, config);
 
   const dedupedExports = new Map<
     string,

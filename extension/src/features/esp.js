@@ -10,11 +10,6 @@ window.entityTrailColor = {
   g: 150,
   b: 0
 };
-window.entityTrailEnabled = false;
-window.entityTrailTargetId = null;
-window.entityTrailHistory = [];
-window.entityTrailMaxLength = 200;
-window.entityTrailRecordInterval = 100;
 window.espEnabled = false;
 window.espColors = {
   close: "#ff0000",

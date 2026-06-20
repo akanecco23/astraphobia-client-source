@@ -419,23 +419,29 @@ function toggleMinimapSize() {
     showNotification("Small minimap enabled");
   }
 }
-window.autoFarmActive = false;
-window.autoFarmMode = "nearest";
-window.autoFarmRange = 3000;
-window.autoFarmBoost = true;
-window.autoFarmEvolve = true;
-window.autoFarmAvoidPlayers = true;
-window.autoFarmAvoidDistance = 800;
-window.autoFarmStats = {
-  collected: 0,
-  startTime: 0
-};
-window.autoFarmPatrolPoints = [];
-window.autoFarmPatrolIndex = 0;
-window.autoFarmCurrentTarget = null;
-window.autoFarmTargetStartTime = 0;
-window.autoFarmSkipIds = new Set();
-window.autoFarmSkipClearTime = 0;
-window.autoFarmSkipAreas = [];
+document.addEventListener("keydown", event_2 => {
+  if (event_2.target.matches("input,textarea,select")) {
+    return;
+  }
+  if (event_2.key === "F5") {
+    event_2.preventDefault();
+    if (window.autoFarmActive) {
+      stopAutoFarm();
+      const autoFarmButton = document.getElementById("autoFarmBtn");
+      if (autoFarmButton) {
+        autoFarmButton.textContent = "Auto Farm";
+        autoFarmButton.classList.remove("toggle-on");
+      }
+    } else {
+      const farmModeSelect = document.getElementById("farmModeSelect");
+      startAutoFarm(farmModeSelect ? farmModeSelect.value : "nearest");
+      const autoFarmButton_2 = document.getElementById("autoFarmBtn");
+      if (autoFarmButton_2) {
+        autoFarmButton_2.textContent = "Stop Farm";
+        autoFarmButton_2.classList.add("toggle-on");
+      }
+    }
+  }
+});
 
 export { getGameState, findEntityById, markAreaAsFailed, isAreaSkipped, findBestFoodCluster, triggerRandomEvolve, checkStuckCondition, setupPatrolRoute, autoFarmLoop, startAutoFarm, stopAutoFarm, toggleMinimapSize };
