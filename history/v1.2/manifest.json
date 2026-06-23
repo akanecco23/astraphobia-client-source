@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "Astraphobia Client",
+  "version": "1.2",
+  "description": "ASTRAPHOBIA CLIENT ON TOP",
+  "author": "Astraphobia",
+  "content_scripts": [
+    {
+      "matches": ["*://*.deeeep.io/*"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    }
+  ],
+  "icons": {
+    "128": "icon128.png"
+  }
+}

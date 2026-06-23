@@ -1,0 +1,408 @@
+import { showNotification } from "./ui/interaction.js";
+import { handleAnimalAction } from "./features/autofarm.js";
+import { togglePanels } from "./ui/panels.js";
+import { setupAntiDetection } from "./features/antidetection.js";
+import { initAdBlocker } from "./features/adblock.js";
+import { applyCustomBackground } from "./ui/theme.js";
+
+let stateMap = new WeakMap();
+function wrapWithProxy(targetObject, propertyKey, proxyHandler) {
+  const originalValue = targetObject[propertyKey];
+  const proxyInstance = new Proxy(originalValue, proxyHandler);
+  stateMap.set(proxyInstance, originalValue);
+  targetObject[propertyKey] = proxyInstance;
+}
+
+let isStarted = false;
+function initNetworkHook(config) {
+  if (isStarted) {
+    return;
+  }
+  function unescapeString(inputString) {
+    if (typeof inputString !== "string") {
+      return inputString;
+    }
+    return inputString.replace(
+      /\\(\\|n|r|t|b|f|v|\d{1,3}|x([\da-fA-F]{2})|u([\da-fA-F]{4})|u\{(0*[\da-fA-F]{1,6})\})/g,
+      (match, escapeSequence, hexValue, unicodeValue, extendedUnicodeValue) => {
+        switch (escapeSequence[0]) {
+          case "\\":
+            return "\\";
+          case "n":
+            return "\n";
+          case "r":
+            return "\r";
+          case "t":
+            return "\t";
+          case "b":
+            return "\b";
+          case "f":
+            return "\f";
+          case "v":
+            return "";
+          case "0":
+          case "1":
+          case "2":
+          case "3":
+          case "4":
+          case "5":
+          case "6":
+          case "7":
+            return String.fromCharCode(Number.parseInt(escapeSequence, 8) || 0);
+          default:
+            if (hexValue != null) {
+              return String.fromCharCode(Number.parseInt(hexValue, 16) || 0);
+            }
+            if (unicodeValue != null) {
+              return String.fromCharCode(
+                Number.parseInt(unicodeValue, 16) || 0,
+              );
+            }
+            if (extendedUnicodeValue != null) {
+              const codePoint = Number.parseInt(extendedUnicodeValue, 16) || 0;
+              if (codePoint > 1114111) {
+                return match;
+              } else {
+                return String.fromCodePoint(codePoint);
+              }
+            }
+            return escapeSequence;
+        }
+      },
+    );
+  }
+  const actionIds = {
+    spawn: 22,
+    createTribe: 5,
+    chat: 100,
+  };
+  const originalEncode = TextEncoder.prototype.encode;
+  TextEncoder.prototype.encode = function (...args) {
+    try {
+      const commandPatterns = [
+        /^(\x14{3}\d+\|6\|)(.+)$/gm,
+        /^(\x14{3}\d+\|8\|)(.+)$/gm,
+        /^(\x14{3}\d+\|14\|)(.+)$/gm,
+        /^(\x13{3}[01])(.+)$/gm,
+      ];
+      for (
+        let patternIndex = 0;
+        patternIndex < commandPatterns.length;
+        patternIndex++
+      ) {
+        const matchResult = commandPatterns[patternIndex].exec(args[0]);
+        if (matchResult && matchResult.length === 3) {
+          const commandHandler = [
+            actionIds.spawn,
+            actionIds.spawn,
+            actionIds.createTribe,
+            actionIds.chat,
+          ][patternIndex];
+          args[0] =
+            matchResult[1] +
+            unescapeString(matchResult[2]).substr(0, commandHandler);
+          break;
+        }
+      }
+    } catch {}
+    return Reflect.apply(originalEncode, this, args);
+  };
+  const inputMaxLengthObserver = new MutationObserver(() => {
+    document
+      .querySelector(".play-game .el-input__inner")
+      ?.setAttribute("maxlength", "80");
+    document
+      .querySelector(".new-tribe .el-input__inner")
+      ?.setAttribute("maxlength", "20");
+    document
+      .querySelector(".chat-input input")
+      ?.setAttribute("maxLength", "1000");
+  });
+  inputMaxLengthObserver.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
+  isStarted = true;
+  if (config) {
+    config.textContent = "Special Characters Active";
+    config.disabled = true;
+    config.style.opacity = "0.6";
+    config.style.cursor = "not-allowed";
+  }
+  showNotification("✅ Special Characters enabled! (One-time use)");
+}
+
+const angles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
+const radius = 300;
+
+let isInitialized = false;
+let isInitialized_2 = false;
+const encryptPacketData = (options, charCode, suffix = "") => {
+  const stringTable = [
+    "ode",
+    "eat",
+    "fr",
+    "bite",
+    "eng",
+    "enc",
+    "the",
+    "code",
+    "rep",
+    "L",
+    "en",
+    "setter",
+  ];
+  if (!options) {
+    return null;
+  }
+  const plainText = ((inputString, keyString) => {
+    const textEncoder = new TextEncoder();
+    const encodedInput =
+      textEncoder[stringTable[5] + stringTable[0]](inputString);
+    const encodedKey = textEncoder[stringTable[10] + stringTable[7]](keyString);
+    const outputBuffer = new Uint8Array(
+      encodedInput["l" + stringTable[4] + stringTable[6].slice(0, 2)],
+    );
+    for (let index = 0; index < encodedInput.length; index++) {
+      outputBuffer[index] =
+        encodedInput[index] ^
+        encodedKey[
+          index %
+            encodedKey[
+              "" +
+                stringTable[9].toLowerCase() +
+                stringTable[10] +
+                "g" +
+                stringTable[6].slice(0, 2)
+            ]
+        ];
+    }
+    return btoa(String.fromCharCode(...outputBuffer));
+  })(
+    String.fromCharCode(charCode)[stringTable[8] + stringTable[1]](3) + suffix,
+    options,
+  );
+  const encodedBytes = new TextEncoder()[stringTable[5] + stringTable[0]](
+    plainText,
+  );
+  const totalBufferSize = 1 + encodedBytes.byteLength + 1;
+  const arrayBuffer = new ArrayBuffer(totalBufferSize);
+  const dataView = new DataView(arrayBuffer);
+  dataView.setUint8(0, 25);
+  new Uint8Array(arrayBuffer)[stringTable[11].slice(0, (9 / 27) * 9)](
+    encodedBytes,
+    1,
+  );
+  dataView.setUint8(totalBufferSize - 1, charCode);
+  return arrayBuffer;
+};
+const securityConfigs = {
+  107: {
+    hasSec: true,
+    secLoadTime: 750,
+    hasScaling: true,
+  },
+  default: {
+    hasSec: false,
+    secLoadTime: 500,
+    hasScaling: false,
+  },
+};
+const sendPacket = (payload, extraData = "") => {
+  if (
+    coreSharedState.gameInstance &&
+    coreSharedState.globalState &&
+    state.socketManager
+  ) {
+    coreSharedState.gameInstance[state.socketManager].sendBytePacket(
+      encryptPacketData(
+        coreSharedState.globalState.token._value,
+        payload,
+        extraData,
+      ),
+    );
+  }
+};
+const state = {};
+const counter = 0;
+const applyGameHacks = () => {
+  if (isInitialized) {
+    return;
+  }
+  if (!coreSharedState.userData) {
+    setTimeout(applyGameHacks, 500);
+    return;
+  }
+  setInterval(() => {
+    try {
+      coreSharedState.gameInstance.viewport.clampZoom({
+        minWidth: 0,
+        maxWidth: 10000000,
+      });
+      coreSharedState.gameInstance.viewport.plugins.plugins.clamp = null;
+      coreSharedState.gameInstance.viewport.plugins.plugins["clamp-zoom"] =
+        null;
+    } catch {}
+  }, 300);
+  try {
+    if (state.setFlash) {
+      coreSharedState.userData[state.setFlash] = () => {};
+    }
+    if (state.terrainManager) {
+      const terrainManager = coreSharedState.userData[state.terrainManager];
+      if (terrainManager && terrainManager.shadow) {
+        terrainManager.shadow.setShadowSize(1000000);
+        terrainManager.shadow.setShadowSize = () => {};
+      }
+    }
+  } catch (error) {
+    console.error(error);
+  }
+  isInitialized = true;
+};
+const initMod = () => {
+  if (isInitialized_2) {
+    return;
+  }
+  function sendActionSequence() {
+    try {
+      handleAnimalAction(1);
+      setTimeout(() => {
+        handleAnimalAction(5000);
+      }, 50);
+      setTimeout(() => {
+        handleAnimalAction(5000);
+      }, 100);
+      setTimeout(() => {
+        handleAnimalAction(5000);
+      }, 150);
+    } catch {}
+  }
+  function createControlOverlay() {
+    try {
+      document.getElementById("ctrl-overlay").remove();
+    } catch {}
+    const overlayElement = document.createElement("div");
+    const gameContainer = document.querySelector("div.game");
+    if (gameContainer) {
+      gameContainer.insertBefore(overlayElement, gameContainer.children[0]);
+    }
+    overlayElement.outerHTML =
+      '<div id="ctrl-overlay" style="width: 100%;height: 100%;position: absolute;display: block;z-index:10000;pointer-events:none;"></div>';
+    document
+      .getElementById("ctrl-overlay")
+      .addEventListener("contextmenu", (event) => event.preventDefault());
+  }
+  createControlOverlay();
+  window.addEventListener(
+    "click",
+    (animalsProcessHandler) => {
+      try {
+        if (!coreSharedState.userData?.myAnimals?.[0]) {
+          return;
+        }
+        const visibleFishLevel =
+          coreSharedState.userData.myAnimals[0].visibleFishLevel;
+        const fishLevelConfig = {
+          ...securityConfigs.default,
+          ...securityConfigs[visibleFishLevel],
+        };
+        if (animalsProcessHandler.ctrlKey) {
+          if (animalsProcessHandler.shiftKey && visibleFishLevel === 107) {
+            sendActionSequence();
+            return;
+          } else if (
+            animalsProcessHandler.shiftKey &&
+            visibleFishLevel !== 101 &&
+            coreSharedState.userData.myAnimals[0]._standing
+          ) {
+            handleAnimalAction(
+              Math.floor(Math.random() * 1647483648) + 500000000,
+            );
+            return;
+          } else {
+            let keyMappingConfig = Object.getOwnPropertyNames(
+              coreSharedState.gameInstance,
+            )
+              .map((serviceKey) => coreSharedState.gameInstance[serviceKey])
+              .find((keyMap) => keyMap.keys instanceof Array);
+            if (keyMappingConfig) {
+              keyMappingConfig.pointerDown = true;
+              keyMappingConfig.pressElapsed = Infinity;
+              keyMappingConfig.setPointerDown(false);
+            }
+          }
+        } else if (animalsProcessHandler.altKey) {
+          handleAnimalAction(
+            coreSharedState.userData?.myAnimals?.[0]?._standing
+              ? 41
+              : Math.floor(fishLevelConfig.secLoadTime / 2),
+          );
+        }
+      } catch {}
+    },
+    false,
+  );
+  window.addEventListener(
+    "keyup",
+    (keyboardEvent) => {
+      try {
+        if (!keyboardEvent.ctrlKey && !keyboardEvent.altKey) {
+          document.getElementById("ctrl-overlay").style.pointerEvents = "none";
+        }
+      } catch {}
+    },
+    false,
+  );
+  window.addEventListener("focus", () => {
+    try {
+      document.getElementById("ctrl-overlay").style.pointerEvents = "none";
+    } catch {}
+  });
+  isInitialized_2 = true;
+};
+
+document.addEventListener("keydown", (event) => {
+  if (
+    event.key === coreSharedState.pressedKey &&
+    !event.repeat &&
+    !event.target.matches("input, textarea, button")
+  ) {
+    event.preventDefault();
+    togglePanels();
+  }
+});
+window.addEventListener("load", () => {
+  setTimeout(() => {
+    setupAntiDetection();
+    initAdBlocker();
+    applyCustomBackground();
+  }, 1000);
+});
+
+export const coreSharedState = {
+  mainInterval: null,
+  isActive: false,
+  animationInterval: null,
+  angleIndex: 0,
+  gameInstance: null,
+  globalState: null,
+  userData: null,
+  pressedKey: "Shift",
+};
+
+export {
+  wrapWithProxy,
+  initNetworkHook,
+  encryptPacketData,
+  sendPacket,
+  applyGameHacks,
+  initMod,
+  stateMap,
+  angles,
+  radius,
+  isInitialized,
+  isInitialized_2,
+  securityConfigs,
+  state,
+};
