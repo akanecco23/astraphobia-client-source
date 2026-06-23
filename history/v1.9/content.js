@@ -16,7 +16,6 @@ import {
   simulateClick,
   moveAndClickTarget,
 } from "./src/features/movement.js";
-import { initAntiDetection } from "./src/features/antidetection.js";
 import { activateAstraVision } from "./src/features/xray.js";
 import { updateLockButton, drawRadar, initRadarDrag } from "./src/ui/radar.js";
 import {
@@ -46,7 +45,6 @@ import {
   detectAndHandleStuck,
   setupPatrolPoints,
   autoFarmLoop,
-  startAutoFarm,
   stopAutoFarm,
 } from "./src/features/autofarm.js";
 import {
@@ -83,9 +81,9 @@ import {
   createSettingsPanel,
   createMusicPanel,
   createUpdatePanel,
+  togglePanelsVisibility,
 } from "./src/ui/panels.js";
 import {
-  startEntityTrail,
   stopEntityTrail,
   toggleEntityTrail,
   drawEntityTrail,
@@ -104,15 +102,18 @@ import {
   findEntityById,
   getGameState_2,
   getViewportScale,
+  startEntityTrail,
   renderLoop,
+  startAutoFarm,
+  initAntiDetection,
   initializeApplication,
-  stateCache,
   currentTime,
   musicPlaylist,
   angles,
   radius,
   offsetValue,
-  config,
+  gameInstance,
+  playerData,
   isLoaded,
   dragState,
   maxDistance,

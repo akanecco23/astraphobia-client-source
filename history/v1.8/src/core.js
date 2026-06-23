@@ -1,5 +1,10 @@
 import { showNotification } from "./ui/interaction.js";
-import { getAllPropertyNames } from "./utils.js";
+import {
+  calculateDistance,
+  getNearbyEntities,
+  getAllPropertyNames,
+} from "./utils.js";
+import { setupPatrolPoints, autoFarmLoop } from "./features/autofarm.js";
 import { applyTheme, initBackground, injectStyles } from "./ui/theme.js";
 import {
   createToolsPanel,
@@ -13,7 +18,7 @@ import {
 import { initAdBlocker } from "./features/adblock.js";
 import { initRadarDrag } from "./ui/radar.js";
 import { renderEspLoop, trackPlayer } from "./features/esp.js";
-import { renderOverlay } from "./features/entitytrail.js";
+import { renderOverlay, toggleEntityTrail } from "./features/entitytrail.js";
 import {
   updateLockOnTarget,
   autoDodgeLoop,
@@ -26,6 +31,116 @@ function wrapWithProxy(targetObject, propertyKey, proxyHandler) {
   const proxyValue = new Proxy(originalValue, proxyHandler);
   stateMap.set(proxyValue, originalValue);
   targetObject[propertyKey] = proxyValue;
+}
+let isFinished = false;
+function interceptTextEncoder() {
+  if (isFinished) {
+    return;
+  }
+  function unescapeString(inputString) {
+    if (typeof inputString !== "string") {
+      return inputString;
+    }
+    return inputString.replace(
+      /\\(\\|n|r|t|b|f|v|\d{1,3}|x([\da-fA-F]{2})|u([\da-fA-F]{4})|u\{(0*[\da-fA-F]{1,6})\})/g,
+      (match, octalStr, hexStr1, hexStr2, hexStr3) => {
+        switch (octalStr[0]) {
+          case "\\":
+            return "\\";
+          case "n":
+            return "\n";
+          case "r":
+            return "\r";
+          case "t":
+            return "\t";
+          case "b":
+            return "\b";
+          case "f":
+            return "\f";
+          case "v":
+            return "";
+          case "0":
+          case "1":
+          case "2":
+          case "3":
+          case "4":
+          case "5":
+          case "6":
+          case "7":
+            return String.fromCharCode(Number.parseInt(octalStr, 8) || 0);
+          default:
+            if (hexStr1 != null) {
+              return String.fromCharCode(Number.parseInt(hexStr1, 16) || 0);
+            }
+            if (hexStr2 != null) {
+              return String.fromCharCode(Number.parseInt(hexStr2, 16) || 0);
+            }
+            if (hexStr3 != null) {
+              const codePoint = Number.parseInt(hexStr3, 16) || 0;
+              if (codePoint > 1114111) {
+                return match;
+              } else {
+                return String.fromCodePoint(codePoint);
+              }
+            }
+            return octalStr;
+        }
+      },
+    );
+  }
+  const actionCodes = {
+    spawn: 22,
+    createTribe: 5,
+    chat: 100,
+  };
+  const originalEncode = TextEncoder.prototype.encode;
+  TextEncoder.prototype.encode = function (...inputArgs) {
+    try {
+      const commandPatterns = [
+        /^(\x14{3}\d+\|6\|)(.+)$/gm,
+        /^(\x14{3}\d+\|8\|)(.+)$/gm,
+        /^(\x14{3}\d+\|14\|)(.+)$/gm,
+        /^(\x13{3}[01])(.+)$/gm,
+      ];
+      for (
+        let patternIndex = 0;
+        patternIndex < commandPatterns.length;
+        patternIndex++
+      ) {
+        const matchResult = commandPatterns[patternIndex].exec(inputArgs[0]);
+        if (matchResult && matchResult.length === 3) {
+          const actionHandler = [
+            actionCodes.spawn,
+            actionCodes.spawn,
+            actionCodes.createTribe,
+            actionCodes.chat,
+          ][patternIndex];
+          inputArgs[0] =
+            matchResult[1] +
+            unescapeString(matchResult[2]).substr(0, actionHandler);
+          break;
+        }
+      }
+    } catch {}
+    return Reflect.apply(originalEncode, this, inputArgs);
+  };
+  const inputMaxLengthObserver = new MutationObserver(() => {
+    document
+      .querySelector(".play-game .el-input__inner")
+      ?.setAttribute("maxlength", "80");
+    document
+      .querySelector(".new-tribe .el-input__inner")
+      ?.setAttribute("maxlength", "20");
+    document
+      .querySelector(".chat-input input")
+      ?.setAttribute("maxLength", "1000");
+  });
+  inputMaxLengthObserver.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
+  isFinished = true;
+  showNotification("Special characters enabled");
 }
 const angles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
 const radius = 300;
@@ -202,6 +317,50 @@ function findEntityById(entityId) {
   }
 }
 let isProcessed = false;
+function startEntityTrail() {
+  if (state.trailInterval) {
+    clearInterval(state.trailInterval);
+    state.trailInterval = null;
+  }
+  state.trailInterval = setInterval(() => {
+    if (!window.entityTrailEnabled || !window.entityTrailTargetId) {
+      return;
+    }
+    const targetEntityId = findEntityById(window.entityTrailTargetId);
+    if (!targetEntityId) {
+      const gameState = getNearbyEntities();
+      if (gameState && gameState.players && gameState.players.length > 0) {
+        window.entityTrailTargetId = gameState.players[0].id;
+      }
+      return;
+    }
+    const targetEntity = getEntityPosition(targetEntityId);
+    if (!targetEntity) {
+      return;
+    }
+    const lastTrailPoint =
+      window.entityTrailHistory[window.entityTrailHistory.length - 1];
+    if (
+      lastTrailPoint &&
+      calculateDistance(
+        lastTrailPoint.x,
+        lastTrailPoint.y,
+        targetEntity.x,
+        targetEntity.y,
+      ) < 5
+    ) {
+      return;
+    }
+    window.entityTrailHistory.push({
+      x: targetEntity.x,
+      y: targetEntity.y,
+      time: Date.now(),
+    });
+    if (window.entityTrailHistory.length > window.entityTrailMaxLength) {
+      window.entityTrailHistory.shift();
+    }
+  }, window.entityTrailRecordInterval);
+}
 let dragState = {
   dragging: false,
   offsetX: 0,
@@ -224,6 +383,29 @@ const maxFailCount = 2;
 const timeThreshold = 20000;
 const timeLimit = 600;
 let randomAngle = 0;
+function startAutoFarm(farmMode) {
+  window.autoFarmMode = farmMode || "nearest";
+  window.autoFarmActive = true;
+  window.autoFarmStats.startTime = Date.now();
+  window.autoFarmStats.collected = 0;
+  window.autoFarmCurrentTarget = null;
+  window.autoFarmTargetStartTime = 0;
+  window.autoFarmSkipIds.clear();
+  window.autoFarmSkipAreas = [];
+  window.autoFarmSkipClearTime = Date.now();
+  state.currentPosition_2 = null;
+  state.counter_2 = 0;
+  state.lastValue2 = 0;
+  state.lastTimestamp_2 = 0;
+  if (farmMode === "patrol") {
+    setupPatrolPoints();
+  }
+  showNotification("Auto farm started (" + window.autoFarmMode + ")");
+  if (!state.isActive_2) {
+    state.isActive_2 = true;
+    autoFarmLoop();
+  }
+}
 let isReady_2 = false;
 const initGameHooks = () => {
   if (isReady_2) {
@@ -409,6 +591,29 @@ document.addEventListener(
   },
   true,
 );
+document.addEventListener(
+  "keydown",
+  (event_3) => {
+    if (event_3.target.matches("input,textarea,select,[contenteditable]")) {
+      return;
+    }
+    if (event_3.repeat) {
+      return;
+    }
+    const entityTraceKey = window.entityTraceKey.toLowerCase();
+    const entityKey = event_3.key.toLowerCase();
+    const entityCode = event_3.code.toLowerCase();
+    if (
+      entityKey === entityTraceKey ||
+      entityCode === entityTraceKey ||
+      entityCode === "key" + entityTraceKey
+    ) {
+      event_3.preventDefault();
+      toggleEntityTrail();
+    }
+  },
+  true,
+);
 document.addEventListener("keydown", (event_4) => {
   if (event_4.target.matches("input,textarea,select")) {
     return;
@@ -444,7 +649,6 @@ export const state = {
   isActive: false,
   mainIntervalId: null,
   isProcessing: false,
-  isFinished: false,
   secondaryIntervalId: null,
   currentIndex: 0,
   currentKey: "q",
@@ -469,6 +673,7 @@ export const state = {
 };
 export {
   wrapWithProxy,
+  interceptTextEncoder,
   getGameState,
   getEntityManager,
   getFirstAnimal,
@@ -476,8 +681,10 @@ export {
   getEntityPosition,
   calculateDirection,
   findEntityById,
+  startEntityTrail,
   clearTracking_2,
   clearTracking_3,
+  startAutoFarm,
   initGameHooks,
   initializeApp,
   angles,

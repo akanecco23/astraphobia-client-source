@@ -1,11 +1,9 @@
 import { typeText, showNotification } from "./src/ui/interaction.js";
-import { applyTheme, initBackground, injectStyles } from "./src/ui/theme.js";
 import {
-  startScheduledTask,
-  stopInterval,
-  typeAndSendMessage,
-} from "./src/features/chat.js";
-import { interceptTextEncoder } from "./src/features/antidetection.js";
+  updateLockButtonUI,
+  drawRadar,
+  initRadarDrag,
+} from "./src/ui/radar.js";
 import {
   startCircularMovement,
   stopMouseSimulation,
@@ -13,20 +11,6 @@ import {
   moveMouseSide,
   simulateClick,
 } from "./src/features/movement.js";
-import { initializeAstraVision } from "./src/features/xray.js";
-import {
-  updateLockButtonUI,
-  drawRadar,
-  initRadarDrag,
-} from "./src/ui/radar.js";
-import {
-  drawEsp,
-  drawTrackedEntity,
-  renderEspLoop,
-  clearTracking,
-  trackPlayer,
-  toggleMinimapSize,
-} from "./src/features/esp.js";
 import {
   updateLockOnTarget,
   toggleLock,
@@ -45,9 +29,23 @@ import {
   detectAndHandleStuck,
   setupPatrolPoints,
   autoFarmLoop,
-  startAutoFarm,
   stopAutoFarm,
 } from "./src/features/autofarm.js";
+import { applyTheme, initBackground, injectStyles } from "./src/ui/theme.js";
+import {
+  startScheduledTask,
+  stopInterval,
+  typeAndSendMessage,
+} from "./src/features/chat.js";
+import { initializeAstraVision } from "./src/features/xray.js";
+import {
+  drawEsp,
+  drawTrackedEntity,
+  renderEspLoop,
+  clearTracking,
+  trackPlayer,
+  toggleMinimapSize,
+} from "./src/features/esp.js";
 import {
   refreshUI,
   showHalloweenModal,
@@ -58,10 +56,10 @@ import {
   createAutomationPanel,
   createSettingsPanel,
   createUpdateHistoryPanel,
+  togglePanelsVisibility,
 } from "./src/ui/panels.js";
 import { initAdBlocker } from "./src/features/adblock.js";
 import {
-  startEntityTrail,
   stopMouseSimulation_2,
   toggleEntityTrail,
   drawEntityTrail,
@@ -69,6 +67,7 @@ import {
 } from "./src/features/entitytrail.js";
 import {
   wrapWithProxy,
+  interceptTextEncoder,
   getGameState,
   getEntityManager,
   getFirstAnimal,
@@ -76,8 +75,10 @@ import {
   getEntityPosition,
   calculateDirection,
   findEntityById,
+  startEntityTrail,
   clearTracking_2,
   clearTracking_3,
+  startAutoFarm,
   initGameHooks,
   initializeApp,
   angles,

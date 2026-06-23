@@ -12,6 +12,7 @@ import {
   getFirstAnimalPosition,
   angle,
   tickInterval,
+  startAutoFarm,
   state,
 } from "../core.js";
 import { moveAndClickTarget } from "./movement.js";
@@ -591,29 +592,6 @@ function autoFarmLoop() {
   }
   setTimeout(autoFarmLoop, 60);
 }
-function startAutoFarm(farmMode) {
-  window.autoFarmMode = farmMode || "nearest";
-  window.autoFarmActive = true;
-  window.autoFarmStats.startTime = Date.now();
-  window.autoFarmStats.collected = 0;
-  window.autoFarmCurrentTarget = null;
-  window.autoFarmTargetStartTime = 0;
-  window.autoFarmSkipIds.clear();
-  window.autoFarmSkipAreas = [];
-  window.autoFarmSkipClearTime = Date.now();
-  state.position = null;
-  state.counter_2 = 0;
-  state.lastValue = 0;
-  state.lastTickTime = 0;
-  if (farmMode === "patrol") {
-    setupPatrolPoints();
-  }
-  showNotification("Auto farm started (" + window.autoFarmMode + ")");
-  if (!state.isToggled) {
-    state.isToggled = true;
-    autoFarmLoop();
-  }
-}
 function stopAutoFarm() {
   window.autoFarmActive = false;
   state.isToggled = false;
@@ -661,6 +639,5 @@ export {
   detectAndHandleStuck,
   setupPatrolPoints,
   autoFarmLoop,
-  startAutoFarm,
   stopAutoFarm,
 };

@@ -15,16 +15,28 @@ const DEFAULT_CONFIG: SplitterConfig = {
       "Module definitions and bootstrap patterns for the splitter. Edit to customize.",
   },
   modules: {
-    core: { path: "core" },
-    utils: { path: "utils" },
+    core: {
+      path: "core",
+      description:
+        "initialization, bootstrap, game hook, proxy wrapping, state resolution, obfuscated key discovery, player data, game instance, socket manager, packet encoding, viewport, zoom clamp, control overlay, Reflect, PropertyNames, sendBytePacket, TextEncoder",
+    },
+    utils: {
+      path: "utils",
+      description:
+        "shared utilities, property enumeration, distance calculation, entity lookup, canvas helpers",
+    },
     storage: { path: "storage" },
-    ui: { path: "ui/panels" },
+    ui_panels: {
+      path: "ui/panels",
+      description:
+        "Main UI panels, toggle, settings menu, panel creation, DOM construction, innerHTML, createElement, appendChild",
+    },
   },
   bootstrap: {
     exactNames: [],
     prefixes: ["launch", "init", "start", "setup"],
     suffixes: ["OnLoad", "Bootstrap", "Application"],
-    minCallees: 5,
+    minCallees: 3,
   },
   scoreThreshold: 5,
 };

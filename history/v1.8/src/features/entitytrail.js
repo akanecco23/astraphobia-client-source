@@ -1,62 +1,12 @@
+import { showNotification } from "../ui/interaction.js";
+import { refreshUI } from "../ui/panels.js";
 import {
-  getEntityPosition,
-  findEntityById,
-  getFirstAnimalPosition,
-  state,
-} from "../core.js";
-import {
-  calculateDistance,
   getNearbyEntities,
   getZoomScale,
   getOrCreateOverlayCanvas,
 } from "../utils.js";
-import { showNotification } from "../ui/interaction.js";
-import { refreshUI } from "../ui/panels.js";
+import { startEntityTrail, getFirstAnimalPosition, state } from "../core.js";
 
-function startEntityTrail() {
-  if (state.trailInterval) {
-    clearInterval(state.trailInterval);
-    state.trailInterval = null;
-  }
-  state.trailInterval = setInterval(() => {
-    if (!window.entityTrailEnabled || !window.entityTrailTargetId) {
-      return;
-    }
-    const targetEntityId = findEntityById(window.entityTrailTargetId);
-    if (!targetEntityId) {
-      const gameState = getNearbyEntities();
-      if (gameState && gameState.players && gameState.players.length > 0) {
-        window.entityTrailTargetId = gameState.players[0].id;
-      }
-      return;
-    }
-    const targetEntity = getEntityPosition(targetEntityId);
-    if (!targetEntity) {
-      return;
-    }
-    const lastTrailPoint =
-      window.entityTrailHistory[window.entityTrailHistory.length - 1];
-    if (
-      lastTrailPoint &&
-      calculateDistance(
-        lastTrailPoint.x,
-        lastTrailPoint.y,
-        targetEntity.x,
-        targetEntity.y,
-      ) < 5
-    ) {
-      return;
-    }
-    window.entityTrailHistory.push({
-      x: targetEntity.x,
-      y: targetEntity.y,
-      time: Date.now(),
-    });
-    if (window.entityTrailHistory.length > window.entityTrailMaxLength) {
-      window.entityTrailHistory.shift();
-    }
-  }, window.entityTrailRecordInterval);
-}
 function stopMouseSimulation_2() {
   if (state.trailInterval) {
     clearInterval(state.trailInterval);
@@ -167,32 +117,8 @@ window.entityTrailTargetId = null;
 window.entityTrailHistory = [];
 window.entityTrailMaxLength = 200;
 window.entityTrailRecordInterval = 100;
-document.addEventListener(
-  "keydown",
-  (event_3) => {
-    if (event_3.target.matches("input,textarea,select,[contenteditable]")) {
-      return;
-    }
-    if (event_3.repeat) {
-      return;
-    }
-    const entityTraceKey = window.entityTraceKey.toLowerCase();
-    const entityKey = event_3.key.toLowerCase();
-    const entityCode = event_3.code.toLowerCase();
-    if (
-      entityKey === entityTraceKey ||
-      entityCode === entityTraceKey ||
-      entityCode === "key" + entityTraceKey
-    ) {
-      event_3.preventDefault();
-      toggleEntityTrail();
-    }
-  },
-  true,
-);
 
 export {
-  startEntityTrail,
   stopMouseSimulation_2,
   toggleEntityTrail,
   drawEntityTrail,

@@ -10,11 +10,49 @@ import { log } from "./logger.js";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const generate = (_generate as any).default ?? _generate;
 
+const BOOTSTRAP_CODE_PATTERNS = [
+  /Function\.prototype\.toString/,
+  /aboveBgPlatformsContainer/,
+  /__proto__\.__proto__.*_0x/,
+  /sendBytePacket/,
+];
+
+const PROTOTYPE_PATCH_RE =
+  /\b(?:TextEncoder|Function|Element|HTMLElement|Node|EventTarget|Object|Array|String|Number)\.prototype\.\w+\s*=/;
+
+function isBootstrapCode(code: string): boolean {
+  let hits = 0;
+  for (const pat of BOOTSTRAP_CODE_PATTERNS) {
+    if (pat.test(code)) hits++;
+  }
+  if (hits >= 2) return true;
+  if (hits >= 1 && PROTOTYPE_PATCH_RE.test(code)) return true;
+  return false;
+}
+
+function isUIPanelCode(code: string, name: string): boolean {
+  if (!name) return false;
+  const nameLower = name.toLowerCase();
+  const hasCreatePrefix =
+    nameLower.startsWith("create") || nameLower.startsWith("build");
+  if (!hasCreatePrefix) return false;
+  let domHits = 0;
+  if (/\bcreateElement\b/.test(code)) domHits++;
+  if (/\binnerHTML\b/.test(code)) domHits++;
+  if (/\bappendChild\b/.test(code)) domHits++;
+  if (/\bquerySelector\b/.test(code)) domHits++;
+  if (/\.style\b/.test(code) && !/style\s*=/.test(code)) domHits++;
+  if (/\.className\b/.test(code) || /classList/.test(code)) domHits++;
+  return domHits >= 2;
+}
+
 function guessModuleFromConfig(
   code: string,
   name: string,
   config: SplitterConfig,
 ): string {
+  if (isBootstrapCode(code)) return "core";
+
   const moduleNames = Object.keys(config.modules);
   const scores: Record<string, number> = {};
 
@@ -49,6 +87,22 @@ function guessModuleFromConfig(
         }
       }
     }
+  }
+
+  if (isUIPanelCode(code, name)) {
+    const uiMod = moduleNames.find((m) => m.startsWith("ui"));
+    if (uiMod && (scores[uiMod] ?? 0) > 0) return uiMod;
+    if (uiMod) scores[uiMod] = (scores[uiMod] ?? 0) + 10;
+  }
+
+  const sortedScores = Object.entries(scores)
+    .filter(([, s]) => s > 0)
+    .sort((a, b) => b[1] - a[1]);
+
+  if (sortedScores.length >= 3) {
+    const top = sortedScores[0]![1];
+    const second = sortedScores[1]![1];
+    if (top < second * 2) return "core";
   }
 
   let bestModule = "core";
@@ -678,7 +732,10 @@ export async function splitIntoModules(
     );
     const calls = callGraph.get(decl.name) ?? new Set();
 
-    if (isBootstrapFromConfig(config, decl.name, calls.size)) {
+    if (
+      isBootstrapFromConfig(config, decl.name, calls.size) ||
+      isBootstrapCode(decl.code)
+    ) {
       nameToModule[decl.name] = "core";
       if (existing) {
         existing.module = "core";

@@ -2,49 +2,25 @@ Index: content.js
 ===================================================================
 --- content.js	v1.6
 +++ content.js	v1.7
-@@ -1,11 +1,7 @@
+@@ -1,97 +1,112 @@
 +import { typeText, showNotification } from "./src/ui/interaction.js";
-+import { setTheme, initHomeBackground, injectStyles } from "./src/ui/theme.js";
  import {
 -  typeText,
 -  showToast,
 -  restoreUIInteractivity,
 -} from "./src/ui/interaction.js";
--import { applyTheme, initBackground, injectStyles } from "./src/ui/theme.js";
--import {
-   startScheduledTask,
-   stopInterval,
-   simulateChatInput,
- } from "./src/features/chat.js";
-@@ -14,83 +10,100 @@
++  updateLockButtonUI,
++  drawRadar,
++  initRadarDragging,
++} from "./src/ui/radar.js";
+ import {
+   startCircularMovement,
    stopMouseSimulation,
    toggleMouseSimulation,
    moveMouseToSide,
    simulateClick,
 -  simulateMoveAndClick,
  } from "./src/features/movement.js";
--import { initializeAntiDetection } from "./src/features/antidetection.js";
--import { drawRadar, initRadarDrag } from "./src/ui/radar.js";
-+import { initAntiTamper } from "./src/features/antidetection.js";
-+import { initializeViewportHacks } from "./src/features/xray.js";
- import {
--  createEspOverlay,
--  drawEsp,
--  drawTrackedEntity,
--  renderEspLoop,
-+  updateLockButtonUI,
-+  drawRadar,
-+  initRadarDragging,
-+} from "./src/ui/radar.js";
-+import {
-+  drawEspEntities,
-+  drawTrackedEntityIndicator,
-+  renderEspOverlay,
-   clearTracking,
-   trackPlayer,
-   toggleMinimapSize,
- } from "./src/features/esp.js";
--import { autoDodgeLoop, enableAutoDodge } from "./src/features/aimbot.js";
  import {
 -  isAreaSkipped,
 +  updateLockOnTarget,
@@ -55,7 +31,6 @@ Index: content.js
 +} from "./src/features/aimbot.js";
 +import {
    handleFarmFailure,
--  isAreaSkipped_2,
 -  findClosestFarmable,
 -  getFarmableEntities,
 -  findOptimalFarmPosition,
@@ -66,7 +41,6 @@ Index: content.js
 -  generatePatrolPoints,
 -  autoFarmUpdate,
 -  startAutoFarmLoop,
--  initAutoFarm,
 +  isAreaSkipped,
 +  findClosestFarmableEntity,
 +  getNearbyFarmables,
@@ -76,9 +50,30 @@ Index: content.js
 +  detectAndHandleStuck,
 +  setupPatrolPoints,
 +  autoFarmLoop,
-+  startAutoFarm,
    stopAutoFarm,
  } from "./src/features/autofarm.js";
+-import { applyTheme, initBackground, injectStyles } from "./src/ui/theme.js";
++import { setTheme, initHomeBackground, injectStyles } from "./src/ui/theme.js";
+ import {
+   startScheduledTask,
+   stopInterval,
+   simulateChatInput,
+ } from "./src/features/chat.js";
+-import { drawRadar, initRadarDrag } from "./src/ui/radar.js";
++import { initializeViewportHacks } from "./src/features/xray.js";
+ import {
+-  createEspOverlay,
+-  drawEsp,
+-  drawTrackedEntity,
+-  renderEspLoop,
++  drawEspEntities,
++  drawTrackedEntityIndicator,
++  renderEspOverlay,
+   clearTracking,
+   trackPlayer,
+   toggleMinimapSize,
+ } from "./src/features/esp.js";
+-import { autoDodgeLoop, enableAutoDodge } from "./src/features/aimbot.js";
  import {
 -  showHalloweenModal,
 +  refreshUI,
@@ -91,12 +86,13 @@ Index: content.js
 +  createAutomationPanel,
    createSettingsPanel,
 -  createUpdateHistoryPanel,
+-  toggleUiVisibility,
 +  createUpdatePanel,
++  togglePanelsVisibility,
  } from "./src/ui/panels.js";
  import { initAdBlocker } from "./src/features/adblock.js";
  import {
 -  wrapWithProxy,
-+  startEntityTrail,
 +  stopMouseSimulation_2,
 +  toggleEntityTrail,
 +  drawEntityTrail,
@@ -110,19 +106,27 @@ Index: content.js
    getEntityPosition,
    calculateDirection,
 -  findEntityById,
++  startEntityTrail,
    clearTracking_2,
    clearTracking_3,
+-  isAreaSkipped_2,
+-  initAutoFarm,
+-  initializeAntiDetection,
 -  initializeViewportSettings,
 -  initializeClient,
--  privateMap,
 -  angleSteps,
++  startAutoFarm,
++  initAntiTamper,
 +  initializeApp,
 +  stateMap,
 +  angleDegrees,
    radius,
    offsetValue,
+-  game,
+-  playerData,
 -  isActive,
--  state,
++  gameInstance,
++  animalData,
 +  settings,
 +  isEnabled,
    dragState,
@@ -175,10 +179,22 @@ Index: src/core.js
 ===================================================================
 --- src/core.js	v1.6
 +++ src/core.js	v1.7
-@@ -1,39 +1,40 @@
+@@ -1,43 +1,50 @@
 -import { showToast, restoreUIInteractivity } from "./ui/interaction.js";
--import { applyTheme, initBackground, injectStyles } from "./ui/theme.js";
+-import { calculateDistance, getAllPropertyNames } from "./utils.js";
 +import { showNotification } from "./ui/interaction.js";
+ import {
+-  generatePatrolPoints,
+-  startAutoFarmLoop,
+-} from "./features/autofarm.js";
+-import { applyTheme, initBackground, injectStyles } from "./ui/theme.js";
++  getEntityById,
++  calculateDistance,
++  getNearbyEntities,
++  proxyProperty,
++  getAllPropertyNames,
++} from "./utils.js";
++import { setupPatrolPoints, autoFarmLoop } from "./features/autofarm.js";
 +import { setTheme, initHomeBackground, injectStyles } from "./ui/theme.js";
  import {
    createToolsPanel,
@@ -198,15 +214,17 @@ Index: src/core.js
 -import { autoDodgeLoop } from "./features/aimbot.js";
 +import { initRadarDragging } from "./ui/radar.js";
 +import { renderEspOverlay, trackPlayer } from "./features/esp.js";
-+import { renderOverlayLoop } from "./features/entitytrail.js";
++import {
++  renderOverlayLoop,
++  toggleEntityTrail,
++} from "./features/entitytrail.js";
 +import {
 +  updateLockOnTarget,
 +  autoDodgeLoop,
 +  toggleLock,
 +} from "./features/aimbot.js";
  import { moveMouseToSide } from "./features/movement.js";
--import { initializeAntiDetection } from "./features/antidetection.js";
--let privateMap = new WeakMap();
+-const privateMap = new WeakMap();
 -function wrapWithProxy(targetObject, propertyKey, handler) {
 -  const originalValue = targetObject[propertyKey];
 -  const proxyValue = new Proxy(originalValue, handler);
@@ -214,7 +232,6 @@ Index: src/core.js
 -  targetObject[propertyKey] = proxyValue;
 -}
 -let isStarted = false;
-+import { initAntiTamper } from "./features/antidetection.js";
 +let stateMap = new WeakMap();
 +let isActive = false;
  function hookTextEncoder() {
@@ -236,7 +253,7 @@ Index: src/core.js
              return "\\";
            case "n":
              return "\n";
-@@ -54,38 +55,36 @@
+@@ -58,38 +65,36 @@
            case "4":
            case "5":
            case "6":
@@ -285,7 +302,7 @@ Index: src/core.js
        const commandPatterns = [
          /^(\x14{3}\d+\|6\|)(.+)$/gm,
          /^(\x14{3}\d+\|8\|)(.+)$/gm,
-@@ -96,24 +95,24 @@
+@@ -100,24 +105,24 @@
          let patternIndex = 0;
          patternIndex < commandPatterns.length;
          patternIndex++
@@ -319,7 +336,7 @@ Index: src/core.js
    const inputMaxLengthObserver = new MutationObserver(() => {
      document
        .querySelector(".play-game .el-input__inner")
-@@ -128,28 +127,27 @@
+@@ -132,27 +137,26 @@
    inputMaxLengthObserver.observe(document.body, {
      childList: true,
      subtree: true,
@@ -333,45 +350,45 @@ Index: src/core.js
 +const angleDegrees = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
  const radius = 300;
  const offsetValue = 400;
+-let game;
+-let globalState;
+-let playerData;
 -let isActive = false;
 -const state = {};
++let gameInstance;
++let appState;
++let animalData;
 +const settings = {};
  function getGameState() {
    try {
-     if (
--      coreSharedState.playerData &&
--      coreSharedState.playerData.myAnimals &&
--      coreSharedState.playerData.myAnimals.length > 0
-+      state.animalData &&
-+      state.animalData.myAnimals &&
-+      state.animalData.myAnimals.length > 0
-     ) {
--      return coreSharedState.playerData;
-+      return state.animalData;
+-    if (playerData && playerData.myAnimals && playerData.myAnimals.length > 0) {
+-      return playerData;
++    if (animalData && animalData.myAnimals && animalData.myAnimals.length > 0) {
++      return animalData;
      }
      const states = window.__ss?.states;
      if (!states) {
--      return coreSharedState.playerData || null;
-+      return state.animalData || null;
+-      return playerData || null;
++      return animalData || null;
      }
      for (let i = 0; i < states.length; i++) {
        if (states[i]?.gameScene?.myAnimals) {
          return states[i].gameScene;
-@@ -161,11 +159,11 @@
+@@ -164,11 +168,11 @@
            }
          }
        }
      }
--    return coreSharedState.playerData || null;
-+    return state.animalData || null;
+-    return playerData || null;
++    return animalData || null;
    } catch (error) {
--    return coreSharedState.playerData || null;
-+    return state.animalData || null;
+-    return playerData || null;
++    return animalData || null;
    }
  }
  function getEntityManager(gameState) {
    if (!gameState) {
-@@ -176,10 +174,10 @@
+@@ -179,10 +183,10 @@
    }
    if (window.__cachedEM) {
      return window.__cachedEM;
@@ -384,7 +401,7 @@ Index: src/core.js
        window.__cachedEM = entityManager;
        return entityManager;
      }
-@@ -201,18 +199,14 @@
+@@ -204,18 +208,14 @@
  function getFirstAnimalPosition() {
    try {
      const animal = getGameState();
@@ -406,7 +423,7 @@ Index: src/core.js
    } catch (error) {
      return null;
    }
-@@ -221,10 +215,12 @@
+@@ -224,10 +224,12 @@
    if (!entity || !entity.position) {
      return null;
    }
@@ -421,7 +438,7 @@ Index: src/core.js
  }
  function calculateDirection(entity) {
    if (!entity) {
-@@ -256,44 +252,9 @@
+@@ -259,43 +261,52 @@
      dirX: dirX,
      dirY: dirY,
    };
@@ -431,17 +448,36 @@ Index: src/core.js
 -    const rawState = getGameState();
 -    if (!rawState) {
 -      return null;
--    }
++let isEnabled = false;
++function startEntityTrail() {
++  if (state.trailInterval) {
++    clearInterval(state.trailInterval);
++    state.trailInterval = null;
++  }
++  state.trailInterval = setInterval(() => {
++    if (!window.entityTrailEnabled || !window.entityTrailTargetId) {
++      return;
+     }
 -    const parsedState = getEntityManager(rawState);
 -    if (!parsedState) {
 -      return null;
--    }
++    const targetEntityId = getEntityById(window.entityTrailTargetId);
++    if (!targetEntityId) {
++      const gameState = getNearbyEntities();
++      if (gameState && gameState.players && gameState.players.length > 0) {
++        window.entityTrailTargetId = gameState.players[0].id;
++      }
++      return;
+     }
 -    let entity = parsedState.entitiesById
 -      ? parsedState.entitiesById[entityId]
 -      : null;
 -    if (!entity && parsedState.entitiesList) {
 -      entity = parsedState.entitiesList.find((item) => item.id === entityId);
--    }
++    const targetEntity = getEntityPosition(targetEntityId);
++    if (!targetEntity) {
++      return;
+     }
 -    if (!entity && parsedState.animalsByPlayerRoomId) {
 -      for (let roomId of Object.keys(parsedState.animalsByPlayerRoomId)) {
 -        const animals = parsedState.animalsByPlayerRoomId[roomId];
@@ -456,18 +492,37 @@ Index: src/core.js
 -          break;
 -        }
 -      }
--    }
++    const lastTrailPoint =
++      window.entityTrailHistory[window.entityTrailHistory.length - 1];
++    if (
++      lastTrailPoint &&
++      calculateDistance(
++        lastTrailPoint.x,
++        lastTrailPoint.y,
++        targetEntity.x,
++        targetEntity.y,
++      ) < 5
++    ) {
++      return;
+     }
 -    return entity;
 -  } catch (error) {
 -    return null;
 -  }
--}
-+let isEnabled = false;
++    window.entityTrailHistory.push({
++      x: targetEntity.x,
++      y: targetEntity.y,
++      time: Date.now(),
++    });
++    if (window.entityTrailHistory.length > window.entityTrailMaxLength) {
++      window.entityTrailHistory.shift();
++    }
++  }, window.entityTrailRecordInterval);
+ }
  let dragState = {
    dragging: false,
    offsetX: 0,
-   offsetY: 0,
-@@ -301,75 +262,45 @@
+@@ -304,33 +315,22 @@
    y: 20,
  };
  function clearTracking_2() {
@@ -488,38 +543,248 @@ Index: src/core.js
  const maxFailCount = 2;
 -const expiryTimeout = 20000;
 -const updateInterval_2 = 600;
+-function isAreaSkipped_2(x, y) {
+-  const currentTime = Date.now();
+-  window.autoFarmSkipAreas = window.autoFarmSkipAreas.filter(
+-    (timerState) => currentTime - timerState.time < expiryTimeout,
+-  );
+-  return window.autoFarmSkipAreas.some(
+-    (cellData) =>
+-      cellData.skipped &&
+-      calculateDistance(x, y, cellData.x, cellData.y) < cellData.radius,
+-  );
+-}
 -let angle = 0;
--const initializeViewportSettings = () => {
--  if (isActive) {
+-function initAutoFarm(farmMode) {
 +const timeoutLimit = 20000;
 +const timeThreshold = 600;
 +let randomAngle = 0;
++function startAutoFarm(farmMode) {
+   window.autoFarmMode = farmMode || "nearest";
+   window.autoFarmActive = true;
+   window.autoFarmStats.startTime = Date.now();
+   window.autoFarmStats.collected = 0;
+@@ -338,96 +338,101 @@
+   window.autoFarmTargetStartTime = 0;
+   window.autoFarmSkipIds.clear();
+   window.autoFarmSkipAreas = [];
+   window.autoFarmSkipClearTime = Date.now();
+-  coreSharedState.position = null;
+-  coreSharedState.counter_2 = 0;
+-  coreSharedState.lastValue = 0;
+-  coreSharedState.lastUpdateTime = 0;
++  state.currentPosition = null;
++  state.counter_2 = 0;
++  state.lastTimestamp_2 = 0;
++  state.previousTimestamp = 0;
+   if (farmMode === "patrol") {
+-    generatePatrolPoints();
++    setupPatrolPoints();
+   }
+-  showToast("Auto farm started (" + window.autoFarmMode + ")");
+-  startAutoFarmLoop();
++  showNotification("Auto farm started (" + window.autoFarmMode + ")");
++  if (!state.isActive_3) {
++    state.isActive_3 = true;
++    autoFarmLoop();
++  }
+ }
+-let isProcessed = false;
+-const initializeAntiDetection = () => {
+-  if (isProcessed) {
++let isReady = false;
++const initAntiTamper = () => {
++  if (isReady) {
+     return;
+   }
+-  isProcessed = true;
++  isReady = true;
+   const cache = {};
+-  for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
+-    cache[propertyKey] = Reflect[propertyKey];
++  for (const reflectMethod of Object.getOwnPropertyNames(Reflect)) {
++    cache[reflectMethod] = Reflect[reflectMethod];
+   }
+   const Proxy = Proxy;
+   const lookupGetter = Object.prototype.__lookupGetter__;
+-  const wrapValue = (registry, key, options) => {
+-    const instance = new Proxy(registry[key], options);
+-    privateMap.set(instance, registry[key]);
+-    registry[key] = instance;
++  const wrapProperty = (target, key, value) => {
++    const instance = new Proxy(target[key], value);
++    stateMap.set(instance, target[key]);
++    target[key] = instance;
+   };
+-  wrapValue(Function.prototype, "toString", {
+-    apply(thisContext, paramKey, args) {
++  wrapProperty(Function.prototype, "toString", {
++    apply(thisArg, argsKey, callContext) {
+       return cache.apply(
+-        thisContext,
+-        privateMap.get(paramKey) || paramKey,
+-        args,
++        thisArg,
++        stateMap.get(argsKey) || argsKey,
++        callContext,
+       );
+     },
+   });
+-  wrapValue(window, "Proxy", {
++  wrapProperty(window, "Proxy", {
+     construct(constructor, constructorArgs) {
+       return cache.construct(constructor, constructorArgs);
+     },
+   });
+-  wrapValue(Proxy, "revocable", {
+-    apply(targetContext, params, extraParams) {
+-      return cache.apply(targetContext, params, extraParams);
++  wrapProperty(Proxy, "revocable", {
++    apply(applyThisArg, applyArgs, applyContext) {
++      return cache.apply(applyThisArg, applyArgs, applyContext);
+     },
+   });
+-  let lastTimestamp = 0;
+-  wrapValue(Function.prototype, "bind", {
+-    apply(thisArg, argsArray, extraArgs) {
++  let lastExecutionTime = 0;
++  wrapProperty(Function.prototype, "bind", {
++    apply(thisContext, args, extraArgs) {
+       try {
+         try {
+           if (
+             lookupGetter.call(extraArgs[0], "aboveBgPlatformsContainer") != null
+           ) {
+-            return cache.apply(thisArg, argsArray, extraArgs);
++            return cache.apply(thisContext, args, extraArgs);
+           }
+         } catch {}
+         if (extraArgs[0] && extraArgs[0].aboveBgPlatformsContainer != null) {
+-          playerData = extraArgs[0];
+-          game = extraArgs[0].game;
++          animalData = extraArgs[0];
++          gameInstance = extraArgs[0].game;
+           window.__cachedEM = null;
+-          const allProperties = getAllPropertyNames(playerData);
+-          const obfuscatedProperties = allProperties.filter((varName) =>
++          const propertyNames = getAllPropertyNames(animalData);
++          const obfuscatedPropertyNames = propertyNames.filter((varName) =>
+             varName.startsWith("_0x"),
+           );
+-          state.setFlash =
+-            Object.getOwnPropertyNames(playerData.__proto__.__proto__)
++          settings.setFlash =
++            Object.getOwnPropertyNames(animalData.__proto__.__proto__)
+               .filter((propName) => propName.startsWith("_0x"))
+               .find(
+-                (functionKey) => playerData[functionKey] instanceof Function,
+-              ) || state.setFlash;
+-          state.terrainManager =
+-            obfuscatedProperties.find(
+-              (shadowKey) =>
+-                typeof playerData[shadowKey]?.shadow !== "undefined",
+-            ) || state.terrainManager;
+-          state.entityManager =
+-            obfuscatedProperties.find(
+-              (entitiesKey) =>
+-                typeof playerData[entitiesKey]?.entitiesList !== "undefined",
+-            ) || state.entityManager;
+-          state.socketManager =
+-            getAllPropertyNames(game).find(
+-              (networkKey) =>
+-                typeof game[networkKey]?.sendBytePacket !== "undefined",
+-            ) || state.socketManager;
++                (methodName) => animalData[methodName] instanceof Function,
++              ) || settings.setFlash;
++          settings.terrainManager =
++            obfuscatedPropertyNames.find(
++              (shadowEntityKey) =>
++                typeof animalData[shadowEntityKey]?.shadow !== "undefined",
++            ) || settings.terrainManager;
++          settings.entityManager =
++            obfuscatedPropertyNames.find(
++              (entitiesListKey) =>
++                typeof animalData[entitiesListKey]?.entitiesList !==
++                "undefined",
++            ) || settings.entityManager;
++          settings.socketManager =
++            getAllPropertyNames(gameInstance).find(
++              (networkClientKey) =>
++                typeof gameInstance[networkClientKey]?.sendBytePacket !==
++                "undefined",
++            ) || settings.socketManager;
+           try {
+-            globalState = document
++            appState = document
+               .getElementById("app")
+               ._vnode.appContext.config.globalProperties.$simpleState.states.find(
+                 (gameStore) => gameStore._storeMeta.id === "game",
+               );
+@@ -437,14 +442,14 @@
+             clearInterval(intervalId);
+           } catch {}
+           intervalId = setInterval(() => {
+             try {
+-              if (!playerData?.myAnimals?.[0]) {
++              if (!animalData?.myAnimals?.[0]) {
+                 return;
+               }
+-              const firstAnimal = playerData.myAnimals[0];
++              const firstAnimal = animalData.myAnimals[0];
+               if (firstAnimal.fadingTrail) {
+-                wrapWithProxy(
++                proxyProperty(
+                   Object.getPrototypeOf(firstAnimal.fadingTrail),
+                   "enable",
+                   {
+                     apply() {},
+@@ -462,72 +467,42 @@
+               }
+               clearInterval(intervalId);
+             } catch {}
+           }, 200);
+-          if (coreSharedState.lastTimestamp < Date.now() - 3000) {
+-            showToast("Client loaded");
+-            coreSharedState.lastTimestamp = Date.now();
++          if (lastExecutionTime < Date.now() - 3000) {
++            showNotification("Client loaded");
++            lastExecutionTime = Date.now();
+           }
+         }
+       } catch {}
+-      return cache.apply(thisArg, argsArray, extraArgs);
++      return cache.apply(thisContext, args, extraArgs);
+     },
+   });
+ };
+-const initializeViewportSettings = () => {
+-  if (isActive) {
 +let pressedKey = "Shift";
 +let isEnabled_2 = false;
 +function initializeApp() {
 +  if (isEnabled_2) {
      return;
    }
--  if (!coreSharedState.playerData) {
+-  if (!playerData) {
 -    setTimeout(initializeViewportSettings, 500);
 -    return;
 -  }
 -  setInterval(() => {
 -    try {
--      coreSharedState.game.viewport.clampZoom({
+-      game.viewport.clampZoom({
 -        minWidth: 0,
 -        maxWidth: 10000000,
 -      });
--      coreSharedState.game.viewport.plugins.plugins.clamp = null;
--      coreSharedState.game.viewport.plugins.plugins["clamp-zoom"] = null;
+-      game.viewport.plugins.plugins.clamp = null;
+-      game.viewport.plugins.plugins["clamp-zoom"] = null;
 -    } catch {}
 -  }, 300);
 -  try {
 -    if (state.setFlash) {
--      coreSharedState.playerData[state.setFlash] = () => {};
+-      playerData[state.setFlash] = () => {};
 -    }
 -    if (state.terrainManager) {
--      const terrainManager = coreSharedState.playerData[state.terrainManager];
+-      const terrainManager = playerData[state.terrainManager];
 -      if (terrainManager?.shadow) {
 -        terrainManager.shadow.setShadowSize(1000000);
 -        terrainManager.shadow.setShadowSize = () => {};
@@ -567,7 +832,7 @@ Index: src/core.js
    }, 1000);
  }
  document.addEventListener(
-@@ -380,105 +311,119 @@
+@@ -538,104 +513,143 @@
      }
      if (event.repeat) {
        return;
@@ -601,6 +866,29 @@ Index: src/core.js
 +    if (event_2.key.toLowerCase() === window.lockKey.toLowerCase()) {
 +      event_2.preventDefault();
 +      toggleLock();
++    }
++  },
++  true,
++);
++document.addEventListener(
++  "keydown",
++  (event_3) => {
++    if (event_3.target.matches("input,textarea,select,[contenteditable]")) {
++      return;
++    }
++    if (event_3.repeat) {
++      return;
++    }
++    const entityTraceKey = window.entityTraceKey.toLowerCase();
++    const lowercaseKey = event_3.key.toLowerCase();
++    const lowercaseCode = event_3.code.toLowerCase();
++    if (
++      lowercaseKey === entityTraceKey ||
++      lowercaseCode === entityTraceKey ||
++      lowercaseCode === "key" + entityTraceKey
++    ) {
++      event_3.preventDefault();
++      toggleEntityTrail();
 +    }
 +  },
 +  true,
@@ -660,9 +948,6 @@ Index: src/core.js
 -  currentIndex: 0,
 -  inputKey: "q",
 -  eventKey: "e",
--  game: null,
--  globalState: null,
--  playerData: null,
 -  isToggled: false,
 -  isInitialized_2: false,
 -  lastTimeA: 0,
@@ -677,9 +962,6 @@ Index: src/core.js
 +  angleIndex: 0,
 +  currentKey: "q",
 +  activeKey: "e",
-+  gameInstance: null,
-+  appState: null,
-+  animalData: null,
 +  isProcessed: false,
 +  isMinimapSmall: false,
 +  trailInterval: null,
@@ -697,10 +979,8 @@ Index: src/core.js
 +  currentPosition: null,
 +  counter_2: 0,
    lastTimestamp_2: 0,
--  isProcessed: false,
 -  pressedKey: "Shift",
 +  lastOffset: 0,
-+  isReady: false,
  };
  export {
 -  wrapWithProxy,
@@ -711,19 +991,27 @@ Index: src/core.js
    getEntityPosition,
    calculateDirection,
 -  findEntityById,
++  startEntityTrail,
    clearTracking_2,
    clearTracking_3,
+-  isAreaSkipped_2,
+-  initAutoFarm,
+-  initializeAntiDetection,
 -  initializeViewportSettings,
 -  initializeClient,
--  privateMap,
 -  angleSteps,
++  startAutoFarm,
++  initAntiTamper,
 +  initializeApp,
 +  stateMap,
 +  angleDegrees,
    radius,
    offsetValue,
+-  game,
+-  playerData,
 -  isActive,
--  state,
++  gameInstance,
++  animalData,
 +  settings,
 +  isEnabled,
    dragState,
@@ -1232,197 +1520,11 @@ Index: src/features/aimbot.js
 +  autoDodgeLoop,
 +  enableAutoDodge,
 +};
-Index: src/features/antidetection.js
-===================================================================
---- src/features/antidetection.js	v1.6
-+++ src/features/antidetection.js	v1.7
-@@ -1,91 +1,89 @@
--import { getAllPropertyNames } from "../utils.js";
--import { privateMap, wrapWithProxy, state, coreSharedState } from "../core.js";
--import { showToast } from "../ui/interaction.js";
-+import { proxyProperty, getAllPropertyNames } from "../utils.js";
-+import { showNotification } from "../ui/interaction.js";
-+import { stateMap, settings, state } from "../core.js";
- 
--const initializeAntiDetection = () => {
--  if (coreSharedState.isProcessed) {
-+const initAntiTamper = () => {
-+  if (state.isReady) {
-     return;
-   }
--  coreSharedState.isProcessed = true;
-+  state.isReady = true;
-   const cache = {};
--  for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
--    cache[propertyKey] = Reflect[propertyKey];
-+  for (const reflectMethod of Object.getOwnPropertyNames(Reflect)) {
-+    cache[reflectMethod] = Reflect[reflectMethod];
-   }
-   const Proxy = Proxy;
-   const lookupGetter = Object.prototype.__lookupGetter__;
--  const wrapValue = (registry, key, options) => {
--    const instance = new Proxy(registry[key], options);
--    privateMap.set(instance, registry[key]);
--    registry[key] = instance;
-+  const wrapProperty = (target, key, value) => {
-+    const instance = new Proxy(target[key], value);
-+    stateMap.set(instance, target[key]);
-+    target[key] = instance;
-   };
--  wrapValue(Function.prototype, "toString", {
--    apply(thisContext, paramKey, args) {
-+  wrapProperty(Function.prototype, "toString", {
-+    apply(thisArg, argsKey, callContext) {
-       return cache.apply(
--        thisContext,
--        privateMap.get(paramKey) || paramKey,
--        args,
-+        thisArg,
-+        stateMap.get(argsKey) || argsKey,
-+        callContext,
-       );
-     },
-   });
--  wrapValue(window, "Proxy", {
-+  wrapProperty(window, "Proxy", {
-     construct(constructor, constructorArgs) {
-       return cache.construct(constructor, constructorArgs);
-     },
-   });
--  wrapValue(Proxy, "revocable", {
--    apply(targetContext, params, extraParams) {
--      return cache.apply(targetContext, params, extraParams);
-+  wrapProperty(Proxy, "revocable", {
-+    apply(applyThisArg, applyArgs, applyContext) {
-+      return cache.apply(applyThisArg, applyArgs, applyContext);
-     },
-   });
--  let lastTimestamp = 0;
--  wrapValue(Function.prototype, "bind", {
--    apply(thisArg, argsArray, extraArgs) {
-+  let lastExecutionTime = 0;
-+  wrapProperty(Function.prototype, "bind", {
-+    apply(thisContext, args, extraArgs) {
-       try {
-         try {
-           if (
-             lookupGetter.call(extraArgs[0], "aboveBgPlatformsContainer") != null
-           ) {
--            return cache.apply(thisArg, argsArray, extraArgs);
-+            return cache.apply(thisContext, args, extraArgs);
-           }
-         } catch {}
-         if (extraArgs[0] && extraArgs[0].aboveBgPlatformsContainer != null) {
--          coreSharedState.playerData = extraArgs[0];
--          coreSharedState.game = extraArgs[0].game;
-+          state.animalData = extraArgs[0];
-+          state.gameInstance = extraArgs[0].game;
-           window.__cachedEM = null;
--          const allProperties = getAllPropertyNames(coreSharedState.playerData);
--          const obfuscatedProperties = allProperties.filter((varName) =>
-+          const propertyNames = getAllPropertyNames(state.animalData);
-+          const obfuscatedPropertyNames = propertyNames.filter((varName) =>
-             varName.startsWith("_0x"),
-           );
--          state.setFlash =
--            Object.getOwnPropertyNames(
--              coreSharedState.playerData.__proto__.__proto__,
--            )
-+          settings.setFlash =
-+            Object.getOwnPropertyNames(state.animalData.__proto__.__proto__)
-               .filter((propName) => propName.startsWith("_0x"))
-               .find(
--                (functionKey) =>
--                  coreSharedState.playerData[functionKey] instanceof Function,
--              ) || state.setFlash;
--          state.terrainManager =
--            obfuscatedProperties.find(
--              (shadowKey) =>
--                typeof coreSharedState.playerData[shadowKey]?.shadow !==
-+                (methodName) =>
-+                  state.animalData[methodName] instanceof Function,
-+              ) || settings.setFlash;
-+          settings.terrainManager =
-+            obfuscatedPropertyNames.find(
-+              (shadowEntityKey) =>
-+                typeof state.animalData[shadowEntityKey]?.shadow !==
-                 "undefined",
--            ) || state.terrainManager;
--          state.entityManager =
--            obfuscatedProperties.find(
--              (entitiesKey) =>
--                typeof coreSharedState.playerData[entitiesKey]?.entitiesList !==
-+            ) || settings.terrainManager;
-+          settings.entityManager =
-+            obfuscatedPropertyNames.find(
-+              (entitiesListKey) =>
-+                typeof state.animalData[entitiesListKey]?.entitiesList !==
-                 "undefined",
--            ) || state.entityManager;
--          state.socketManager =
--            getAllPropertyNames(coreSharedState.game).find(
--              (networkKey) =>
--                typeof coreSharedState.game[networkKey]?.sendBytePacket !==
-+            ) || settings.entityManager;
-+          settings.socketManager =
-+            getAllPropertyNames(state.gameInstance).find(
-+              (networkClientKey) =>
-+                typeof state.gameInstance[networkClientKey]?.sendBytePacket !==
-                 "undefined",
--            ) || state.socketManager;
-+            ) || settings.socketManager;
-           try {
--            coreSharedState.globalState = document
-+            state.appState = document
-               .getElementById("app")
-               ._vnode.appContext.config.globalProperties.$simpleState.states.find(
-                 (gameStore) => gameStore._storeMeta.id === "game",
-               );
-@@ -95,14 +93,14 @@
-             clearInterval(intervalId);
-           } catch {}
-           intervalId = setInterval(() => {
-             try {
--              if (!coreSharedState.playerData?.myAnimals?.[0]) {
-+              if (!state.animalData?.myAnimals?.[0]) {
-                 return;
-               }
--              const firstAnimal = coreSharedState.playerData.myAnimals[0];
-+              const firstAnimal = state.animalData.myAnimals[0];
-               if (firstAnimal.fadingTrail) {
--                wrapWithProxy(
-+                proxyProperty(
-                   Object.getPrototypeOf(firstAnimal.fadingTrail),
-                   "enable",
-                   {
-                     apply() {},
-@@ -120,16 +118,16 @@
-               }
-               clearInterval(intervalId);
-             } catch {}
-           }, 200);
--          if (coreSharedState.lastTimestamp < Date.now() - 3000) {
--            showToast("Client loaded");
--            coreSharedState.lastTimestamp = Date.now();
-+          if (lastExecutionTime < Date.now() - 3000) {
-+            showNotification("Client loaded");
-+            lastExecutionTime = Date.now();
-           }
-         }
-       } catch {}
--      return cache.apply(thisArg, argsArray, extraArgs);
-+      return cache.apply(thisContext, args, extraArgs);
-     },
-   });
- };
- 
--export { initializeAntiDetection };
-+export { initAntiTamper };
 Index: src/features/autofarm.js
 ===================================================================
 --- src/features/autofarm.js	v1.6
 +++ src/features/autofarm.js	v1.7
-@@ -1,19 +1,19 @@
+@@ -1,21 +1,20 @@
  import { calculateDistance, isPlayer, getGameCanvas } from "../utils.js";
 -import { showToast } from "../ui/interaction.js";
 +import { showNotification } from "../ui/interaction.js";
@@ -1435,12 +1537,15 @@ Index: src/features/autofarm.js
 +  timeoutLimit,
    getGameState,
    getEntityManager,
+-  isAreaSkipped_2,
    getFirstAnimalPosition,
 -  angle,
 -  updateInterval_2,
+-  initAutoFarm,
 -  coreSharedState,
 +  randomAngle,
 +  timeThreshold,
++  startAutoFarm,
 +  state,
  } from "../core.js";
 -import { simulateMoveAndClick } from "./movement.js";
@@ -1449,7 +1554,7 @@ Index: src/features/autofarm.js
  window.autoFarmActive = false;
  window.autoFarmMode = "nearest";
  window.autoFarmRange = 3000;
-@@ -32,100 +32,101 @@
+@@ -34,89 +33,101 @@
  window.autoFarmSkipIds = new Set();
  window.autoFarmSkipClearTime = 0;
  window.autoFarmSkipAreas = [];
@@ -1499,22 +1604,17 @@ Index: src/features/autofarm.js
      });
    }
  }
--function isAreaSkipped_2(x, y) {
+-function findClosestFarmable(farmRange) {
 +function isAreaSkipped(x, y) {
-   const currentTime = Date.now();
-   window.autoFarmSkipAreas = window.autoFarmSkipAreas.filter(
--    (timerState) => currentTime - timerState.time < expiryTimeout,
++  const currentTime = Date.now();
++  window.autoFarmSkipAreas = window.autoFarmSkipAreas.filter(
 +    (currentTime) => currentTime - currentTime.time < timeoutLimit,
-   );
-   return window.autoFarmSkipAreas.some(
--    (cellData) =>
--      cellData.skipped &&
--      calculateDistance(x, y, cellData.x, cellData.y) < cellData.radius,
++  );
++  return window.autoFarmSkipAreas.some(
 +    (cell) =>
 +      cell.skipped && calculateDistance(x, y, cell.x, cell.y) < cell.radius,
-   );
- }
--function findClosestFarmable(farmRange) {
++  );
++}
 +function findClosestFarmableEntity(farmRange) {
    farmRange = farmRange || window.autoFarmRange;
    try {
@@ -1598,7 +1698,7 @@ Index: src/features/autofarm.js
          };
        }
      });
-@@ -133,472 +134,458 @@
+@@ -124,492 +135,474 @@
    } catch (error) {
      return null;
    }
@@ -2328,37 +2428,6 @@ Index: src/features/autofarm.js
 -  coreSharedState.isActive_2 = true;
 -  autoFarmUpdate();
 -}
--function initAutoFarm(farmMode) {
-+function startAutoFarm(farmMode) {
-   window.autoFarmMode = farmMode || "nearest";
-   window.autoFarmActive = true;
-   window.autoFarmStats.startTime = Date.now();
-   window.autoFarmStats.collected = 0;
-@@ -606,39 +593,38 @@
-   window.autoFarmTargetStartTime = 0;
-   window.autoFarmSkipIds.clear();
-   window.autoFarmSkipAreas = [];
-   window.autoFarmSkipClearTime = Date.now();
--  coreSharedState.position = null;
--  coreSharedState.counter_2 = 0;
--  coreSharedState.lastValue = 0;
--  coreSharedState.lastUpdateTime = 0;
-+  state.currentPosition = null;
-+  state.counter_2 = 0;
-+  state.lastTimestamp_2 = 0;
-+  state.previousTimestamp = 0;
-   if (farmMode === "patrol") {
--    generatePatrolPoints();
-+    setupPatrolPoints();
-   }
--  showToast("Auto farm started (" + window.autoFarmMode + ")");
--  startAutoFarmLoop();
-+  showNotification("Auto farm started (" + window.autoFarmMode + ")");
-+  if (!state.isActive_3) {
-+    state.isActive_3 = true;
-+    autoFarmLoop();
-+  }
- }
  function stopAutoFarm() {
    window.autoFarmActive = false;
 -  coreSharedState.isActive_2 = false;
@@ -2392,7 +2461,7 @@ Index: src/features/autofarm.js
        stopAutoFarm();
        const autoFarmButton = document.getElementById("autoFarmBtn");
        if (autoFarmButton) {
-@@ -646,9 +632,9 @@
+@@ -617,9 +610,9 @@
          autoFarmButton.classList.remove("toggle-on");
        }
      } else {
@@ -2403,14 +2472,13 @@ Index: src/features/autofarm.js
        if (autoFarmButton_2) {
          autoFarmButton_2.textContent = "Stop Farm";
          autoFarmButton_2.classList.add("toggle-on");
-@@ -657,20 +643,17 @@
+@@ -628,18 +621,16 @@
    }
  });
  
  export {
 -  isAreaSkipped,
    handleFarmFailure,
--  isAreaSkipped_2,
 -  findClosestFarmable,
 -  getFarmableEntities,
 -  findOptimalFarmPosition,
@@ -2421,7 +2489,6 @@ Index: src/features/autofarm.js
 -  generatePatrolPoints,
 -  autoFarmUpdate,
 -  startAutoFarmLoop,
--  initAutoFarm,
 +  isAreaSkipped,
 +  findClosestFarmableEntity,
 +  getNearbyFarmables,
@@ -2431,7 +2498,6 @@ Index: src/features/autofarm.js
 +  detectAndHandleStuck,
 +  setupPatrolPoints,
 +  autoFarmLoop,
-+  startAutoFarm,
    stopAutoFarm,
  };
 Index: src/features/chat.js
@@ -2498,62 +2564,16 @@ Index: src/features/entitytrail.js
 ===================================================================
 --- src/features/entitytrail.js	v1.6
 +++ src/features/entitytrail.js	v1.7
-@@ -0,0 +1,197 @@
+@@ -0,0 +1,127 @@
++import { showNotification } from "../ui/interaction.js";
++import { refreshUI } from "../ui/panels.js";
 +import {
-+  getEntityById,
-+  calculateDistance,
 +  getNearbyEntities,
 +  getZoomLevel,
 +  getOrCreateOverlayCanvas,
 +} from "../utils.js";
-+import { getEntityPosition, getFirstAnimalPosition, state } from "../core.js";
-+import { showNotification } from "../ui/interaction.js";
-+import { refreshUI } from "../ui/panels.js";
++import { startEntityTrail, getFirstAnimalPosition, state } from "../core.js";
 +
-+function startEntityTrail() {
-+  if (state.trailInterval) {
-+    clearInterval(state.trailInterval);
-+    state.trailInterval = null;
-+  }
-+  state.trailInterval = setInterval(() => {
-+    if (!window.entityTrailEnabled || !window.entityTrailTargetId) {
-+      return;
-+    }
-+    const targetEntityId = getEntityById(window.entityTrailTargetId);
-+    if (!targetEntityId) {
-+      const gameState = getNearbyEntities();
-+      if (gameState && gameState.players && gameState.players.length > 0) {
-+        window.entityTrailTargetId = gameState.players[0].id;
-+      }
-+      return;
-+    }
-+    const targetEntity = getEntityPosition(targetEntityId);
-+    if (!targetEntity) {
-+      return;
-+    }
-+    const lastTrailPoint =
-+      window.entityTrailHistory[window.entityTrailHistory.length - 1];
-+    if (
-+      lastTrailPoint &&
-+      calculateDistance(
-+        lastTrailPoint.x,
-+        lastTrailPoint.y,
-+        targetEntity.x,
-+        targetEntity.y,
-+      ) < 5
-+    ) {
-+      return;
-+    }
-+    window.entityTrailHistory.push({
-+      x: targetEntity.x,
-+      y: targetEntity.y,
-+      time: Date.now(),
-+    });
-+    if (window.entityTrailHistory.length > window.entityTrailMaxLength) {
-+      window.entityTrailHistory.shift();
-+    }
-+  }, window.entityTrailRecordInterval);
-+}
 +function stopMouseSimulation_2() {
 +  if (state.trailInterval) {
 +    clearInterval(state.trailInterval);
@@ -2665,32 +2685,8 @@ Index: src/features/entitytrail.js
 +window.entityTrailHistory = [];
 +window.entityTrailMaxLength = 200;
 +window.entityTrailRecordInterval = 100;
-+document.addEventListener(
-+  "keydown",
-+  (event_3) => {
-+    if (event_3.target.matches("input,textarea,select,[contenteditable]")) {
-+      return;
-+    }
-+    if (event_3.repeat) {
-+      return;
-+    }
-+    const entityTraceKey = window.entityTraceKey.toLowerCase();
-+    const lowercaseKey = event_3.key.toLowerCase();
-+    const lowercaseCode = event_3.code.toLowerCase();
-+    if (
-+      lowercaseKey === entityTraceKey ||
-+      lowercaseCode === entityTraceKey ||
-+      lowercaseCode === "key" + entityTraceKey
-+    ) {
-+      event_3.preventDefault();
-+      toggleEntityTrail();
-+    }
-+  },
-+  true,
-+);
 +
 +export {
-+  startEntityTrail,
 +  stopMouseSimulation_2,
 +  toggleEntityTrail,
 +  drawEntityTrail,
@@ -2700,7 +2696,7 @@ Index: src/features/esp.js
 ===================================================================
 --- src/features/esp.js	v1.6
 +++ src/features/esp.js	v1.7
-@@ -1,145 +1,148 @@
+@@ -1,146 +1,149 @@
  import {
 -  getGameCanvas,
    isPlayer,
@@ -2714,8 +2710,10 @@ Index: src/features/esp.js
    getEntityPosition,
    calculateDirection,
 -  findEntityById,
+-  playerData,
    getFirstAnimalPosition,
 -  coreSharedState,
++  animalData,
 +  state,
  } from "../core.js";
  import { drawRadar } from "../ui/radar.js";
@@ -2929,7 +2927,7 @@ Index: src/features/esp.js
      return;
    }
    if (!isPlayer(trackedEntity)) {
-@@ -162,9 +165,9 @@
+@@ -163,9 +166,9 @@
      entityPos.x,
      entityPos.y,
    );
@@ -2940,7 +2938,7 @@ Index: src/features/esp.js
    ctx.beginPath();
    ctx.moveTo(centerX, centerY);
    ctx.lineTo(screenX, screenY);
-@@ -172,25 +175,18 @@
+@@ -173,25 +176,18 @@
    ctx.lineWidth = 2;
    ctx.setLineDash([8, 4]);
    ctx.stroke();
@@ -2968,7 +2966,7 @@ Index: src/features/esp.js
    ctx.moveTo(screenX, screenY);
    ctx.lineTo(
      screenX + entityDir.dirX * dirLineLength,
-@@ -198,168 +194,163 @@
+@@ -199,168 +195,163 @@
    );
    ctx.strokeStyle = "#ff00ff";
    ctx.lineWidth = 2;
@@ -3132,7 +3130,7 @@ Index: src/features/esp.js
 -  const centerX = espCanvas.width / 2;
 -  const centerY = espCanvas.height / 2;
 -  drawEsp(ctx, entities, centerX, centerY, renderScale);
--  drawTrackedEntity(ctx, espCanvas, coreSharedState.playerData, renderScale);
+-  drawTrackedEntity(ctx, espCanvas, playerData, renderScale);
 -  drawRadar(ctx, espCanvas, entities);
 -  requestAnimationFrame(renderEspLoop);
 +  const localPlayer = getFirstAnimalPosition();
@@ -3168,29 +3166,29 @@ Index: src/features/esp.js
    }
  }
  function toggleMinimapSize() {
--  if (!coreSharedState.playerData || !coreSharedState.playerData.minimap) {
+-  if (!playerData || !playerData.minimap) {
 -    showToast("Minimap not available");
-+  if (!state.animalData || !state.animalData.minimap) {
++  if (!animalData || !animalData.minimap) {
 +    showNotification("Minimap not available");
      return;
    }
 -  if (coreSharedState.isToggled) {
--    coreSharedState.playerData.minimap.scale.set(1);
--    coreSharedState.playerData.minimap.pivot.set(0, 0);
+-    playerData.minimap.scale.set(1);
+-    playerData.minimap.pivot.set(0, 0);
 -    coreSharedState.isToggled = false;
 -    showToast("Minimap restored");
 +  if (state.isMinimapSmall) {
-+    state.animalData.minimap.scale.set(1);
-+    state.animalData.minimap.pivot.set(0, 0);
++    animalData.minimap.scale.set(1);
++    animalData.minimap.pivot.set(0, 0);
 +    state.isMinimapSmall = false;
 +    showNotification("Minimap restored");
    } else {
--    coreSharedState.playerData.minimap.scale.set(0.5);
--    coreSharedState.playerData.minimap.pivot.set(-70, -45);
+-    playerData.minimap.scale.set(0.5);
+-    playerData.minimap.pivot.set(-70, -45);
 -    coreSharedState.isToggled = true;
 -    showToast("Small minimap enabled");
-+    state.animalData.minimap.scale.set(0.5);
-+    state.animalData.minimap.pivot.set(-70, -45);
++    animalData.minimap.scale.set(0.5);
++    animalData.minimap.pivot.set(-70, -45);
 +    state.isMinimapSmall = true;
 +    showNotification("Small minimap enabled");
    }
@@ -3358,32 +3356,32 @@ Index: src/features/xray.js
 --- src/features/xray.js	v1.6
 +++ src/features/xray.js	v1.7
 @@ -0,0 +1,38 @@
-+import { settings, state } from "../core.js";
++import { gameInstance, animalData, settings, state } from "../core.js";
 +
 +const initializeViewportHacks = () => {
 +  if (state.isProcessed) {
 +    return;
 +  }
-+  if (!state.animalData) {
++  if (!animalData) {
 +    setTimeout(initializeViewportHacks, 500);
 +    return;
 +  }
 +  setInterval(() => {
 +    try {
-+      state.gameInstance.viewport.clampZoom({
++      gameInstance.viewport.clampZoom({
 +        minWidth: 0,
 +        maxWidth: 10000000,
 +      });
-+      state.gameInstance.viewport.plugins.plugins.clamp = null;
-+      state.gameInstance.viewport.plugins.plugins["clamp-zoom"] = null;
++      gameInstance.viewport.plugins.plugins.clamp = null;
++      gameInstance.viewport.plugins.plugins["clamp-zoom"] = null;
 +    } catch {}
 +  }, 300);
 +  try {
 +    if (settings.setFlash) {
-+      state.animalData[settings.setFlash] = () => {};
++      animalData[settings.setFlash] = () => {};
 +    }
 +    if (settings.terrainManager) {
-+      const terrainManager = state.animalData[settings.terrainManager];
++      const terrainManager = animalData[settings.terrainManager];
 +      if (terrainManager?.shadow) {
 +        terrainManager.shadow.setShadowSize(1000000);
 +        terrainManager.shadow.setShadowSize = () => {};
@@ -3402,7 +3400,7 @@ Index: src/ui/interaction.js
 +++ src/ui/interaction.js	v1.7
 @@ -1,17 +1,16 @@
 -import { getMyAnimal } from "../utils.js";
--import { radius, coreSharedState } from "../core.js";
+-import { radius, game, coreSharedState } from "../core.js";
 +import { radius, state } from "../core.js";
  
  function typeText(selector, text) {
@@ -3567,7 +3565,7 @@ Index: src/ui/panels.js
 ===================================================================
 --- src/ui/panels.js	v1.6
 +++ src/ui/panels.js	v1.7
-@@ -1,73 +1,77 @@
+@@ -1,71 +1,74 @@
 -import { showToast, typeText } from "./interaction.js";
 +import { showNotification, typeText } from "./interaction.js";
  import {
@@ -3578,19 +3576,22 @@ Index: src/ui/panels.js
  import {
    radius,
    hookTextEncoder,
+-  game,
 -  isActive,
 +  pressedKey,
    clearTracking_2,
++  initAntiTamper,
    clearTracking_3,
+-  initAutoFarm,
+-  initializeAntiDetection,
 -  initializeViewportSettings,
 -  coreSharedState,
++  startAutoFarm,
 +  settings,
 +  state,
  } from "../core.js";
  import { generateRandomString } from "../utils.js";
  import { toggleMouseSimulation } from "../features/movement.js";
--import { initializeAntiDetection } from "../features/antidetection.js";
-+import { initAntiTamper } from "../features/antidetection.js";
 +import { initializeViewportHacks } from "../features/xray.js";
  import {
    clearTracking,
@@ -3598,15 +3599,10 @@ Index: src/ui/panels.js
    toggleMinimapSize,
  } from "../features/esp.js";
 -import { enableAutoDodge } from "../features/aimbot.js";
-+import { toggleLock, enableAutoDodge } from "../features/aimbot.js";
- import {
--  generatePatrolPoints,
--  initAutoFarm,
-+  setupPatrolPoints,
-+  startAutoFarm,
-   stopAutoFarm,
- } from "../features/autofarm.js";
+-import { generatePatrolPoints, stopAutoFarm } from "../features/autofarm.js";
 -import { applyTheme, initBackground } from "./theme.js";
++import { toggleLock, enableAutoDodge } from "../features/aimbot.js";
++import { setupPatrolPoints, stopAutoFarm } from "../features/autofarm.js";
 +import { setTheme, initHomeBackground } from "./theme.js";
  
 -function showHalloweenModal(config) {
@@ -3672,7 +3668,7 @@ Index: src/ui/panels.js
    });
    codeInput.focus();
  }
-@@ -83,27 +87,27 @@
+@@ -81,27 +84,27 @@
        )
      ) {
        return;
@@ -3706,7 +3702,7 @@ Index: src/ui/panels.js
          element.style.right = "auto";
        }
      };
-@@ -122,307 +126,389 @@
+@@ -120,307 +123,389 @@
      }
    });
  }
@@ -4284,7 +4280,7 @@ Index: src/ui/panels.js
    const updateBody = updatePanel.querySelector("#updateBody");
    let isUpdateMinimized = false;
    updatePanel.querySelector("#updateMin").onclick = (event) => {
-@@ -435,33 +521,37 @@
+@@ -433,34 +518,38 @@
    };
    makeDraggable(updatePanel);
    return updatePanel;
@@ -4332,7 +4328,9 @@ Index: src/ui/panels.js
 +  createAutomationPanel,
    createSettingsPanel,
 -  createUpdateHistoryPanel,
+-  toggleUiVisibility,
 +  createUpdatePanel,
++  togglePanelsVisibility,
  };
 Index: src/ui/radar.js
 ===================================================================
@@ -4710,19 +4708,21 @@ Index: src/utils.js
 ===================================================================
 --- src/utils.js	v1.6
 +++ src/utils.js	v1.7
-@@ -1,10 +1,5 @@
--import {
--  getGameState,
--  getEntityManager,
+@@ -1,10 +1,10 @@
+ import {
++  stateMap,
+   getGameState,
+   getEntityManager,
 -  angle,
+-  game,
 -  coreSharedState,
--} from "./core.js";
-+import { stateMap, getGameState, getEntityManager, state } from "./core.js";
++  gameInstance,
++  state,
+ } from "./core.js";
  
  function generateRandomString(length) {
    let resultString = "";
-   for (let i = 0; i < length; i++) {
-@@ -12,8 +7,14 @@
+@@ -13,8 +13,14 @@
      resultString += String.fromCodePoint(randomCodePoint);
    }
    return resultString;
@@ -4737,7 +4737,7 @@ Index: src/utils.js
    return (
      document.querySelector("#gameCanvas") ||
      document.querySelector("canvas") ||
-@@ -68,22 +69,66 @@
+@@ -69,22 +75,66 @@
    } catch (error) {
      return null;
    }
@@ -4810,7 +4810,7 @@ Index: src/utils.js
        myPos: {
          x: myX,
          y: myY,
-@@ -91,15 +136,21 @@
+@@ -92,15 +142,21 @@
        entities: [],
        players: [],
        food: [],
@@ -4836,7 +4836,7 @@ Index: src/utils.js
          return;
        }
        const deltaX = entityX - myX;
-@@ -112,25 +163,25 @@
+@@ -113,25 +169,25 @@
          distance: distance,
          angle: Math.atan2(deltaY, deltaX),
          entity: entity,
@@ -4870,15 +4870,15 @@ Index: src/utils.js
      return {
        error: error.message,
      };
-@@ -145,21 +196,56 @@
+@@ -146,21 +202,56 @@
        cameraState.camera.currentZoomLevel !== 0
      ) {
        zoomLevel = cameraState.camera.currentZoomLevel;
      }
--    if (coreSharedState.game?.viewport?.scale?.x) {
--      zoomLevel = coreSharedState.game.viewport.scale.x;
-+    if (state.gameInstance?.viewport?.scale?.x) {
-+      zoomLevel = state.gameInstance.viewport.scale.x;
+-    if (game?.viewport?.scale?.x) {
+-      zoomLevel = game.viewport.scale.x;
++    if (gameInstance?.viewport?.scale?.x) {
++      zoomLevel = gameInstance.viewport.scale.x;
      }
    } catch (error) {}
    return zoomLevel;

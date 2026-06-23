@@ -7,26 +7,24 @@ import {
 import {
   radius,
   hookTextEncoder,
+  game,
   isActive,
   clearTracking_2,
   clearTracking_3,
+  initAutoFarm,
+  initializeAntiDetection,
   initializeViewportSettings,
   coreSharedState,
 } from "../core.js";
 import { generateRandomString } from "../utils.js";
 import { toggleMouseSimulation } from "../features/movement.js";
-import { initializeAntiDetection } from "../features/antidetection.js";
 import {
   clearTracking,
   trackPlayer,
   toggleMinimapSize,
 } from "../features/esp.js";
 import { enableAutoDodge } from "../features/aimbot.js";
-import {
-  generatePatrolPoints,
-  initAutoFarm,
-  stopAutoFarm,
-} from "../features/autofarm.js";
+import { generatePatrolPoints, stopAutoFarm } from "../features/autofarm.js";
 import { applyTheme, initBackground } from "./theme.js";
 
 function showHalloweenModal(config) {
@@ -464,4 +462,5 @@ export {
   createPlusPanel,
   createSettingsPanel,
   createUpdateHistoryPanel,
+  toggleUiVisibility,
 };

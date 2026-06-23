@@ -4,40 +4,35 @@ import {
   getAllPropertyNames,
 } from "./src/utils.js";
 import { handleAnimalAction } from "./src/features/autofarm.js";
-import {
-  startAntiAfk,
-  setupAntiDetection,
-} from "./src/features/antidetection.js";
+import { startAntiAfk } from "./src/features/antidetection.js";
 import {
   stopMouseSimulation,
   toggleMouseSimulation,
 } from "./src/features/movement.js";
-import {
-  startScheduledTask,
-  stopInterval,
-  createDeepToolsPanel,
-} from "./src/features/chat.js";
-import { applyCustomBackground, createSettingsStyles } from "./src/ui/theme.js";
-import { initAdBlocker } from "./src/features/adblock.js";
+import { startScheduledTask, stopInterval } from "./src/features/chat.js";
 import {
   createUpdateHistoryPanel,
+  createDeepToolsPanel,
   createPlusPanel,
-  initializePanels,
+  togglePanels,
 } from "./src/ui/panels.js";
+import { applyCustomBackground, createSettingsStyles } from "./src/ui/theme.js";
+import { initAdBlocker } from "./src/features/adblock.js";
 import {
   wrapWithProxy,
   initNetworkHook,
   encryptPacketData,
   sendPacket,
+  setupAntiDetection,
   applyGameHacks,
   initMod,
-  stateMap,
+  initializePanels,
   angles,
   radius,
+  userData,
   isInitialized,
   isInitialized_2,
   securityConfigs,
-  state,
   coreSharedState,
 } from "./src/core.js";
 import {

@@ -2,31 +2,24 @@ Index: content.js
 ===================================================================
 --- content.js	v1.5
 +++ content.js	v1.6
-@@ -1,46 +1,96 @@
+@@ -1,48 +1,97 @@
  import {
 -  generateRandomString,
 -  getGameCanvas,
 -  getAllPropertyNames,
 -} from "./src/utils.js";
 -import { handleAnimalAction } from "./src/features/autofarm.js";
--import { createHalloweenModal, initControlOverlay } from "./src/ui/panels.js";
 +  typeText,
 +  showToast,
 +  restoreUIInteractivity,
 +} from "./src/ui/interaction.js";
-+import { applyTheme, initBackground, injectStyles } from "./src/ui/theme.js";
  import {
--  startAntiAfk,
--  initializeAntiTamper,
--} from "./src/features/antidetection.js";
--import { initAdBlocker } from "./src/features/adblock.js";
--import {
-   startScheduledTask,
-   stopInterval,
+-  startScheduledTask,
+-  stopInterval,
 -  autoChat,
-+  simulateChatInput,
- } from "./src/features/chat.js";
- import {
+-} from "./src/features/chat.js";
+-import { startAntiAfk } from "./src/features/antidetection.js";
+-import {
 +  startCircularMovement,
    stopMouseSimulation,
    toggleMouseSimulation,
@@ -35,36 +28,14 @@ Index: content.js
 +  simulateMoveAndClick,
  } from "./src/features/movement.js";
 -import { toggleMinimapScale } from "./src/ui/radar.js";
-+import { initializeAntiDetection } from "./src/features/antidetection.js";
-+import { drawRadar, initRadarDrag } from "./src/ui/radar.js";
+-import { initAdBlocker } from "./src/features/adblock.js";
  import {
--  createUpdateHistoryStyles,
--  injectDeepToolsStyles,
--  injectPlusPanelStyles,
 -  applyHomeBackground,
 -  applyThemeColors,
--  injectSettingsPanelStyles,
 -  setBlueTheme,
 -} from "./src/ui/theme.js";
-+  createEspOverlay,
-+  drawEsp,
-+  drawTrackedEntity,
-+  renderEspLoop,
-+  clearTracking,
-+  trackPlayer,
-+  toggleMinimapSize,
-+} from "./src/features/esp.js";
-+import { autoDodgeLoop, enableAutoDodge } from "./src/features/aimbot.js";
- import {
--  wrapPropertyWithProxy,
--  initInterceptor,
--  encryptPacketData,
--  sendPacket,
--  disableGameRestrictions,
--  stateMap,
 +  isAreaSkipped,
 +  handleFarmFailure,
-+  isAreaSkipped_2,
 +  findClosestFarmable,
 +  getFarmableEntities,
 +  findOptimalFarmPosition,
@@ -75,9 +46,32 @@ Index: content.js
 +  generatePatrolPoints,
 +  autoFarmUpdate,
 +  startAutoFarmLoop,
-+  initAutoFarm,
 +  stopAutoFarm,
 +} from "./src/features/autofarm.js";
++import { applyTheme, initBackground, injectStyles } from "./src/ui/theme.js";
+ import {
+-  createHalloweenModal,
+-  initControlOverlay,
+-  createUpdateHistoryStyles,
+-  injectDeepToolsStyles,
+-  injectPlusPanelStyles,
+-  injectSettingsPanelStyles,
+-  togglePanels,
++  startScheduledTask,
++  stopInterval,
++  simulateChatInput,
++} from "./src/features/chat.js";
++import { drawRadar, initRadarDrag } from "./src/ui/radar.js";
++import {
++  createEspOverlay,
++  drawEsp,
++  drawTrackedEntity,
++  renderEspLoop,
++  clearTracking,
++  trackPlayer,
++  toggleMinimapSize,
++} from "./src/features/esp.js";
++import { autoDodgeLoop, enableAutoDodge } from "./src/features/aimbot.js";
 +import {
 +  showHalloweenModal,
 +  makeDraggable,
@@ -85,9 +79,16 @@ Index: content.js
 +  createPlusPanel,
 +  createSettingsPanel,
 +  createUpdateHistoryPanel,
-+} from "./src/ui/panels.js";
++  toggleUiVisibility,
+ } from "./src/ui/panels.js";
 +import { initAdBlocker } from "./src/features/adblock.js";
-+import {
+ import {
+-  wrapPropertyWithProxy,
+-  initInterceptor,
+-  encryptPacketData,
+-  sendPacket,
+-  initializeAntiTamper,
+-  disableGameRestrictions,
 +  wrapWithProxy,
 +  hookTextEncoder,
 +  getGameState,
@@ -98,16 +99,20 @@ Index: content.js
 +  findEntityById,
 +  clearTracking_2,
 +  clearTracking_3,
++  isAreaSkipped_2,
++  initAutoFarm,
++  initializeAntiDetection,
 +  initializeViewportSettings,
 +  initializeClient,
-+  privateMap,
    angleSteps,
    radius,
+-  gameInstance,
++  offsetValue,
++  game,
+   playerData,
 -  isReady,
 -  securityConfigs,
-+  offsetValue,
 +  isActive,
-   state,
 +  dragState,
 +  maxDistance,
 +  distanceThreshold,
@@ -149,11 +154,16 @@ Index: src/core.js
 ===================================================================
 --- src/core.js	v1.5
 +++ src/core.js	v1.6
-@@ -1,31 +1,39 @@
+@@ -1,31 +1,43 @@
 -import { showNotification } from "./ui/interaction.js";
--import { togglePanels } from "./ui/panels.js";
--import { initializeAntiTamper } from "./features/antidetection.js";
+-import { getAllPropertyNames } from "./utils.js";
+-import { initControlOverlay, togglePanels } from "./ui/panels.js";
 +import { showToast, restoreUIInteractivity } from "./ui/interaction.js";
++import { calculateDistance, getAllPropertyNames } from "./utils.js";
++import {
++  generatePatrolPoints,
++  startAutoFarmLoop,
++} from "./features/autofarm.js";
 +import { applyTheme, initBackground, injectStyles } from "./ui/theme.js";
 +import {
 +  createToolsPanel,
@@ -165,14 +175,13 @@ Index: src/core.js
  import { initAdBlocker } from "./features/adblock.js";
 -import { applyHomeBackground } from "./ui/theme.js";
 -
--let stateMap = new WeakMap();
+-const stateMap = new WeakMap();
 -function wrapPropertyWithProxy(targetObject, propertyKey, proxyHandler) {
 +import { initRadarDrag } from "./ui/radar.js";
 +import { renderEspLoop, trackPlayer } from "./features/esp.js";
 +import { autoDodgeLoop } from "./features/aimbot.js";
 +import { moveMouseToSide } from "./features/movement.js";
-+import { initializeAntiDetection } from "./features/antidetection.js";
-+let privateMap = new WeakMap();
++const privateMap = new WeakMap();
 +function wrapWithProxy(targetObject, propertyKey, handler) {
    const originalValue = targetObject[propertyKey];
 -  const proxyInstance = new Proxy(originalValue, proxyHandler);
@@ -205,7 +214,7 @@ Index: src/core.js
              return "\\";
            case "n":
              return "\n";
-@@ -46,25 +54,27 @@
+@@ -46,25 +58,27 @@
            case "4":
            case "5":
            case "6":
@@ -241,7 +250,7 @@ Index: src/core.js
        },
      );
    }
-@@ -88,17 +98,17 @@
+@@ -88,17 +102,17 @@
          patternIndex++
        ) {
          const matchResult = commandPatterns[patternIndex].exec(inputArgs[0]);
@@ -261,7 +270,7 @@ Index: src/core.js
          }
        }
      } catch {}
-@@ -118,187 +128,357 @@
+@@ -118,318 +132,510 @@
    inputMaxLengthObserver.observe(document.body, {
      childList: true,
      subtree: true,
@@ -280,7 +289,12 @@ Index: src/core.js
 -
  const angleSteps = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
  const radius = 300;
--
+-let gameInstance;
+-let appState;
++const offsetValue = 400;
++let game;
++let globalState;
+ let playerData;
 -let isReady = false;
 -
 -const encryptPacketData = (isEnabled, charCode, suffix = "") => {
@@ -299,21 +313,16 @@ Index: src/core.js
 -    "setter",
 -  ];
 -  if (!isEnabled) {
-+const offsetValue = 400;
 +let isActive = false;
 +const state = {};
 +function getGameState() {
 +  try {
-+    if (
-+      coreSharedState.playerData &&
-+      coreSharedState.playerData.myAnimals &&
-+      coreSharedState.playerData.myAnimals.length > 0
-+    ) {
-+      return coreSharedState.playerData;
++    if (playerData && playerData.myAnimals && playerData.myAnimals.length > 0) {
++      return playerData;
 +    }
 +    const states = window.__ss?.states;
 +    if (!states) {
-+      return coreSharedState.playerData || null;
++      return playerData || null;
 +    }
 +    for (let i = 0; i < states.length; i++) {
 +      if (states[i]?.gameScene?.myAnimals) {
@@ -327,9 +336,9 @@ Index: src/core.js
 +        }
 +      }
 +    }
-+    return coreSharedState.playerData || null;
++    return playerData || null;
 +  } catch (error) {
-+    return coreSharedState.playerData || null;
++    return playerData || null;
 +  }
 +}
 +function getEntityManager(gameState) {
@@ -373,47 +382,7 @@ Index: src/core.js
 -  })(
 -    String.fromCharCode(charCode)[stringTable[8] + stringTable[1]](3) + suffix,
 -    isEnabled,
--  );
--  const encodedBytes = new TextEncoder()[stringTable[5] + stringTable[0]](
--    plainText,
--  );
--  const bufferLength = 1 + encodedBytes.byteLength + 1;
--  const arrayBuffer = new ArrayBuffer(bufferLength);
--  const dataView = new DataView(arrayBuffer);
--  dataView.setUint8(0, 25);
--  new Uint8Array(arrayBuffer)[stringTable[11].slice(0, (9 / 27) * 9)](
--    encodedBytes,
--    1,
--  );
--  dataView.setUint8(bufferLength - 1, charCode);
--  return arrayBuffer;
--};
--const securityConfigs = {
--  107: {
--    hasSec: true,
--    secLoadTime: 750,
--    hasScaling: true,
--  },
--  default: {
--    hasSec: false,
--    secLoadTime: 500,
--    hasScaling: false,
--  },
--};
--const sendPacket = (payload, additionalData = "") => {
--  if (
--    coreSharedState.gameInstance &&
--    coreSharedState.appState &&
--    state.socketManager
--  ) {
--    coreSharedState.gameInstance[state.socketManager].sendBytePacket(
--      encryptPacketData(
--        coreSharedState.appState.token._value,
--        payload,
--        additionalData,
--      ),
--    );
-   }
++  }
 +  for (const key of Object.keys(gameState)) {
 +    const potentialManager = gameState[key];
 +    if (
@@ -529,11 +498,7 @@ Index: src/core.js
 +  offsetY: 0,
 +  x: null,
 +  y: 20,
- };
--const state = {};
--const counter = 0;
--const disableGameRestrictions = () => {
--  if (isReady) {
++};
 +function clearTracking_2() {
 +  window.espTrackedEntityId = null;
 +  showToast("Tracking cleared");
@@ -548,36 +513,312 @@ Index: src/core.js
 +const maxFailCount = 2;
 +const expiryTimeout = 20000;
 +const updateInterval_2 = 600;
++function isAreaSkipped_2(x, y) {
++  const currentTime = Date.now();
++  window.autoFarmSkipAreas = window.autoFarmSkipAreas.filter(
++    (timerState) => currentTime - timerState.time < expiryTimeout,
+   );
+-  const encodedBytes = new TextEncoder()[stringTable[5] + stringTable[0]](
+-    plainText,
++  return window.autoFarmSkipAreas.some(
++    (cellData) =>
++      cellData.skipped &&
++      calculateDistance(x, y, cellData.x, cellData.y) < cellData.radius,
+   );
+-  const bufferLength = 1 + encodedBytes.byteLength + 1;
+-  const arrayBuffer = new ArrayBuffer(bufferLength);
+-  const dataView = new DataView(arrayBuffer);
+-  dataView.setUint8(0, 25);
+-  new Uint8Array(arrayBuffer)[stringTable[11].slice(0, (9 / 27) * 9)](
+-    encodedBytes,
+-    1,
+-  );
+-  dataView.setUint8(bufferLength - 1, charCode);
+-  return arrayBuffer;
+-};
+-const securityConfigs = {
+-  107: {
+-    hasSec: true,
+-    secLoadTime: 750,
+-    hasScaling: true,
+-  },
+-  default: {
+-    hasSec: false,
+-    secLoadTime: 500,
+-    hasScaling: false,
+-  },
+-};
+-const sendPacket = (payload, additionalData = "") => {
+-  if (gameInstance && appState && state.socketManager) {
+-    gameInstance[state.socketManager].sendBytePacket(
+-      encryptPacketData(appState.token._value, payload, additionalData),
+-    );
++}
 +let angle = 0;
++function initAutoFarm(farmMode) {
++  window.autoFarmMode = farmMode || "nearest";
++  window.autoFarmActive = true;
++  window.autoFarmStats.startTime = Date.now();
++  window.autoFarmStats.collected = 0;
++  window.autoFarmCurrentTarget = null;
++  window.autoFarmTargetStartTime = 0;
++  window.autoFarmSkipIds.clear();
++  window.autoFarmSkipAreas = [];
++  window.autoFarmSkipClearTime = Date.now();
++  coreSharedState.position = null;
++  coreSharedState.counter_2 = 0;
++  coreSharedState.lastValue = 0;
++  coreSharedState.lastUpdateTime = 0;
++  if (farmMode === "patrol") {
++    generatePatrolPoints();
+   }
+-};
+-const state = {};
+-const counter = 0;
+-const initializeAntiTamper = () => {
+-  const storage = {};
++  showToast("Auto farm started (" + window.autoFarmMode + ")");
++  startAutoFarmLoop();
++}
++let isProcessed = false;
++const initializeAntiDetection = () => {
++  if (isProcessed) {
++    return;
++  }
++  isProcessed = true;
++  const cache = {};
+   for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
+-    storage[propertyKey] = Reflect[propertyKey];
++    cache[propertyKey] = Reflect[propertyKey];
+   }
+-  const ProxyConstructor = Proxy;
++  const Proxy = Proxy;
+   const lookupGetter = Object.prototype.__lookupGetter__;
+-  const createProxyHook = (dataStore, storeIndex, storeValue) => {
+-    const processedValue = new ProxyConstructor(
+-      dataStore[storeIndex],
+-      storeValue,
+-    );
+-    stateMap.set(processedValue, dataStore[storeIndex]);
+-    dataStore[storeIndex] = processedValue;
++  const wrapValue = (registry, key, options) => {
++    const instance = new Proxy(registry[key], options);
++    privateMap.set(instance, registry[key]);
++    registry[key] = instance;
+   };
+-  createProxyHook(Function.prototype, "toString", {
+-    apply(context, argsKey, extraArg) {
+-      return storage.apply(context, stateMap.get(argsKey) || argsKey, extraArg);
++  wrapValue(Function.prototype, "toString", {
++    apply(thisContext, paramKey, args) {
++      return cache.apply(
++        thisContext,
++        privateMap.get(paramKey) || paramKey,
++        args,
++      );
+     },
+   });
+-  createProxyHook(window, "Proxy", {
++  wrapValue(window, "Proxy", {
+     construct(constructor, constructorArgs) {
+-      const instance = storage.construct(constructor, constructorArgs);
+-      return instance;
++      return cache.construct(constructor, constructorArgs);
+     },
+   });
+-  createProxyHook(ProxyConstructor, "revocable", {
+-    apply(thisArg, args, extraArg2) {
+-      const result = storage.apply(thisArg, args, extraArg2);
+-      return result;
++  wrapValue(Proxy, "revocable", {
++    apply(targetContext, params, extraParams) {
++      return cache.apply(targetContext, params, extraParams);
+     },
+   });
+   let lastTimestamp = 0;
+-  createProxyHook(Function.prototype, "bind", {
+-    apply(thisArg2, args2, extraArg3) {
++  wrapValue(Function.prototype, "bind", {
++    apply(thisArg, argsArray, extraArgs) {
+       try {
+         try {
+           if (
+-            lookupGetter.call(extraArg3[0], "aboveBgPlatformsContainer") != null
++            lookupGetter.call(extraArgs[0], "aboveBgPlatformsContainer") != null
+           ) {
+-            return storage.apply(thisArg2, args2, extraArg3);
++            return cache.apply(thisArg, argsArray, extraArgs);
+           }
+         } catch {}
+-        if (extraArg3[0] && extraArg3[0].aboveBgPlatformsContainer != null) {
+-          playerData = extraArg3[0];
+-          gameInstance = extraArg3[0].game;
+-          const allKeys = getAllPropertyNames(playerData);
+-          const obfuscatedKeys = allKeys.filter((obfuscatedVarName) =>
+-            obfuscatedVarName.startsWith("_0x"),
++        if (extraArgs[0] && extraArgs[0].aboveBgPlatformsContainer != null) {
++          playerData = extraArgs[0];
++          game = extraArgs[0].game;
++          window.__cachedEM = null;
++          const allProperties = getAllPropertyNames(playerData);
++          const obfuscatedProperties = allProperties.filter((varName) =>
++            varName.startsWith("_0x"),
+           );
+           state.setFlash =
+             Object.getOwnPropertyNames(playerData.__proto__.__proto__)
+-              .filter((obfuscatedPropName) =>
+-                obfuscatedPropName.startsWith("_0x"),
+-              )
++              .filter((propName) => propName.startsWith("_0x"))
+               .find(
+-                (methodName) => playerData[methodName] instanceof Function,
++                (functionKey) => playerData[functionKey] instanceof Function,
+               ) || state.setFlash;
+           state.terrainManager =
+-            obfuscatedKeys.find(
+-              (shadowEntityKey) =>
+-                typeof playerData[shadowEntityKey]?.shadow !== "undefined",
++            obfuscatedProperties.find(
++              (shadowKey) =>
++                typeof playerData[shadowKey]?.shadow !== "undefined",
+             ) || state.terrainManager;
+           state.entityManager =
+-            obfuscatedKeys.find(
+-              (entitiesListKey) =>
+-                typeof playerData[entitiesListKey]?.entitiesList !==
+-                "undefined",
++            obfuscatedProperties.find(
++              (entitiesKey) =>
++                typeof playerData[entitiesKey]?.entitiesList !== "undefined",
+             ) || state.entityManager;
+-          state.entityManagerProps = {};
+-          const entityManagerKeys = getAllPropertyNames(
+-            playerData[state.entityManager],
+-          );
+-          const animalsUpdateInterval = setInterval(() => {
+-            state.entityManagerProps.animalsList =
+-              entityManagerKeys
+-                .filter((variableName) => variableName.startsWith("_0x"))
+-                .find(
+-                  (entityName) =>
+-                    typeof playerData?.[state.entityManager]?.[
+-                      entityName
+-                    ]?.[0] !== "undefined",
+-                ) || state.entityManagerProps.animalsList;
+-            if (typeof state.entityManagerProps.animalsList !== "undefined") {
+-              clearInterval(animalsUpdateInterval);
+-            }
+-          }, 1000);
+           state.socketManager =
+-            getAllPropertyNames(gameInstance).find(
+-              (networkClientKey) =>
+-                typeof gameInstance[networkClientKey]?.sendBytePacket !==
+-                "undefined",
++            getAllPropertyNames(game).find(
++              (networkKey) =>
++                typeof game[networkKey]?.sendBytePacket !== "undefined",
+             ) || state.socketManager;
+           try {
+-            appState = document
++            globalState = document
+               .getElementById("app")
+               ._vnode.appContext.config.globalProperties.$simpleState.states.find(
+                 (gameStore) => gameStore._storeMeta.id === "game",
+               );
+           } catch {}
+-          let animalsCheckInterval;
++          let intervalId;
+           try {
+-            clearInterval(animalsCheckInterval);
++            clearInterval(intervalId);
+           } catch {}
+-          animalsCheckInterval = setInterval(() => {
++          intervalId = setInterval(() => {
+             try {
+               if (!playerData?.myAnimals?.[0]) {
+                 return;
+               }
+-              const myAnimal = playerData.myAnimals[0];
+-              if (myAnimal.fadingTrail) {
+-                const fadingTrailPrototype = Object.getPrototypeOf(
+-                  myAnimal.fadingTrail,
++              const firstAnimal = playerData.myAnimals[0];
++              if (firstAnimal.fadingTrail) {
++                wrapWithProxy(
++                  Object.getPrototypeOf(firstAnimal.fadingTrail),
++                  "enable",
++                  {
++                    apply() {},
++                  },
+                 );
+-                wrapPropertyWithProxy(fadingTrailPrototype, "enable", {
+-                  apply() {},
+-                });
+               }
+-              if (myAnimal.bubblesEmitter) {
+-                const bubblesEmitterPrototype = Object.getPrototypeOf(
+-                  myAnimal.bubblesEmitter,
++              if (firstAnimal.bubblesEmitter) {
++                Object.defineProperty(
++                  Object.getPrototypeOf(firstAnimal.bubblesEmitter),
++                  "emit",
++                  {
++                    set: () => {},
++                  },
+                 );
+-                Object.defineProperty(bubblesEmitterPrototype, "emit", {
+-                  set: () => {},
+-                });
+               }
+-              clearInterval(animalsCheckInterval);
++              clearInterval(intervalId);
+             } catch {}
+           }, 200);
+-          if (lastTimestamp < Date.now() - 3000) {
+-            showNotification("✅ Astraphobia client loaded in game");
+-            lastTimestamp = Date.now();
++          if (coreSharedState.lastTimestamp < Date.now() - 3000) {
++            showToast("Client loaded");
++            coreSharedState.lastTimestamp = Date.now();
+           }
+-          initControlOverlay();
+         }
+       } catch {}
+-      return storage.apply(thisArg2, args2, extraArg3);
++      return cache.apply(thisArg, argsArray, extraArgs);
+     },
+   });
+ };
+-const disableGameRestrictions = () => {
+-  if (isReady) {
 +const initializeViewportSettings = () => {
 +  if (isActive) {
      return;
    }
-   if (!coreSharedState.playerData) {
+   if (!playerData) {
 -    setTimeout(disableGameRestrictions, 500);
 +    setTimeout(initializeViewportSettings, 500);
      return;
    }
    setInterval(() => {
      try {
--      coreSharedState.gameInstance.viewport.clampZoom({
-+      coreSharedState.game.viewport.clampZoom({
+-      gameInstance.viewport.clampZoom({
++      game.viewport.clampZoom({
          minWidth: 0,
          maxWidth: 10000000,
        });
--      coreSharedState.gameInstance.viewport.plugins.plugins.clamp = null;
--      coreSharedState.gameInstance.viewport.plugins.plugins["clamp-zoom"] =
--        null;
-+      coreSharedState.game.viewport.plugins.plugins.clamp = null;
-+      coreSharedState.game.viewport.plugins.plugins["clamp-zoom"] = null;
+-      gameInstance.viewport.plugins.plugins.clamp = null;
+-      gameInstance.viewport.plugins.plugins["clamp-zoom"] = null;
++      game.viewport.plugins.plugins.clamp = null;
++      game.viewport.plugins.plugins["clamp-zoom"] = null;
      } catch {}
    }, 300);
    try {
      if (state.setFlash) {
-       coreSharedState.playerData[state.setFlash] = () => {};
+       playerData[state.setFlash] = () => {};
      }
      if (state.terrainManager) {
-       const terrainManager = coreSharedState.playerData[state.terrainManager];
+       const terrainManager = playerData[state.terrainManager];
 -      if (terrainManager && terrainManager.shadow) {
 +      if (terrainManager?.shadow) {
          terrainManager.shadow.setShadowSize(1000000);
@@ -683,15 +924,10 @@ Index: src/core.js
    isProcessing: false,
 -  rotationInterval: null,
 -  angleIndex: 0,
--  gameInstance: null,
--  appState: null,
 +  animationInterval: null,
 +  currentIndex: 0,
 +  inputKey: "q",
 +  eventKey: "e",
-+  game: null,
-+  globalState: null,
-   playerData: null,
 +  isToggled: false,
    isInitialized_2: false,
 -  isProcessing_2: false,
@@ -709,7 +945,6 @@ Index: src/core.js
 +  counter_2: 0,
 +  lastValue: 0,
 +  lastTimestamp_2: 0,
-+  isProcessed: false,
 +  pressedKey: "Shift",
  };
 -
@@ -718,8 +953,8 @@ Index: src/core.js
 -  initInterceptor,
 -  encryptPacketData,
 -  sendPacket,
+-  initializeAntiTamper,
 -  disableGameRestrictions,
--  stateMap,
 +  wrapWithProxy,
 +  hookTextEncoder,
 +  getGameState,
@@ -730,16 +965,20 @@ Index: src/core.js
 +  findEntityById,
 +  clearTracking_2,
 +  clearTracking_3,
++  isAreaSkipped_2,
++  initAutoFarm,
++  initializeAntiDetection,
 +  initializeViewportSettings,
 +  initializeClient,
-+  privateMap,
    angleSteps,
    radius,
+-  gameInstance,
++  offsetValue,
++  game,
+   playerData,
 -  isReady,
 -  securityConfigs,
-+  offsetValue,
 +  isActive,
-   state,
 +  dragState,
 +  maxDistance,
 +  distanceThreshold,
@@ -1007,28 +1246,15 @@ Index: src/features/antidetection.js
 ===================================================================
 --- src/features/antidetection.js	v1.5
 +++ src/features/antidetection.js	v1.6
-@@ -1,183 +1,135 @@
--import { getGameCanvas, getAllPropertyNames } from "../utils.js";
+@@ -1,31 +0,0 @@
+-import { getGameCanvas } from "../utils.js";
 -import { showNotification } from "../ui/interaction.js";
--import {
--  angleSteps,
--  radius,
--  stateMap,
--  wrapPropertyWithProxy,
--  state,
--  coreSharedState,
--} from "../core.js";
--import { initControlOverlay } from "../ui/panels.js";
-+import { getAllPropertyNames } from "../utils.js";
-+import { privateMap, wrapWithProxy, state, coreSharedState } from "../core.js";
-+import { showToast } from "../ui/interaction.js";
- 
+-import { angleSteps, radius, coreSharedState } from "../core.js";
+-
 -function startAntiAfk() {
 -  if (coreSharedState.rotationInterval) {
-+const initializeAntiDetection = () => {
-+  if (coreSharedState.isProcessed) {
-     return;
-   }
+-    return;
+-  }
 -  const gameCanvas = getGameCanvas();
 -  if (!gameCanvas) {
 -    showNotification("Game canvas not found!");
@@ -1050,242 +1276,32 @@ Index: src/features/antidetection.js
 -      (coreSharedState.angleIndex + 1) % angleSteps.length;
 -  }, 15);
 -}
--const initializeAntiTamper = () => {
--  const storage = {};
-+  coreSharedState.isProcessed = true;
-+  const cache = {};
-   for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
--    storage[propertyKey] = Reflect[propertyKey];
-+    cache[propertyKey] = Reflect[propertyKey];
-   }
--  const ProxyConstructor = Proxy;
-+  const Proxy = Proxy;
-   const lookupGetter = Object.prototype.__lookupGetter__;
--  const createProxyHook = (dataStore, storeIndex, storeValue) => {
--    const processedValue = new ProxyConstructor(
--      dataStore[storeIndex],
--      storeValue,
--    );
--    stateMap.set(processedValue, dataStore[storeIndex]);
--    dataStore[storeIndex] = processedValue;
-+  const wrapValue = (registry, key, options) => {
-+    const instance = new Proxy(registry[key], options);
-+    privateMap.set(instance, registry[key]);
-+    registry[key] = instance;
-   };
--  createProxyHook(Function.prototype, "toString", {
--    apply(context, argsKey, extraArg) {
--      return storage.apply(context, stateMap.get(argsKey) || argsKey, extraArg);
-+  wrapValue(Function.prototype, "toString", {
-+    apply(thisContext, paramKey, args) {
-+      return cache.apply(
-+        thisContext,
-+        privateMap.get(paramKey) || paramKey,
-+        args,
-+      );
-     },
-   });
--  createProxyHook(window, "Proxy", {
-+  wrapValue(window, "Proxy", {
-     construct(constructor, constructorArgs) {
--      const instance = storage.construct(constructor, constructorArgs);
--      return instance;
-+      return cache.construct(constructor, constructorArgs);
-     },
-   });
--  createProxyHook(ProxyConstructor, "revocable", {
--    apply(thisArg, args, extraArg2) {
--      const result = storage.apply(thisArg, args, extraArg2);
--      return result;
-+  wrapValue(Proxy, "revocable", {
-+    apply(targetContext, params, extraParams) {
-+      return cache.apply(targetContext, params, extraParams);
-     },
-   });
-   let lastTimestamp = 0;
--  createProxyHook(Function.prototype, "bind", {
--    apply(thisArg2, args2, extraArg3) {
-+  wrapValue(Function.prototype, "bind", {
-+    apply(thisArg, argsArray, extraArgs) {
-       try {
-         try {
-           if (
--            lookupGetter.call(extraArg3[0], "aboveBgPlatformsContainer") != null
-+            lookupGetter.call(extraArgs[0], "aboveBgPlatformsContainer") != null
-           ) {
--            return storage.apply(thisArg2, args2, extraArg3);
-+            return cache.apply(thisArg, argsArray, extraArgs);
-           }
-         } catch {}
--        if (extraArg3[0] && extraArg3[0].aboveBgPlatformsContainer != null) {
--          coreSharedState.playerData = extraArg3[0];
--          coreSharedState.gameInstance = extraArg3[0].game;
--          const allKeys = getAllPropertyNames(coreSharedState.playerData);
--          const obfuscatedKeys = allKeys.filter((obfuscatedVarName) =>
--            obfuscatedVarName.startsWith("_0x"),
-+        if (extraArgs[0] && extraArgs[0].aboveBgPlatformsContainer != null) {
-+          coreSharedState.playerData = extraArgs[0];
-+          coreSharedState.game = extraArgs[0].game;
-+          window.__cachedEM = null;
-+          const allProperties = getAllPropertyNames(coreSharedState.playerData);
-+          const obfuscatedProperties = allProperties.filter((varName) =>
-+            varName.startsWith("_0x"),
-           );
-           state.setFlash =
-             Object.getOwnPropertyNames(
-               coreSharedState.playerData.__proto__.__proto__,
-             )
--              .filter((obfuscatedPropName) =>
--                obfuscatedPropName.startsWith("_0x"),
--              )
-+              .filter((propName) => propName.startsWith("_0x"))
-               .find(
--                (methodName) =>
--                  coreSharedState.playerData[methodName] instanceof Function,
-+                (functionKey) =>
-+                  coreSharedState.playerData[functionKey] instanceof Function,
-               ) || state.setFlash;
-           state.terrainManager =
--            obfuscatedKeys.find(
--              (shadowEntityKey) =>
--                typeof coreSharedState.playerData[shadowEntityKey]?.shadow !==
-+            obfuscatedProperties.find(
-+              (shadowKey) =>
-+                typeof coreSharedState.playerData[shadowKey]?.shadow !==
-                 "undefined",
-             ) || state.terrainManager;
-           state.entityManager =
--            obfuscatedKeys.find(
--              (entitiesListKey) =>
--                typeof coreSharedState.playerData[entitiesListKey]
--                  ?.entitiesList !== "undefined",
-+            obfuscatedProperties.find(
-+              (entitiesKey) =>
-+                typeof coreSharedState.playerData[entitiesKey]?.entitiesList !==
-+                "undefined",
-             ) || state.entityManager;
--          state.entityManagerProps = {};
--          const entityManagerKeys = getAllPropertyNames(
--            coreSharedState.playerData[state.entityManager],
--          );
--          const animalsUpdateInterval = setInterval(() => {
--            state.entityManagerProps.animalsList =
--              entityManagerKeys
--                .filter((variableName) => variableName.startsWith("_0x"))
--                .find(
--                  (entityName) =>
--                    typeof coreSharedState.playerData?.[state.entityManager]?.[
--                      entityName
--                    ]?.[0] !== "undefined",
--                ) || state.entityManagerProps.animalsList;
--            if (typeof state.entityManagerProps.animalsList !== "undefined") {
--              clearInterval(animalsUpdateInterval);
--            }
--          }, 1000);
-           state.socketManager =
--            getAllPropertyNames(coreSharedState.gameInstance).find(
--              (networkClientKey) =>
--                typeof coreSharedState.gameInstance[networkClientKey]
--                  ?.sendBytePacket !== "undefined",
-+            getAllPropertyNames(coreSharedState.game).find(
-+              (networkKey) =>
-+                typeof coreSharedState.game[networkKey]?.sendBytePacket !==
-+                "undefined",
-             ) || state.socketManager;
-           try {
--            coreSharedState.appState = document
-+            coreSharedState.globalState = document
-               .getElementById("app")
-               ._vnode.appContext.config.globalProperties.$simpleState.states.find(
-                 (gameStore) => gameStore._storeMeta.id === "game",
-               );
-           } catch {}
--          let animalsCheckInterval;
-+          let intervalId;
-           try {
--            clearInterval(animalsCheckInterval);
-+            clearInterval(intervalId);
-           } catch {}
--          animalsCheckInterval = setInterval(() => {
-+          intervalId = setInterval(() => {
-             try {
-               if (!coreSharedState.playerData?.myAnimals?.[0]) {
-                 return;
-               }
--              const myAnimal = coreSharedState.playerData.myAnimals[0];
--              if (myAnimal.fadingTrail) {
--                const fadingTrailPrototype = Object.getPrototypeOf(
--                  myAnimal.fadingTrail,
-+              const firstAnimal = coreSharedState.playerData.myAnimals[0];
-+              if (firstAnimal.fadingTrail) {
-+                wrapWithProxy(
-+                  Object.getPrototypeOf(firstAnimal.fadingTrail),
-+                  "enable",
-+                  {
-+                    apply() {},
-+                  },
-                 );
--                wrapPropertyWithProxy(fadingTrailPrototype, "enable", {
--                  apply() {},
--                });
-               }
--              if (myAnimal.bubblesEmitter) {
--                const bubblesEmitterPrototype = Object.getPrototypeOf(
--                  myAnimal.bubblesEmitter,
-+              if (firstAnimal.bubblesEmitter) {
-+                Object.defineProperty(
-+                  Object.getPrototypeOf(firstAnimal.bubblesEmitter),
-+                  "emit",
-+                  {
-+                    set: () => {},
-+                  },
-                 );
--                Object.defineProperty(bubblesEmitterPrototype, "emit", {
--                  set: () => {},
--                });
-               }
--              clearInterval(animalsCheckInterval);
-+              clearInterval(intervalId);
-             } catch {}
-           }, 200);
--          if (lastTimestamp < Date.now() - 3000) {
--            showNotification("✅ Astraphobia client loaded in game");
--            lastTimestamp = Date.now();
-+          if (coreSharedState.lastTimestamp < Date.now() - 3000) {
-+            showToast("Client loaded");
-+            coreSharedState.lastTimestamp = Date.now();
-           }
--          initControlOverlay();
-         }
-       } catch {}
--      return storage.apply(thisArg2, args2, extraArg3);
-+      return cache.apply(thisArg, argsArray, extraArgs);
-     },
-   });
- };
- 
--export { startAntiAfk, initializeAntiTamper };
-+export { initializeAntiDetection };
+-
+-export { startAntiAfk };
 Index: src/features/autofarm.js
 ===================================================================
 --- src/features/autofarm.js	v1.5
 +++ src/features/autofarm.js	v1.6
-@@ -1,33 +1,676 @@
--import { securityConfigs, sendPacket, coreSharedState } from "../core.js";
+@@ -1,33 +1,645 @@
 +import { calculateDistance, isPlayer, getGameCanvas } from "../utils.js";
 +import { showToast } from "../ui/interaction.js";
-+import {
+ import {
+-  playerData,
+-  securityConfigs,
+-  sendPacket,
 +  radius,
 +  expiryTimeout,
 +  distanceThreshold_2,
 +  maxFailCount,
 +  getGameState,
 +  getEntityManager,
++  isAreaSkipped_2,
 +  getFirstAnimalPosition,
 +  angle,
 +  updateInterval_2,
-+  coreSharedState,
-+} from "../core.js";
++  initAutoFarm,
+   coreSharedState,
+ } from "../core.js";
 +import { simulateMoveAndClick } from "./movement.js";
  
 -const handleAnimalAction = (currentValue) => {
@@ -1352,25 +1368,12 @@ Index: src/features/autofarm.js
 +    });
 +  }
 +}
-+function isAreaSkipped_2(x, y) {
-+  const currentTime = Date.now();
-+  window.autoFarmSkipAreas = window.autoFarmSkipAreas.filter(
-+    (timerState) => currentTime - timerState.time < expiryTimeout,
-+  );
-+  return window.autoFarmSkipAreas.some(
-+    (cellData) =>
-+      cellData.skipped &&
-+      calculateDistance(x, y, cellData.x, cellData.y) < cellData.radius,
-+  );
-+}
 +function findClosestFarmable(farmRange) {
 +  farmRange = farmRange || window.autoFarmRange;
    try {
 -    const fishLevelSettings = {
 -      ...securityConfigs.default,
--      ...(securityConfigs[
--        coreSharedState.playerData?.myAnimals?.[0]?.visibleFishLevel
--      ] || {}),
+-      ...(securityConfigs[playerData?.myAnimals?.[0]?.visibleFishLevel] || {}),
 +    const gameState = getGameState();
 +    const worldData = getEntityManager(gameState);
 +    const playerAnimal = gameState?.myAnimals?.[0];
@@ -1557,10 +1560,7 @@ Index: src/features/autofarm.js
 +      x: 0,
 +      y: 0,
      };
--    if (
--      currentValue <
--      (coreSharedState.playerData?.myAnimals?.[0]?._standing ? 40 : 100)
--    ) {
+-    if (currentValue < (playerData?.myAnimals?.[0]?._standing ? 40 : 100)) {
 -      return sendPacket(id1);
 +  }
 +  const localPlayer = getFirstAnimalPosition();
@@ -1591,7 +1591,7 @@ Index: src/features/autofarm.js
 +      avoidX += (deltaX / distance) * avoidanceFactor * 500;
 +      avoidY += (deltaY / distance) * avoidanceFactor * 500;
      }
--    if (coreSharedState.playerData?.myAnimals?.[0]?._standing) {
+-    if (playerData?.myAnimals?.[0]?._standing) {
 -      return sendPacket(id5, currentValue);
 +  });
 +  return {
@@ -1894,26 +1894,6 @@ Index: src/features/autofarm.js
 +  coreSharedState.isActive_2 = true;
 +  autoFarmUpdate();
 +}
-+function initAutoFarm(farmMode) {
-+  window.autoFarmMode = farmMode || "nearest";
-+  window.autoFarmActive = true;
-+  window.autoFarmStats.startTime = Date.now();
-+  window.autoFarmStats.collected = 0;
-+  window.autoFarmCurrentTarget = null;
-+  window.autoFarmTargetStartTime = 0;
-+  window.autoFarmSkipIds.clear();
-+  window.autoFarmSkipAreas = [];
-+  window.autoFarmSkipClearTime = Date.now();
-+  coreSharedState.position = null;
-+  coreSharedState.counter_2 = 0;
-+  coreSharedState.lastValue = 0;
-+  coreSharedState.lastUpdateTime = 0;
-+  if (farmMode === "patrol") {
-+    generatePatrolPoints();
-+  }
-+  showToast("Auto farm started (" + window.autoFarmMode + ")");
-+  startAutoFarmLoop();
-+}
 +function stopAutoFarm() {
 +  window.autoFarmActive = false;
 +  coreSharedState.isActive_2 = false;
@@ -1958,7 +1938,6 @@ Index: src/features/autofarm.js
 +export {
 +  isAreaSkipped,
 +  handleFarmFailure,
-+  isAreaSkipped_2,
 +  findClosestFarmable,
 +  getFarmableEntities,
 +  findOptimalFarmPosition,
@@ -1969,7 +1948,6 @@ Index: src/features/autofarm.js
 +  generatePatrolPoints,
 +  autoFarmUpdate,
 +  startAutoFarmLoop,
-+  initAutoFarm,
 +  stopAutoFarm,
 +};
 Index: src/features/chat.js
@@ -2044,7 +2022,7 @@ Index: src/features/esp.js
 ===================================================================
 --- src/features/esp.js	v1.5
 +++ src/features/esp.js	v1.6
-@@ -0,0 +1,365 @@
+@@ -0,0 +1,366 @@
 +import {
 +  getGameCanvas,
 +  isPlayer,
@@ -2056,6 +2034,7 @@ Index: src/features/esp.js
 +  getEntityPosition,
 +  calculateDirection,
 +  findEntityById,
++  playerData,
 +  getFirstAnimalPosition,
 +  coreSharedState,
 +} from "../core.js";
@@ -2363,7 +2342,7 @@ Index: src/features/esp.js
 +  const centerX = espCanvas.width / 2;
 +  const centerY = espCanvas.height / 2;
 +  drawEsp(ctx, entities, centerX, centerY, renderScale);
-+  drawTrackedEntity(ctx, espCanvas, coreSharedState.playerData, renderScale);
++  drawTrackedEntity(ctx, espCanvas, playerData, renderScale);
 +  drawRadar(ctx, espCanvas, entities);
 +  requestAnimationFrame(renderEspLoop);
 +}
@@ -2384,18 +2363,18 @@ Index: src/features/esp.js
 +  }
 +}
 +function toggleMinimapSize() {
-+  if (!coreSharedState.playerData || !coreSharedState.playerData.minimap) {
++  if (!playerData || !playerData.minimap) {
 +    showToast("Minimap not available");
 +    return;
 +  }
 +  if (coreSharedState.isToggled) {
-+    coreSharedState.playerData.minimap.scale.set(1);
-+    coreSharedState.playerData.minimap.pivot.set(0, 0);
++    playerData.minimap.scale.set(1);
++    playerData.minimap.pivot.set(0, 0);
 +    coreSharedState.isToggled = false;
 +    showToast("Minimap restored");
 +  } else {
-+    coreSharedState.playerData.minimap.scale.set(0.5);
-+    coreSharedState.playerData.minimap.pivot.set(-70, -45);
++    playerData.minimap.scale.set(0.5);
++    playerData.minimap.pivot.set(-70, -45);
 +    coreSharedState.isToggled = true;
 +    showToast("Small minimap enabled");
 +  }
@@ -2583,8 +2562,9 @@ Index: src/ui/interaction.js
 --- src/ui/interaction.js	v1.5
 +++ src/ui/interaction.js	v1.6
 @@ -1,16 +1,17 @@
+-import { radius, coreSharedState } from "../core.js";
 +import { getMyAnimal } from "../utils.js";
- import { radius, coreSharedState } from "../core.js";
++import { radius, game, coreSharedState } from "../core.js";
  
 -function simulateTyping(inputSelector, textToType) {
 -  const inputElement = document.querySelector(inputSelector);
@@ -2756,39 +2736,46 @@ Index: src/ui/panels.js
 ===================================================================
 --- src/ui/panels.js	v1.5
 +++ src/ui/panels.js	v1.6
-@@ -1,177 +1,467 @@
--import { showNotification } from "./interaction.js";
+@@ -1,686 +1,466 @@
+-import { showNotification, simulateTyping } from "./interaction.js";
 -import { handleAnimalAction } from "../features/autofarm.js";
--import { radius, securityConfigs, coreSharedState } from "../core.js";
 +import { showToast, typeText } from "./interaction.js";
-+import {
-+  startScheduledTask,
-+  stopInterval,
+ import {
+   startScheduledTask,
+   stopInterval,
+-  autoChat,
 +  simulateChatInput,
-+} from "../features/chat.js";
-+import {
-+  radius,
+ } from "../features/chat.js";
+ import {
+   radius,
+-  gameInstance,
+-  playerData,
+-  securityConfigs,
+-  initInterceptor,
+-  isReady,
+-  initializeAntiTamper,
+-  disableGameRestrictions,
 +  hookTextEncoder,
++  game,
 +  isActive,
 +  clearTracking_2,
 +  clearTracking_3,
++  initAutoFarm,
++  initializeAntiDetection,
 +  initializeViewportSettings,
-+  coreSharedState,
-+} from "../core.js";
-+import { generateRandomString } from "../utils.js";
-+import { toggleMouseSimulation } from "../features/movement.js";
-+import { initializeAntiDetection } from "../features/antidetection.js";
+   coreSharedState,
+ } from "../core.js";
+ import { generateRandomString } from "../utils.js";
+ import { toggleMouseSimulation } from "../features/movement.js";
+-import { toggleMinimapScale } from "./radar.js";
+-import { applyThemeColors } from "./theme.js";
 +import {
 +  clearTracking,
 +  trackPlayer,
 +  toggleMinimapSize,
 +} from "../features/esp.js";
 +import { enableAutoDodge } from "../features/aimbot.js";
-+import {
-+  generatePatrolPoints,
-+  initAutoFarm,
-+  stopAutoFarm,
-+} from "../features/autofarm.js";
++import { generatePatrolPoints, stopAutoFarm } from "../features/autofarm.js";
 +import { applyTheme, initBackground } from "./theme.js";
  
 -function createHalloweenModal(modalConfig) {
@@ -2872,19 +2859,149 @@ Index: src/ui/panels.js
  }
 -const initControlOverlay = () => {
 -  if (coreSharedState.isInitialized_2) {
+-    return;
+-  }
+-  function sendActionSequence() {
+-    try {
+-      handleAnimalAction(1);
+-      setTimeout(() => {
+-        handleAnimalAction(5000);
+-      }, 50);
+-      setTimeout(() => {
+-        handleAnimalAction(5000);
+-      }, 100);
+-      setTimeout(() => {
+-        handleAnimalAction(5000);
+-      }, 150);
+-    } catch {}
+-  }
+-  function createControlOverlay() {
+-    try {
+-      document.getElementById("ctrl-overlay").remove();
+-    } catch {}
+-    const overlayDiv = document.createElement("div");
+-    const gameContainer = document.querySelector("div.game");
+-    if (gameContainer) {
+-      gameContainer.insertBefore(overlayDiv, gameContainer.children[0]);
+-    }
+-    overlayDiv.outerHTML =
+-      '<div id="ctrl-overlay" style="width: 100%;height: 100%;position: absolute;display: block;z-index:10000;pointer-events:none;"></div>';
+-    document
+-      .getElementById("ctrl-overlay")
+-      .addEventListener("contextmenu", (event) => event.preventDefault());
+-  }
+-  createControlOverlay();
+-  window.addEventListener(
+-    "click",
+-    (processAnimals) => {
+-      try {
+-        if (!playerData?.myAnimals?.[0]) {
+-          return;
+-        }
+-        const visibleFishLevel = playerData.myAnimals[0].visibleFishLevel;
+-        const mergedFishConfig = {
+-          ...securityConfigs.default,
+-          ...securityConfigs[visibleFishLevel],
+-        };
+-        if (processAnimals.ctrlKey) {
+-          if (processAnimals.shiftKey && visibleFishLevel === 107) {
+-            sendActionSequence();
+-            return;
+-          } else if (
+-            processAnimals.shiftKey &&
+-            visibleFishLevel !== 101 &&
+-            playerData.myAnimals[0]._standing
+-          ) {
+-            handleAnimalAction(
+-              Math.floor(Math.random() * 1647483648) + 500000000,
+-            );
+-            return;
+-          } else {
+-            let propertyMap = Object.getOwnPropertyNames(gameInstance)
+-              .map((serviceKey) => gameInstance[serviceKey])
+-              .find((keyMap) => keyMap.keys instanceof Array);
+-            if (propertyMap) {
+-              propertyMap.pointerDown = true;
+-              propertyMap.pressElapsed = Infinity;
+-              propertyMap.setPointerDown(false);
+-            }
+-          }
+-        } else if (processAnimals.altKey) {
+-          handleAnimalAction(
+-            playerData?.myAnimals?.[0]?._standing
+-              ? 41
+-              : Math.floor(mergedFishConfig.secLoadTime / 2),
+-          );
+-        }
+-      } catch {}
+-    },
+-    false,
+-  );
+-  window.addEventListener(
+-    "keyup",
+-    (keyboardEvent) => {
+-      try {
+-        if (!keyboardEvent.ctrlKey && !keyboardEvent.altKey) {
+-          document.getElementById("ctrl-overlay").style.pointerEvents = "none";
+-        }
+-      } catch {}
+-    },
+-    false,
+-  );
+-  window.addEventListener("focus", () => {
+-    try {
+-      document.getElementById("ctrl-overlay").style.pointerEvents = "none";
+-    } catch {}
+-  });
+-  coreSharedState.isInitialized_2 = true;
+-};
+-function createUpdateHistoryStyles() {
+-  const styleElement = document.createElement("style");
+-  styleElement.textContent =
+-    "\n      #update-history {\n        position: fixed;\n        bottom: 20px;\n        left: 20px;\n        background: var(--bg-primary);\n        color: var(--text-primary);\n        padding: 16px;\n        border-radius: 16px;\n        font-size: 13px;\n        z-index: 9999;\n        max-width: 240px;\n        max-height: 280px;\n        overflow-y: auto;\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        cursor: move;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        transition: all 0.3s ease;\n        backdrop-filter: blur(20px);\n      }\n      #update-history:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #update-history ul {\n        margin: 0;\n        padding-left: 18px;\n      }\n      #update-history li {\n        margin-bottom: 6px;\n        line-height: 1.4;\n        color: var(--text-primary);\n      }\n      #update-history h3 {\n        margin: 0 0 12px 0;\n        font-size: 15px;\n        color: var(--accent);\n        position: relative;\n        padding-right: 28px;\n        font-weight: 600;\n      }\n      #update-history button.min-btn {\n        background: none;\n        border: none;\n        color: var(--accent);\n        font-size: 20px;\n        cursor: pointer;\n        position: absolute;\n        top: 30%;\n        right: 8px;\n        transform: translateY(-50%);\n        z-index: 1;\n        transition: all 0.2s ease;\n        width: 24px;\n        height: 24px;\n        line-height: 24px;\n        border-radius: 50%;\n      }\n      #update-history button.min-btn:hover {\n        color: var(--accent-hover);\n        background: rgba(var(--accent-rgb), 0.2);\n      }\n      #update-history.themestarwars::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at center, rgba(255,255,255,0.1) 1px, transparent 1px);\n        background-size: 20px 20px;\n        animation: twinkle-stars 20s linear infinite;\n      }\n      #update-history.themekfc::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 20% 30%, rgba(244,0,0,0.1) 2px, transparent 2px),\n                    radial-gradient(circle at 80% 70%, rgba(255,204,0,0.05) 1px, transparent 1px);\n        background-size: 40px 40px;\n      }\n      #update-history.themehalloween::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 30% 20%, rgba(255, 102, 0, 0.1) 1px, transparent 1px),\n                    radial-gradient(circle at 70% 80%, rgba(139, 0, 255, 0.05) 2px, transparent 2px);\n        background-size: 30px 30px;\n        animation: halloween-glow 15s ease-in-out infinite alternate;\n      }\n      #update-history.themehalloween .bat {\n        position: absolute;\n        font-size: 20px;\n        animation: fly-bat 10s linear infinite;\n        pointer-events: none;\n        opacity: 0.7;\n      }\n      #update-history.themehalloween .bat:nth-child(1) { top: 10%; left: -10%; animation-delay: 0s; }\n      #update-history.themehalloween .bat:nth-child(2) { top: 50%; right: -10%; animation-delay: 3s; animation-direction: reverse; }\n      #update-history.themehalloween .bat:nth-child(3) { top: 80%; left: -10%; animation-delay: 6s; }\n      @keyframes fly-bat {\n        0% { transform: translateX(0) rotate(0deg); }\n        100% { transform: translateX(120%) rotate(360deg); }\n      }\n      @keyframes twinkle-stars {\n        0% { background-position: 0 0; }\n        100% { background-position: 20px 20px; }\n      }\n      @keyframes halloween-glow {\n        0% { opacity: 0.8; }\n        100% { opacity: 1; }\n      }\n    ";
+-  document.head.appendChild(styleElement);
+-  const draggableElement = document.createElement("div");
+-  draggableElement.id = "update-history";
+-  draggableElement.innerHTML =
+-    '\n      <h3>Update History <button class="min-btn" id="minHist">−</button></h3>\n      <div id="historyContent">\n        <ul>\n          <li>v1.5 - Added Star Wars theme, Pink theme, KFC theme (More Glow in KFC Theme), new Halloween theme + Mini-Game, new Astraphobia Client Halloween Icon and updated Halloween Astraphobia Client Website.</li>\n          <li>v1.4 - New Themes Selection (NO MORE PLAIN RED UI MORE MODERN COLORS).</li>\n          <li>v1.3 - New Blue Themed UI with new UI animations and Client Logo! No more minimize or maximize for everything but Update History because of toogle client tool. Updated Astraphobia Client Website and Discord! Also, added new small minimap feature.</li>\n          <li>v1.2 - Astra-Vision added - no ink flash or deep darkness effects + no-zoom limit, added new client ui rework, and custom-background feature (images and gif\'s).</li>\n          <li>v1.1 - Added built-in ad blocker, removed boost trail, spoofing for username, keybind selector for auto spin, added settings GUI, added shift keybind to toogle all panels.</li>\n          <li>v1.0 - Initial release with auto chat, auto-spin, special character bypass, and thresher super boost, no-zoom limit is automatically enabled.</li>\n        </ul>\n      </div>\n    ';
+-  document.body.appendChild(draggableElement);
+-  const minHistElement = draggableElement.querySelector("#minHist");
+-  const historyContentElement =
+-    draggableElement.querySelector("#historyContent");
+-  let isHistoryHidden = false;
+-  minHistElement.onclick = (arg_b829) => {
+-    arg_b829.stopPropagation();
+-    isHistoryHidden = !isHistoryHidden;
+-    historyContentElement.style.display = isHistoryHidden ? "none" : "block";
+-    draggableElement.style.height = isHistoryHidden ? "60px" : "auto";
+-    minHistElement.textContent = isHistoryHidden ? "+" : "−";
+-  };
 +function makeDraggable(element) {
-+  let offsetX;
-+  let offsetY;
-+  let isDragging = false;
+   let offsetX;
+   let offsetY;
+-  let isMoving = false;
+   let isDragging = false;
+-  draggableElement.addEventListener("mousedown", (arg_5759) => {
 +  let hasMoved = false;
 +  element.addEventListener("mousedown", (event) => {
-+    if (
+     if (
+-      ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(arg_5759.target.tagName)
 +      ["BUTTON", "INPUT", "TEXTAREA", "SELECT", "A", "LABEL"].includes(
 +        event.target.tagName,
 +      )
-+    ) {
-+      return;
-+    }
+     ) {
+       return;
+     }
+-    isMoving = true;
+-    isDragging = false;
+-    offsetX = arg_5759.clientX - draggableElement.getBoundingClientRect().left;
+-    offsetY = arg_5759.clientY - draggableElement.getBoundingClientRect().top;
+-    draggableElement.style.transition = "none";
+-    const handleMouseMove = (mouseEvent) => {
+-      const deltaX = mouseEvent.clientX - arg_5759.clientX;
+-      const deltaY = mouseEvent.clientY - arg_5759.clientY;
+-      if (!isDragging && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+-        isDragging = true;
 +    if (event.target.closest("button, input, textarea, select, label")) {
 +      return;
 +    }
@@ -2900,29 +3017,73 @@ Index: src/ui/panels.js
 +          Math.abs(event.clientY - event.clientY) > 5)
 +      ) {
 +        hasMoved = true;
-+      }
+       }
+-      if (isMoving) {
+-        draggableElement.style.left = mouseEvent.clientX - offsetX + "px";
+-        draggableElement.style.top = mouseEvent.clientY - offsetY + "px";
+-        draggableElement.style.bottom = "auto";
+-        draggableElement.style.right = "auto";
 +      if (isDragging) {
 +        element.style.left = event.clientX - offsetX + "px";
 +        element.style.top = event.clientY - offsetY + "px";
 +        element.style.bottom = "auto";
 +        element.style.right = "auto";
-+      }
-+    };
-+    const handleMouseUp = () => {
+       }
+     };
+     const handleMouseUp = () => {
+-      isMoving = false;
+-      draggableElement.style.transition = "all 0.3s ease";
 +      isDragging = false;
 +      element.style.transition = "";
-+      document.removeEventListener("mousemove", handleMouseMove);
-+      document.removeEventListener("mouseup", handleMouseUp);
-+    };
-+    document.addEventListener("mousemove", handleMouseMove);
-+    document.addEventListener("mouseup", handleMouseUp);
-+  });
+       document.removeEventListener("mousemove", handleMouseMove);
+       document.removeEventListener("mouseup", handleMouseUp);
+     };
+     document.addEventListener("mousemove", handleMouseMove);
+     document.addEventListener("mouseup", handleMouseUp);
+   });
+-  draggableElement.addEventListener("click", (arg_98a2) => {
+-    if (isDragging) {
+-      arg_98a2.stopImmediatePropagation();
 +  element.addEventListener("click", (event_2) => {
 +    if (hasMoved) {
 +      event_2.stopImmediatePropagation();
-+    }
-+  });
-+}
+     }
+   });
+-  if (localStorage.getItem("theme") === "halloween") {
+-    for (let loopIndex = 0; loopIndex < 3; loopIndex++) {
+-      const spanElement = document.createElement("span");
+-      spanElement.className = "bat";
+-      spanElement.textContent = "🦇";
+-      draggableElement.appendChild(spanElement);
+-    }
+-  }
+-  return draggableElement;
+ }
+-function injectDeepToolsStyles() {
+-  const deepToolsStyleElement = document.createElement("style");
+-  deepToolsStyleElement.textContent =
+-    "\n      :root {\n        --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);\n        --shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.4);\n      }\n      #deep-tools-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n        position: relative;\n      }\n      #deep-tools-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #deep-tools-panel textarea {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 8px;\n        padding: 10px;\n        transition: all 0.2s ease;\n        font-size: 13px;\n      }\n      #deep-tools-panel textarea:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);\n      }\n      #deep-tools-panel input[type=\"number\"] {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 60px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #deep-tools-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        position: relative;\n        overflow: hidden;\n      }\n      #deep-tools-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #deep-tools-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #deep-tools-panel button:hover:not(:disabled) {\n        background: var(--hover-bg);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2);\n        color: var(--accent-hover);\n      }\n      #deep-tools-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #deep-tools-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #deep-tools-panel .credits {\n        margin-top: 12px;\n        font-size: 11px;\n        color: var(--text-secondary);\n        line-height: 1.4;\n      }\n      #deep-tools-panel .auto-chat-controls {\n        display: flex;\n        gap: 8px;\n        margin-bottom: 10px;\n        align-items: center;\n        justify-content: center;\n      }\n      #deep-tools-panel .spin-keybind {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        margin-bottom: 10px;\n        font-size: 12px;\n      }\n      #deep-tools-panel .spin-keybind label {\n        color: var(--text-primary);\n      }\n      #deep-tools-panel #spinKeyInput {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 50px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #aim-overlay, #ctrl-overlay {\n        z-index: 10000 !important;\n      }\n      div.game {\n        position: relative;\n      }\n      /* Ad Removal */\n      div.sidebar.left > div.ad-block {\n        opacity: 0 !important;\n        pointer-events: none !important;\n        display: none !important;\n      }\n      div.sidebar.left > a {\n        display: none !important;\n      }\n      div.sidebar.left {\n        max-width: 30vw;\n        width: 21rem;\n        bottom: 0 !important;\n      }\n      /* Theme-specific panel animations */\n      #deep-tools-panel.themestarwars::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        background: radial-gradient(circle at center, rgba(255,255,255,0.1) 1px, transparent 1px);\n        background-size: 20px 20px;\n        animation: twinkle-stars 20s linear infinite;\n        z-index: -1;\n        border-radius: 16px;\n      }\n      #deep-tools-panel.themekfc::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 20% 30%, rgba(244,0,0,0.1) 2px, transparent 2px),\n                    radial-gradient(circle at 80% 70%, rgba(255,204,0,0.05) 1px, transparent 1px);\n        background-size: 40px 40px;\n      }\n      #deep-tools-panel.themehalloween::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 30% 20%, rgba(255, 102, 0, 0.1) 1px, transparent 1px),\n                    radial-gradient(circle at 70% 80%, rgba(139, 0, 255, 0.05) 2px, transparent 2px);\n        background-size: 30px 30px;\n        animation: halloween-glow 15s ease-in-out infinite alternate;\n      }\n      #deep-tools-panel.themehalloween .bat {\n        position: absolute;\n        font-size: 20px;\n        animation: fly-bat 10s linear infinite;\n        pointer-events: none;\n        opacity: 0.7;\n      }\n      #deep-tools-panel.themehalloween .bat:nth-child(1) { top: 10%; left: -10%; animation-delay: 0s; }\n      #deep-tools-panel.themehalloween .bat:nth-child(2) { top: 50%; right: -10%; animation-delay: 3s; animation-direction: reverse; }\n      #deep-tools-panel.themehalloween .bat:nth-child(3) { top: 80%; left: -10%; animation-delay: 6s; }\n      @keyframes fly-bat {\n        0% { transform: translateX(0) rotate(0deg); }\n        100% { transform: translateX(120%) rotate(360deg); }\n      }\n      @keyframes twinkle-stars {\n        0% { background-position: 0 0; }\n        100% { background-position: 20px 20px; }\n      }\n      @keyframes halloween-glow {\n        0% { opacity: 0.8; }\n        100% { opacity: 1; }\n      }\n    ";
+-  document.head.appendChild(deepToolsStyleElement);
+-  const deepToolsPanel = document.createElement("div");
+-  deepToolsPanel.id = "deep-tools-panel";
+-  deepToolsPanel.style.position = "fixed";
+-  deepToolsPanel.style.bottom = "20px";
+-  deepToolsPanel.style.right = "20px";
+-  deepToolsPanel.style.color = "var(--text-primary)";
+-  deepToolsPanel.style.padding = "16px";
+-  deepToolsPanel.style.borderRadius = "16px";
+-  deepToolsPanel.style.fontSize = "14px";
+-  deepToolsPanel.style.zIndex = "99999";
+-  deepToolsPanel.style.userSelect = "none";
+-  deepToolsPanel.style.width = "240px";
+-  deepToolsPanel.style.textAlign = "center";
+-  deepToolsPanel.style.cursor = "move";
+-  deepToolsPanel.style.overflow = "hidden";
+-  deepToolsPanel.innerHTML =
+-    '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        ASTRAPHOBIA CLIENT\n      </div>\n      <div id="panelContent">\n        <textarea id="chatMsg" placeholder="Type message..." style="width:100%; height:50px; margin-bottom:10px; resize:none;"></textarea>\n        <button id="sendBtn" style="width:100%; margin-bottom:10px;">Send Typed Chat</button>\n        <div class="auto-chat-controls">\n          <input type="number" id="delayInput" min="1" max="300" value="10" style="margin-right:8px;">\n          <span style="font-size:12px;">sec</span>\n        </div>\n        <button id="autoChatBtn" style="width:100%; margin-bottom:10px;">Enable Auto Chat</button>\n        <button id="patchBtn" style="width:100%; margin-bottom:10px;">Enable Special Characters(in chat/clan/name)</button>\n        <button id="spoofBtn" style="width:100%; margin-bottom:10px;">Spoof Username:Random Unicode Name(ban decrease)</button>\n        <button id="spinBtn" style="width:100%; margin-bottom:10px;">Enable Auto Spin</button>\n        <div class="spin-keybind">\n          <label for="spinKeyInput">Keybind:</label>\n          <input type="text" id="spinKeyInput" placeholder="PRESS" readonly>\n        </div>\n        <div class="credits">\n          Coder: Astraphobia<br>\n          Owner/Founder: Astraphobia<br>\n          Designer/Marketer: Astraphobia<br>\n          Tester: Astraphobia\n        </div>\n      </div>\n    ';
+-  document.body.appendChild(deepToolsPanel);
+-  deepToolsPanel.querySelector("#sendBtn").onclick = () => {
+-    const chatMessage = deepToolsPanel.querySelector("#chatMsg").value;
 +function createToolsPanel() {
 +  const panelElement = document.createElement("div");
 +  panelElement.id = "deep-tools-panel";
@@ -2941,10 +3102,20 @@ Index: src/ui/panels.js
 +  };
 +  panelElement.querySelector("#sendBtn").onclick = () => {
 +    const chatMessage = panelElement.querySelector("#chatMsg").value;
-+    if (chatMessage) {
+     if (chatMessage) {
+-      autoChat(chatMessage);
 +      simulateChatInput(chatMessage);
-+    }
-+  };
+     }
+   };
+-  const patchButton = deepToolsPanel.querySelector("#patchBtn");
+-  patchButton.onclick = () => initInterceptor(patchButton);
+-  const spoofButton = deepToolsPanel.querySelector("#spoofBtn");
+-  spoofButton.onclick = () => {
+-    const inputLimit = generateRandomString(8);
+-    if (simulateTyping(".play-game .el-input__inner", inputLimit)) {
+-      showNotification("Spoofed name!");
+-    } else if (simulateTyping(".new-tribe .el-input__inner", inputLimit)) {
+-      showNotification("Spoofed tribe name!");
 +  const autoChatBtn = panelElement.querySelector("#autoChatBtn");
 +  autoChatBtn.onclick = () => {
 +    const messageText = panelElement.querySelector("#chatMsg").value;
@@ -2958,12 +3129,15 @@ Index: src/ui/panels.js
 +      stopInterval();
 +      autoChatBtn.textContent = "Auto Chat";
 +      autoChatBtn.classList.remove("toggle-on");
-+    } else {
+     } else {
+-      showNotification("No name input found! Enable special characters first.");
 +      startScheduledTask(messageText, delayValue);
 +      autoChatBtn.textContent = "Stop Chat";
 +      autoChatBtn.classList.add("toggle-on");
-+    }
-+  };
+     }
+   };
+-  const spinButton = deepToolsPanel.querySelector("#spinBtn");
+-  spinButton.onclick = () => {
 +  const patchBtn = panelElement.querySelector("#patchBtn");
 +  patchBtn.onclick = () => {
 +    hookTextEncoder();
@@ -2983,39 +3157,130 @@ Index: src/ui/panels.js
 +  };
 +  const spinBtn = panelElement.querySelector("#spinBtn");
 +  spinBtn.onclick = () => {
-+    toggleMouseSimulation();
+     toggleMouseSimulation();
+-    if (coreSharedState.rotationInterval) {
+-      spinButton.textContent = "Disable Auto Spin";
+-      spinButton.style.color = "var(--accent)";
+-      spinButton.style.opacity = "0.6";
 +    if (coreSharedState.animationInterval) {
 +      spinBtn.textContent = "Stop Spin";
 +      spinBtn.classList.add("toggle-on");
-+    } else {
+     } else {
+-      spinButton.textContent = "Enable Auto Spin";
+-      spinButton.style.color = "var(--accent)";
+-      spinButton.style.opacity = "1";
 +      spinBtn.textContent = "Auto Spin";
 +      spinBtn.classList.remove("toggle-on");
-+    }
-+  };
+     }
+   };
+-  const spinKeyInput = deepToolsPanel.querySelector("#spinKeyInput");
+-  let pressedKey = null;
+-  spinKeyInput.addEventListener("keydown", (event) => {
+-    event.preventDefault();
+-    pressedKey = event.code || event.key;
+-    spinKeyInput.value = pressedKey.replace("Key", "").toLowerCase();
 +  const spinKeyInput = panelElement.querySelector("#spinKeyInput");
 +  let lastPressedKey = null;
 +  spinKeyInput.addEventListener("keydown", (keyEvent) => {
 +    keyEvent.preventDefault();
 +    lastPressedKey = keyEvent.code || keyEvent.key;
 +    spinKeyInput.value = lastPressedKey.replace("Key", "").toUpperCase();
-+  });
+   });
+-  document.addEventListener("keydown", (event_2) => {
 +  document.addEventListener("keydown", (keyboardEvent) => {
-+    if (
+     if (
+-      pressedKey &&
+-      event_2.code === pressedKey &&
+-      !event_2.target.matches("input, textarea, button")
 +      lastPressedKey &&
 +      keyboardEvent.code === lastPressedKey &&
 +      !keyboardEvent.target.matches("input,textarea,button,select")
-+    ) {
+     ) {
+-      event_2.preventDefault();
 +      keyboardEvent.preventDefault();
-+      toggleMouseSimulation();
+       toggleMouseSimulation();
+-      if (coreSharedState.rotationInterval) {
+-        spinButton.textContent = "Disable Auto Spin";
+-        spinButton.style.color = "var(--accent)";
+-        spinButton.style.opacity = "0.6";
 +      if (coreSharedState.animationInterval) {
 +        spinBtn.textContent = "Stop Spin";
 +        spinBtn.classList.add("toggle-on");
-+      } else {
+       } else {
+-        spinButton.textContent = "Enable Auto Spin";
+-        spinButton.style.color = "var(--accent)";
+-        spinButton.style.opacity = "1";
 +        spinBtn.textContent = "Auto Spin";
 +        spinBtn.classList.remove("toggle-on");
-+      }
-+    }
-+  });
+       }
+     }
+   });
+-  const autoChatButton = deepToolsPanel.querySelector("#autoChatBtn");
+-  autoChatButton.onclick = () => {
+-    const chatMessageValue = deepToolsPanel.querySelector("#chatMsg").value;
+-    const delayInput = deepToolsPanel.querySelector("#delayInput");
+-    const delayValue = parseInt(delayInput.value) || 10;
+-    if (!chatMessageValue) {
+-      showNotification("⚠️ Enter a message first!");
+-      return;
+-    }
+-    if (coreSharedState.isProcessing) {
+-      stopInterval();
+-      autoChatButton.textContent = "Enable Auto Chat";
+-      autoChatButton.style.color = "var(--accent)";
+-      autoChatButton.style.opacity = "1";
+-    } else {
+-      startScheduledTask(chatMessageValue, delayValue);
+-      autoChatButton.textContent = "Disable Auto Chat";
+-      autoChatButton.style.color = "var(--accent)";
+-      autoChatButton.style.opacity = "0.6";
+-    }
+-  };
+-  let deepToolsOffsetX;
+-  let deepToolsOffsetY;
+-  let deepToolsDragActive = false;
+-  let deepToolsIsDragging = false;
+-  deepToolsPanel.addEventListener("mousedown", (event_3) => {
+-    if (
+-      event_3.target.tagName === "BUTTON" ||
+-      event_3.target.tagName === "TEXTAREA" ||
+-      event_3.target.tagName === "INPUT" ||
+-      event_3.target.classList.contains("credits")
+-    ) {
+-      return;
+-    }
+-    deepToolsDragActive = true;
+-    deepToolsIsDragging = false;
+-    deepToolsOffsetX =
+-      event_3.clientX - deepToolsPanel.getBoundingClientRect().left;
+-    deepToolsOffsetY =
+-      event_3.clientY - deepToolsPanel.getBoundingClientRect().top;
+-    deepToolsPanel.style.transition = "none";
+-    const handleDeepToolsDrag = (mouseEvent) => {
+-      const deltaX = mouseEvent.clientX - event_3.clientX;
+-      const deltaY = mouseEvent.clientY - event_3.clientY;
+-      if (
+-        !deepToolsIsDragging &&
+-        (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)
+-      ) {
+-        deepToolsIsDragging = true;
+-      }
+-      if (deepToolsDragActive) {
+-        deepToolsPanel.style.left =
+-          mouseEvent.clientX - deepToolsOffsetX + "px";
+-        deepToolsPanel.style.top = mouseEvent.clientY - deepToolsOffsetY + "px";
+-        deepToolsPanel.style.bottom = "auto";
+-        deepToolsPanel.style.right = "auto";
+-      }
+-    };
+-    const handleMouseUp = () => {
+-      deepToolsDragActive = false;
+-      deepToolsPanel.style.transition = "all 0.3s ease";
+-      document.removeEventListener("mousemove", handleDeepToolsDrag);
+-      document.removeEventListener("mouseup", handleMouseUp);
+-    };
+-    document.addEventListener("mousemove", handleDeepToolsDrag);
+-    document.addEventListener("mouseup", handleMouseUp);
 +  const turnLeftKeyInput = panelElement.querySelector("#turnLeftKeyInput");
 +  const turnRightKeyInput = panelElement.querySelector("#turnRightKeyInput");
 +  turnLeftKeyInput.value = coreSharedState.inputKey.toUpperCase();
@@ -3026,7 +3291,11 @@ Index: src/ui/panels.js
 +    coreSharedState.inputKey = uiEvent.key;
 +    turnLeftKeyInput.value =
 +      uiEvent.key.length === 1 ? uiEvent.key.toUpperCase() : uiEvent.key;
-+  });
+   });
+-  deepToolsPanel.addEventListener("click", (event_4) => {
+-    if (deepToolsIsDragging) {
+-      event_4.stopImmediatePropagation();
+-    }
 +  turnRightKeyInput.addEventListener("keydown", (inputEvent) => {
 +    inputEvent.preventDefault();
 +    inputEvent.stopPropagation();
@@ -3035,18 +3304,50 @@ Index: src/ui/panels.js
 +      inputEvent.key.length === 1
 +        ? inputEvent.key.toUpperCase()
 +        : inputEvent.key;
-+  });
+   });
+-  if (localStorage.getItem("theme") === "halloween") {
+-    for (let loopIndex = 0; loopIndex < 3; loopIndex++) {
+-      const spanElement = document.createElement("span");
+-      spanElement.className = "bat";
+-      spanElement.textContent = "🦇";
+-      deepToolsPanel.appendChild(spanElement);
+-    }
+-  }
+-  return deepToolsPanel;
 +  makeDraggable(panelElement);
 +  return panelElement;
-+}
+ }
+-function injectPlusPanelStyles() {
+-  const plusPanelStyleElement = document.createElement("style");
+-  plusPanelStyleElement.textContent =
+-    "\n      #plus-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n        position: relative;\n      }\n      #plus-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #plus-panel textarea {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 8px;\n        padding: 10px;\n        transition: all 0.2s ease;\n        font-size: 13px;\n      }\n      #plus-panel textarea:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);\n      }\n      #plus-panel input[type=\"number\"] {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 60px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #plus-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        position: relative;\n        overflow: hidden;\n        width: 100%;\n        margin-bottom: 10px;\n      }\n      #plus-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #plus-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #plus-panel button:hover:not(:disabled) {\n        background: var(--hover-bg);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2);\n        color: var(--accent-hover);\n      }\n      #plus-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #plus-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      /* Theme-specific panel animations */\n      #plus-panel.themestarwars::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        background: radial-gradient(circle at center, rgba(255,255,255,0.1) 1px, transparent 1px);\n        background-size: 20px 20px;\n        animation: twinkle-stars 20s linear infinite;\n        z-index: -1;\n        border-radius: 16px;\n      }\n      #plus-panel.themekfc::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 20% 30%, rgba(244,0,0,0.1) 2px, transparent 2px),\n                    radial-gradient(circle at 80% 70%, rgba(255,204,0,0.05) 1px, transparent 1px);\n        background-size: 40px 40px;\n      }\n      #plus-panel.themehalloween::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 30% 20%, rgba(255, 102, 0, 0.1) 1px, transparent 1px),\n                    radial-gradient(circle at 70% 80%, rgba(139, 0, 255, 0.05) 2px, transparent 2px);\n        background-size: 30px 30px;\n        animation: halloween-glow 15s ease-in-out infinite alternate;\n      }\n      #plus-panel.themehalloween .bat {\n        position: absolute;\n        font-size: 20px;\n        animation: fly-bat 10s linear infinite;\n        pointer-events: none;\n        opacity: 0.7;\n      }\n      #plus-panel.themehalloween .bat:nth-child(1) { top: 10%; left: -10%; animation-delay: 0s; }\n      #plus-panel.themehalloween .bat:nth-child(2) { top: 50%; right: -10%; animation-delay: 3s; animation-direction: reverse; }\n      #plus-panel.themehalloween .bat:nth-child(3) { top: 80%; left: -10%; animation-delay: 6s; }\n      @keyframes fly-bat {\n        0% { transform: translateX(0) rotate(0deg); }\n        100% { transform: translateX(120%) rotate(360deg); }\n      }\n      @keyframes twinkle-stars {\n        0% { background-position: 0 0; }\n        100% { background-position: 20px 20px; }\n      }\n      @keyframes halloween-glow {\n        0% { opacity: 0.8; }\n        100% { opacity: 1; }\n      }\n    ";
+-  document.head.appendChild(plusPanelStyleElement);
 +function createPlusPanel() {
-+  const plusPanel = document.createElement("div");
-+  plusPanel.id = "plus-panel";
+   const plusPanel = document.createElement("div");
+   plusPanel.id = "plus-panel";
+-  plusPanel.style.position = "fixed";
+-  plusPanel.style.top = "20px";
+-  plusPanel.style.right = "20px";
+-  plusPanel.style.color = "var(--text-primary)";
+-  plusPanel.style.padding = "16px";
+-  plusPanel.style.borderRadius = "16px";
+-  plusPanel.style.fontSize = "14px";
+-  plusPanel.style.zIndex = "99999";
+-  plusPanel.style.userSelect = "none";
+-  plusPanel.style.width = "240px";
+-  plusPanel.style.textAlign = "center";
+-  plusPanel.style.cursor = "move";
+-  plusPanel.style.overflow = "hidden";
 +  plusPanel.className = "ast-panel";
 +  plusPanel.style.cssText = "top:20px;right:20px;width:230px;";
-+  plusPanel.innerHTML =
+   plusPanel.innerHTML =
+-    '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        ASTRAPHOBIA CLIENT+\n      </div>\n      <div id="plusContent">\n        <button id="thresherBtn">Enable Thresher Super Boost(ctrl + shift and click)(minumum required 2 boost)</button>\n        <button id="astraVisionBtn">Enable Astra-Vision (no-zoom limit, no ink flash or deep darkness)</button>\n        <button id="smallMinimapBtn">Enable Small Minimap</button>\n      </div>\n    ';
 +    '\n      <div class="ast-header">\n        <span class="ast-header-title">Astraphobia Client</span>\n        <button class="ast-header-min" id="plusMin">−</button>\n      </div>\n      <div class="ast-body" id="plusBody">\n        <span class="ast-section-label">Vision</span>\n        <button class="ast-btn patched" id="thresherBtn" disabled>Thresher Boost (Patched)</button>\n        <button class="ast-btn" id="astraVisionBtn">Astra-Vision</button>\n        <button class="ast-btn" id="smallMinimapBtn">Small Minimap</button>\n\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">ESP</span>\n        <button class="ast-btn" id="espBtn">ESP</button>\n        <select class="ast-select" id="espModeSelect">\n          <option value="players">Players</option>\n          <option value="food">Food</option>\n        </select>\n        <button class="ast-btn" id="trackNearestBtn">Track Nearest (F3)</button>\n        <button class="ast-btn" id="untrackBtn">Untrack (F4)</button>\n\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Automation</span>\n        <button class="ast-btn" id="autoDodgeBtn">Auto Dodge</button>\n        <select class="ast-select" id="farmModeSelect">\n          <option value="nearest">Nearest Food</option>\n          <option value="cluster">Food Clusters</option>\n          <option value="patrol">Patrol Route</option>\n        </select>\n        <button class="ast-btn" id="autoFarmBtn">Auto Farm (F5)</button>\n\n        <div class="ast-toggle-row">\n          <label for="farmBoostToggle">Boost</label>\n          <div class="ast-switch">\n            <input type="checkbox" id="farmBoostToggle" checked>\n            <span class="slider"></span>\n          </div>\n        </div>\n        <div class="ast-toggle-row">\n          <label for="farmEvolveToggle">Evolve</label>\n          <div class="ast-switch">\n            <input type="checkbox" id="farmEvolveToggle" checked>\n            <span class="slider"></span>\n          </div>\n        </div>\n        <div class="ast-toggle-row">\n          <label for="farmAvoidToggle">Avoid Players</label>\n          <div class="ast-switch">\n            <input type="checkbox" id="farmAvoidToggle" checked>\n            <span class="slider"></span>\n          </div>\n        </div>\n      </div>\n    ';
-+  document.body.appendChild(plusPanel);
+   document.body.appendChild(plusPanel);
+-  const thresherButton = plusPanel.querySelector("#thresherBtn");
+-  thresherButton.onclick = () => {
+-    if (coreSharedState.isInitialized_2) {
+-      showNotification("Thresher Super Boost is already active!");
 +  const plusBody = plusPanel.querySelector("#plusBody");
 +  let isPlusBodyVisible = false;
 +  plusPanel.querySelector("#plusMin").onclick = (toggleEvent) => {
@@ -3065,14 +3366,24 @@ Index: src/ui/panels.js
 +  astraVisionBtn.onclick = () => {
 +    if (isActive) {
 +      showToast("Already active");
-+      return;
-+    }
+       return;
+     }
+-    initializeAntiTamper();
+-    thresherButton.textContent = "Thresher Super Boost Active";
+-    thresherButton.style.color = "var(--accent)";
+-    thresherButton.style.opacity = "0.6";
+-    thresherButton.disabled = true;
 +    initializeAntiDetection();
 +    initializeViewportSettings();
 +    astraVisionBtn.textContent = "Astra-Vision ✓";
 +    astraVisionBtn.classList.add("toggle-on");
 +    astraVisionBtn.disabled = true;
-+  };
+   };
+-  const astraVisionButton = plusPanel.querySelector("#astraVisionBtn");
+-  astraVisionButton.onclick = () => {
+-    if (isReady) {
+-      showNotification("Astra-Vision already enabled!");
+-      return;
 +  const smallMinimapBtn = plusPanel.querySelector("#smallMinimapBtn");
 +  smallMinimapBtn.onclick = () => {
 +    initializeAntiDetection();
@@ -3083,19 +3394,51 @@ Index: src/ui/panels.js
 +    } else {
 +      smallMinimapBtn.textContent = "Small Minimap";
 +      smallMinimapBtn.classList.remove("toggle-on");
-+    }
-+  };
+     }
+-    initializeAntiTamper();
+-    disableGameRestrictions();
+-    astraVisionButton.textContent = "Astra-Vision Active";
+-    astraVisionButton.style.color = "var(--accent)";
+-    astraVisionButton.style.opacity = "0.6";
+-    astraVisionButton.disabled = true;
+-    showNotification(
+-      "👁️ Astra-Vision enabled! (zoom-limit unlocked, no ink-flash or deep darkness effects)",
+-    );
+   };
+-  const smallMinimapButton = plusPanel.querySelector("#smallMinimapBtn");
+-  smallMinimapButton.onclick = () => {
+-    initializeAntiTamper();
+-    toggleMinimapScale();
+-    if (coreSharedState.isProcessing_2) {
+-      smallMinimapButton.textContent = "Disable Small Minimap";
+-      smallMinimapButton.style.color = "var(--accent)";
+-      smallMinimapButton.style.opacity = "0.6";
 +  const espBtn = plusPanel.querySelector("#espBtn");
 +  espBtn.onclick = () => {
 +    clearTracking();
 +    if (window.espEnabled) {
 +      espBtn.textContent = "ESP ✓";
 +      espBtn.classList.add("toggle-on");
-+    } else {
+     } else {
+-      smallMinimapButton.textContent = "Enable Small Minimap";
+-      smallMinimapButton.style.color = "var(--accent)";
+-      smallMinimapButton.style.opacity = "1";
 +      espBtn.textContent = "ESP";
 +      espBtn.classList.remove("toggle-on");
-+    }
-+  };
+     }
+   };
+-  let plusPanelOffsetX;
+-  let plusPanelOffsetY;
+-  let plusPanelDragActive = false;
+-  let plusPanelIsDragging = false;
+-  plusPanel.addEventListener("mousedown", (event) => {
+-    if (
+-      event.target.tagName === "BUTTON" ||
+-      event.target.tagName === "TEXTAREA" ||
+-      event.target.tagName === "INPUT" ||
+-      event.target.classList.contains("credits")
+-    ) {
+-      return;
 +  const espModeSelect = plusPanel.querySelector("#espModeSelect");
 +  espModeSelect.value = window.espMode || "players";
 +  espModeSelect.onchange = (espModeEvent) => {
@@ -3114,7 +3457,20 @@ Index: src/ui/panels.js
 +      enableAutoDodge();
 +      autoDodgeBtn.textContent = "Dodging ✓";
 +      autoDodgeBtn.classList.add("toggle-on");
-+    }
+     }
+-    plusPanelDragActive = true;
+-    plusPanelIsDragging = false;
+-    plusPanelOffsetX = event.clientX - plusPanel.getBoundingClientRect().left;
+-    plusPanelOffsetY = event.clientY - plusPanel.getBoundingClientRect().top;
+-    plusPanel.style.transition = "none";
+-    const handlePlusPanelDrag = (mouseEvent) => {
+-      const deltaX = mouseEvent.clientX - event.clientX;
+-      const deltaY = mouseEvent.clientY - event.clientY;
+-      if (
+-        !plusPanelIsDragging &&
+-        (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)
+-      ) {
+-        plusPanelIsDragging = true;
 +  };
 +  const autoFarmBtn = plusPanel.querySelector("#autoFarmBtn");
 +  autoFarmBtn.id = "autoFarmBtn";
@@ -3135,9 +3491,37 @@ Index: src/ui/panels.js
 +      window.autoFarmMode = autoFarmModeEvent.target.value;
 +      if (autoFarmModeEvent.target.value === "patrol") {
 +        generatePatrolPoints();
-+      }
+       }
+-      if (plusPanelDragActive) {
+-        plusPanel.style.left = mouseEvent.clientX - plusPanelOffsetX + "px";
+-        plusPanel.style.top = mouseEvent.clientY - plusPanelOffsetY + "px";
+-        plusPanel.style.bottom = "auto";
+-        plusPanel.style.right = "auto";
+-      }
+-    };
+-    const handleMouseUp = () => {
+-      plusPanelDragActive = false;
+-      plusPanel.style.transition = "all 0.3s ease";
+-      document.removeEventListener("mousemove", handlePlusPanelDrag);
+-      document.removeEventListener("mouseup", handleMouseUp);
+-    };
+-    document.addEventListener("mousemove", handlePlusPanelDrag);
+-    document.addEventListener("mouseup", handleMouseUp);
+-  });
+-  plusPanel.addEventListener("click", (event_2) => {
+-    if (plusPanelIsDragging) {
+-      event_2.stopImmediatePropagation();
 +      showToast("Farm: " + autoFarmModeEvent.target.value);
-+    }
+     }
+-  });
+-  if (localStorage.getItem("theme") === "halloween") {
+-    for (let index = 0; index < 3; index++) {
+-      const spanElement = document.createElement("span");
+-      spanElement.className = "bat";
+-      spanElement.textContent = "🦇";
+-      plusPanel.appendChild(spanElement);
+-    }
+-  }
 +  };
 +  plusPanel.querySelector("#farmBoostToggle").onchange = (
 +    autoFarmBoostEvent,
@@ -3155,8 +3539,19 @@ Index: src/ui/panels.js
 +    window.autoFarmAvoidPlayers = autoFarmAvoidPlayersEvent.target.checked;
 +  };
 +  makeDraggable(plusPanel);
-+  return plusPanel;
-+}
+   return plusPanel;
+ }
+-function injectSettingsPanelStyles() {
+-  const styleElement = document.createElement("style");
+-  styleElement.textContent =
+-    "\n      #settings-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n        position: fixed;\n        top: 20px;\n        left: 20px;\n        color: var(--text-primary);\n        padding: 16px;\n        font-size: 14px;\n        z-index: 99999;\n        user-select: none;\n        width: 240px;\n        text-align: center;\n        cursor: move;\n        overflow: hidden;\n        position: relative;\n      }\n      #settings-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #settings-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        width: 100%;\n        margin-bottom: 10px;\n        position: relative;\n        overflow: hidden;\n      }\n      #settings-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #settings-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #settings-panel button:hover:not(:disabled) {\n        background: var(--hover-bg);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2);\n        color: var(--accent-hover);\n      }\n      #settings-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #settings-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #settings-panel .keybind-set, #settings-panel .bg-set {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        margin-bottom: 10px;\n        font-size: 12px;\n      }\n      #settings-panel .keybind-set label, #settings-panel .bg-set label {\n        color: var(--text-primary);\n      }\n      #settings-panel #toggleKeyInput, #settings-panel #bgUrl {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #settings-panel #toggleKeyInput {\n        width: 80px;\n      }\n      #settings-panel #bgUrl {\n        width: 120px;\n      }\n      #settings-panel .section-header {\n        font-weight: bold;\n        color: var(--accent);\n        margin: 12px 0 6px 0;\n        font-size: 13px;\n      }\n      #settings-panel select {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 100%;\n        margin-bottom: 10px;\n        transition: all 0.2s ease;\n      }\n      #settings-panel select:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);\n      }\n      #settings-panel .limited-edition {\n        font-size: 11px;\n        color: #ff6600;\n        font-style: italic;\n        margin-top: 4px;\n      }\n      /* Theme-specific panel animations */\n      #settings-panel.themestarwars::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        background: radial-gradient(circle at center, rgba(255,255,255,0.1) 1px, transparent 1px);\n        background-size: 20px 20px;\n        animation: twinkle-stars 20s linear infinite;\n        z-index: -1;\n        border-radius: 16px;\n      }\n      #settings-panel.themekfc::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 20% 30%, rgba(244,0,0,0.1) 2px, transparent 2px),\n                    radial-gradient(circle at 80% 70%, rgba(255,204,0,0.05) 1px, transparent 1px);\n        background-size: 40px 40px;\n      }\n      #settings-panel.themehalloween::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 30% 20%, rgba(255, 102, 0, 0.1) 1px, transparent 1px),\n                    radial-gradient(circle at 70% 80%, rgba(139, 0, 255, 0.05) 2px, transparent 2px);\n        background-size: 30px 30px;\n        animation: halloween-glow 15s ease-in-out infinite alternate;\n      }\n      #settings-panel.themehalloween .bat {\n        position: absolute;\n        font-size: 20px;\n        animation: fly-bat 10s linear infinite;\n        pointer-events: none;\n        opacity: 0.7;\n      }\n      #settings-panel.themehalloween .bat:nth-child(1) { top: 10%; left: -10%; animation-delay: 0s; }\n      #settings-panel.themehalloween .bat:nth-child(2) { top: 50%; right: -10%; animation-delay: 3s; animation-direction: reverse; }\n      #settings-panel.themehalloween .bat:nth-child(3) { top: 80%; left: -10%; animation-delay: 6s; }\n      @keyframes fly-bat {\n        0% { transform: translateX(0) rotate(0deg); }\n        100% { transform: translateX(120%) rotate(360deg); }\n      }\n      @keyframes twinkle-stars {\n        0% { background-position: 0 0; }\n        100% { background-position: 20px 20px; }\n      }\n      @keyframes halloween-glow {\n        0% { opacity: 0.8; }\n        100% { opacity: 1; }\n      }\n    ";
+-  document.head.appendChild(styleElement);
+-  const draggableElement = document.createElement("div");
+-  draggableElement.id = "settings-panel";
+-  draggableElement.innerHTML =
+-    '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        SETTINGS\n      </div>\n      <div id="settingsContent">\n        <div class="keybind-set">\n          <label for="toggleKeyInput">Toggle Client:</label>\n          <input type="text" id="toggleKeyInput" placeholder="PRESS" readonly>\n        </div>\n        <div class="section-header">Custom Background</div>\n        <div class="bg-set">\n          <label for="bgUrl">BG URL:</label>\n          <input type="text" id="bgUrl" placeholder="Image/GIF URL">\n        </div>\n        <button id="applyBg">Apply Custom Background</button>\n        <div class="section-header">Themes</div>\n        <select id="themeSelect">\n          <option value="blue">Blue (Default)</option>\n          <option value="red">Red</option>\n          <option value="green">Green</option>\n          <option value="pink">Pink</option>\n          <option value="starwars">Star Wars</option>\n          <option value="kfc">KFC🍗</option>\n          <option value="halloween">Halloween 🎃</option>\n        </select>\n        <div id="limitedEdition" class="limited-edition" style="display:none;">Limited Edition</div>\n      </div>\n    ';
+-  document.body.appendChild(draggableElement);
+-  const bgUrlInput = draggableElement.querySelector("#bgUrl");
 +function createSettingsPanel() {
 +  const settingsPanel = document.createElement("div");
 +  settingsPanel.id = "settings-panel";
@@ -3183,35 +3578,93 @@ Index: src/ui/panels.js
 +      keyEvent.key.length === 1 ? keyEvent.key.toUpperCase() : keyEvent.key;
 +  });
 +  const bgUrlInput = settingsPanel.querySelector("#bgUrl");
-+  bgUrlInput.value = localStorage.getItem("bgUrl") || "";
+   bgUrlInput.value = localStorage.getItem("bgUrl") || "";
+-  const applyBgButton = draggableElement.querySelector("#applyBg");
+-  applyBgButton.onclick = () => {
 +  settingsPanel.querySelector("#applyBg").onclick = () => {
-+    const backgroundUrl = bgUrlInput.value.trim();
+     const backgroundUrl = bgUrlInput.value.trim();
+-    if (backgroundUrl === "") {
+-      showNotification("Enter a URL first!");
 +    if (!backgroundUrl) {
 +      showToast("Enter a URL");
-+      return;
-+    }
-+    localStorage.setItem("bgUrl", backgroundUrl);
+       return;
+     }
+     localStorage.setItem("bgUrl", backgroundUrl);
+-    let homeBgElement = document.querySelector(".home-bg");
+-    const updateHomeBackgroundImage = () => {
+-      homeBgElement = document.querySelector(".home-bg");
+-      if (homeBgElement) {
+-        homeBgElement.style.setProperty(
+-          "background-image",
+-          'url("' + backgroundUrl + '")',
+-          "important",
+-        );
+-      }
+-    };
+-    if (homeBgElement == null) {
+-      const bgCheckInterval = setInterval(() => {
+-        homeBgElement = document.querySelector(".home-bg");
+-        if (homeBgElement != null) {
+-          clearInterval(bgCheckInterval);
+-          updateHomeBackgroundImage();
+-        }
+-      }, 100);
+-    } else {
+-      updateHomeBackgroundImage();
+-    }
+-    showNotification("Custom Background applied!");
 +    initBackground();
 +    showToast("Background applied");
-+  };
+   };
+-  const themeSelect = draggableElement.querySelector("#themeSelect");
+-  const currentTheme = localStorage.getItem("theme") || "blue";
 +  const themeSelect = settingsPanel.querySelector("#themeSelect");
 +  const currentTheme = localStorage.getItem("theme") || "grey";
-+  themeSelect.value = currentTheme;
+   themeSelect.value = currentTheme;
+-  applyThemeColors(currentTheme);
+-  themeSelect.onchange = (themeChangeEvent) => {
+-    const selectedTheme = themeChangeEvent.target.value;
+-    if (selectedTheme === "halloween") {
+-      createHalloweenModal((isHalloween) => {
+-        if (isHalloween) {
+-          applyThemeColors("halloween");
 +  themeSelect.onchange = (changeEvent) => {
 +    const themeName = changeEvent.target.value;
 +    if (themeName === "halloween") {
 +      showHalloweenModal((isHalloweenMode) => {
 +        if (isHalloweenMode) {
 +          applyTheme("halloween");
-+        } else {
+         } else {
+-          themeChangeEvent.target.value = "blue";
+-          applyThemeColors("blue");
 +          changeEvent.target.value = localStorage.getItem("theme") || "grey";
-+        }
-+      });
-+    } else {
+         }
+       });
+     } else {
+-      applyThemeColors(selectedTheme);
+-      showNotification("Theme changed to " + selectedTheme);
 +      applyTheme(themeName);
 +      showToast("Theme: " + themeName);
-+    }
-+  };
+     }
+   };
+-  const toggleKeyInput = draggableElement.querySelector("#toggleKeyInput");
+-  toggleKeyInput.value = coreSharedState.activeKey;
+-  toggleKeyInput.addEventListener("keydown", (keyboardEvent) => {
+-    keyboardEvent.preventDefault();
+-    coreSharedState.activeKey = keyboardEvent.key;
+-    toggleKeyInput.value = coreSharedState.activeKey;
+-  });
+-  let offsetX;
+-  let offsetY;
+-  let isDraggingActive = false;
+-  let isDragging = false;
+-  draggableElement.addEventListener("mousedown", (clickEvent) => {
+-    if (
+-      clickEvent.target.tagName === "BUTTON" ||
+-      clickEvent.target.tagName === "INPUT" ||
+-      clickEvent.target.classList.contains("credits")
+-    ) {
+-      return;
 +  makeDraggable(settingsPanel);
 +  return settingsPanel;
 +}
@@ -3246,30 +3699,8 @@ Index: src/ui/panels.js
 +  ];
 +  const mainPanel = document.getElementById("deep-tools-panel");
 +  if (!mainPanel) {
-     return;
-   }
--  function sendActionSequence() {
--    try {
--      handleAnimalAction(1);
--      setTimeout(() => {
--        handleAnimalAction(5000);
--      }, 50);
--      setTimeout(() => {
--        handleAnimalAction(5000);
--      }, 100);
--      setTimeout(() => {
--        handleAnimalAction(5000);
--      }, 150);
--    } catch {}
--  }
--  function createControlOverlay() {
--    try {
--      document.getElementById("ctrl-overlay").remove();
--    } catch {}
--    const overlayDiv = document.createElement("div");
--    const gameContainer = document.querySelector("div.game");
--    if (gameContainer) {
--      gameContainer.insertBefore(overlayDiv, gameContainer.children[0]);
++    return;
++  }
 +  const isVisible = mainPanel.style.display !== "none";
 +  const newDisplayState = isVisible ? "none" : "block";
 +  panelIds.forEach((elementId) => {
@@ -3277,80 +3708,49 @@ Index: src/ui/panels.js
 +    if (element) {
 +      element.style.display = newDisplayState;
      }
--    overlayDiv.outerHTML =
--      '<div id="ctrl-overlay" style="width: 100%;height: 100%;position: absolute;display: block;z-index:10000;pointer-events:none;"></div>';
--    document
--      .getElementById("ctrl-overlay")
--      .addEventListener("contextmenu", (event) => event.preventDefault());
--  }
--  createControlOverlay();
--  window.addEventListener(
--    "click",
--    (processAnimals) => {
--      try {
--        if (!coreSharedState.playerData?.myAnimals?.[0]) {
--          return;
--        }
--        const visibleFishLevel =
--          coreSharedState.playerData.myAnimals[0].visibleFishLevel;
--        const mergedFishConfig = {
--          ...securityConfigs.default,
--          ...securityConfigs[visibleFishLevel],
--        };
--        if (processAnimals.ctrlKey) {
--          if (processAnimals.shiftKey && visibleFishLevel === 107) {
--            sendActionSequence();
--            return;
--          } else if (
--            processAnimals.shiftKey &&
--            visibleFishLevel !== 101 &&
--            coreSharedState.playerData.myAnimals[0]._standing
--          ) {
--            handleAnimalAction(
--              Math.floor(Math.random() * 1647483648) + 500000000,
--            );
--            return;
--          } else {
--            let propertyMap = Object.getOwnPropertyNames(
--              coreSharedState.gameInstance,
--            )
--              .map((serviceKey) => coreSharedState.gameInstance[serviceKey])
--              .find((keyMap) => keyMap.keys instanceof Array);
--            if (propertyMap) {
--              propertyMap.pointerDown = true;
--              propertyMap.pressElapsed = Infinity;
--              propertyMap.setPointerDown(false);
--            }
--          }
--        } else if (processAnimals.altKey) {
--          handleAnimalAction(
--            coreSharedState.playerData?.myAnimals?.[0]?._standing
--              ? 41
--              : Math.floor(mergedFishConfig.secLoadTime / 2),
--          );
--        }
--      } catch {}
--    },
--    false,
--  );
--  window.addEventListener(
--    "keyup",
--    (keyboardEvent) => {
--      try {
--        if (!keyboardEvent.ctrlKey && !keyboardEvent.altKey) {
--          document.getElementById("ctrl-overlay").style.pointerEvents = "none";
--        }
--      } catch {}
--    },
--    false,
--  );
--  window.addEventListener("focus", () => {
--    try {
--      document.getElementById("ctrl-overlay").style.pointerEvents = "none";
--    } catch {}
+-    isDraggingActive = true;
+-    isDragging = false;
+-    offsetX =
+-      clickEvent.clientX - draggableElement.getBoundingClientRect().left;
+-    offsetY = clickEvent.clientY - draggableElement.getBoundingClientRect().top;
+-    draggableElement.style.transition = "none";
+-    const handleMouseMove = (mouseEvent) => {
+-      const deltaX = mouseEvent.clientX - clickEvent.clientX;
+-      const deltaY = mouseEvent.clientY - clickEvent.clientY;
+-      if (!isDragging && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+-        isDragging = true;
+-      }
+-      if (isDraggingActive) {
+-        draggableElement.style.left = mouseEvent.clientX - offsetX + "px";
+-        draggableElement.style.top = mouseEvent.clientY - offsetY + "px";
+-        draggableElement.style.bottom = "auto";
+-        draggableElement.style.right = "auto";
+-      }
+-    };
+-    const handleMouseUp = () => {
+-      isDraggingActive = false;
+-      draggableElement.style.transition = "all 0.3s ease";
+-      document.removeEventListener("mousemove", handleMouseMove);
+-      document.removeEventListener("mouseup", handleMouseUp);
+-    };
+-    document.addEventListener("mousemove", handleMouseMove);
+-    document.addEventListener("mouseup", handleMouseUp);
    });
--  coreSharedState.isInitialized_2 = true;
--};
+-  draggableElement.addEventListener("click", (propagationEvent) => {
+-    if (isDragging) {
+-      propagationEvent.stopImmediatePropagation();
+-    }
+-  });
+-  if (localStorage.getItem("theme") === "halloween") {
+-    for (let i = 0; i < 3; i++) {
+-      const spanElement = document.createElement("span");
+-      spanElement.className = "bat";
+-      spanElement.textContent = "🦇";
+-      draggableElement.appendChild(spanElement);
+-    }
+-  }
+-  return draggableElement;
+ }
 -function togglePanels() {
 -  const deepToolsPanel = document.getElementById("deep-tools-panel");
 -  const updateHistoryPanel = document.getElementById("update-history");
@@ -3362,41 +3762,48 @@ Index: src/ui/panels.js
 -  updateHistoryPanel.style.display = newDisplay;
 -  settingsPanel.style.display = newDisplay;
 -  plusPanel.style.display = newDisplay;
- }
+-}
  
--export { createHalloweenModal, initControlOverlay };
-+export {
+ export {
+-  createHalloweenModal,
+-  initControlOverlay,
+-  createUpdateHistoryStyles,
+-  injectDeepToolsStyles,
+-  injectPlusPanelStyles,
+-  injectSettingsPanelStyles,
+-  togglePanels,
 +  showHalloweenModal,
 +  makeDraggable,
 +  createToolsPanel,
 +  createPlusPanel,
 +  createSettingsPanel,
 +  createUpdateHistoryPanel,
-+};
++  toggleUiVisibility,
+ };
 Index: src/ui/radar.js
 ===================================================================
 --- src/ui/radar.js	v1.5
 +++ src/ui/radar.js	v1.6
 @@ -1,22 +1,158 @@
 -import { showNotification } from "./interaction.js";
--import { coreSharedState } from "../core.js";
+-import { playerData, coreSharedState } from "../core.js";
 +import { dragState, coreSharedState } from "../core.js";
  
 -function toggleMinimapScale() {
--  if (!coreSharedState.playerData || !coreSharedState.playerData.minimap) {
+-  if (!playerData || !playerData.minimap) {
 -    showNotification("Minimap not available yet!");
 +function drawRadar(ctx, canvas, gameState) {
 +  if (!gameState || gameState.error) {
      return;
    }
 -  if (coreSharedState.isProcessing_2) {
--    coreSharedState.playerData.minimap.scale.set(1);
--    coreSharedState.playerData.minimap.pivot.set(0, 0);
+-    playerData.minimap.scale.set(1);
+-    playerData.minimap.pivot.set(0, 0);
 -    coreSharedState.isProcessing_2 = false;
 -    showNotification("🗺️ Minimap restored to normal!");
 -  } else {
--    coreSharedState.playerData.minimap.scale.set(0.5);
--    coreSharedState.playerData.minimap.pivot.set(-70, -45);
+-    playerData.minimap.scale.set(0.5);
+-    playerData.minimap.pivot.set(-70, -45);
 -    coreSharedState.isProcessing_2 = true;
 -    showNotification("🗺️ Small Minimap enabled!");
 +  const radarSize = 150;
@@ -3556,387 +3963,16 @@ Index: src/ui/theme.js
 ===================================================================
 --- src/ui/theme.js	v1.5
 +++ src/ui/theme.js	v1.6
-@@ -1,691 +1,149 @@
+@@ -1,186 +1,149 @@
 -import {
--  startScheduledTask,
--  stopInterval,
--  autoChat,
--} from "../features/chat.js";
--import {
--  radius,
--  initInterceptor,
--  isReady,
--  disableGameRestrictions,
--  coreSharedState,
--} from "../core.js";
--import { generateRandomString } from "../utils.js";
--import { simulateTyping, showNotification } from "./interaction.js";
--import { toggleMouseSimulation } from "../features/movement.js";
--import { initializeAntiTamper } from "../features/antidetection.js";
--import { toggleMinimapScale } from "./radar.js";
--import { createHalloweenModal } from "./panels.js";
+-  createUpdateHistoryStyles,
+-  injectDeepToolsStyles,
+-  injectPlusPanelStyles,
+-  injectSettingsPanelStyles,
+-} from "./panels.js";
 -import { initAdBlocker } from "../features/adblock.js";
 +import { radius, coreSharedState } from "../core.js";
  
--function createUpdateHistoryStyles() {
--  const styleElement = document.createElement("style");
--  styleElement.textContent =
--    "\n      #update-history {\n        position: fixed;\n        bottom: 20px;\n        left: 20px;\n        background: var(--bg-primary);\n        color: var(--text-primary);\n        padding: 16px;\n        border-radius: 16px;\n        font-size: 13px;\n        z-index: 9999;\n        max-width: 240px;\n        max-height: 280px;\n        overflow-y: auto;\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        cursor: move;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        transition: all 0.3s ease;\n        backdrop-filter: blur(20px);\n      }\n      #update-history:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #update-history ul {\n        margin: 0;\n        padding-left: 18px;\n      }\n      #update-history li {\n        margin-bottom: 6px;\n        line-height: 1.4;\n        color: var(--text-primary);\n      }\n      #update-history h3 {\n        margin: 0 0 12px 0;\n        font-size: 15px;\n        color: var(--accent);\n        position: relative;\n        padding-right: 28px;\n        font-weight: 600;\n      }\n      #update-history button.min-btn {\n        background: none;\n        border: none;\n        color: var(--accent);\n        font-size: 20px;\n        cursor: pointer;\n        position: absolute;\n        top: 30%;\n        right: 8px;\n        transform: translateY(-50%);\n        z-index: 1;\n        transition: all 0.2s ease;\n        width: 24px;\n        height: 24px;\n        line-height: 24px;\n        border-radius: 50%;\n      }\n      #update-history button.min-btn:hover {\n        color: var(--accent-hover);\n        background: rgba(var(--accent-rgb), 0.2);\n      }\n      #update-history.themestarwars::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at center, rgba(255,255,255,0.1) 1px, transparent 1px);\n        background-size: 20px 20px;\n        animation: twinkle-stars 20s linear infinite;\n      }\n      #update-history.themekfc::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 20% 30%, rgba(244,0,0,0.1) 2px, transparent 2px),\n                    radial-gradient(circle at 80% 70%, rgba(255,204,0,0.05) 1px, transparent 1px);\n        background-size: 40px 40px;\n      }\n      #update-history.themehalloween::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 30% 20%, rgba(255, 102, 0, 0.1) 1px, transparent 1px),\n                    radial-gradient(circle at 70% 80%, rgba(139, 0, 255, 0.05) 2px, transparent 2px);\n        background-size: 30px 30px;\n        animation: halloween-glow 15s ease-in-out infinite alternate;\n      }\n      #update-history.themehalloween .bat {\n        position: absolute;\n        font-size: 20px;\n        animation: fly-bat 10s linear infinite;\n        pointer-events: none;\n        opacity: 0.7;\n      }\n      #update-history.themehalloween .bat:nth-child(1) { top: 10%; left: -10%; animation-delay: 0s; }\n      #update-history.themehalloween .bat:nth-child(2) { top: 50%; right: -10%; animation-delay: 3s; animation-direction: reverse; }\n      #update-history.themehalloween .bat:nth-child(3) { top: 80%; left: -10%; animation-delay: 6s; }\n      @keyframes fly-bat {\n        0% { transform: translateX(0) rotate(0deg); }\n        100% { transform: translateX(120%) rotate(360deg); }\n      }\n      @keyframes twinkle-stars {\n        0% { background-position: 0 0; }\n        100% { background-position: 20px 20px; }\n      }\n      @keyframes halloween-glow {\n        0% { opacity: 0.8; }\n        100% { opacity: 1; }\n      }\n    ";
--  document.head.appendChild(styleElement);
--  const draggableElement = document.createElement("div");
--  draggableElement.id = "update-history";
--  draggableElement.innerHTML =
--    '\n      <h3>Update History <button class="min-btn" id="minHist">−</button></h3>\n      <div id="historyContent">\n        <ul>\n          <li>v1.5 - Added Star Wars theme, Pink theme, KFC theme (More Glow in KFC Theme), new Halloween theme + Mini-Game, new Astraphobia Client Halloween Icon and updated Halloween Astraphobia Client Website.</li>\n          <li>v1.4 - New Themes Selection (NO MORE PLAIN RED UI MORE MODERN COLORS).</li>\n          <li>v1.3 - New Blue Themed UI with new UI animations and Client Logo! No more minimize or maximize for everything but Update History because of toogle client tool. Updated Astraphobia Client Website and Discord! Also, added new small minimap feature.</li>\n          <li>v1.2 - Astra-Vision added - no ink flash or deep darkness effects + no-zoom limit, added new client ui rework, and custom-background feature (images and gif\'s).</li>\n          <li>v1.1 - Added built-in ad blocker, removed boost trail, spoofing for username, keybind selector for auto spin, added settings GUI, added shift keybind to toogle all panels.</li>\n          <li>v1.0 - Initial release with auto chat, auto-spin, special character bypass, and thresher super boost, no-zoom limit is automatically enabled.</li>\n        </ul>\n      </div>\n    ';
--  document.body.appendChild(draggableElement);
--  const minHistElement = draggableElement.querySelector("#minHist");
--  const historyContentElement =
--    draggableElement.querySelector("#historyContent");
--  let isHistoryHidden = false;
--  minHistElement.onclick = (arg_b829) => {
--    arg_b829.stopPropagation();
--    isHistoryHidden = !isHistoryHidden;
--    historyContentElement.style.display = isHistoryHidden ? "none" : "block";
--    draggableElement.style.height = isHistoryHidden ? "60px" : "auto";
--    minHistElement.textContent = isHistoryHidden ? "+" : "−";
--  };
--  let offsetX;
--  let offsetY;
--  let isMoving = false;
--  let isDragging = false;
--  draggableElement.addEventListener("mousedown", (arg_5759) => {
--    if (
--      ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(arg_5759.target.tagName)
--    ) {
--      return;
--    }
--    isMoving = true;
--    isDragging = false;
--    offsetX = arg_5759.clientX - draggableElement.getBoundingClientRect().left;
--    offsetY = arg_5759.clientY - draggableElement.getBoundingClientRect().top;
--    draggableElement.style.transition = "none";
--    const handleMouseMove = (mouseEvent) => {
--      const deltaX = mouseEvent.clientX - arg_5759.clientX;
--      const deltaY = mouseEvent.clientY - arg_5759.clientY;
--      if (!isDragging && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
--        isDragging = true;
--      }
--      if (isMoving) {
--        draggableElement.style.left = mouseEvent.clientX - offsetX + "px";
--        draggableElement.style.top = mouseEvent.clientY - offsetY + "px";
--        draggableElement.style.bottom = "auto";
--        draggableElement.style.right = "auto";
--      }
--    };
--    const handleMouseUp = () => {
--      isMoving = false;
--      draggableElement.style.transition = "all 0.3s ease";
--      document.removeEventListener("mousemove", handleMouseMove);
--      document.removeEventListener("mouseup", handleMouseUp);
--    };
--    document.addEventListener("mousemove", handleMouseMove);
--    document.addEventListener("mouseup", handleMouseUp);
--  });
--  draggableElement.addEventListener("click", (arg_98a2) => {
--    if (isDragging) {
--      arg_98a2.stopImmediatePropagation();
--    }
--  });
--  if (localStorage.getItem("theme") === "halloween") {
--    for (let loopIndex = 0; loopIndex < 3; loopIndex++) {
--      const spanElement = document.createElement("span");
--      spanElement.className = "bat";
--      spanElement.textContent = "🦇";
--      draggableElement.appendChild(spanElement);
--    }
--  }
--  return draggableElement;
--}
--function injectDeepToolsStyles() {
--  const deepToolsStyleElement = document.createElement("style");
--  deepToolsStyleElement.textContent =
--    "\n      :root {\n        --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);\n        --shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.4);\n      }\n      #deep-tools-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n        position: relative;\n      }\n      #deep-tools-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #deep-tools-panel textarea {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 8px;\n        padding: 10px;\n        transition: all 0.2s ease;\n        font-size: 13px;\n      }\n      #deep-tools-panel textarea:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);\n      }\n      #deep-tools-panel input[type=\"number\"] {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 60px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #deep-tools-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        position: relative;\n        overflow: hidden;\n      }\n      #deep-tools-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #deep-tools-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #deep-tools-panel button:hover:not(:disabled) {\n        background: var(--hover-bg);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2);\n        color: var(--accent-hover);\n      }\n      #deep-tools-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #deep-tools-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #deep-tools-panel .credits {\n        margin-top: 12px;\n        font-size: 11px;\n        color: var(--text-secondary);\n        line-height: 1.4;\n      }\n      #deep-tools-panel .auto-chat-controls {\n        display: flex;\n        gap: 8px;\n        margin-bottom: 10px;\n        align-items: center;\n        justify-content: center;\n      }\n      #deep-tools-panel .spin-keybind {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        margin-bottom: 10px;\n        font-size: 12px;\n      }\n      #deep-tools-panel .spin-keybind label {\n        color: var(--text-primary);\n      }\n      #deep-tools-panel #spinKeyInput {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 50px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #aim-overlay, #ctrl-overlay {\n        z-index: 10000 !important;\n      }\n      div.game {\n        position: relative;\n      }\n      /* Ad Removal */\n      div.sidebar.left > div.ad-block {\n        opacity: 0 !important;\n        pointer-events: none !important;\n        display: none !important;\n      }\n      div.sidebar.left > a {\n        display: none !important;\n      }\n      div.sidebar.left {\n        max-width: 30vw;\n        width: 21rem;\n        bottom: 0 !important;\n      }\n      /* Theme-specific panel animations */\n      #deep-tools-panel.themestarwars::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        background: radial-gradient(circle at center, rgba(255,255,255,0.1) 1px, transparent 1px);\n        background-size: 20px 20px;\n        animation: twinkle-stars 20s linear infinite;\n        z-index: -1;\n        border-radius: 16px;\n      }\n      #deep-tools-panel.themekfc::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 20% 30%, rgba(244,0,0,0.1) 2px, transparent 2px),\n                    radial-gradient(circle at 80% 70%, rgba(255,204,0,0.05) 1px, transparent 1px);\n        background-size: 40px 40px;\n      }\n      #deep-tools-panel.themehalloween::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 30% 20%, rgba(255, 102, 0, 0.1) 1px, transparent 1px),\n                    radial-gradient(circle at 70% 80%, rgba(139, 0, 255, 0.05) 2px, transparent 2px);\n        background-size: 30px 30px;\n        animation: halloween-glow 15s ease-in-out infinite alternate;\n      }\n      #deep-tools-panel.themehalloween .bat {\n        position: absolute;\n        font-size: 20px;\n        animation: fly-bat 10s linear infinite;\n        pointer-events: none;\n        opacity: 0.7;\n      }\n      #deep-tools-panel.themehalloween .bat:nth-child(1) { top: 10%; left: -10%; animation-delay: 0s; }\n      #deep-tools-panel.themehalloween .bat:nth-child(2) { top: 50%; right: -10%; animation-delay: 3s; animation-direction: reverse; }\n      #deep-tools-panel.themehalloween .bat:nth-child(3) { top: 80%; left: -10%; animation-delay: 6s; }\n      @keyframes fly-bat {\n        0% { transform: translateX(0) rotate(0deg); }\n        100% { transform: translateX(120%) rotate(360deg); }\n      }\n      @keyframes twinkle-stars {\n        0% { background-position: 0 0; }\n        100% { background-position: 20px 20px; }\n      }\n      @keyframes halloween-glow {\n        0% { opacity: 0.8; }\n        100% { opacity: 1; }\n      }\n    ";
--  document.head.appendChild(deepToolsStyleElement);
--  const deepToolsPanel = document.createElement("div");
--  deepToolsPanel.id = "deep-tools-panel";
--  deepToolsPanel.style.position = "fixed";
--  deepToolsPanel.style.bottom = "20px";
--  deepToolsPanel.style.right = "20px";
--  deepToolsPanel.style.color = "var(--text-primary)";
--  deepToolsPanel.style.padding = "16px";
--  deepToolsPanel.style.borderRadius = "16px";
--  deepToolsPanel.style.fontSize = "14px";
--  deepToolsPanel.style.zIndex = "99999";
--  deepToolsPanel.style.userSelect = "none";
--  deepToolsPanel.style.width = "240px";
--  deepToolsPanel.style.textAlign = "center";
--  deepToolsPanel.style.cursor = "move";
--  deepToolsPanel.style.overflow = "hidden";
--  deepToolsPanel.innerHTML =
--    '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        ASTRAPHOBIA CLIENT\n      </div>\n      <div id="panelContent">\n        <textarea id="chatMsg" placeholder="Type message..." style="width:100%; height:50px; margin-bottom:10px; resize:none;"></textarea>\n        <button id="sendBtn" style="width:100%; margin-bottom:10px;">Send Typed Chat</button>\n        <div class="auto-chat-controls">\n          <input type="number" id="delayInput" min="1" max="300" value="10" style="margin-right:8px;">\n          <span style="font-size:12px;">sec</span>\n        </div>\n        <button id="autoChatBtn" style="width:100%; margin-bottom:10px;">Enable Auto Chat</button>\n        <button id="patchBtn" style="width:100%; margin-bottom:10px;">Enable Special Characters(in chat/clan/name)</button>\n        <button id="spoofBtn" style="width:100%; margin-bottom:10px;">Spoof Username:Random Unicode Name(ban decrease)</button>\n        <button id="spinBtn" style="width:100%; margin-bottom:10px;">Enable Auto Spin</button>\n        <div class="spin-keybind">\n          <label for="spinKeyInput">Keybind:</label>\n          <input type="text" id="spinKeyInput" placeholder="PRESS" readonly>\n        </div>\n        <div class="credits">\n          Coder: Astraphobia<br>\n          Owner/Founder: Astraphobia<br>\n          Designer/Marketer: Astraphobia<br>\n          Tester: Astraphobia\n        </div>\n      </div>\n    ';
--  document.body.appendChild(deepToolsPanel);
--  deepToolsPanel.querySelector("#sendBtn").onclick = () => {
--    const chatMessage = deepToolsPanel.querySelector("#chatMsg").value;
--    if (chatMessage) {
--      autoChat(chatMessage);
--    }
--  };
--  const patchButton = deepToolsPanel.querySelector("#patchBtn");
--  patchButton.onclick = () => initInterceptor(patchButton);
--  const spoofButton = deepToolsPanel.querySelector("#spoofBtn");
--  spoofButton.onclick = () => {
--    const inputLimit = generateRandomString(8);
--    if (simulateTyping(".play-game .el-input__inner", inputLimit)) {
--      showNotification("Spoofed name!");
--    } else if (simulateTyping(".new-tribe .el-input__inner", inputLimit)) {
--      showNotification("Spoofed tribe name!");
--    } else {
--      showNotification("No name input found! Enable special characters first.");
--    }
--  };
--  const spinButton = deepToolsPanel.querySelector("#spinBtn");
--  spinButton.onclick = () => {
--    toggleMouseSimulation();
--    if (coreSharedState.rotationInterval) {
--      spinButton.textContent = "Disable Auto Spin";
--      spinButton.style.color = "var(--accent)";
--      spinButton.style.opacity = "0.6";
--    } else {
--      spinButton.textContent = "Enable Auto Spin";
--      spinButton.style.color = "var(--accent)";
--      spinButton.style.opacity = "1";
--    }
--  };
--  const spinKeyInput = deepToolsPanel.querySelector("#spinKeyInput");
--  let pressedKey = null;
--  spinKeyInput.addEventListener("keydown", (event) => {
--    event.preventDefault();
--    pressedKey = event.code || event.key;
--    spinKeyInput.value = pressedKey.replace("Key", "").toLowerCase();
--  });
--  document.addEventListener("keydown", (event_2) => {
--    if (
--      pressedKey &&
--      event_2.code === pressedKey &&
--      !event_2.target.matches("input, textarea, button")
--    ) {
--      event_2.preventDefault();
--      toggleMouseSimulation();
--      if (coreSharedState.rotationInterval) {
--        spinButton.textContent = "Disable Auto Spin";
--        spinButton.style.color = "var(--accent)";
--        spinButton.style.opacity = "0.6";
--      } else {
--        spinButton.textContent = "Enable Auto Spin";
--        spinButton.style.color = "var(--accent)";
--        spinButton.style.opacity = "1";
--      }
--    }
--  });
--  const autoChatButton = deepToolsPanel.querySelector("#autoChatBtn");
--  autoChatButton.onclick = () => {
--    const chatMessageValue = deepToolsPanel.querySelector("#chatMsg").value;
--    const delayInput = deepToolsPanel.querySelector("#delayInput");
--    const delayValue = parseInt(delayInput.value) || 10;
--    if (!chatMessageValue) {
--      showNotification("⚠️ Enter a message first!");
--      return;
--    }
--    if (coreSharedState.isProcessing) {
--      stopInterval();
--      autoChatButton.textContent = "Enable Auto Chat";
--      autoChatButton.style.color = "var(--accent)";
--      autoChatButton.style.opacity = "1";
--    } else {
--      startScheduledTask(chatMessageValue, delayValue);
--      autoChatButton.textContent = "Disable Auto Chat";
--      autoChatButton.style.color = "var(--accent)";
--      autoChatButton.style.opacity = "0.6";
--    }
--  };
--  let deepToolsOffsetX;
--  let deepToolsOffsetY;
--  let deepToolsDragActive = false;
--  let deepToolsIsDragging = false;
--  deepToolsPanel.addEventListener("mousedown", (event_3) => {
--    if (
--      event_3.target.tagName === "BUTTON" ||
--      event_3.target.tagName === "TEXTAREA" ||
--      event_3.target.tagName === "INPUT" ||
--      event_3.target.classList.contains("credits")
--    ) {
--      return;
--    }
--    deepToolsDragActive = true;
--    deepToolsIsDragging = false;
--    deepToolsOffsetX =
--      event_3.clientX - deepToolsPanel.getBoundingClientRect().left;
--    deepToolsOffsetY =
--      event_3.clientY - deepToolsPanel.getBoundingClientRect().top;
--    deepToolsPanel.style.transition = "none";
--    const handleDeepToolsDrag = (mouseEvent) => {
--      const deltaX = mouseEvent.clientX - event_3.clientX;
--      const deltaY = mouseEvent.clientY - event_3.clientY;
--      if (
--        !deepToolsIsDragging &&
--        (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)
--      ) {
--        deepToolsIsDragging = true;
--      }
--      if (deepToolsDragActive) {
--        deepToolsPanel.style.left =
--          mouseEvent.clientX - deepToolsOffsetX + "px";
--        deepToolsPanel.style.top = mouseEvent.clientY - deepToolsOffsetY + "px";
--        deepToolsPanel.style.bottom = "auto";
--        deepToolsPanel.style.right = "auto";
--      }
--    };
--    const handleMouseUp = () => {
--      deepToolsDragActive = false;
--      deepToolsPanel.style.transition = "all 0.3s ease";
--      document.removeEventListener("mousemove", handleDeepToolsDrag);
--      document.removeEventListener("mouseup", handleMouseUp);
--    };
--    document.addEventListener("mousemove", handleDeepToolsDrag);
--    document.addEventListener("mouseup", handleMouseUp);
--  });
--  deepToolsPanel.addEventListener("click", (event_4) => {
--    if (deepToolsIsDragging) {
--      event_4.stopImmediatePropagation();
--    }
--  });
--  if (localStorage.getItem("theme") === "halloween") {
--    for (let loopIndex = 0; loopIndex < 3; loopIndex++) {
--      const spanElement = document.createElement("span");
--      spanElement.className = "bat";
--      spanElement.textContent = "🦇";
--      deepToolsPanel.appendChild(spanElement);
--    }
--  }
--  return deepToolsPanel;
--}
--function injectPlusPanelStyles() {
--  const plusPanelStyleElement = document.createElement("style");
--  plusPanelStyleElement.textContent =
--    "\n      #plus-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n        position: relative;\n      }\n      #plus-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #plus-panel textarea {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 8px;\n        padding: 10px;\n        transition: all 0.2s ease;\n        font-size: 13px;\n      }\n      #plus-panel textarea:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);\n      }\n      #plus-panel input[type=\"number\"] {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 60px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #plus-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        position: relative;\n        overflow: hidden;\n        width: 100%;\n        margin-bottom: 10px;\n      }\n      #plus-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #plus-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #plus-panel button:hover:not(:disabled) {\n        background: var(--hover-bg);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2);\n        color: var(--accent-hover);\n      }\n      #plus-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #plus-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      /* Theme-specific panel animations */\n      #plus-panel.themestarwars::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        background: radial-gradient(circle at center, rgba(255,255,255,0.1) 1px, transparent 1px);\n        background-size: 20px 20px;\n        animation: twinkle-stars 20s linear infinite;\n        z-index: -1;\n        border-radius: 16px;\n      }\n      #plus-panel.themekfc::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 20% 30%, rgba(244,0,0,0.1) 2px, transparent 2px),\n                    radial-gradient(circle at 80% 70%, rgba(255,204,0,0.05) 1px, transparent 1px);\n        background-size: 40px 40px;\n      }\n      #plus-panel.themehalloween::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 30% 20%, rgba(255, 102, 0, 0.1) 1px, transparent 1px),\n                    radial-gradient(circle at 70% 80%, rgba(139, 0, 255, 0.05) 2px, transparent 2px);\n        background-size: 30px 30px;\n        animation: halloween-glow 15s ease-in-out infinite alternate;\n      }\n      #plus-panel.themehalloween .bat {\n        position: absolute;\n        font-size: 20px;\n        animation: fly-bat 10s linear infinite;\n        pointer-events: none;\n        opacity: 0.7;\n      }\n      #plus-panel.themehalloween .bat:nth-child(1) { top: 10%; left: -10%; animation-delay: 0s; }\n      #plus-panel.themehalloween .bat:nth-child(2) { top: 50%; right: -10%; animation-delay: 3s; animation-direction: reverse; }\n      #plus-panel.themehalloween .bat:nth-child(3) { top: 80%; left: -10%; animation-delay: 6s; }\n      @keyframes fly-bat {\n        0% { transform: translateX(0) rotate(0deg); }\n        100% { transform: translateX(120%) rotate(360deg); }\n      }\n      @keyframes twinkle-stars {\n        0% { background-position: 0 0; }\n        100% { background-position: 20px 20px; }\n      }\n      @keyframes halloween-glow {\n        0% { opacity: 0.8; }\n        100% { opacity: 1; }\n      }\n    ";
--  document.head.appendChild(plusPanelStyleElement);
--  const plusPanel = document.createElement("div");
--  plusPanel.id = "plus-panel";
--  plusPanel.style.position = "fixed";
--  plusPanel.style.top = "20px";
--  plusPanel.style.right = "20px";
--  plusPanel.style.color = "var(--text-primary)";
--  plusPanel.style.padding = "16px";
--  plusPanel.style.borderRadius = "16px";
--  plusPanel.style.fontSize = "14px";
--  plusPanel.style.zIndex = "99999";
--  plusPanel.style.userSelect = "none";
--  plusPanel.style.width = "240px";
--  plusPanel.style.textAlign = "center";
--  plusPanel.style.cursor = "move";
--  plusPanel.style.overflow = "hidden";
--  plusPanel.innerHTML =
--    '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        ASTRAPHOBIA CLIENT+\n      </div>\n      <div id="plusContent">\n        <button id="thresherBtn">Enable Thresher Super Boost(ctrl + shift and click)(minumum required 2 boost)</button>\n        <button id="astraVisionBtn">Enable Astra-Vision (no-zoom limit, no ink flash or deep darkness)</button>\n        <button id="smallMinimapBtn">Enable Small Minimap</button>\n      </div>\n    ';
--  document.body.appendChild(plusPanel);
--  const thresherButton = plusPanel.querySelector("#thresherBtn");
--  thresherButton.onclick = () => {
--    if (coreSharedState.isInitialized_2) {
--      showNotification("Thresher Super Boost is already active!");
--      return;
--    }
--    initializeAntiTamper();
--    thresherButton.textContent = "Thresher Super Boost Active";
--    thresherButton.style.color = "var(--accent)";
--    thresherButton.style.opacity = "0.6";
--    thresherButton.disabled = true;
--  };
--  const astraVisionButton = plusPanel.querySelector("#astraVisionBtn");
--  astraVisionButton.onclick = () => {
--    if (isReady) {
--      showNotification("Astra-Vision already enabled!");
--      return;
--    }
--    initializeAntiTamper();
--    disableGameRestrictions();
--    astraVisionButton.textContent = "Astra-Vision Active";
--    astraVisionButton.style.color = "var(--accent)";
--    astraVisionButton.style.opacity = "0.6";
--    astraVisionButton.disabled = true;
--    showNotification(
--      "👁️ Astra-Vision enabled! (zoom-limit unlocked, no ink-flash or deep darkness effects)",
--    );
--  };
--  const smallMinimapButton = plusPanel.querySelector("#smallMinimapBtn");
--  smallMinimapButton.onclick = () => {
--    initializeAntiTamper();
--    toggleMinimapScale();
--    if (coreSharedState.isProcessing_2) {
--      smallMinimapButton.textContent = "Disable Small Minimap";
--      smallMinimapButton.style.color = "var(--accent)";
--      smallMinimapButton.style.opacity = "0.6";
--    } else {
--      smallMinimapButton.textContent = "Enable Small Minimap";
--      smallMinimapButton.style.color = "var(--accent)";
--      smallMinimapButton.style.opacity = "1";
--    }
--  };
--  let plusPanelOffsetX;
--  let plusPanelOffsetY;
--  let plusPanelDragActive = false;
--  let plusPanelIsDragging = false;
--  plusPanel.addEventListener("mousedown", (event) => {
--    if (
--      event.target.tagName === "BUTTON" ||
--      event.target.tagName === "TEXTAREA" ||
--      event.target.tagName === "INPUT" ||
--      event.target.classList.contains("credits")
--    ) {
--      return;
--    }
--    plusPanelDragActive = true;
--    plusPanelIsDragging = false;
--    plusPanelOffsetX = event.clientX - plusPanel.getBoundingClientRect().left;
--    plusPanelOffsetY = event.clientY - plusPanel.getBoundingClientRect().top;
--    plusPanel.style.transition = "none";
--    const handlePlusPanelDrag = (mouseEvent) => {
--      const deltaX = mouseEvent.clientX - event.clientX;
--      const deltaY = mouseEvent.clientY - event.clientY;
--      if (
--        !plusPanelIsDragging &&
--        (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)
--      ) {
--        plusPanelIsDragging = true;
--      }
--      if (plusPanelDragActive) {
--        plusPanel.style.left = mouseEvent.clientX - plusPanelOffsetX + "px";
--        plusPanel.style.top = mouseEvent.clientY - plusPanelOffsetY + "px";
--        plusPanel.style.bottom = "auto";
--        plusPanel.style.right = "auto";
--      }
--    };
--    const handleMouseUp = () => {
--      plusPanelDragActive = false;
--      plusPanel.style.transition = "all 0.3s ease";
--      document.removeEventListener("mousemove", handlePlusPanelDrag);
--      document.removeEventListener("mouseup", handleMouseUp);
--    };
--    document.addEventListener("mousemove", handlePlusPanelDrag);
--    document.addEventListener("mouseup", handleMouseUp);
--  });
--  plusPanel.addEventListener("click", (event_2) => {
--    if (plusPanelIsDragging) {
--      event_2.stopImmediatePropagation();
--    }
--  });
--  if (localStorage.getItem("theme") === "halloween") {
--    for (let index = 0; index < 3; index++) {
--      const spanElement = document.createElement("span");
--      spanElement.className = "bat";
--      spanElement.textContent = "🦇";
--      plusPanel.appendChild(spanElement);
--    }
--  }
--  return plusPanel;
--}
 -function applyHomeBackground() {
 -  const storedBgUrl = localStorage.getItem("bgUrl") || "";
 -  if (storedBgUrl === "") {
@@ -4212,134 +4248,6 @@ Index: src/ui/theme.js
 +    setBackgroundImage();
    }
  }
--function injectSettingsPanelStyles() {
-+function injectStyles() {
-   const styleElement = document.createElement("style");
-   styleElement.textContent =
--    "\n      #settings-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n        position: fixed;\n        top: 20px;\n        left: 20px;\n        color: var(--text-primary);\n        padding: 16px;\n        font-size: 14px;\n        z-index: 99999;\n        user-select: none;\n        width: 240px;\n        text-align: center;\n        cursor: move;\n        overflow: hidden;\n        position: relative;\n      }\n      #settings-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #settings-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        width: 100%;\n        margin-bottom: 10px;\n        position: relative;\n        overflow: hidden;\n      }\n      #settings-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #settings-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #settings-panel button:hover:not(:disabled) {\n        background: var(--hover-bg);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2);\n        color: var(--accent-hover);\n      }\n      #settings-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #settings-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #settings-panel .keybind-set, #settings-panel .bg-set {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        margin-bottom: 10px;\n        font-size: 12px;\n      }\n      #settings-panel .keybind-set label, #settings-panel .bg-set label {\n        color: var(--text-primary);\n      }\n      #settings-panel #toggleKeyInput, #settings-panel #bgUrl {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #settings-panel #toggleKeyInput {\n        width: 80px;\n      }\n      #settings-panel #bgUrl {\n        width: 120px;\n      }\n      #settings-panel .section-header {\n        font-weight: bold;\n        color: var(--accent);\n        margin: 12px 0 6px 0;\n        font-size: 13px;\n      }\n      #settings-panel select {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 100%;\n        margin-bottom: 10px;\n        transition: all 0.2s ease;\n      }\n      #settings-panel select:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);\n      }\n      #settings-panel .limited-edition {\n        font-size: 11px;\n        color: #ff6600;\n        font-style: italic;\n        margin-top: 4px;\n      }\n      /* Theme-specific panel animations */\n      #settings-panel.themestarwars::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        background: radial-gradient(circle at center, rgba(255,255,255,0.1) 1px, transparent 1px);\n        background-size: 20px 20px;\n        animation: twinkle-stars 20s linear infinite;\n        z-index: -1;\n        border-radius: 16px;\n      }\n      #settings-panel.themekfc::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 20% 30%, rgba(244,0,0,0.1) 2px, transparent 2px),\n                    radial-gradient(circle at 80% 70%, rgba(255,204,0,0.05) 1px, transparent 1px);\n        background-size: 40px 40px;\n      }\n      #settings-panel.themehalloween::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 30% 20%, rgba(255, 102, 0, 0.1) 1px, transparent 1px),\n                    radial-gradient(circle at 70% 80%, rgba(139, 0, 255, 0.05) 2px, transparent 2px);\n        background-size: 30px 30px;\n        animation: halloween-glow 15s ease-in-out infinite alternate;\n      }\n      #settings-panel.themehalloween .bat {\n        position: absolute;\n        font-size: 20px;\n        animation: fly-bat 10s linear infinite;\n        pointer-events: none;\n        opacity: 0.7;\n      }\n      #settings-panel.themehalloween .bat:nth-child(1) { top: 10%; left: -10%; animation-delay: 0s; }\n      #settings-panel.themehalloween .bat:nth-child(2) { top: 50%; right: -10%; animation-delay: 3s; animation-direction: reverse; }\n      #settings-panel.themehalloween .bat:nth-child(3) { top: 80%; left: -10%; animation-delay: 6s; }\n      @keyframes fly-bat {\n        0% { transform: translateX(0) rotate(0deg); }\n        100% { transform: translateX(120%) rotate(360deg); }\n      }\n      @keyframes twinkle-stars {\n        0% { background-position: 0 0; }\n        100% { background-position: 20px 20px; }\n      }\n      @keyframes halloween-glow {\n        0% { opacity: 0.8; }\n        100% { opacity: 1; }\n      }\n    ";
-+    "\n      /* ===== PANEL BASE ===== */\n      .ast-panel {\n        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;\n        background: var(--bg1, #1a1a1a);\n        color: var(--text, #e0e0e0);\n        border-radius: 6px;\n        position: fixed;\n        z-index: 99999;\n        user-select: none;\n        cursor: move;\n        font-size: 13px;\n        min-width: 220px;\n        overflow: hidden;\n      }\n\n      /* ===== PANEL HEADER ===== */\n      .ast-header {\n        background: var(--bg2, #242424);\n        padding: 10px 14px;\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        border-bottom: 1px solid var(--bdr, #333);\n      }\n      .ast-header-title {\n        font-size: 12px;\n        font-weight: 700;\n        letter-spacing: 1.5px;\n        text-transform: uppercase;\n        color: var(--acc, #888);\n      }\n      .ast-header-min {\n        background: none;\n        border: none;\n        color: var(--text-sec, #888);\n        font-size: 16px;\n        cursor: pointer;\n        padding: 0 4px;\n        line-height: 1;\n        transition: color 0.15s;\n      }\n      .ast-header-min:hover { color: var(--text, #e0e0e0); }\n\n      /* ===== PANEL BODY ===== */\n      .ast-body {\n        padding: 8px 12px 12px 12px;\n      }\n\n      /* ===== SECTION ===== */\n      .ast-section {\n        margin-bottom: 6px;\n      }\n      .ast-section-label {\n        font-size: 10px;\n        font-weight: 600;\n        letter-spacing: 1px;\n        text-transform: uppercase;\n        color: var(--text-sec, #888);\n        padding: 8px 0 4px 2px;\n        display: block;\n      }\n\n      /* ===== BUTTONS ===== */\n      .ast-btn {\n        display: block;\n        width: 100%;\n        background: var(--bg2, #242424);\n        color: var(--text, #e0e0e0);\n        border: none;\n        border-radius: 4px;\n        padding: 8px 10px;\n        font-size: 12px;\n        font-weight: 500;\n        cursor: pointer;\n        text-align: left;\n        transition: background 0.12s;\n        margin-bottom: 3px;\n        font-family: inherit;\n        position: relative;\n      }\n      .ast-btn:hover:not(:disabled) {\n        background: var(--hvr, #2e2e2e);\n      }\n      .ast-btn:active:not(:disabled) {\n        background: var(--bg3, #2a2a2a);\n      }\n      .ast-btn:disabled {\n        opacity: 0.35;\n        cursor: not-allowed;\n      }\n      .ast-btn.toggle-on {\n        color: var(--acc, #888);\n      }\n      .ast-btn.toggle-on::before {\n        content: '';\n        position: absolute;\n        left: 0;\n        top: 4px;\n        bottom: 4px;\n        width: 2px;\n        background: var(--acc, #888);\n        border-radius: 1px;\n      }\n      .ast-btn.patched {\n        opacity: 0.25;\n        text-decoration: line-through;\n        cursor: not-allowed;\n      }\n\n      /* ===== TOGGLE ROW ===== */\n      .ast-toggle-row {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        padding: 5px 2px;\n        font-size: 12px;\n      }\n      .ast-toggle-row label {\n        color: var(--text, #e0e0e0);\n        font-weight: 400;\n        cursor: pointer;\n      }\n\n      /* Toggle switch */\n      .ast-switch {\n        position: relative;\n        width: 32px;\n        height: 18px;\n        flex-shrink: 0;\n      }\n      .ast-switch input {\n        opacity: 0;\n        width: 0;\n        height: 0;\n        position: absolute;\n      }\n      .ast-switch .slider {\n        position: absolute;\n        cursor: pointer;\n        top: 0; left: 0; right: 0; bottom: 0;\n        background: #333;\n        border-radius: 9px;\n        transition: background 0.2s;\n      }\n      .ast-switch .slider::before {\n        content: '';\n        position: absolute;\n        height: 14px;\n        width: 14px;\n        left: 2px;\n        bottom: 2px;\n        background: #888;\n        border-radius: 50%;\n        transition: transform 0.2s, background 0.2s;\n      }\n      .ast-switch input:checked + .slider {\n        background: rgba(var(--acc-rgb, 136,136,136), 0.3);\n      }\n      .ast-switch input:checked + .slider::before {\n        transform: translateX(14px);\n        background: var(--acc, #888);\n      }\n\n      /* ===== SELECT ===== */\n      .ast-select {\n        width: 100%;\n        background: var(--bg2, #242424);\n        color: var(--text, #e0e0e0);\n        border: 1px solid var(--bdr, #333);\n        border-radius: 4px;\n        padding: 6px 8px;\n        font-size: 12px;\n        cursor: pointer;\n        outline: none;\n        font-family: inherit;\n        margin-bottom: 3px;\n        -webkit-appearance: none;\n        appearance: none;\n      }\n      .ast-select:focus {\n        border-color: var(--acc, #888);\n      }\n\n      /* ===== INPUTS ===== */\n      .ast-input {\n        background: var(--bg2, #242424);\n        color: var(--text, #e0e0e0);\n        border: 1px solid var(--bdr, #333);\n        border-radius: 4px;\n        padding: 6px 8px;\n        font-size: 12px;\n        outline: none;\n        font-family: inherit;\n        transition: border-color 0.15s;\n      }\n      .ast-input:focus {\n        border-color: var(--acc, #888);\n      }\n      .ast-input::placeholder {\n        color: #555;\n      }\n\n      .ast-textarea {\n        background: var(--bg2, #242424);\n        color: var(--text, #e0e0e0);\n        border: 1px solid var(--bdr, #333);\n        border-radius: 4px;\n        padding: 8px;\n        font-size: 12px;\n        outline: none;\n        font-family: inherit;\n        resize: none;\n        width: 100%;\n        box-sizing: border-box;\n        transition: border-color 0.15s;\n      }\n      .ast-textarea:focus {\n        border-color: var(--acc, #888);\n      }\n      .ast-textarea::placeholder {\n        color: #555;\n      }\n\n      /* ===== KEY CAPTURE ===== */\n      .ast-key-row {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        padding: 4px 2px;\n        font-size: 12px;\n        margin-bottom: 3px;\n      }\n      .ast-key-row span {\n        color: var(--text, #e0e0e0);\n      }\n      .ast-key-capture {\n        background: var(--bg2, #242424);\n        border: 1px solid var(--bdr, #333);\n        color: var(--acc, #888);\n        border-radius: 4px;\n        padding: 4px 10px;\n        font-size: 11px;\n        text-align: center;\n        min-width: 50px;\n        cursor: pointer;\n        outline: none;\n        font-family: 'Consolas', 'Courier New', monospace;\n        font-weight: 600;\n        transition: border-color 0.15s;\n      }\n      .ast-key-capture:focus {\n        border-color: var(--acc, #888);\n      }\n\n      /* ===== INLINE ROW ===== */\n      .ast-row {\n        display: flex;\n        align-items: center;\n        gap: 6px;\n        margin-bottom: 4px;\n      }\n      .ast-row .ast-input {\n        flex: 1;\n      }\n\n      /* ===== CREDITS ===== */\n      .ast-credits {\n        padding-top: 8px;\n        font-size: 10px;\n        color: #555;\n        line-height: 1.5;\n        text-align: center;\n      }\n\n      /* ===== SEPARATOR ===== */\n      .ast-sep {\n        height: 1px;\n        background: var(--bdr, #333);\n        margin: 6px 0;\n      }\n\n      /* ===== UPDATE LIST ===== */\n      .ast-update-list {\n        margin: 0;\n        padding-left: 16px;\n        font-size: 11px;\n        color: var(--text-sec, #888);\n        line-height: 1.6;\n      }\n      .ast-update-list li {\n        margin-bottom: 4px;\n      }\n\n      /* ===== HIDE ADS ===== */\n      div.sidebar.left > div.ad-block { opacity:0!important; pointer-events:none!important; display:none!important; }\n      div.sidebar.left > a { display:none!important; }\n      div.sidebar.left { max-width:30vw; width:21rem; bottom:0!important; }\n    ";
-   document.head.appendChild(styleElement);
--  const draggableElement = document.createElement("div");
--  draggableElement.id = "settings-panel";
--  draggableElement.innerHTML =
--    '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        SETTINGS\n      </div>\n      <div id="settingsContent">\n        <div class="keybind-set">\n          <label for="toggleKeyInput">Toggle Client:</label>\n          <input type="text" id="toggleKeyInput" placeholder="PRESS" readonly>\n        </div>\n        <div class="section-header">Custom Background</div>\n        <div class="bg-set">\n          <label for="bgUrl">BG URL:</label>\n          <input type="text" id="bgUrl" placeholder="Image/GIF URL">\n        </div>\n        <button id="applyBg">Apply Custom Background</button>\n        <div class="section-header">Themes</div>\n        <select id="themeSelect">\n          <option value="blue">Blue (Default)</option>\n          <option value="red">Red</option>\n          <option value="green">Green</option>\n          <option value="pink">Pink</option>\n          <option value="starwars">Star Wars</option>\n          <option value="kfc">KFC🍗</option>\n          <option value="halloween">Halloween 🎃</option>\n        </select>\n        <div id="limitedEdition" class="limited-edition" style="display:none;">Limited Edition</div>\n      </div>\n    ';
--  document.body.appendChild(draggableElement);
--  const bgUrlInput = draggableElement.querySelector("#bgUrl");
--  bgUrlInput.value = localStorage.getItem("bgUrl") || "";
--  const applyBgButton = draggableElement.querySelector("#applyBg");
--  applyBgButton.onclick = () => {
--    const backgroundUrl = bgUrlInput.value.trim();
--    if (backgroundUrl === "") {
--      showNotification("Enter a URL first!");
--      return;
--    }
--    localStorage.setItem("bgUrl", backgroundUrl);
--    let homeBgElement = document.querySelector(".home-bg");
--    const updateHomeBackgroundImage = () => {
--      homeBgElement = document.querySelector(".home-bg");
--      if (homeBgElement) {
--        homeBgElement.style.setProperty(
--          "background-image",
--          'url("' + backgroundUrl + '")',
--          "important",
--        );
--      }
--    };
--    if (homeBgElement == null) {
--      const bgCheckInterval = setInterval(() => {
--        homeBgElement = document.querySelector(".home-bg");
--        if (homeBgElement != null) {
--          clearInterval(bgCheckInterval);
--          updateHomeBackgroundImage();
--        }
--      }, 100);
--    } else {
--      updateHomeBackgroundImage();
--    }
--    showNotification("Custom Background applied!");
--  };
--  const themeSelect = draggableElement.querySelector("#themeSelect");
--  const currentTheme = localStorage.getItem("theme") || "blue";
--  themeSelect.value = currentTheme;
--  applyThemeColors(currentTheme);
--  themeSelect.onchange = (themeChangeEvent) => {
--    const selectedTheme = themeChangeEvent.target.value;
--    if (selectedTheme === "halloween") {
--      createHalloweenModal((isHalloween) => {
--        if (isHalloween) {
--          applyThemeColors("halloween");
--        } else {
--          themeChangeEvent.target.value = "blue";
--          applyThemeColors("blue");
--        }
--      });
--    } else {
--      applyThemeColors(selectedTheme);
--      showNotification("Theme changed to " + selectedTheme);
--    }
--  };
--  const toggleKeyInput = draggableElement.querySelector("#toggleKeyInput");
--  toggleKeyInput.value = coreSharedState.activeKey;
--  toggleKeyInput.addEventListener("keydown", (keyboardEvent) => {
--    keyboardEvent.preventDefault();
--    coreSharedState.activeKey = keyboardEvent.key;
--    toggleKeyInput.value = coreSharedState.activeKey;
--  });
--  let offsetX;
--  let offsetY;
--  let isDraggingActive = false;
--  let isDragging = false;
--  draggableElement.addEventListener("mousedown", (clickEvent) => {
--    if (
--      clickEvent.target.tagName === "BUTTON" ||
--      clickEvent.target.tagName === "INPUT" ||
--      clickEvent.target.classList.contains("credits")
--    ) {
--      return;
--    }
--    isDraggingActive = true;
--    isDragging = false;
--    offsetX =
--      clickEvent.clientX - draggableElement.getBoundingClientRect().left;
--    offsetY = clickEvent.clientY - draggableElement.getBoundingClientRect().top;
--    draggableElement.style.transition = "none";
--    const handleMouseMove = (mouseEvent) => {
--      const deltaX = mouseEvent.clientX - clickEvent.clientX;
--      const deltaY = mouseEvent.clientY - clickEvent.clientY;
--      if (!isDragging && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
--        isDragging = true;
--      }
--      if (isDraggingActive) {
--        draggableElement.style.left = mouseEvent.clientX - offsetX + "px";
--        draggableElement.style.top = mouseEvent.clientY - offsetY + "px";
--        draggableElement.style.bottom = "auto";
--        draggableElement.style.right = "auto";
--      }
--    };
--    const handleMouseUp = () => {
--      isDraggingActive = false;
--      draggableElement.style.transition = "all 0.3s ease";
--      document.removeEventListener("mousemove", handleMouseMove);
--      document.removeEventListener("mouseup", handleMouseUp);
--    };
--    document.addEventListener("mousemove", handleMouseMove);
--    document.addEventListener("mouseup", handleMouseUp);
--  });
--  draggableElement.addEventListener("click", (propagationEvent) => {
--    if (isDragging) {
--      propagationEvent.stopImmediatePropagation();
--    }
--  });
--  if (localStorage.getItem("theme") === "halloween") {
--    for (let i = 0; i < 3; i++) {
--      const spanElement = document.createElement("span");
--      spanElement.className = "bat";
--      spanElement.textContent = "🦇";
--      draggableElement.appendChild(spanElement);
--    }
--  }
--  return draggableElement;
- }
 -function setBlueTheme() {
 -  setTimeout(() => {
 -    localStorage.setItem("theme", "blue");
@@ -4357,27 +4265,25 @@ Index: src/ui/theme.js
 -    settingsPanel: null,
 -    plusPanel: null,
 -  };
--}
++function injectStyles() {
++  const styleElement = document.createElement("style");
++  styleElement.textContent =
++    "\n      /* ===== PANEL BASE ===== */\n      .ast-panel {\n        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;\n        background: var(--bg1, #1a1a1a);\n        color: var(--text, #e0e0e0);\n        border-radius: 6px;\n        position: fixed;\n        z-index: 99999;\n        user-select: none;\n        cursor: move;\n        font-size: 13px;\n        min-width: 220px;\n        overflow: hidden;\n      }\n\n      /* ===== PANEL HEADER ===== */\n      .ast-header {\n        background: var(--bg2, #242424);\n        padding: 10px 14px;\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        border-bottom: 1px solid var(--bdr, #333);\n      }\n      .ast-header-title {\n        font-size: 12px;\n        font-weight: 700;\n        letter-spacing: 1.5px;\n        text-transform: uppercase;\n        color: var(--acc, #888);\n      }\n      .ast-header-min {\n        background: none;\n        border: none;\n        color: var(--text-sec, #888);\n        font-size: 16px;\n        cursor: pointer;\n        padding: 0 4px;\n        line-height: 1;\n        transition: color 0.15s;\n      }\n      .ast-header-min:hover { color: var(--text, #e0e0e0); }\n\n      /* ===== PANEL BODY ===== */\n      .ast-body {\n        padding: 8px 12px 12px 12px;\n      }\n\n      /* ===== SECTION ===== */\n      .ast-section {\n        margin-bottom: 6px;\n      }\n      .ast-section-label {\n        font-size: 10px;\n        font-weight: 600;\n        letter-spacing: 1px;\n        text-transform: uppercase;\n        color: var(--text-sec, #888);\n        padding: 8px 0 4px 2px;\n        display: block;\n      }\n\n      /* ===== BUTTONS ===== */\n      .ast-btn {\n        display: block;\n        width: 100%;\n        background: var(--bg2, #242424);\n        color: var(--text, #e0e0e0);\n        border: none;\n        border-radius: 4px;\n        padding: 8px 10px;\n        font-size: 12px;\n        font-weight: 500;\n        cursor: pointer;\n        text-align: left;\n        transition: background 0.12s;\n        margin-bottom: 3px;\n        font-family: inherit;\n        position: relative;\n      }\n      .ast-btn:hover:not(:disabled) {\n        background: var(--hvr, #2e2e2e);\n      }\n      .ast-btn:active:not(:disabled) {\n        background: var(--bg3, #2a2a2a);\n      }\n      .ast-btn:disabled {\n        opacity: 0.35;\n        cursor: not-allowed;\n      }\n      .ast-btn.toggle-on {\n        color: var(--acc, #888);\n      }\n      .ast-btn.toggle-on::before {\n        content: '';\n        position: absolute;\n        left: 0;\n        top: 4px;\n        bottom: 4px;\n        width: 2px;\n        background: var(--acc, #888);\n        border-radius: 1px;\n      }\n      .ast-btn.patched {\n        opacity: 0.25;\n        text-decoration: line-through;\n        cursor: not-allowed;\n      }\n\n      /* ===== TOGGLE ROW ===== */\n      .ast-toggle-row {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        padding: 5px 2px;\n        font-size: 12px;\n      }\n      .ast-toggle-row label {\n        color: var(--text, #e0e0e0);\n        font-weight: 400;\n        cursor: pointer;\n      }\n\n      /* Toggle switch */\n      .ast-switch {\n        position: relative;\n        width: 32px;\n        height: 18px;\n        flex-shrink: 0;\n      }\n      .ast-switch input {\n        opacity: 0;\n        width: 0;\n        height: 0;\n        position: absolute;\n      }\n      .ast-switch .slider {\n        position: absolute;\n        cursor: pointer;\n        top: 0; left: 0; right: 0; bottom: 0;\n        background: #333;\n        border-radius: 9px;\n        transition: background 0.2s;\n      }\n      .ast-switch .slider::before {\n        content: '';\n        position: absolute;\n        height: 14px;\n        width: 14px;\n        left: 2px;\n        bottom: 2px;\n        background: #888;\n        border-radius: 50%;\n        transition: transform 0.2s, background 0.2s;\n      }\n      .ast-switch input:checked + .slider {\n        background: rgba(var(--acc-rgb, 136,136,136), 0.3);\n      }\n      .ast-switch input:checked + .slider::before {\n        transform: translateX(14px);\n        background: var(--acc, #888);\n      }\n\n      /* ===== SELECT ===== */\n      .ast-select {\n        width: 100%;\n        background: var(--bg2, #242424);\n        color: var(--text, #e0e0e0);\n        border: 1px solid var(--bdr, #333);\n        border-radius: 4px;\n        padding: 6px 8px;\n        font-size: 12px;\n        cursor: pointer;\n        outline: none;\n        font-family: inherit;\n        margin-bottom: 3px;\n        -webkit-appearance: none;\n        appearance: none;\n      }\n      .ast-select:focus {\n        border-color: var(--acc, #888);\n      }\n\n      /* ===== INPUTS ===== */\n      .ast-input {\n        background: var(--bg2, #242424);\n        color: var(--text, #e0e0e0);\n        border: 1px solid var(--bdr, #333);\n        border-radius: 4px;\n        padding: 6px 8px;\n        font-size: 12px;\n        outline: none;\n        font-family: inherit;\n        transition: border-color 0.15s;\n      }\n      .ast-input:focus {\n        border-color: var(--acc, #888);\n      }\n      .ast-input::placeholder {\n        color: #555;\n      }\n\n      .ast-textarea {\n        background: var(--bg2, #242424);\n        color: var(--text, #e0e0e0);\n        border: 1px solid var(--bdr, #333);\n        border-radius: 4px;\n        padding: 8px;\n        font-size: 12px;\n        outline: none;\n        font-family: inherit;\n        resize: none;\n        width: 100%;\n        box-sizing: border-box;\n        transition: border-color 0.15s;\n      }\n      .ast-textarea:focus {\n        border-color: var(--acc, #888);\n      }\n      .ast-textarea::placeholder {\n        color: #555;\n      }\n\n      /* ===== KEY CAPTURE ===== */\n      .ast-key-row {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        padding: 4px 2px;\n        font-size: 12px;\n        margin-bottom: 3px;\n      }\n      .ast-key-row span {\n        color: var(--text, #e0e0e0);\n      }\n      .ast-key-capture {\n        background: var(--bg2, #242424);\n        border: 1px solid var(--bdr, #333);\n        color: var(--acc, #888);\n        border-radius: 4px;\n        padding: 4px 10px;\n        font-size: 11px;\n        text-align: center;\n        min-width: 50px;\n        cursor: pointer;\n        outline: none;\n        font-family: 'Consolas', 'Courier New', monospace;\n        font-weight: 600;\n        transition: border-color 0.15s;\n      }\n      .ast-key-capture:focus {\n        border-color: var(--acc, #888);\n      }\n\n      /* ===== INLINE ROW ===== */\n      .ast-row {\n        display: flex;\n        align-items: center;\n        gap: 6px;\n        margin-bottom: 4px;\n      }\n      .ast-row .ast-input {\n        flex: 1;\n      }\n\n      /* ===== CREDITS ===== */\n      .ast-credits {\n        padding-top: 8px;\n        font-size: 10px;\n        color: #555;\n        line-height: 1.5;\n        text-align: center;\n      }\n\n      /* ===== SEPARATOR ===== */\n      .ast-sep {\n        height: 1px;\n        background: var(--bdr, #333);\n        margin: 6px 0;\n      }\n\n      /* ===== UPDATE LIST ===== */\n      .ast-update-list {\n        margin: 0;\n        padding-left: 16px;\n        font-size: 11px;\n        color: var(--text-sec, #888);\n        line-height: 1.6;\n      }\n      .ast-update-list li {\n        margin-bottom: 4px;\n      }\n\n      /* ===== HIDE ADS ===== */\n      div.sidebar.left > div.ad-block { opacity:0!important; pointer-events:none!important; display:none!important; }\n      div.sidebar.left > a { display:none!important; }\n      div.sidebar.left { max-width:30vw; width:21rem; bottom:0!important; }\n    ";
++  document.head.appendChild(styleElement);
+ }
  
--export {
--  createUpdateHistoryStyles,
--  injectDeepToolsStyles,
--  injectPlusPanelStyles,
--  applyHomeBackground,
--  applyThemeColors,
--  injectSettingsPanelStyles,
--  setBlueTheme,
--};
+-export { applyHomeBackground, applyThemeColors, setBlueTheme };
 +export { applyTheme, initBackground, injectStyles };
 Index: src/utils.js
 ===================================================================
 --- src/utils.js	v1.5
 +++ src/utils.js	v1.6
-@@ -1,4 +1,11 @@
+@@ -1,4 +1,12 @@
 +import {
 +  getGameState,
 +  getEntityManager,
 +  angle,
++  game,
 +  coreSharedState,
 +} from "./core.js";
 +
@@ -4385,7 +4291,7 @@ Index: src/utils.js
    let resultString = "";
    for (let i = 0; i < length; i++) {
      const randomCodePoint = Math.floor(Math.random() * 1048575 + 65536);
-@@ -18,6 +25,141 @@
+@@ -18,6 +26,141 @@
      ...Object.getOwnPropertyNames(Object.getPrototypeOf(targetObject)),
      ...Object.getOwnPropertyNames(targetObject),
    ];
@@ -4510,8 +4416,8 @@ Index: src/utils.js
 +    ) {
 +      zoomLevel = cameraState.camera.currentZoomLevel;
 +    }
-+    if (coreSharedState.game?.viewport?.scale?.x) {
-+      zoomLevel = coreSharedState.game.viewport.scale.x;
++    if (game?.viewport?.scale?.x) {
++      zoomLevel = game.viewport.scale.x;
 +    }
 +  } catch (error) {}
 +  return zoomLevel;

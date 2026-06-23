@@ -4,17 +4,18 @@ import {
   stopInterval,
   typeAndSendMessage,
 } from "../features/chat.js";
-import { interceptTextEncoder } from "../features/antidetection.js";
-import { generateRandomString } from "../utils.js";
-import { toggleMouseSimulation } from "../features/movement.js";
 import {
   radius,
+  interceptTextEncoder,
   clearTracking_2,
   initGameHooks,
   clearTracking_3,
+  startAutoFarm,
   settings,
   state,
 } from "../core.js";
+import { generateRandomString } from "../utils.js";
+import { toggleMouseSimulation } from "../features/movement.js";
 import { initializeAstraVision } from "../features/xray.js";
 import {
   clearTracking,
@@ -22,11 +23,7 @@ import {
   toggleMinimapSize,
 } from "../features/esp.js";
 import { toggleLock, enableAutoDodge } from "../features/aimbot.js";
-import {
-  setupPatrolPoints,
-  startAutoFarm,
-  stopAutoFarm,
-} from "../features/autofarm.js";
+import { setupPatrolPoints, stopAutoFarm } from "../features/autofarm.js";
 import { applyTheme, initBackground } from "./theme.js";
 
 window.lockKey = "t";
@@ -719,4 +716,5 @@ export {
   createAutomationPanel,
   createSettingsPanel,
   createUpdateHistoryPanel,
+  togglePanelsVisibility,
 };

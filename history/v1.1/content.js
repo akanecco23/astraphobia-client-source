@@ -15,26 +15,27 @@ import {
   toggleMouseSimulation,
 } from "./src/features/movement.js";
 import { startScheduledTask, stopInterval } from "./src/features/chat.js";
-import { initHooks } from "./src/features/entitytrail.js";
-import { initAdBlocker } from "./src/features/adblock.js";
 import {
   createUpdateHistoryPanel,
   createToolsPanel,
   initPlusPanel,
   initSettingsPanel,
+  togglePanels,
 } from "./src/ui/panels.js";
+import { initAdBlocker } from "./src/features/adblock.js";
 import {
   wrapWithProxy,
   setupTextEncoderHook,
   encryptPacketData,
   sendPacket,
+  initHooks,
   disableZoomClamp,
   initGameCheats,
-  privateStateMap,
+  initAllPanels,
   angleSteps,
   orbitRadius,
+  playerData,
   isInitialized_2,
   securityConfig,
-  state,
   coreSharedState,
 } from "./src/core.js";

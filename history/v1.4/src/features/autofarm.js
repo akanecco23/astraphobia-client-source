@@ -1,4 +1,4 @@
-import { securitySettings, sendPacket, state } from "../core.js";
+import { playerData, securitySettings, sendPacket, state } from "../core.js";
 
 const handleAnimalAction = (currentValue) => {
   const id1 = 1;
@@ -7,16 +7,12 @@ const handleAnimalAction = (currentValue) => {
   try {
     const fishLevelConfig = {
       ...securitySettings.default,
-      ...(securitySettings[
-        state.playerData?.myAnimals?.[0]?.visibleFishLevel
-      ] || {}),
+      ...(securitySettings[playerData?.myAnimals?.[0]?.visibleFishLevel] || {}),
     };
-    if (
-      currentValue < (state.playerData?.myAnimals?.[0]?._standing ? 40 : 100)
-    ) {
+    if (currentValue < (playerData?.myAnimals?.[0]?._standing ? 40 : 100)) {
       return sendPacket(id1);
     }
-    if (state.playerData?.myAnimals?.[0]?._standing) {
+    if (playerData?.myAnimals?.[0]?._standing) {
       return sendPacket(id5, currentValue);
     }
     if (fishLevelConfig.hasScaling) {

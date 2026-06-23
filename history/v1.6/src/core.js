@@ -1,4 +1,9 @@
 import { showToast, restoreUIInteractivity } from "./ui/interaction.js";
+import { calculateDistance, getAllPropertyNames } from "./utils.js";
+import {
+  generatePatrolPoints,
+  startAutoFarmLoop,
+} from "./features/autofarm.js";
 import { applyTheme, initBackground, injectStyles } from "./ui/theme.js";
 import {
   createToolsPanel,
@@ -12,8 +17,7 @@ import { initRadarDrag } from "./ui/radar.js";
 import { renderEspLoop, trackPlayer } from "./features/esp.js";
 import { autoDodgeLoop } from "./features/aimbot.js";
 import { moveMouseToSide } from "./features/movement.js";
-import { initializeAntiDetection } from "./features/antidetection.js";
-let privateMap = new WeakMap();
+const privateMap = new WeakMap();
 function wrapWithProxy(targetObject, propertyKey, handler) {
   const originalValue = targetObject[propertyKey];
   const proxyValue = new Proxy(originalValue, handler);
@@ -135,20 +139,19 @@ function hookTextEncoder() {
 const angleSteps = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
 const radius = 300;
 const offsetValue = 400;
+let game;
+let globalState;
+let playerData;
 let isActive = false;
 const state = {};
 function getGameState() {
   try {
-    if (
-      coreSharedState.playerData &&
-      coreSharedState.playerData.myAnimals &&
-      coreSharedState.playerData.myAnimals.length > 0
-    ) {
-      return coreSharedState.playerData;
+    if (playerData && playerData.myAnimals && playerData.myAnimals.length > 0) {
+      return playerData;
     }
     const states = window.__ss?.states;
     if (!states) {
-      return coreSharedState.playerData || null;
+      return playerData || null;
     }
     for (let i = 0; i < states.length; i++) {
       if (states[i]?.gameScene?.myAnimals) {
@@ -162,9 +165,9 @@ function getGameState() {
         }
       }
     }
-    return coreSharedState.playerData || null;
+    return playerData || null;
   } catch (error) {
-    return coreSharedState.playerData || null;
+    return playerData || null;
   }
 }
 function getEntityManager(gameState) {
@@ -314,31 +317,186 @@ const distanceThreshold_2 = 400;
 const maxFailCount = 2;
 const expiryTimeout = 20000;
 const updateInterval_2 = 600;
+function isAreaSkipped_2(x, y) {
+  const currentTime = Date.now();
+  window.autoFarmSkipAreas = window.autoFarmSkipAreas.filter(
+    (timerState) => currentTime - timerState.time < expiryTimeout,
+  );
+  return window.autoFarmSkipAreas.some(
+    (cellData) =>
+      cellData.skipped &&
+      calculateDistance(x, y, cellData.x, cellData.y) < cellData.radius,
+  );
+}
 let angle = 0;
+function initAutoFarm(farmMode) {
+  window.autoFarmMode = farmMode || "nearest";
+  window.autoFarmActive = true;
+  window.autoFarmStats.startTime = Date.now();
+  window.autoFarmStats.collected = 0;
+  window.autoFarmCurrentTarget = null;
+  window.autoFarmTargetStartTime = 0;
+  window.autoFarmSkipIds.clear();
+  window.autoFarmSkipAreas = [];
+  window.autoFarmSkipClearTime = Date.now();
+  coreSharedState.position = null;
+  coreSharedState.counter_2 = 0;
+  coreSharedState.lastValue = 0;
+  coreSharedState.lastUpdateTime = 0;
+  if (farmMode === "patrol") {
+    generatePatrolPoints();
+  }
+  showToast("Auto farm started (" + window.autoFarmMode + ")");
+  startAutoFarmLoop();
+}
+let isProcessed = false;
+const initializeAntiDetection = () => {
+  if (isProcessed) {
+    return;
+  }
+  isProcessed = true;
+  const cache = {};
+  for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
+    cache[propertyKey] = Reflect[propertyKey];
+  }
+  const Proxy = Proxy;
+  const lookupGetter = Object.prototype.__lookupGetter__;
+  const wrapValue = (registry, key, options) => {
+    const instance = new Proxy(registry[key], options);
+    privateMap.set(instance, registry[key]);
+    registry[key] = instance;
+  };
+  wrapValue(Function.prototype, "toString", {
+    apply(thisContext, paramKey, args) {
+      return cache.apply(
+        thisContext,
+        privateMap.get(paramKey) || paramKey,
+        args,
+      );
+    },
+  });
+  wrapValue(window, "Proxy", {
+    construct(constructor, constructorArgs) {
+      return cache.construct(constructor, constructorArgs);
+    },
+  });
+  wrapValue(Proxy, "revocable", {
+    apply(targetContext, params, extraParams) {
+      return cache.apply(targetContext, params, extraParams);
+    },
+  });
+  let lastTimestamp = 0;
+  wrapValue(Function.prototype, "bind", {
+    apply(thisArg, argsArray, extraArgs) {
+      try {
+        try {
+          if (
+            lookupGetter.call(extraArgs[0], "aboveBgPlatformsContainer") != null
+          ) {
+            return cache.apply(thisArg, argsArray, extraArgs);
+          }
+        } catch {}
+        if (extraArgs[0] && extraArgs[0].aboveBgPlatformsContainer != null) {
+          playerData = extraArgs[0];
+          game = extraArgs[0].game;
+          window.__cachedEM = null;
+          const allProperties = getAllPropertyNames(playerData);
+          const obfuscatedProperties = allProperties.filter((varName) =>
+            varName.startsWith("_0x"),
+          );
+          state.setFlash =
+            Object.getOwnPropertyNames(playerData.__proto__.__proto__)
+              .filter((propName) => propName.startsWith("_0x"))
+              .find(
+                (functionKey) => playerData[functionKey] instanceof Function,
+              ) || state.setFlash;
+          state.terrainManager =
+            obfuscatedProperties.find(
+              (shadowKey) =>
+                typeof playerData[shadowKey]?.shadow !== "undefined",
+            ) || state.terrainManager;
+          state.entityManager =
+            obfuscatedProperties.find(
+              (entitiesKey) =>
+                typeof playerData[entitiesKey]?.entitiesList !== "undefined",
+            ) || state.entityManager;
+          state.socketManager =
+            getAllPropertyNames(game).find(
+              (networkKey) =>
+                typeof game[networkKey]?.sendBytePacket !== "undefined",
+            ) || state.socketManager;
+          try {
+            globalState = document
+              .getElementById("app")
+              ._vnode.appContext.config.globalProperties.$simpleState.states.find(
+                (gameStore) => gameStore._storeMeta.id === "game",
+              );
+          } catch {}
+          let intervalId;
+          try {
+            clearInterval(intervalId);
+          } catch {}
+          intervalId = setInterval(() => {
+            try {
+              if (!playerData?.myAnimals?.[0]) {
+                return;
+              }
+              const firstAnimal = playerData.myAnimals[0];
+              if (firstAnimal.fadingTrail) {
+                wrapWithProxy(
+                  Object.getPrototypeOf(firstAnimal.fadingTrail),
+                  "enable",
+                  {
+                    apply() {},
+                  },
+                );
+              }
+              if (firstAnimal.bubblesEmitter) {
+                Object.defineProperty(
+                  Object.getPrototypeOf(firstAnimal.bubblesEmitter),
+                  "emit",
+                  {
+                    set: () => {},
+                  },
+                );
+              }
+              clearInterval(intervalId);
+            } catch {}
+          }, 200);
+          if (coreSharedState.lastTimestamp < Date.now() - 3000) {
+            showToast("Client loaded");
+            coreSharedState.lastTimestamp = Date.now();
+          }
+        }
+      } catch {}
+      return cache.apply(thisArg, argsArray, extraArgs);
+    },
+  });
+};
 const initializeViewportSettings = () => {
   if (isActive) {
     return;
   }
-  if (!coreSharedState.playerData) {
+  if (!playerData) {
     setTimeout(initializeViewportSettings, 500);
     return;
   }
   setInterval(() => {
     try {
-      coreSharedState.game.viewport.clampZoom({
+      game.viewport.clampZoom({
         minWidth: 0,
         maxWidth: 10000000,
       });
-      coreSharedState.game.viewport.plugins.plugins.clamp = null;
-      coreSharedState.game.viewport.plugins.plugins["clamp-zoom"] = null;
+      game.viewport.plugins.plugins.clamp = null;
+      game.viewport.plugins.plugins["clamp-zoom"] = null;
     } catch {}
   }, 300);
   try {
     if (state.setFlash) {
-      coreSharedState.playerData[state.setFlash] = () => {};
+      playerData[state.setFlash] = () => {};
     }
     if (state.terrainManager) {
-      const terrainManager = coreSharedState.playerData[state.terrainManager];
+      const terrainManager = playerData[state.terrainManager];
       if (terrainManager?.shadow) {
         terrainManager.shadow.setShadowSize(1000000);
         terrainManager.shadow.setShadowSize = () => {};
@@ -433,9 +591,6 @@ export const coreSharedState = {
   currentIndex: 0,
   inputKey: "q",
   eventKey: "e",
-  game: null,
-  globalState: null,
-  playerData: null,
   isToggled: false,
   isInitialized_2: false,
   lastTimeA: 0,
@@ -451,7 +606,6 @@ export const coreSharedState = {
   counter_2: 0,
   lastValue: 0,
   lastTimestamp_2: 0,
-  isProcessed: false,
   pressedKey: "Shift",
 };
 export {
@@ -465,14 +619,17 @@ export {
   findEntityById,
   clearTracking_2,
   clearTracking_3,
+  isAreaSkipped_2,
+  initAutoFarm,
+  initializeAntiDetection,
   initializeViewportSettings,
   initializeClient,
-  privateMap,
   angleSteps,
   radius,
   offsetValue,
+  game,
+  playerData,
   isActive,
-  state,
   dragState,
   maxDistance,
   distanceThreshold,

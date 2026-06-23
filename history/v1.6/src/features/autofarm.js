@@ -7,9 +7,11 @@ import {
   maxFailCount,
   getGameState,
   getEntityManager,
+  isAreaSkipped_2,
   getFirstAnimalPosition,
   angle,
   updateInterval_2,
+  initAutoFarm,
   coreSharedState,
 } from "../core.js";
 import { simulateMoveAndClick } from "./movement.js";
@@ -73,17 +75,6 @@ function handleFarmFailure(x, y) {
       skipped: false,
     });
   }
-}
-function isAreaSkipped_2(x, y) {
-  const currentTime = Date.now();
-  window.autoFarmSkipAreas = window.autoFarmSkipAreas.filter(
-    (timerState) => currentTime - timerState.time < expiryTimeout,
-  );
-  return window.autoFarmSkipAreas.some(
-    (cellData) =>
-      cellData.skipped &&
-      calculateDistance(x, y, cellData.x, cellData.y) < cellData.radius,
-  );
 }
 function findClosestFarmable(farmRange) {
   farmRange = farmRange || window.autoFarmRange;
@@ -597,26 +588,6 @@ function startAutoFarmLoop() {
   coreSharedState.isActive_2 = true;
   autoFarmUpdate();
 }
-function initAutoFarm(farmMode) {
-  window.autoFarmMode = farmMode || "nearest";
-  window.autoFarmActive = true;
-  window.autoFarmStats.startTime = Date.now();
-  window.autoFarmStats.collected = 0;
-  window.autoFarmCurrentTarget = null;
-  window.autoFarmTargetStartTime = 0;
-  window.autoFarmSkipIds.clear();
-  window.autoFarmSkipAreas = [];
-  window.autoFarmSkipClearTime = Date.now();
-  coreSharedState.position = null;
-  coreSharedState.counter_2 = 0;
-  coreSharedState.lastValue = 0;
-  coreSharedState.lastUpdateTime = 0;
-  if (farmMode === "patrol") {
-    generatePatrolPoints();
-  }
-  showToast("Auto farm started (" + window.autoFarmMode + ")");
-  startAutoFarmLoop();
-}
 function stopAutoFarm() {
   window.autoFarmActive = false;
   coreSharedState.isActive_2 = false;
@@ -660,7 +631,6 @@ document.addEventListener("keydown", (event_3) => {
 export {
   isAreaSkipped,
   handleFarmFailure,
-  isAreaSkipped_2,
   findClosestFarmable,
   getFarmableEntities,
   findOptimalFarmPosition,
@@ -671,6 +641,5 @@ export {
   generatePatrolPoints,
   autoFarmUpdate,
   startAutoFarmLoop,
-  initAutoFarm,
   stopAutoFarm,
 };

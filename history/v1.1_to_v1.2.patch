@@ -2,7 +2,7 @@ Index: content.js
 ===================================================================
 --- content.js	v1.1
 +++ content.js	v1.2
-@@ -2,39 +2,46 @@
+@@ -2,40 +2,41 @@
    generateRandomString,
    getGameCanvas,
    getAllPropertyNames,
@@ -13,53 +13,48 @@ Index: content.js
 -  showToast,
 -} from "./src/ui/interaction.js";
  import { handleAnimalAction } from "./src/features/autofarm.js";
++import { startAntiAfk } from "./src/features/antidetection.js";
  import {
 -  startCircularMouseMovement,
-+  startAntiAfk,
-+  setupAntiDetection,
-+} from "./src/features/antidetection.js";
-+import {
    stopMouseSimulation,
    toggleMouseSimulation,
  } from "./src/features/movement.js";
--import { startScheduledTask, stopInterval } from "./src/features/chat.js";
--import { initHooks } from "./src/features/entitytrail.js";
-+import {
-+  startScheduledTask,
-+  stopInterval,
-+  createDeepToolsPanel,
-+} from "./src/features/chat.js";
-+import { applyCustomBackground, createSettingsStyles } from "./src/ui/theme.js";
- import { initAdBlocker } from "./src/features/adblock.js";
+ import { startScheduledTask, stopInterval } from "./src/features/chat.js";
  import {
    createUpdateHistoryPanel,
 -  createToolsPanel,
 -  initPlusPanel,
 -  initSettingsPanel,
++  createDeepToolsPanel,
 +  createPlusPanel,
-+  initializePanels,
+   togglePanels,
  } from "./src/ui/panels.js";
++import { applyCustomBackground, createSettingsStyles } from "./src/ui/theme.js";
+ import { initAdBlocker } from "./src/features/adblock.js";
  import {
    wrapWithProxy,
 -  setupTextEncoderHook,
 +  initNetworkHook,
    encryptPacketData,
    sendPacket,
+-  initHooks,
 -  disableZoomClamp,
 -  initGameCheats,
--  privateStateMap,
+-  initAllPanels,
 -  angleSteps,
 -  orbitRadius,
+-  playerData,
++  setupAntiDetection,
 +  applyGameHacks,
 +  initMod,
-+  stateMap,
++  initializePanels,
 +  angles,
 +  radius,
++  userData,
 +  isInitialized,
    isInitialized_2,
 -  securityConfig,
 +  securityConfigs,
-   state,
    coreSharedState,
  } from "./src/core.js";
 +import {
@@ -87,18 +82,25 @@ Index: src/core.js
 ===================================================================
 --- src/core.js	v1.1
 +++ src/core.js	v1.2
-@@ -1,30 +1,31 @@
+@@ -1,36 +1,36 @@
 -import { showToast } from "./ui/interaction.js";
 +import { showNotification } from "./ui/interaction.js";
+ import { getAllPropertyNames } from "./utils.js";
  import { handleAnimalAction } from "./features/autofarm.js";
- import { togglePanels } from "./ui/panels.js";
--import { initHooks } from "./features/entitytrail.js";
-+import { setupAntiDetection } from "./features/antidetection.js";
+ import {
+   createUpdateHistoryPanel,
+-  createToolsPanel,
+-  initPlusPanel,
+-  initSettingsPanel,
++  createDeepToolsPanel,
++  createPlusPanel,
+   togglePanels,
+ } from "./ui/panels.js";
++import { applyCustomBackground, createSettingsStyles } from "./ui/theme.js";
  import { initAdBlocker } from "./features/adblock.js";
-+import { applyCustomBackground } from "./ui/theme.js";
  
--let privateStateMap = new WeakMap();
-+let stateMap = new WeakMap();
+-const privateStateMap = new WeakMap();
++const stateMap = new WeakMap();
  function wrapWithProxy(targetObject, propertyKey, proxyHandler) {
    const originalValue = targetObject[propertyKey];
 -  const proxyValue = new Proxy(originalValue, proxyHandler);
@@ -129,7 +131,7 @@ Index: src/core.js
            case "\\":
              return "\\";
            case "n":
-@@ -48,18 +49,20 @@
+@@ -54,18 +54,20 @@
            case "6":
            case "7":
              return String.fromCharCode(Number.parseInt(escapeSequence, 8) || 0);
@@ -157,7 +159,7 @@ Index: src/core.js
                  return String.fromCodePoint(codePoint);
                }
              }
-@@ -73,9 +76,9 @@
+@@ -79,9 +81,9 @@
      createTribe: 5,
      chat: 100,
    };
@@ -168,7 +170,7 @@ Index: src/core.js
        const commandPatterns = [
          /^(\x14{3}\d+\|6\|)(.+)$/gm,
          /^(\x14{3}\d+\|8\|)(.+)$/gm,
-@@ -86,24 +89,24 @@
+@@ -92,24 +94,24 @@
          let patternIndex = 0;
          patternIndex < commandPatterns.length;
          patternIndex++
@@ -198,7 +200,7 @@ Index: src/core.js
    const inputMaxLengthObserver = new MutationObserver(() => {
      document
        .querySelector(".play-game .el-input__inner")
-@@ -118,25 +121,25 @@
+@@ -124,27 +126,27 @@
    inputMaxLengthObserver.observe(document.body, {
      childList: true,
      subtree: true,
@@ -224,8 +226,11 @@ Index: src/core.js
 -const orbitRadius = 300;
 +const angles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
 +const radius = 300;
- 
+ let gameInstance;
+ let globalState;
+-let playerData;
 -let isRunning = false;
++let userData;
 +let isInitialized = false;
  let isInitialized_2 = false;
 -const encryptPacketData = (message, terminatorCode, suffix = "") => {
@@ -236,7 +241,7 @@ Index: src/core.js
      "eat",
      "fr",
      "bite",
-@@ -148,57 +151,53 @@
+@@ -156,57 +158,53 @@
      "L",
      "en",
      "setter",
@@ -321,57 +326,253 @@ Index: src/core.js
      hasSec: true,
      secLoadTime: 750,
      hasScaling: true,
-@@ -208,29 +207,33 @@
+@@ -216,121 +214,105 @@
      secLoadTime: 500,
      hasScaling: false,
    },
  };
 -const sendPacket = (payload, additionalData = "") => {
 +const sendPacket = (payload, extraData = "") => {
-   if (
-     coreSharedState.gameInstance &&
-     coreSharedState.globalState &&
-     state.socketManager
-   ) {
-     coreSharedState.gameInstance[state.socketManager].sendBytePacket(
-       encryptPacketData(
--        coreSharedState.globalState.token,
-+        coreSharedState.globalState.token._value,
-         payload,
--        additionalData,
-+        extraData,
-       ),
+   if (gameInstance && globalState && state.socketManager) {
+     gameInstance[state.socketManager].sendBytePacket(
+-      encryptPacketData(globalState.token, payload, additionalData),
++      encryptPacketData(globalState.token._value, payload, extraData),
      );
    }
  };
  const state = {};
  const counter = 0;
+-const initHooks = () => {
+-  const propertyCache = {};
+-  for (const propertyName of Object.getOwnPropertyNames(Reflect)) {
+-    propertyCache[propertyName] = Reflect[propertyName];
++const setupAntiDetection = () => {
++  const storage = {};
++  for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
++    storage[propertyKey] = Reflect[propertyKey];
+   }
+-  const ProxyConstructor = Proxy;
++  const ProxyClass = Proxy;
+   const lookupGetter = Object.prototype.__lookupGetter__;
+-  const wrapWithProxy = (state, key, value) => {
+-    const wrappedValue = new ProxyConstructor(state[key], value);
+-    privateStateMap.set(wrappedValue, state[key]);
+-    state[key] = wrappedValue;
++  const wrapWithProxy = (dataStore, storeIndex, storeValue) => {
++    const processedValue = new ProxyClass(dataStore[storeIndex], storeValue);
++    stateMap.set(processedValue, dataStore[storeIndex]);
++    dataStore[storeIndex] = processedValue;
+   };
+   wrapWithProxy(Function.prototype, "toString", {
+-    apply(thisContext, key_2, context) {
+-      return propertyCache.apply(
+-        thisContext,
+-        privateStateMap.get(key_2) || key_2,
++    apply(context, functionKey, applyArgs) {
++      return storage.apply(
+         context,
++        stateMap.get(functionKey) || functionKey,
++        applyArgs,
+       );
+     },
+   });
+   wrapWithProxy(window, "Proxy", {
+     construct(constructor, constructorArgs) {
+-      const instance = propertyCache.construct(constructor, constructorArgs);
++      const instance = storage.construct(constructor, constructorArgs);
+       return instance;
+     },
+   });
+-  wrapWithProxy(ProxyConstructor, "revocable", {
+-    apply(targetFunction, functionArgs, functionContext) {
+-      const functionResult = propertyCache.apply(
+-        targetFunction,
+-        functionArgs,
+-        functionContext,
+-      );
+-      return functionResult;
++  wrapWithProxy(ProxyClass, "revocable", {
++    apply(applyContext, applyTarget, applyArgs2) {
++      const applyResult = storage.apply(applyContext, applyTarget, applyArgs2);
++      return applyResult;
+     },
+   });
+-  let lastExecutionTime = 0;
++  let lastTimestamp = 0;
+   wrapWithProxy(Function.prototype, "bind", {
+-    apply(targetFunction2, functionArgs2, functionContext2) {
++    apply(applyContext2, applyTarget2, applyArgs3) {
+       try {
+         try {
+           if (
+-            lookupGetter.call(
+-              functionContext2[0],
+-              "aboveBgPlatformsContainer",
+-            ) != null
++            lookupGetter.call(applyArgs3[0], "aboveBgPlatformsContainer") !=
++            null
+           ) {
+-            return propertyCache.apply(
+-              targetFunction2,
+-              functionArgs2,
+-              functionContext2,
+-            );
++            return storage.apply(applyContext2, applyTarget2, applyArgs3);
+           }
+         } catch {}
+-        if (
+-          functionContext2[0] &&
+-          functionContext2[0].aboveBgPlatformsContainer != null
+-        ) {
+-          playerData = functionContext2[0];
+-          gameInstance = functionContext2[0].game;
+-          const allKeys = getAllPropertyNames(playerData);
+-          const obfuscatedKeys = allKeys.filter((obfuscatedKey) =>
+-            obfuscatedKey.startsWith("_0x"),
++        if (applyArgs3[0] && applyArgs3[0].aboveBgPlatformsContainer != null) {
++          userData = applyArgs3[0];
++          gameInstance = applyArgs3[0].game;
++          const allKeys = getAllPropertyNames(userData);
++          const obfuscatedKeys = allKeys.filter((obfuscatedVarName) =>
++            obfuscatedVarName.startsWith("_0x"),
+           );
+           state.setFlash =
+-            Object.getOwnPropertyNames(playerData.__proto__.__proto__)
+-              .filter((obfuscatedName) => obfuscatedName.startsWith("_0x"))
+-              .find(
+-                (functionKey) => playerData[functionKey] instanceof Function,
+-              ) || state.setFlash;
++            Object.getOwnPropertyNames(userData.__proto__.__proto__)
++              .filter((targetVarName) => targetVarName.startsWith("_0x"))
++              .find((methodName) => userData[methodName] instanceof Function) ||
++            state.setFlash;
+           state.terrainManager =
+             obfuscatedKeys.find(
+-              (shadowObjectKey) =>
+-                typeof playerData[shadowObjectKey]?.shadow !== "undefined",
++              (shadowEntityKey) =>
++                typeof userData[shadowEntityKey]?.shadow !== "undefined",
+             ) || state.terrainManager;
+           state.entityManager =
+             obfuscatedKeys.find(
+               (entitiesListKey) =>
+-                typeof playerData[entitiesListKey]?.entitiesList !==
+-                "undefined",
++                typeof userData[entitiesListKey]?.entitiesList !== "undefined",
+             ) || state.entityManager;
+           state.entityManagerProps = {};
+           const entityManagerKeys = getAllPropertyNames(
+-            playerData[state.entityManager],
++            userData[state.entityManager],
+           );
+           const animalsUpdateInterval = setInterval(() => {
+             state.entityManagerProps.animalsList =
+               entityManagerKeys
+                 .filter((variableName) => variableName.startsWith("_0x"))
+                 .find(
+-                  (entityType) =>
+-                    typeof playerData?.[state.entityManager]?.[
+-                      entityType
+-                    ]?.[0] !== "undefined",
++                  (entityKey) =>
++                    typeof userData?.[state.entityManager]?.[entityKey]?.[0] !==
++                    "undefined",
+                 ) || state.entityManagerProps.animalsList;
+             if (typeof state.entityManagerProps.animalsList !== "undefined") {
+               clearInterval(animalsUpdateInterval);
+             }
+           }, 1000);
+           state.socketManager =
+             getAllPropertyNames(gameInstance).find(
+-              (packetSenderKey) =>
+-                typeof gameInstance[packetSenderKey]?.sendBytePacket !==
++              (networkServiceKey) =>
++                typeof gameInstance[networkServiceKey]?.sendBytePacket !==
+                 "undefined",
+             ) || state.socketManager;
+           try {
+             globalState = document
+@@ -344,51 +326,50 @@
+             clearInterval(animalsCheckInterval);
+           } catch {}
+           animalsCheckInterval = setInterval(() => {
+             try {
+-              if (!playerData?.myAnimals?.[0]) {
++              if (!userData?.myAnimals?.[0]) {
+                 return;
+               }
+-              const myAnimal = playerData.myAnimals[0];
++              const myAnimal = userData.myAnimals[0];
+               if (myAnimal.fadingTrail) {
+-                const fadingTrailProto = Object.getPrototypeOf(
++                const fadingTrailPrototype = Object.getPrototypeOf(
+                   myAnimal.fadingTrail,
+                 );
+-                wrapWithProxy(fadingTrailProto, "enable", {
++                wrapWithProxy(fadingTrailPrototype, "enable", {
+                   apply() {},
+                 });
+               }
+               if (myAnimal.bubblesEmitter) {
+-                const bubblesEmitterProto = Object.getPrototypeOf(
++                const bubblesEmitterPrototype = Object.getPrototypeOf(
+                   myAnimal.bubblesEmitter,
+                 );
+-                Object.defineProperty(bubblesEmitterProto, "emit", {
++                Object.defineProperty(bubblesEmitterPrototype, "emit", {
+                   set: () => {},
+                 });
+               }
+               clearInterval(animalsCheckInterval);
+             } catch {}
+           }, 200);
+-          if (lastExecutionTime < Date.now() - 3000) {
+-            showToast("✅ Astraphobia client loaded in game");
+-            lastExecutionTime = Date.now();
++          if (lastTimestamp < Date.now() - 3000) {
++            showNotification("✅ Astraphobia client loaded in game");
++            lastTimestamp = Date.now();
+           }
+-          disableZoomClamp();
+-          initGameCheats();
++          initMod();
+         }
+       } catch {}
+-      return propertyCache.apply(
+-        targetFunction2,
+-        functionArgs2,
+-        functionContext2,
+-      );
++      return storage.apply(applyContext2, applyTarget2, applyArgs3);
+     },
+   });
+ };
 -const disableZoomClamp = () => {
 -  if (isRunning) {
 +const applyGameHacks = () => {
 +  if (isInitialized) {
      return;
    }
-+  if (!coreSharedState.userData) {
++  if (!userData) {
 +    setTimeout(applyGameHacks, 500);
 +    return;
 +  }
    setInterval(() => {
      try {
-       coreSharedState.gameInstance.viewport.clampZoom({
+       gameInstance.viewport.clampZoom({
          minWidth: 0,
-@@ -240,11 +243,25 @@
-       coreSharedState.gameInstance.viewport.plugins.plugins["clamp-zoom"] =
-         null;
+@@ -397,11 +378,25 @@
+       gameInstance.viewport.plugins.plugins.clamp = null;
+       gameInstance.viewport.plugins.plugins["clamp-zoom"] = null;
      } catch {}
    }, 300);
 -  isRunning = true;
 +  try {
 +    if (state.setFlash) {
-+      coreSharedState.userData[state.setFlash] = () => {};
++      userData[state.setFlash] = () => {};
 +    }
 +    if (state.terrainManager) {
-+      const terrainManager = coreSharedState.userData[state.terrainManager];
++      const terrainManager = userData[state.terrainManager];
 +      if (terrainManager && terrainManager.shadow) {
 +        terrainManager.shadow.setShadowSize(1000000);
 +        terrainManager.shadow.setShadowSize = () => {};
@@ -388,18 +589,17 @@ Index: src/core.js
      return;
    }
    function sendActionSequence() {
-@@ -280,49 +297,45 @@
+@@ -437,46 +432,42 @@
    window.addEventListener(
      "click",
      (animalsProcessHandler) => {
        try {
--        if (!coreSharedState.playerData?.myAnimals?.[0]) {
-+        if (!coreSharedState.userData?.myAnimals?.[0]) {
+-        if (!playerData?.myAnimals?.[0]) {
++        if (!userData?.myAnimals?.[0]) {
            return;
          }
-         const visibleFishLevel =
--          coreSharedState.playerData.myAnimals[0].visibleFishLevel;
-+          coreSharedState.userData.myAnimals[0].visibleFishLevel;
+-        const visibleFishLevel = playerData.myAnimals[0].visibleFishLevel;
++        const visibleFishLevel = userData.myAnimals[0].visibleFishLevel;
          const fishLevelConfig = {
 -          ...securityConfig.default,
 -          ...securityConfig[visibleFishLevel],
@@ -413,8 +613,8 @@ Index: src/core.js
            } else if (
              animalsProcessHandler.shiftKey &&
              visibleFishLevel !== 101 &&
--            coreSharedState.playerData.myAnimals[0]._standing
-+            coreSharedState.userData.myAnimals[0]._standing
+-            playerData.myAnimals[0]._standing
++            userData.myAnimals[0]._standing
            ) {
              handleAnimalAction(
                Math.floor(Math.random() * 1647483648) + 500000000,
@@ -425,11 +625,9 @@ Index: src/core.js
 -              handleAnimalAction(1000);
 -              return;
 -            }
--            let keyMap = Object.getOwnPropertyNames(
-+            let keyMappingConfig = Object.getOwnPropertyNames(
-               coreSharedState.gameInstance,
-             )
-               .map((serviceKey) => coreSharedState.gameInstance[serviceKey])
+-            let keyMap = Object.getOwnPropertyNames(gameInstance)
++            let keyMappingConfig = Object.getOwnPropertyNames(gameInstance)
+               .map((serviceKey) => gameInstance[serviceKey])
 -              .find((keyCollection) => keyCollection.keys instanceof Array);
 -            if (keyMap) {
 -              keyMap.pointerDown = true;
@@ -444,13 +642,13 @@ Index: src/core.js
            }
          } else if (animalsProcessHandler.altKey) {
            handleAnimalAction(
--            coreSharedState.playerData?.myAnimals?.[0]?._standing
-+            coreSharedState.userData?.myAnimals?.[0]?._standing
+-            playerData?.myAnimals?.[0]?._standing
++            userData?.myAnimals?.[0]?._standing
                ? 41
                : Math.floor(fishLevelConfig.secLoadTime / 2),
            );
          }
-@@ -331,11 +344,11 @@
+@@ -485,11 +476,11 @@
      false,
    );
    window.addEventListener(
@@ -464,11 +662,34 @@ Index: src/core.js
          }
        } catch {}
      },
-@@ -348,46 +361,48 @@
+@@ -502,57 +493,60 @@
    });
    isInitialized_2 = true;
  };
  
+-function initAllPanels() {
+-  const mainPanel = createToolsPanel();
+-  const historyPanel = createUpdateHistoryPanel();
+-  const settingsPanel = initSettingsPanel();
+-  const plusPanel = initPlusPanel();
++function initializePanels() {
++  const mainPanelElement = createDeepToolsPanel();
++  const historyPanelElement = createUpdateHistoryPanel();
++  const settingsPanelElement = createSettingsStyles();
++  const plusPanelElement = createPlusPanel();
++  applyCustomBackground();
+   initAdBlocker();
+   return {
+-    mainPanel: mainPanel,
+-    historyPanel: historyPanel,
+-    settingsPanel: settingsPanel,
+-    plusPanel: plusPanel,
++    mainPanel: mainPanelElement,
++    historyPanel: historyPanelElement,
++    settingsPanel: settingsPanelElement,
++    plusPanel: plusPanelElement,
+   };
+ }
 -document.addEventListener("keydown", (keyboardEvent) => {
 +document.addEventListener("keydown", (event) => {
    if (
@@ -501,10 +722,6 @@ Index: src/core.js
 +  isActive: false,
 +  animationInterval: null,
    angleIndex: 0,
-   gameInstance: null,
-   globalState: null,
--  playerData: null,
-+  userData: null,
    pressedKey: "Shift",
  };
  
@@ -514,21 +731,24 @@ Index: src/core.js
 +  initNetworkHook,
    encryptPacketData,
    sendPacket,
+-  initHooks,
 -  disableZoomClamp,
 -  initGameCheats,
--  privateStateMap,
+-  initAllPanels,
 -  angleSteps,
 -  orbitRadius,
+-  playerData,
++  setupAntiDetection,
 +  applyGameHacks,
 +  initMod,
-+  stateMap,
++  initializePanels,
 +  angles,
 +  radius,
++  userData,
 +  isInitialized,
    isInitialized_2,
 -  securityConfig,
 +  securityConfigs,
-   state,
  };
 Index: src/features/adblock.js
 ===================================================================
@@ -564,18 +784,10 @@ Index: src/features/antidetection.js
 ===================================================================
 --- src/features/antidetection.js	v1.1
 +++ src/features/antidetection.js	v1.2
-@@ -0,0 +1,183 @@
-+import { getGameCanvas, getAllPropertyNames } from "../utils.js";
+@@ -0,0 +1,31 @@
++import { getGameCanvas } from "../utils.js";
 +import { showNotification } from "../ui/interaction.js";
-+import {
-+  angles,
-+  radius,
-+  stateMap,
-+  wrapWithProxy,
-+  state,
-+  initMod,
-+  coreSharedState,
-+} from "../core.js";
++import { angles, radius, coreSharedState } from "../core.js";
 +
 +function startAntiAfk() {
 +  if (coreSharedState.animationInterval) {
@@ -602,159 +814,21 @@ Index: src/features/antidetection.js
 +      (coreSharedState.angleIndex + 1) % angles.length;
 +  }, 15);
 +}
-+const setupAntiDetection = () => {
-+  const storage = {};
-+  for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
-+    storage[propertyKey] = Reflect[propertyKey];
-+  }
-+  const ProxyClass = Proxy;
-+  const lookupGetter = Object.prototype.__lookupGetter__;
-+  const wrapWithProxy = (dataStore, storeIndex, storeValue) => {
-+    const processedValue = new ProxyClass(dataStore[storeIndex], storeValue);
-+    stateMap.set(processedValue, dataStore[storeIndex]);
-+    dataStore[storeIndex] = processedValue;
-+  };
-+  wrapWithProxy(Function.prototype, "toString", {
-+    apply(context, functionKey, applyArgs) {
-+      return storage.apply(
-+        context,
-+        stateMap.get(functionKey) || functionKey,
-+        applyArgs,
-+      );
-+    },
-+  });
-+  wrapWithProxy(window, "Proxy", {
-+    construct(constructor, constructorArgs) {
-+      const instance = storage.construct(constructor, constructorArgs);
-+      return instance;
-+    },
-+  });
-+  wrapWithProxy(ProxyClass, "revocable", {
-+    apply(applyContext, applyTarget, applyArgs2) {
-+      const applyResult = storage.apply(applyContext, applyTarget, applyArgs2);
-+      return applyResult;
-+    },
-+  });
-+  let lastTimestamp = 0;
-+  wrapWithProxy(Function.prototype, "bind", {
-+    apply(applyContext2, applyTarget2, applyArgs3) {
-+      try {
-+        try {
-+          if (
-+            lookupGetter.call(applyArgs3[0], "aboveBgPlatformsContainer") !=
-+            null
-+          ) {
-+            return storage.apply(applyContext2, applyTarget2, applyArgs3);
-+          }
-+        } catch {}
-+        if (applyArgs3[0] && applyArgs3[0].aboveBgPlatformsContainer != null) {
-+          coreSharedState.userData = applyArgs3[0];
-+          coreSharedState.gameInstance = applyArgs3[0].game;
-+          const allKeys = getAllPropertyNames(coreSharedState.userData);
-+          const obfuscatedKeys = allKeys.filter((obfuscatedVarName) =>
-+            obfuscatedVarName.startsWith("_0x"),
-+          );
-+          state.setFlash =
-+            Object.getOwnPropertyNames(
-+              coreSharedState.userData.__proto__.__proto__,
-+            )
-+              .filter((targetVarName) => targetVarName.startsWith("_0x"))
-+              .find(
-+                (methodName) =>
-+                  coreSharedState.userData[methodName] instanceof Function,
-+              ) || state.setFlash;
-+          state.terrainManager =
-+            obfuscatedKeys.find(
-+              (shadowEntityKey) =>
-+                typeof coreSharedState.userData[shadowEntityKey]?.shadow !==
-+                "undefined",
-+            ) || state.terrainManager;
-+          state.entityManager =
-+            obfuscatedKeys.find(
-+              (entitiesListKey) =>
-+                typeof coreSharedState.userData[entitiesListKey]
-+                  ?.entitiesList !== "undefined",
-+            ) || state.entityManager;
-+          state.entityManagerProps = {};
-+          const entityManagerKeys = getAllPropertyNames(
-+            coreSharedState.userData[state.entityManager],
-+          );
-+          const animalsUpdateInterval = setInterval(() => {
-+            state.entityManagerProps.animalsList =
-+              entityManagerKeys
-+                .filter((variableName) => variableName.startsWith("_0x"))
-+                .find(
-+                  (entityKey) =>
-+                    typeof coreSharedState.userData?.[state.entityManager]?.[
-+                      entityKey
-+                    ]?.[0] !== "undefined",
-+                ) || state.entityManagerProps.animalsList;
-+            if (typeof state.entityManagerProps.animalsList !== "undefined") {
-+              clearInterval(animalsUpdateInterval);
-+            }
-+          }, 1000);
-+          state.socketManager =
-+            getAllPropertyNames(coreSharedState.gameInstance).find(
-+              (networkServiceKey) =>
-+                typeof coreSharedState.gameInstance[networkServiceKey]
-+                  ?.sendBytePacket !== "undefined",
-+            ) || state.socketManager;
-+          try {
-+            coreSharedState.globalState = document
-+              .getElementById("app")
-+              ._vnode.appContext.config.globalProperties.$simpleState.states.find(
-+                (gameStore) => gameStore._storeMeta.id === "game",
-+              );
-+          } catch {}
-+          let animalsCheckInterval;
-+          try {
-+            clearInterval(animalsCheckInterval);
-+          } catch {}
-+          animalsCheckInterval = setInterval(() => {
-+            try {
-+              if (!coreSharedState.userData?.myAnimals?.[0]) {
-+                return;
-+              }
-+              const myAnimal = coreSharedState.userData.myAnimals[0];
-+              if (myAnimal.fadingTrail) {
-+                const fadingTrailPrototype = Object.getPrototypeOf(
-+                  myAnimal.fadingTrail,
-+                );
-+                wrapWithProxy(fadingTrailPrototype, "enable", {
-+                  apply() {},
-+                });
-+              }
-+              if (myAnimal.bubblesEmitter) {
-+                const bubblesEmitterPrototype = Object.getPrototypeOf(
-+                  myAnimal.bubblesEmitter,
-+                );
-+                Object.defineProperty(bubblesEmitterPrototype, "emit", {
-+                  set: () => {},
-+                });
-+              }
-+              clearInterval(animalsCheckInterval);
-+            } catch {}
-+          }, 200);
-+          if (lastTimestamp < Date.now() - 3000) {
-+            showNotification("✅ Astraphobia client loaded in game");
-+            lastTimestamp = Date.now();
-+          }
-+          initMod();
-+        }
-+      } catch {}
-+      return storage.apply(applyContext2, applyTarget2, applyArgs3);
-+    },
-+  });
-+};
 +
-+export { startAntiAfk, setupAntiDetection };
++export { startAntiAfk };
 Index: src/features/autofarm.js
 ===================================================================
 --- src/features/autofarm.js	v1.1
 +++ src/features/autofarm.js	v1.2
-@@ -1,33 +1,32 @@
--import { securityConfig, sendPacket, coreSharedState } from "../core.js";
-+import { securityConfigs, sendPacket, coreSharedState } from "../core.js";
+@@ -1,33 +1,33 @@
+ import {
+-  playerData,
+-  securityConfig,
++  userData,
++  securityConfigs,
+   sendPacket,
+   coreSharedState,
+ } from "../core.js";
  
 -const handleAnimalAction = (currentValue) => {
 -  const const1 = 1;
@@ -767,25 +841,19 @@ Index: src/features/autofarm.js
    try {
 -    const fishLevelSettings = {
 -      ...securityConfig.default,
--      ...(securityConfig[
--        coreSharedState.playerData?.myAnimals?.[0]?.visibleFishLevel
+-      ...(securityConfig[playerData?.myAnimals?.[0]?.visibleFishLevel] || {}),
 +    const fishLevelConfig = {
 +      ...securityConfigs.default,
-+      ...(securityConfigs[
-+        coreSharedState.userData?.myAnimals?.[0]?.visibleFishLevel
-       ] || {}),
++      ...(securityConfigs[userData?.myAnimals?.[0]?.visibleFishLevel] || {}),
      };
-     if (
--      currentValue <
--      (coreSharedState.playerData?.myAnimals?.[0]?._standing ? 40 : 100)
-+      value < (coreSharedState.userData?.myAnimals?.[0]?._standing ? 40 : 100)
-     ) {
+-    if (currentValue < (playerData?.myAnimals?.[0]?._standing ? 40 : 100)) {
 -      return sendPacket(const1);
++    if (value < (userData?.myAnimals?.[0]?._standing ? 40 : 100)) {
 +      return sendPacket(id1);
      }
--    if (coreSharedState.playerData?.myAnimals?.[0]?._standing) {
+-    if (playerData?.myAnimals?.[0]?._standing) {
 -      return sendPacket(const5, currentValue);
-+    if (coreSharedState.userData?.myAnimals?.[0]?._standing) {
++    if (userData?.myAnimals?.[0]?._standing) {
 +      return sendPacket(id5, value);
      }
 -    if (fishLevelSettings.hasScaling) {
@@ -808,22 +876,9 @@ Index: src/features/chat.js
 ===================================================================
 --- src/features/chat.js	v1.1
 +++ src/features/chat.js	v1.2
-@@ -1,21 +1,185 @@
--import { autoTypeChat } from "../ui/interaction.js";
--import { coreSharedState } from "../core.js";
-+import {
-+  autoTypeChat,
-+  simulateTyping,
-+  showNotification,
-+} from "../ui/interaction.js";
-+import {
-+  initNetworkHook,
-+  radius,
-+  isInitialized,
-+  coreSharedState,
-+} from "../core.js";
-+import { generateRandomString } from "../utils.js";
-+import { toggleMouseSimulation } from "./movement.js";
+@@ -1,21 +1,21 @@
+ import { autoTypeChat } from "../ui/interaction.js";
+ import { coreSharedState } from "../core.js";
  
  function startScheduledTask(taskData, intervalSeconds) {
 -  if (coreSharedState.updateInterval) {
@@ -849,342 +904,8 @@ Index: src/features/chat.js
 -  coreSharedState.isProcessing = false;
 +  coreSharedState.isActive = false;
  }
-+function createDeepToolsPanel() {
-+  const deepToolsStyle = document.createElement("style");
-+  deepToolsStyle.textContent =
-+    "\n      #deep-tools-panel {\n        font-family: 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n        border: 1px solid #333;\n        background: #1e1e1e;\n      }\n      #deep-tools-panel:hover {\n        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n      }\n      #deep-tools-panel textarea {\n        background: #2d2d2d;\n        border: 1px solid #444;\n        color: #e0e0e0;\n        border-radius: 6px;\n        padding: 8px;\n        transition: border-color 0.2s;\n        font-size: 13px;\n      }\n      #deep-tools-panel textarea:focus {\n        outline: none;\n        border-color: #e74c3c;\n        box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);\n      }\n      #deep-tools-panel input[type=\"number\"] {\n        background: #2d2d2d;\n        border: 1px solid #444;\n        color: #e0e0e0;\n        border-radius: 4px;\n        padding: 4px;\n        width: 60px;\n        text-align: center;\n      }\n      #deep-tools-panel button {\n        background: #2d2d2d;\n        color: #e74c3c;\n        border: 1px solid #444;\n        border-radius: 6px;\n        padding: 8px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n      }\n      #deep-tools-panel button:hover:not(:disabled) {\n        background: #3d3d3d;\n        border-color: #e74c3c;\n        transform: translateY(-1px);\n        box-shadow: 0 2px 6px rgba(231, 76, 60, 0.2);\n      }\n      #deep-tools-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);\n      }\n      #deep-tools-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #deep-tools-panel button.min-btn {\n        background: none;\n        border: none;\n        color: #e74c3c;\n        font-size: 18px;\n        cursor: pointer;\n        position: absolute;\n        top: 30%;\n        right: 5px;\n        transform: translateY(-50%);\n        z-index: 1;\n        transition: color 0.2s ease;\n        width: 20px;\n        height: 20px;\n        line-height: 20px;\n      }\n      #deep-tools-panel button.min-btn:hover {\n        color: #f39c12;\n      }\n      #deep-tools-panel .credits {\n        margin-top: 10px;\n        font-size: 10px;\n        color: #888;\n        line-height: 1.3;\n      }\n      #deep-tools-panel .auto-chat-controls {\n        display: flex;\n        gap: 5px;\n        margin-bottom: 8px;\n        align-items: center;\n        justify-content: center;\n      }\n      #deep-tools-panel .spin-keybind {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        margin-bottom: 8px;\n        font-size: 12px;\n      }\n      #deep-tools-panel .spin-keybind label {\n        color: #e0e0e0;\n      }\n      #deep-tools-panel #spinKeyInput {\n        background: #2d2d2d;\n        border: 1px solid #444;\n        color: #e0e0e0;\n        border-radius: 4px;\n        padding: 4px;\n        width: 50px;\n        text-align: center;\n      }\n      #aim-overlay, #ctrl-overlay {\n        z-index: 10000 !important;\n      }\n      div.game {\n        position: relative;\n      }\n      /* Ad Removal */\n      div.sidebar.left > div.ad-block {\n        opacity: 0 !important;\n        pointer-events: none !important;\n        display: none !important;\n      }\n      div.sidebar.left > a {\n        display: none !important;\n      }\n      div.sidebar.left {\n        max-width: 30vw;\n        width: 21rem;\n        bottom: 0 !important;\n      }\n    ";
-+  document.head.appendChild(deepToolsStyle);
-+  const mainContainer = document.createElement("div");
-+  mainContainer.id = "deep-tools-panel";
-+  mainContainer.style.position = "fixed";
-+  mainContainer.style.bottom = "20px";
-+  mainContainer.style.right = "20px";
-+  mainContainer.style.color = "#e0e0e0";
-+  mainContainer.style.padding = "14px";
-+  mainContainer.style.borderRadius = "8px";
-+  mainContainer.style.fontSize = "14px";
-+  mainContainer.style.zIndex = "99999";
-+  mainContainer.style.userSelect = "none";
-+  mainContainer.style.width = "220px";
-+  mainContainer.style.textAlign = "center";
-+  mainContainer.style.cursor = "move";
-+  mainContainer.style.overflow = "hidden";
-+  mainContainer.innerHTML =
-+    '\n      <div style="font-weight:600; margin-bottom:10px; color:#e74c3c; position: relative; height: 40px; line-height: 40px; padding-right: 25px;">\n        ASTRAPHOBIA CLIENT\n        <button class="min-btn" id="minPanel">−</button>\n      </div>\n      <div id="panelContent">\n        <textarea id="chatMsg" placeholder="Type message..." style="width:100%; height:45px; margin-bottom:10px; resize:none;"></textarea>\n        <button id="sendBtn" style="width:100%; margin-bottom:8px;">Send Typed Chat</button>\n        <div class="auto-chat-controls">\n          <input type="number" id="delayInput" min="1" max="300" value="10" style="margin-right:5px;">\n          <span style="font-size:12px;">sec</span>\n        </div>\n        <button id="autoChatBtn" style="width:100%; margin-bottom:8px;">Enable Auto Chat</button>\n        <button id="patchBtn" style="width:100%; margin-bottom:8px;">Enable Special Characters(in chat/clan/name)</button>\n        <button id="spoofBtn" style="width:100%; margin-bottom:8px;">Spoof Username:Random Unicode Name(ban decrease)</button>\n        <button id="spinBtn" style="width:100%; margin-bottom:8px;">Enable Auto Spin</button>\n        <div class="spin-keybind">\n          <label for="spinKeyInput">Keybind:</label>\n          <input type="text" id="spinKeyInput" placeholder="Press key..." readonly>\n        </div>\n        <div class="credits">\n          Coder: Astraphobia<br>\n          Owner/Founder: Astraphobia<br>\n          Designer/Marketer: Astraphobia<br>\n          Tester: Astraphobia\n        </div>\n      </div>\n    ';
-+  document.body.appendChild(mainContainer);
-+  const minPanel = mainContainer.querySelector("#minPanel");
-+  const panelContent = mainContainer.querySelector("#panelContent");
-+  let isMinimized = false;
-+  minPanel.onclick = (event) => {
-+    event.stopPropagation();
-+    isMinimized = !isMinimized;
-+    panelContent.style.display = isMinimized ? "none" : "block";
-+    mainContainer.style.height = isMinimized ? "50px" : "auto";
-+    minPanel.textContent = isMinimized ? "+" : "−";
-+  };
-+  mainContainer.querySelector("#sendBtn").onclick = () => {
-+    const chatMessage = mainContainer.querySelector("#chatMsg").value;
-+    if (chatMessage) {
-+      autoTypeChat(chatMessage);
-+    }
-+  };
-+  const patchButton = mainContainer.querySelector("#patchBtn");
-+  patchButton.onclick = () => initNetworkHook(patchButton);
-+  const spoofButton = mainContainer.querySelector("#spoofBtn");
-+  spoofButton.onclick = () => {
-+    const maxLength = generateRandomString(8);
-+    if (simulateTyping(".play-game .el-input__inner", maxLength)) {
-+      showNotification("Spoofed name!");
-+    } else if (simulateTyping(".new-tribe .el-input__inner", maxLength)) {
-+      showNotification("Spoofed tribe name!");
-+    } else {
-+      showNotification("No name input found! Enable special characters first.");
-+    }
-+  };
-+  const spinButton = mainContainer.querySelector("#spinBtn");
-+  spinButton.onclick = () => {
-+    toggleMouseSimulation();
-+    if (coreSharedState.animationInterval) {
-+      spinButton.textContent = "Disable Auto Spin";
-+      spinButton.style.color = "#27ae60";
-+    } else {
-+      spinButton.textContent = "Enable Auto Spin";
-+      spinButton.style.color = "#e74c3c";
-+    }
-+  };
-+  const spinKeyInput = mainContainer.querySelector("#spinKeyInput");
-+  let activeKey = null;
-+  spinKeyInput.addEventListener("keydown", (keyEvent) => {
-+    keyEvent.preventDefault();
-+    activeKey = keyEvent.code || keyEvent.key;
-+    spinKeyInput.value = activeKey.replace("Key", "").toLowerCase();
-+  });
-+  document.addEventListener("keydown", (event_2) => {
-+    if (
-+      activeKey &&
-+      event_2.code === activeKey &&
-+      !event_2.target.matches("input, textarea, button")
-+    ) {
-+      event_2.preventDefault();
-+      toggleMouseSimulation();
-+      if (coreSharedState.animationInterval) {
-+        spinButton.textContent = "Disable Auto Spin";
-+        spinButton.style.color = "#27ae60";
-+      } else {
-+        spinButton.textContent = "Enable Auto Spin";
-+        spinButton.style.color = "#e74c3c";
-+      }
-+    }
-+  });
-+  const autoChatButton = mainContainer.querySelector("#autoChatBtn");
-+  autoChatButton.onclick = () => {
-+    const chatMessageText = mainContainer.querySelector("#chatMsg").value;
-+    const delayInput = mainContainer.querySelector("#delayInput");
-+    const delayValue = parseInt(delayInput.value) || 10;
-+    if (!chatMessageText) {
-+      showNotification("⚠️ Enter a message first!");
-+      return;
-+    }
-+    if (coreSharedState.isActive) {
-+      stopInterval();
-+      autoChatButton.textContent = "Enable Auto Chat";
-+      autoChatButton.style.color = "#e74c3c";
-+    } else {
-+      startScheduledTask(chatMessageText, delayValue);
-+      autoChatButton.textContent = "Disable Auto Chat";
-+      autoChatButton.style.color = "#27ae60";
-+    }
-+  };
-+  let offsetX;
-+  let offsetY;
-+  let isLoading = false;
-+  let isInitialized = false;
-+  mainContainer.addEventListener("mousedown", (event_3) => {
-+    if (
-+      event_3.target.tagName === "BUTTON" ||
-+      event_3.target.tagName === "TEXTAREA" ||
-+      event_3.target.tagName === "INPUT" ||
-+      event_3.target.classList.contains("credits")
-+    ) {
-+      return;
-+    }
-+    isLoading = true;
-+    isInitialized = false;
-+    offsetX = event_3.clientX - mainContainer.getBoundingClientRect().left;
-+    offsetY = event_3.clientY - mainContainer.getBoundingClientRect().top;
-+    mainContainer.style.transition = "none";
-+    const handleMouseMove = (mouseEvent) => {
-+      const deltaX = mouseEvent.clientX - event_3.clientX;
-+      const deltaY = mouseEvent.clientY - event_3.clientY;
-+      if (!isInitialized && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-+        isInitialized = true;
-+      }
-+      if (isLoading) {
-+        mainContainer.style.left = mouseEvent.clientX - offsetX + "px";
-+        mainContainer.style.top = mouseEvent.clientY - offsetY + "px";
-+        mainContainer.style.bottom = "auto";
-+        mainContainer.style.right = "auto";
-+      }
-+    };
-+    const handleMouseUp = () => {
-+      isLoading = false;
-+      mainContainer.style.transition = "all 0.3s ease";
-+      document.removeEventListener("mousemove", handleMouseMove);
-+      document.removeEventListener("mouseup", handleMouseUp);
-+    };
-+    document.addEventListener("mousemove", handleMouseMove);
-+    document.addEventListener("mouseup", handleMouseUp);
-+  });
-+  mainContainer.addEventListener("click", (event_4) => {
-+    if (isInitialized) {
-+      event_4.stopImmediatePropagation();
-+    }
-+  });
-+  return mainContainer;
-+}
  
--export { startScheduledTask, stopInterval };
-+export { startScheduledTask, stopInterval, createDeepToolsPanel };
-Index: src/features/entitytrail.js
-===================================================================
---- src/features/entitytrail.js	v1.1
-+++ src/features/entitytrail.js	v1.2
-@@ -1,175 +0,0 @@
--import {
--  privateStateMap,
--  wrapWithProxy,
--  state,
--  disableZoomClamp,
--  initGameCheats,
--  coreSharedState,
--} from "../core.js";
--import { getAllPropertyNames } from "../utils.js";
--import { showToast } from "../ui/interaction.js";
--
--const initHooks = () => {
--  const propertyCache = {};
--  for (const propertyName of Object.getOwnPropertyNames(Reflect)) {
--    propertyCache[propertyName] = Reflect[propertyName];
--  }
--  const ProxyConstructor = Proxy;
--  const lookupGetter = Object.prototype.__lookupGetter__;
--  const wrapWithProxy = (state, key, value) => {
--    const wrappedValue = new ProxyConstructor(state[key], value);
--    privateStateMap.set(wrappedValue, state[key]);
--    state[key] = wrappedValue;
--  };
--  wrapWithProxy(Function.prototype, "toString", {
--    apply(thisContext, key_2, context) {
--      return propertyCache.apply(
--        thisContext,
--        privateStateMap.get(key_2) || key_2,
--        context,
--      );
--    },
--  });
--  wrapWithProxy(window, "Proxy", {
--    construct(constructor, constructorArgs) {
--      const instance = propertyCache.construct(constructor, constructorArgs);
--      return instance;
--    },
--  });
--  wrapWithProxy(ProxyConstructor, "revocable", {
--    apply(targetFunction, functionArgs, functionContext) {
--      const functionResult = propertyCache.apply(
--        targetFunction,
--        functionArgs,
--        functionContext,
--      );
--      return functionResult;
--    },
--  });
--  let lastExecutionTime = 0;
--  wrapWithProxy(Function.prototype, "bind", {
--    apply(targetFunction2, functionArgs2, functionContext2) {
--      try {
--        try {
--          if (
--            lookupGetter.call(
--              functionContext2[0],
--              "aboveBgPlatformsContainer",
--            ) != null
--          ) {
--            return propertyCache.apply(
--              targetFunction2,
--              functionArgs2,
--              functionContext2,
--            );
--          }
--        } catch {}
--        if (
--          functionContext2[0] &&
--          functionContext2[0].aboveBgPlatformsContainer != null
--        ) {
--          coreSharedState.playerData = functionContext2[0];
--          coreSharedState.gameInstance = functionContext2[0].game;
--          const allKeys = getAllPropertyNames(coreSharedState.playerData);
--          const obfuscatedKeys = allKeys.filter((obfuscatedKey) =>
--            obfuscatedKey.startsWith("_0x"),
--          );
--          state.setFlash =
--            Object.getOwnPropertyNames(
--              coreSharedState.playerData.__proto__.__proto__,
--            )
--              .filter((obfuscatedName) => obfuscatedName.startsWith("_0x"))
--              .find(
--                (functionKey) =>
--                  coreSharedState.playerData[functionKey] instanceof Function,
--              ) || state.setFlash;
--          state.terrainManager =
--            obfuscatedKeys.find(
--              (shadowObjectKey) =>
--                typeof coreSharedState.playerData[shadowObjectKey]?.shadow !==
--                "undefined",
--            ) || state.terrainManager;
--          state.entityManager =
--            obfuscatedKeys.find(
--              (entitiesListKey) =>
--                typeof coreSharedState.playerData[entitiesListKey]
--                  ?.entitiesList !== "undefined",
--            ) || state.entityManager;
--          state.entityManagerProps = {};
--          const entityManagerKeys = getAllPropertyNames(
--            coreSharedState.playerData[state.entityManager],
--          );
--          const animalsUpdateInterval = setInterval(() => {
--            state.entityManagerProps.animalsList =
--              entityManagerKeys
--                .filter((variableName) => variableName.startsWith("_0x"))
--                .find(
--                  (entityType) =>
--                    typeof coreSharedState.playerData?.[state.entityManager]?.[
--                      entityType
--                    ]?.[0] !== "undefined",
--                ) || state.entityManagerProps.animalsList;
--            if (typeof state.entityManagerProps.animalsList !== "undefined") {
--              clearInterval(animalsUpdateInterval);
--            }
--          }, 1000);
--          state.socketManager =
--            getAllPropertyNames(coreSharedState.gameInstance).find(
--              (packetSenderKey) =>
--                typeof coreSharedState.gameInstance[packetSenderKey]
--                  ?.sendBytePacket !== "undefined",
--            ) || state.socketManager;
--          try {
--            coreSharedState.globalState = document
--              .getElementById("app")
--              ._vnode.appContext.config.globalProperties.$simpleState.states.find(
--                (gameStore) => gameStore._storeMeta.id === "game",
--              );
--          } catch {}
--          let animalsCheckInterval;
--          try {
--            clearInterval(animalsCheckInterval);
--          } catch {}
--          animalsCheckInterval = setInterval(() => {
--            try {
--              if (!coreSharedState.playerData?.myAnimals?.[0]) {
--                return;
--              }
--              const myAnimal = coreSharedState.playerData.myAnimals[0];
--              if (myAnimal.fadingTrail) {
--                const fadingTrailProto = Object.getPrototypeOf(
--                  myAnimal.fadingTrail,
--                );
--                wrapWithProxy(fadingTrailProto, "enable", {
--                  apply() {},
--                });
--              }
--              if (myAnimal.bubblesEmitter) {
--                const bubblesEmitterProto = Object.getPrototypeOf(
--                  myAnimal.bubblesEmitter,
--                );
--                Object.defineProperty(bubblesEmitterProto, "emit", {
--                  set: () => {},
--                });
--              }
--              clearInterval(animalsCheckInterval);
--            } catch {}
--          }, 200);
--          if (lastExecutionTime < Date.now() - 3000) {
--            showToast("✅ Astraphobia client loaded in game");
--            lastExecutionTime = Date.now();
--          }
--          disableZoomClamp();
--          initGameCheats();
--        }
--      } catch {}
--      return propertyCache.apply(
--        targetFunction2,
--        functionArgs2,
--        functionContext2,
--      );
--    },
--  });
--};
--
--export { initHooks };
+ export { startScheduledTask, stopInterval };
 Index: src/features/movement.js
 ===================================================================
 --- src/features/movement.js	v1.1
@@ -1326,25 +1047,27 @@ Index: src/ui/panels.js
 ===================================================================
 --- src/ui/panels.js	v1.1
 +++ src/ui/panels.js	v1.2
-@@ -1,401 +1,184 @@
+@@ -1,400 +1,342 @@
 -import { simulateTyping, autoTypeChat, showToast } from "./interaction.js";
-+import { showNotification } from "./interaction.js";
-+import { setupAntiDetection } from "../features/antidetection.js";
  import {
 -  setupTextEncoderHook,
++  simulateTyping,
++  autoTypeChat,
++  showNotification,
++} from "./interaction.js";
++import {
 +  radius,
++  initNetworkHook,
 +  isInitialized,
    isInitialized_2,
+-  initHooks,
++  setupAntiDetection,
 +  applyGameHacks,
    coreSharedState,
  } from "../core.js";
--import { generateRandomString } from "../utils.js";
--import { toggleMouseSimulation } from "../features/movement.js";
--import { startScheduledTask, stopInterval } from "../features/chat.js";
--import { initHooks } from "../features/entitytrail.js";
-+import { createDeepToolsPanel } from "../features/chat.js";
-+import { applyCustomBackground, createSettingsStyles } from "./theme.js";
- import { initAdBlocker } from "../features/adblock.js";
+ import { generateRandomString } from "../utils.js";
+ import { toggleMouseSimulation } from "../features/movement.js";
+ import { startScheduledTask, stopInterval } from "../features/chat.js";
  
  function createUpdateHistoryPanel() {
 -  const historyStyleElement = document.createElement("style");
@@ -1467,20 +1190,48 @@ Index: src/ui/panels.js
 -  document.body.appendChild(toolsPanel);
 -  const minPanel = toolsPanel.querySelector("#minPanel");
 -  const panelContent = toolsPanel.querySelector("#panelContent");
--  let isMinimized = false;
--  minPanel.onclick = (event) => {
--    event.stopPropagation();
--    isMinimized = !isMinimized;
--    panelContent.style.display = isMinimized ? "none" : "block";
++function createDeepToolsPanel() {
++  const deepToolsStyle = document.createElement("style");
++  deepToolsStyle.textContent =
++    "\n      #deep-tools-panel {\n        font-family: 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n        border: 1px solid #333;\n        background: #1e1e1e;\n      }\n      #deep-tools-panel:hover {\n        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n      }\n      #deep-tools-panel textarea {\n        background: #2d2d2d;\n        border: 1px solid #444;\n        color: #e0e0e0;\n        border-radius: 6px;\n        padding: 8px;\n        transition: border-color 0.2s;\n        font-size: 13px;\n      }\n      #deep-tools-panel textarea:focus {\n        outline: none;\n        border-color: #e74c3c;\n        box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);\n      }\n      #deep-tools-panel input[type=\"number\"] {\n        background: #2d2d2d;\n        border: 1px solid #444;\n        color: #e0e0e0;\n        border-radius: 4px;\n        padding: 4px;\n        width: 60px;\n        text-align: center;\n      }\n      #deep-tools-panel button {\n        background: #2d2d2d;\n        color: #e74c3c;\n        border: 1px solid #444;\n        border-radius: 6px;\n        padding: 8px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n      }\n      #deep-tools-panel button:hover:not(:disabled) {\n        background: #3d3d3d;\n        border-color: #e74c3c;\n        transform: translateY(-1px);\n        box-shadow: 0 2px 6px rgba(231, 76, 60, 0.2);\n      }\n      #deep-tools-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);\n      }\n      #deep-tools-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #deep-tools-panel button.min-btn {\n        background: none;\n        border: none;\n        color: #e74c3c;\n        font-size: 18px;\n        cursor: pointer;\n        position: absolute;\n        top: 30%;\n        right: 5px;\n        transform: translateY(-50%);\n        z-index: 1;\n        transition: color 0.2s ease;\n        width: 20px;\n        height: 20px;\n        line-height: 20px;\n      }\n      #deep-tools-panel button.min-btn:hover {\n        color: #f39c12;\n      }\n      #deep-tools-panel .credits {\n        margin-top: 10px;\n        font-size: 10px;\n        color: #888;\n        line-height: 1.3;\n      }\n      #deep-tools-panel .auto-chat-controls {\n        display: flex;\n        gap: 5px;\n        margin-bottom: 8px;\n        align-items: center;\n        justify-content: center;\n      }\n      #deep-tools-panel .spin-keybind {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        margin-bottom: 8px;\n        font-size: 12px;\n      }\n      #deep-tools-panel .spin-keybind label {\n        color: #e0e0e0;\n      }\n      #deep-tools-panel #spinKeyInput {\n        background: #2d2d2d;\n        border: 1px solid #444;\n        color: #e0e0e0;\n        border-radius: 4px;\n        padding: 4px;\n        width: 50px;\n        text-align: center;\n      }\n      #aim-overlay, #ctrl-overlay {\n        z-index: 10000 !important;\n      }\n      div.game {\n        position: relative;\n      }\n      /* Ad Removal */\n      div.sidebar.left > div.ad-block {\n        opacity: 0 !important;\n        pointer-events: none !important;\n        display: none !important;\n      }\n      div.sidebar.left > a {\n        display: none !important;\n      }\n      div.sidebar.left {\n        max-width: 30vw;\n        width: 21rem;\n        bottom: 0 !important;\n      }\n    ";
++  document.head.appendChild(deepToolsStyle);
++  const mainContainer = document.createElement("div");
++  mainContainer.id = "deep-tools-panel";
++  mainContainer.style.position = "fixed";
++  mainContainer.style.bottom = "20px";
++  mainContainer.style.right = "20px";
++  mainContainer.style.color = "#e0e0e0";
++  mainContainer.style.padding = "14px";
++  mainContainer.style.borderRadius = "8px";
++  mainContainer.style.fontSize = "14px";
++  mainContainer.style.zIndex = "99999";
++  mainContainer.style.userSelect = "none";
++  mainContainer.style.width = "220px";
++  mainContainer.style.textAlign = "center";
++  mainContainer.style.cursor = "move";
++  mainContainer.style.overflow = "hidden";
++  mainContainer.innerHTML =
++    '\n      <div style="font-weight:600; margin-bottom:10px; color:#e74c3c; position: relative; height: 40px; line-height: 40px; padding-right: 25px;">\n        ASTRAPHOBIA CLIENT\n        <button class="min-btn" id="minPanel">−</button>\n      </div>\n      <div id="panelContent">\n        <textarea id="chatMsg" placeholder="Type message..." style="width:100%; height:45px; margin-bottom:10px; resize:none;"></textarea>\n        <button id="sendBtn" style="width:100%; margin-bottom:8px;">Send Typed Chat</button>\n        <div class="auto-chat-controls">\n          <input type="number" id="delayInput" min="1" max="300" value="10" style="margin-right:5px;">\n          <span style="font-size:12px;">sec</span>\n        </div>\n        <button id="autoChatBtn" style="width:100%; margin-bottom:8px;">Enable Auto Chat</button>\n        <button id="patchBtn" style="width:100%; margin-bottom:8px;">Enable Special Characters(in chat/clan/name)</button>\n        <button id="spoofBtn" style="width:100%; margin-bottom:8px;">Spoof Username:Random Unicode Name(ban decrease)</button>\n        <button id="spinBtn" style="width:100%; margin-bottom:8px;">Enable Auto Spin</button>\n        <div class="spin-keybind">\n          <label for="spinKeyInput">Keybind:</label>\n          <input type="text" id="spinKeyInput" placeholder="Press key..." readonly>\n        </div>\n        <div class="credits">\n          Coder: Astraphobia<br>\n          Owner/Founder: Astraphobia<br>\n          Designer/Marketer: Astraphobia<br>\n          Tester: Astraphobia\n        </div>\n      </div>\n    ';
++  document.body.appendChild(mainContainer);
++  const minPanel = mainContainer.querySelector("#minPanel");
++  const panelContent = mainContainer.querySelector("#panelContent");
+   let isMinimized = false;
+   minPanel.onclick = (event) => {
+     event.stopPropagation();
+     isMinimized = !isMinimized;
+     panelContent.style.display = isMinimized ? "none" : "block";
 -    toolsPanel.style.height = isMinimized ? "50px" : "auto";
--    minPanel.textContent = isMinimized ? "+" : "−";
--  };
++    mainContainer.style.height = isMinimized ? "50px" : "auto";
+     minPanel.textContent = isMinimized ? "+" : "−";
+   };
 -  toolsPanel.querySelector("#sendBtn").onclick = () => {
 -    const chatMessage = toolsPanel.querySelector("#chatMsg").value;
--    if (chatMessage) {
--      autoTypeChat(chatMessage);
--    }
--  };
++  mainContainer.querySelector("#sendBtn").onclick = () => {
++    const chatMessage = mainContainer.querySelector("#chatMsg").value;
+     if (chatMessage) {
+       autoTypeChat(chatMessage);
+     }
+   };
 -  const patchBtn = toolsPanel.querySelector("#patchBtn");
 -  patchBtn.onclick = () => setupTextEncoderHook(patchBtn);
 -  const spoofBtn = toolsPanel.querySelector("#spoofBtn");
@@ -1490,111 +1241,184 @@ Index: src/ui/panels.js
 -      showToast("Spoofed name!");
 -    } else if (simulateTyping(".new-tribe .el-input__inner", generatedValue)) {
 -      showToast("Spoofed tribe name!");
--    } else {
++  const patchButton = mainContainer.querySelector("#patchBtn");
++  patchButton.onclick = () => initNetworkHook(patchButton);
++  const spoofButton = mainContainer.querySelector("#spoofBtn");
++  spoofButton.onclick = () => {
++    const maxLength = generateRandomString(8);
++    if (simulateTyping(".play-game .el-input__inner", maxLength)) {
++      showNotification("Spoofed name!");
++    } else if (simulateTyping(".new-tribe .el-input__inner", maxLength)) {
++      showNotification("Spoofed tribe name!");
+     } else {
 -      showToast("No name input found! Enable special characters first.");
--    }
--  };
++      showNotification("No name input found! Enable special characters first.");
+     }
+   };
 -  const spinBtn = toolsPanel.querySelector("#spinBtn");
 -  spinBtn.onclick = () => {
--    toggleMouseSimulation();
++  const spinButton = mainContainer.querySelector("#spinBtn");
++  spinButton.onclick = () => {
+     toggleMouseSimulation();
 -    if (coreSharedState.rotationInterval) {
 -      spinBtn.textContent = "Disable Auto Spin";
 -      spinBtn.style.color = "#4dff4d";
--    } else {
++    if (coreSharedState.animationInterval) {
++      spinButton.textContent = "Disable Auto Spin";
++      spinButton.style.color = "#27ae60";
+     } else {
 -      spinBtn.textContent = "Enable Auto Spin";
 -      spinBtn.style.color = "#ff4d4d";
--    }
--  };
++      spinButton.textContent = "Enable Auto Spin";
++      spinButton.style.color = "#e74c3c";
+     }
+   };
 -  const spinKeyInput = toolsPanel.querySelector("#spinKeyInput");
 -  let activeKeyCode = null;
 -  spinKeyInput.addEventListener("keydown", (keyboardEvent) => {
 -    keyboardEvent.preventDefault();
 -    activeKeyCode = keyboardEvent.code || keyboardEvent.key;
 -    spinKeyInput.value = activeKeyCode.replace("Key", "").toLowerCase();
--  });
++  const spinKeyInput = mainContainer.querySelector("#spinKeyInput");
++  let activeKey = null;
++  spinKeyInput.addEventListener("keydown", (keyEvent) => {
++    keyEvent.preventDefault();
++    activeKey = keyEvent.code || keyEvent.key;
++    spinKeyInput.value = activeKey.replace("Key", "").toLowerCase();
+   });
 -  document.addEventListener("keydown", (keyEvent) => {
--    if (
++  document.addEventListener("keydown", (event_2) => {
+     if (
 -      activeKeyCode &&
 -      keyEvent.code === activeKeyCode &&
 -      !keyEvent.target.matches("input, textarea, button")
--    ) {
++      activeKey &&
++      event_2.code === activeKey &&
++      !event_2.target.matches("input, textarea, button")
+     ) {
 -      keyEvent.preventDefault();
--      toggleMouseSimulation();
++      event_2.preventDefault();
+       toggleMouseSimulation();
 -      if (coreSharedState.rotationInterval) {
 -        spinBtn.textContent = "Disable Auto Spin";
 -        spinBtn.style.color = "#4dff4d";
--      } else {
++      if (coreSharedState.animationInterval) {
++        spinButton.textContent = "Disable Auto Spin";
++        spinButton.style.color = "#27ae60";
+       } else {
 -        spinBtn.textContent = "Enable Auto Spin";
 -        spinBtn.style.color = "#ff4d4d";
--      }
--    }
--  });
++        spinButton.textContent = "Enable Auto Spin";
++        spinButton.style.color = "#e74c3c";
+       }
+     }
+   });
 -  const autoChatBtn = toolsPanel.querySelector("#autoChatBtn");
 -  autoChatBtn.onclick = () => {
 -    const chatMessageText = toolsPanel.querySelector("#chatMsg").value;
 -    const delayInput = toolsPanel.querySelector("#delayInput");
--    const delayValue = parseInt(delayInput.value) || 10;
--    if (!chatMessageText) {
++  const autoChatButton = mainContainer.querySelector("#autoChatBtn");
++  autoChatButton.onclick = () => {
++    const chatMessageText = mainContainer.querySelector("#chatMsg").value;
++    const delayInput = mainContainer.querySelector("#delayInput");
+     const delayValue = parseInt(delayInput.value) || 10;
+     if (!chatMessageText) {
 -      showToast("⚠️ Enter a message first!");
--      return;
--    }
++      showNotification("⚠️ Enter a message first!");
+       return;
+     }
 -    if (coreSharedState.isProcessing) {
--      stopInterval();
++    if (coreSharedState.isActive) {
+       stopInterval();
 -      autoChatBtn.textContent = "Enable Auto Chat";
 -      autoChatBtn.style.color = "#ff4d4d";
--    } else {
--      startScheduledTask(chatMessageText, delayValue);
++      autoChatButton.textContent = "Enable Auto Chat";
++      autoChatButton.style.color = "#e74c3c";
+     } else {
+       startScheduledTask(chatMessageText, delayValue);
 -      autoChatBtn.textContent = "Disable Auto Chat";
 -      autoChatBtn.style.color = "#4dff4d";
--    }
--  };
--  let offsetX;
--  let offsetY;
++      autoChatButton.textContent = "Disable Auto Chat";
++      autoChatButton.style.color = "#27ae60";
+     }
+   };
+   let offsetX;
+   let offsetY;
 -  let isDraggingTools = false;
 -  let isDragging = false;
 -  toolsPanel.addEventListener("mousedown", (uiEvent) => {
--    if (
++  let isLoading = false;
++  let isInitialized = false;
++  mainContainer.addEventListener("mousedown", (event_3) => {
+     if (
 -      uiEvent.target.tagName === "BUTTON" ||
 -      uiEvent.target.tagName === "TEXTAREA" ||
 -      uiEvent.target.tagName === "INPUT" ||
 -      uiEvent.target.classList.contains("credits")
--    ) {
--      return;
--    }
++      event_3.target.tagName === "BUTTON" ||
++      event_3.target.tagName === "TEXTAREA" ||
++      event_3.target.tagName === "INPUT" ||
++      event_3.target.classList.contains("credits")
+     ) {
+       return;
+     }
 -    isDraggingTools = true;
 -    isDragging = false;
 -    offsetX = uiEvent.clientX - toolsPanel.getBoundingClientRect().left;
 -    offsetY = uiEvent.clientY - toolsPanel.getBoundingClientRect().top;
 -    toolsPanel.style.transition = "none";
--    const handleMouseMove = (mouseEvent) => {
++    isLoading = true;
++    isInitialized = false;
++    offsetX = event_3.clientX - mainContainer.getBoundingClientRect().left;
++    offsetY = event_3.clientY - mainContainer.getBoundingClientRect().top;
++    mainContainer.style.transition = "none";
+     const handleMouseMove = (mouseEvent) => {
 -      const deltaX = mouseEvent.clientX - uiEvent.clientX;
 -      const deltaY = mouseEvent.clientY - uiEvent.clientY;
 -      if (!isDragging && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
 -        isDragging = true;
--      }
++      const deltaX = mouseEvent.clientX - event_3.clientX;
++      const deltaY = mouseEvent.clientY - event_3.clientY;
++      if (!isInitialized && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
++        isInitialized = true;
+       }
 -      if (isDraggingTools) {
 -        toolsPanel.style.left = mouseEvent.clientX - offsetX + "px";
 -        toolsPanel.style.top = mouseEvent.clientY - offsetY + "px";
 -        toolsPanel.style.bottom = "auto";
 -        toolsPanel.style.right = "auto";
--      }
--    };
++      if (isLoading) {
++        mainContainer.style.left = mouseEvent.clientX - offsetX + "px";
++        mainContainer.style.top = mouseEvent.clientY - offsetY + "px";
++        mainContainer.style.bottom = "auto";
++        mainContainer.style.right = "auto";
+       }
+     };
 -    const stopDraggingTools = () => {
 -      isDraggingTools = false;
 -      toolsPanel.style.transition = "all 0.3s cubic-bezier(0.23, 1, 0.32, 1)";
--      document.removeEventListener("mousemove", handleMouseMove);
++    const handleMouseUp = () => {
++      isLoading = false;
++      mainContainer.style.transition = "all 0.3s ease";
+       document.removeEventListener("mousemove", handleMouseMove);
 -      document.removeEventListener("mouseup", stopDraggingTools);
--    };
--    document.addEventListener("mousemove", handleMouseMove);
++      document.removeEventListener("mouseup", handleMouseUp);
+     };
+     document.addEventListener("mousemove", handleMouseMove);
 -    document.addEventListener("mouseup", stopDraggingTools);
--  });
++    document.addEventListener("mouseup", handleMouseUp);
+   });
 -  toolsPanel.addEventListener("click", (propagationEvent) => {
 -    if (isDragging) {
 -      propagationEvent.stopImmediatePropagation();
--    }
--  });
++  mainContainer.addEventListener("click", (event_4) => {
++    if (isInitialized) {
++      event_4.stopImmediatePropagation();
+     }
+   });
 -  return toolsPanel;
--}
++  return mainContainer;
+ }
 -function initPlusPanel() {
 -  const plusStyle = document.createElement("style");
 -  plusStyle.textContent =
@@ -1840,42 +1664,18 @@ Index: src/ui/panels.js
  function togglePanels() {
    const deepToolsPanel = document.getElementById("deep-tools-panel");
    const updateHistoryPanel = document.getElementById("update-history");
-@@ -407,24 +190,20 @@
-   updateHistoryPanel.style.display = newDisplay;
-   settingsPanel.style.display = newDisplay;
-   plusPanel.style.display = newDisplay;
- }
--function initAllPanels() {
--  const mainPanel = createToolsPanel();
--  const historyPanel = createUpdateHistoryPanel();
--  const settingsPanel = initSettingsPanel();
--  const plusPanel = initPlusPanel();
-+function initializePanels() {
-+  const mainPanelElement = createDeepToolsPanel();
-+  const historyPanelElement = createUpdateHistoryPanel();
-+  const settingsPanelElement = createSettingsStyles();
-+  const plusPanelElement = createPlusPanel();
-+  applyCustomBackground();
-   initAdBlocker();
-   return {
--    mainPanel: mainPanel,
--    historyPanel: historyPanel,
--    settingsPanel: settingsPanel,
--    plusPanel: plusPanel,
-+    mainPanel: mainPanelElement,
-+    historyPanel: historyPanelElement,
-+    settingsPanel: settingsPanelElement,
-+    plusPanel: plusPanelElement,
-   };
+@@ -409,9 +351,8 @@
  }
  
--export {
--  createUpdateHistoryPanel,
+ export {
+   createUpdateHistoryPanel,
 -  createToolsPanel,
 -  initPlusPanel,
 -  initSettingsPanel,
--};
-+export { createUpdateHistoryPanel, createPlusPanel, initializePanels };
++  createDeepToolsPanel,
++  createPlusPanel,
+   togglePanels,
+ };
 Index: src/ui/theme.js
 ===================================================================
 --- src/ui/theme.js	v1.1

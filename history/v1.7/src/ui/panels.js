@@ -9,13 +9,14 @@ import {
   hookTextEncoder,
   pressedKey,
   clearTracking_2,
+  initAntiTamper,
   clearTracking_3,
+  startAutoFarm,
   settings,
   state,
 } from "../core.js";
 import { generateRandomString } from "../utils.js";
 import { toggleMouseSimulation } from "../features/movement.js";
-import { initAntiTamper } from "../features/antidetection.js";
 import { initializeViewportHacks } from "../features/xray.js";
 import {
   clearTracking,
@@ -23,11 +24,7 @@ import {
   toggleMinimapSize,
 } from "../features/esp.js";
 import { toggleLock, enableAutoDodge } from "../features/aimbot.js";
-import {
-  setupPatrolPoints,
-  startAutoFarm,
-  stopAutoFarm,
-} from "../features/autofarm.js";
+import { setupPatrolPoints, stopAutoFarm } from "../features/autofarm.js";
 import { setTheme, initHomeBackground } from "./theme.js";
 
 window.lockKey = "t";
@@ -554,4 +551,5 @@ export {
   createAutomationPanel,
   createSettingsPanel,
   createUpdatePanel,
+  togglePanelsVisibility,
 };

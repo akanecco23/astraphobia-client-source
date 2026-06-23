@@ -11,12 +11,14 @@ import {
 import {
   radius,
   initNetworkInterceptor,
+  playerData,
+  initAntiDetection,
+  startAutoFarm,
   musicPlaylist,
   state,
 } from "../core.js";
 import { generateRandomString } from "../utils.js";
 import { toggleMouseSimulation } from "../features/movement.js";
-import { initAntiDetection } from "../features/antidetection.js";
 import { activateAstraVision } from "../features/xray.js";
 import {
   toggleEsp,
@@ -29,11 +31,7 @@ import {
   enableAutoDodge,
   disableAutoDodge,
 } from "../features/aimbot.js";
-import {
-  setupPatrolPoints,
-  startAutoFarm,
-  stopAutoFarm,
-} from "../features/autofarm.js";
+import { setupPatrolPoints, stopAutoFarm } from "../features/autofarm.js";
 import { applyTheme, initBackgroundImage } from "./theme.js";
 import {
   pausePlayback,
@@ -311,7 +309,7 @@ function createVisionPanel() {
       return;
     }
     initAntiDetection();
-    if (!state.playerData) {
+    if (!playerData) {
       showNotification("Loading... click again in 2s");
       setTimeout(() => {
         activateAstraVision();
@@ -329,11 +327,11 @@ function createVisionPanel() {
   const smallMinimapBtn = visionPanel.querySelector("#smallMinimapBtn");
   smallMinimapBtn.onclick = () => {
     initAntiDetection();
-    if (!state.playerData) {
+    if (!playerData) {
       showNotification("Not in game yet");
       return;
     }
-    if (!state.playerData.minimap) {
+    if (!playerData.minimap) {
       showNotification("Minimap not available");
       return;
     }
@@ -873,4 +871,5 @@ export {
   createSettingsPanel,
   createMusicPanel,
   createUpdatePanel,
+  togglePanelsVisibility,
 };

@@ -3,12 +3,6 @@ import {
   showToast,
   restoreUIInteractivity,
 } from "./src/ui/interaction.js";
-import { applyTheme, initBackground, injectStyles } from "./src/ui/theme.js";
-import {
-  startScheduledTask,
-  stopInterval,
-  simulateChatInput,
-} from "./src/features/chat.js";
 import {
   startCircularMovement,
   stopMouseSimulation,
@@ -17,7 +11,27 @@ import {
   simulateClick,
   simulateMoveAndClick,
 } from "./src/features/movement.js";
-import { initializeAntiDetection } from "./src/features/antidetection.js";
+import {
+  isAreaSkipped,
+  handleFarmFailure,
+  findClosestFarmable,
+  getFarmableEntities,
+  findOptimalFarmPosition,
+  getNearbyAvoidEntities,
+  calculateAvoidanceVector,
+  simulateEvolveKeyPress,
+  checkAntiStuck,
+  generatePatrolPoints,
+  autoFarmUpdate,
+  startAutoFarmLoop,
+  stopAutoFarm,
+} from "./src/features/autofarm.js";
+import { applyTheme, initBackground, injectStyles } from "./src/ui/theme.js";
+import {
+  startScheduledTask,
+  stopInterval,
+  simulateChatInput,
+} from "./src/features/chat.js";
 import { drawRadar, initRadarDrag } from "./src/ui/radar.js";
 import {
   createEspOverlay,
@@ -30,29 +44,13 @@ import {
 } from "./src/features/esp.js";
 import { autoDodgeLoop, enableAutoDodge } from "./src/features/aimbot.js";
 import {
-  isAreaSkipped,
-  handleFarmFailure,
-  isAreaSkipped_2,
-  findClosestFarmable,
-  getFarmableEntities,
-  findOptimalFarmPosition,
-  getNearbyAvoidEntities,
-  calculateAvoidanceVector,
-  simulateEvolveKeyPress,
-  checkAntiStuck,
-  generatePatrolPoints,
-  autoFarmUpdate,
-  startAutoFarmLoop,
-  initAutoFarm,
-  stopAutoFarm,
-} from "./src/features/autofarm.js";
-import {
   showHalloweenModal,
   makeDraggable,
   createToolsPanel,
   createPlusPanel,
   createSettingsPanel,
   createUpdateHistoryPanel,
+  toggleUiVisibility,
 } from "./src/ui/panels.js";
 import { initAdBlocker } from "./src/features/adblock.js";
 import {
@@ -66,14 +64,17 @@ import {
   findEntityById,
   clearTracking_2,
   clearTracking_3,
+  isAreaSkipped_2,
+  initAutoFarm,
+  initializeAntiDetection,
   initializeViewportSettings,
   initializeClient,
-  privateMap,
   angleSteps,
   radius,
   offsetValue,
+  game,
+  playerData,
   isActive,
-  state,
   dragState,
   maxDistance,
   distanceThreshold,

@@ -1,4 +1,12 @@
 import { showNotification } from "./ui/interaction.js";
+import {
+  getEntityById,
+  calculateDistance,
+  getNearbyEntities,
+  proxyProperty,
+  getAllPropertyNames,
+} from "./utils.js";
+import { setupPatrolPoints, autoFarmLoop } from "./features/autofarm.js";
 import { setTheme, initHomeBackground, injectStyles } from "./ui/theme.js";
 import {
   createToolsPanel,
@@ -12,14 +20,16 @@ import {
 import { initAdBlocker } from "./features/adblock.js";
 import { initRadarDragging } from "./ui/radar.js";
 import { renderEspOverlay, trackPlayer } from "./features/esp.js";
-import { renderOverlayLoop } from "./features/entitytrail.js";
+import {
+  renderOverlayLoop,
+  toggleEntityTrail,
+} from "./features/entitytrail.js";
 import {
   updateLockOnTarget,
   autoDodgeLoop,
   toggleLock,
 } from "./features/aimbot.js";
 import { moveMouseToSide } from "./features/movement.js";
-import { initAntiTamper } from "./features/antidetection.js";
 let stateMap = new WeakMap();
 let isActive = false;
 function hookTextEncoder() {
@@ -134,19 +144,18 @@ function hookTextEncoder() {
 const angleDegrees = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
 const radius = 300;
 const offsetValue = 400;
+let gameInstance;
+let appState;
+let animalData;
 const settings = {};
 function getGameState() {
   try {
-    if (
-      state.animalData &&
-      state.animalData.myAnimals &&
-      state.animalData.myAnimals.length > 0
-    ) {
-      return state.animalData;
+    if (animalData && animalData.myAnimals && animalData.myAnimals.length > 0) {
+      return animalData;
     }
     const states = window.__ss?.states;
     if (!states) {
-      return state.animalData || null;
+      return animalData || null;
     }
     for (let i = 0; i < states.length; i++) {
       if (states[i]?.gameScene?.myAnimals) {
@@ -160,9 +169,9 @@ function getGameState() {
         }
       }
     }
-    return state.animalData || null;
+    return animalData || null;
   } catch (error) {
-    return state.animalData || null;
+    return animalData || null;
   }
 }
 function getEntityManager(gameState) {
@@ -254,6 +263,50 @@ function calculateDirection(entity) {
   };
 }
 let isEnabled = false;
+function startEntityTrail() {
+  if (state.trailInterval) {
+    clearInterval(state.trailInterval);
+    state.trailInterval = null;
+  }
+  state.trailInterval = setInterval(() => {
+    if (!window.entityTrailEnabled || !window.entityTrailTargetId) {
+      return;
+    }
+    const targetEntityId = getEntityById(window.entityTrailTargetId);
+    if (!targetEntityId) {
+      const gameState = getNearbyEntities();
+      if (gameState && gameState.players && gameState.players.length > 0) {
+        window.entityTrailTargetId = gameState.players[0].id;
+      }
+      return;
+    }
+    const targetEntity = getEntityPosition(targetEntityId);
+    if (!targetEntity) {
+      return;
+    }
+    const lastTrailPoint =
+      window.entityTrailHistory[window.entityTrailHistory.length - 1];
+    if (
+      lastTrailPoint &&
+      calculateDistance(
+        lastTrailPoint.x,
+        lastTrailPoint.y,
+        targetEntity.x,
+        targetEntity.y,
+      ) < 5
+    ) {
+      return;
+    }
+    window.entityTrailHistory.push({
+      x: targetEntity.x,
+      y: targetEntity.y,
+      time: Date.now(),
+    });
+    if (window.entityTrailHistory.length > window.entityTrailMaxLength) {
+      window.entityTrailHistory.shift();
+    }
+  }, window.entityTrailRecordInterval);
+}
 let dragState = {
   dragging: false,
   offsetX: 0,
@@ -276,6 +329,155 @@ const maxFailCount = 2;
 const timeoutLimit = 20000;
 const timeThreshold = 600;
 let randomAngle = 0;
+function startAutoFarm(farmMode) {
+  window.autoFarmMode = farmMode || "nearest";
+  window.autoFarmActive = true;
+  window.autoFarmStats.startTime = Date.now();
+  window.autoFarmStats.collected = 0;
+  window.autoFarmCurrentTarget = null;
+  window.autoFarmTargetStartTime = 0;
+  window.autoFarmSkipIds.clear();
+  window.autoFarmSkipAreas = [];
+  window.autoFarmSkipClearTime = Date.now();
+  state.currentPosition = null;
+  state.counter_2 = 0;
+  state.lastTimestamp_2 = 0;
+  state.previousTimestamp = 0;
+  if (farmMode === "patrol") {
+    setupPatrolPoints();
+  }
+  showNotification("Auto farm started (" + window.autoFarmMode + ")");
+  if (!state.isActive_3) {
+    state.isActive_3 = true;
+    autoFarmLoop();
+  }
+}
+let isReady = false;
+const initAntiTamper = () => {
+  if (isReady) {
+    return;
+  }
+  isReady = true;
+  const cache = {};
+  for (const reflectMethod of Object.getOwnPropertyNames(Reflect)) {
+    cache[reflectMethod] = Reflect[reflectMethod];
+  }
+  const Proxy = Proxy;
+  const lookupGetter = Object.prototype.__lookupGetter__;
+  const wrapProperty = (target, key, value) => {
+    const instance = new Proxy(target[key], value);
+    stateMap.set(instance, target[key]);
+    target[key] = instance;
+  };
+  wrapProperty(Function.prototype, "toString", {
+    apply(thisArg, argsKey, callContext) {
+      return cache.apply(
+        thisArg,
+        stateMap.get(argsKey) || argsKey,
+        callContext,
+      );
+    },
+  });
+  wrapProperty(window, "Proxy", {
+    construct(constructor, constructorArgs) {
+      return cache.construct(constructor, constructorArgs);
+    },
+  });
+  wrapProperty(Proxy, "revocable", {
+    apply(applyThisArg, applyArgs, applyContext) {
+      return cache.apply(applyThisArg, applyArgs, applyContext);
+    },
+  });
+  let lastExecutionTime = 0;
+  wrapProperty(Function.prototype, "bind", {
+    apply(thisContext, args, extraArgs) {
+      try {
+        try {
+          if (
+            lookupGetter.call(extraArgs[0], "aboveBgPlatformsContainer") != null
+          ) {
+            return cache.apply(thisContext, args, extraArgs);
+          }
+        } catch {}
+        if (extraArgs[0] && extraArgs[0].aboveBgPlatformsContainer != null) {
+          animalData = extraArgs[0];
+          gameInstance = extraArgs[0].game;
+          window.__cachedEM = null;
+          const propertyNames = getAllPropertyNames(animalData);
+          const obfuscatedPropertyNames = propertyNames.filter((varName) =>
+            varName.startsWith("_0x"),
+          );
+          settings.setFlash =
+            Object.getOwnPropertyNames(animalData.__proto__.__proto__)
+              .filter((propName) => propName.startsWith("_0x"))
+              .find(
+                (methodName) => animalData[methodName] instanceof Function,
+              ) || settings.setFlash;
+          settings.terrainManager =
+            obfuscatedPropertyNames.find(
+              (shadowEntityKey) =>
+                typeof animalData[shadowEntityKey]?.shadow !== "undefined",
+            ) || settings.terrainManager;
+          settings.entityManager =
+            obfuscatedPropertyNames.find(
+              (entitiesListKey) =>
+                typeof animalData[entitiesListKey]?.entitiesList !==
+                "undefined",
+            ) || settings.entityManager;
+          settings.socketManager =
+            getAllPropertyNames(gameInstance).find(
+              (networkClientKey) =>
+                typeof gameInstance[networkClientKey]?.sendBytePacket !==
+                "undefined",
+            ) || settings.socketManager;
+          try {
+            appState = document
+              .getElementById("app")
+              ._vnode.appContext.config.globalProperties.$simpleState.states.find(
+                (gameStore) => gameStore._storeMeta.id === "game",
+              );
+          } catch {}
+          let intervalId;
+          try {
+            clearInterval(intervalId);
+          } catch {}
+          intervalId = setInterval(() => {
+            try {
+              if (!animalData?.myAnimals?.[0]) {
+                return;
+              }
+              const firstAnimal = animalData.myAnimals[0];
+              if (firstAnimal.fadingTrail) {
+                proxyProperty(
+                  Object.getPrototypeOf(firstAnimal.fadingTrail),
+                  "enable",
+                  {
+                    apply() {},
+                  },
+                );
+              }
+              if (firstAnimal.bubblesEmitter) {
+                Object.defineProperty(
+                  Object.getPrototypeOf(firstAnimal.bubblesEmitter),
+                  "emit",
+                  {
+                    set: () => {},
+                  },
+                );
+              }
+              clearInterval(intervalId);
+            } catch {}
+          }, 200);
+          if (lastExecutionTime < Date.now() - 3000) {
+            showNotification("Client loaded");
+            lastExecutionTime = Date.now();
+          }
+        }
+      } catch {}
+      return cache.apply(thisContext, args, extraArgs);
+    },
+  });
+};
 let pressedKey = "Shift";
 let isEnabled_2 = false;
 function initializeApp() {
@@ -341,6 +543,29 @@ document.addEventListener(
   },
   true,
 );
+document.addEventListener(
+  "keydown",
+  (event_3) => {
+    if (event_3.target.matches("input,textarea,select,[contenteditable]")) {
+      return;
+    }
+    if (event_3.repeat) {
+      return;
+    }
+    const entityTraceKey = window.entityTraceKey.toLowerCase();
+    const lowercaseKey = event_3.key.toLowerCase();
+    const lowercaseCode = event_3.code.toLowerCase();
+    if (
+      lowercaseKey === entityTraceKey ||
+      lowercaseCode === entityTraceKey ||
+      lowercaseCode === "key" + entityTraceKey
+    ) {
+      event_3.preventDefault();
+      toggleEntityTrail();
+    }
+  },
+  true,
+);
 document.addEventListener("keydown", (event_4) => {
   if (event_4.target.matches("input,textarea,select")) {
     return;
@@ -380,9 +605,6 @@ export const state = {
   angleIndex: 0,
   currentKey: "q",
   activeKey: "e",
-  gameInstance: null,
-  appState: null,
-  animalData: null,
   isProcessed: false,
   isMinimapSmall: false,
   trailInterval: null,
@@ -399,7 +621,6 @@ export const state = {
   counter_2: 0,
   lastTimestamp_2: 0,
   lastOffset: 0,
-  isReady: false,
 };
 export {
   hookTextEncoder,
@@ -408,13 +629,18 @@ export {
   getFirstAnimalPosition,
   getEntityPosition,
   calculateDirection,
+  startEntityTrail,
   clearTracking_2,
   clearTracking_3,
+  startAutoFarm,
+  initAntiTamper,
   initializeApp,
   stateMap,
   angleDegrees,
   radius,
   offsetValue,
+  gameInstance,
+  animalData,
   settings,
   isEnabled,
   dragState,

@@ -1,10 +1,10 @@
 import { showNotification } from "./ui/interaction.js";
-import { togglePanels } from "./ui/panels.js";
-import { initializeAntiTamper } from "./features/antidetection.js";
+import { getAllPropertyNames } from "./utils.js";
+import { initControlOverlay, togglePanels } from "./ui/panels.js";
 import { initAdBlocker } from "./features/adblock.js";
 import { applyHomeBackground } from "./ui/theme.js";
 
-let stateMap = new WeakMap();
+const stateMap = new WeakMap();
 function wrapPropertyWithProxy(targetObject, propertyKey, proxyHandler) {
   const originalValue = targetObject[propertyKey];
   const proxyInstance = new Proxy(originalValue, proxyHandler);
@@ -131,7 +131,9 @@ function initInterceptor(config) {
 
 const angleSteps = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
 const radius = 300;
-
+let gameInstance;
+let appState;
+let playerData;
 let isReady = false;
 
 const encryptPacketData = (isEnabled, charCode, suffix = "") => {
@@ -206,47 +208,178 @@ const securityConfigs = {
   },
 };
 const sendPacket = (payload, additionalData = "") => {
-  if (
-    coreSharedState.gameInstance &&
-    coreSharedState.appState &&
-    state.socketManager
-  ) {
-    coreSharedState.gameInstance[state.socketManager].sendBytePacket(
-      encryptPacketData(
-        coreSharedState.appState.token._value,
-        payload,
-        additionalData,
-      ),
+  if (gameInstance && appState && state.socketManager) {
+    gameInstance[state.socketManager].sendBytePacket(
+      encryptPacketData(appState.token._value, payload, additionalData),
     );
   }
 };
 const state = {};
 const counter = 0;
+const initializeAntiTamper = () => {
+  const storage = {};
+  for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
+    storage[propertyKey] = Reflect[propertyKey];
+  }
+  const ProxyConstructor = Proxy;
+  const lookupGetter = Object.prototype.__lookupGetter__;
+  const createProxyHook = (dataStore, storeIndex, storeValue) => {
+    const processedValue = new ProxyConstructor(
+      dataStore[storeIndex],
+      storeValue,
+    );
+    stateMap.set(processedValue, dataStore[storeIndex]);
+    dataStore[storeIndex] = processedValue;
+  };
+  createProxyHook(Function.prototype, "toString", {
+    apply(context, argsKey, extraArg) {
+      return storage.apply(context, stateMap.get(argsKey) || argsKey, extraArg);
+    },
+  });
+  createProxyHook(window, "Proxy", {
+    construct(constructor, constructorArgs) {
+      const instance = storage.construct(constructor, constructorArgs);
+      return instance;
+    },
+  });
+  createProxyHook(ProxyConstructor, "revocable", {
+    apply(thisArg, args, extraArg2) {
+      const result = storage.apply(thisArg, args, extraArg2);
+      return result;
+    },
+  });
+  let lastTimestamp = 0;
+  createProxyHook(Function.prototype, "bind", {
+    apply(thisArg2, args2, extraArg3) {
+      try {
+        try {
+          if (
+            lookupGetter.call(extraArg3[0], "aboveBgPlatformsContainer") != null
+          ) {
+            return storage.apply(thisArg2, args2, extraArg3);
+          }
+        } catch {}
+        if (extraArg3[0] && extraArg3[0].aboveBgPlatformsContainer != null) {
+          playerData = extraArg3[0];
+          gameInstance = extraArg3[0].game;
+          const allKeys = getAllPropertyNames(playerData);
+          const obfuscatedKeys = allKeys.filter((obfuscatedVarName) =>
+            obfuscatedVarName.startsWith("_0x"),
+          );
+          state.setFlash =
+            Object.getOwnPropertyNames(playerData.__proto__.__proto__)
+              .filter((obfuscatedPropName) =>
+                obfuscatedPropName.startsWith("_0x"),
+              )
+              .find(
+                (methodName) => playerData[methodName] instanceof Function,
+              ) || state.setFlash;
+          state.terrainManager =
+            obfuscatedKeys.find(
+              (shadowEntityKey) =>
+                typeof playerData[shadowEntityKey]?.shadow !== "undefined",
+            ) || state.terrainManager;
+          state.entityManager =
+            obfuscatedKeys.find(
+              (entitiesListKey) =>
+                typeof playerData[entitiesListKey]?.entitiesList !==
+                "undefined",
+            ) || state.entityManager;
+          state.entityManagerProps = {};
+          const entityManagerKeys = getAllPropertyNames(
+            playerData[state.entityManager],
+          );
+          const animalsUpdateInterval = setInterval(() => {
+            state.entityManagerProps.animalsList =
+              entityManagerKeys
+                .filter((variableName) => variableName.startsWith("_0x"))
+                .find(
+                  (entityName) =>
+                    typeof playerData?.[state.entityManager]?.[
+                      entityName
+                    ]?.[0] !== "undefined",
+                ) || state.entityManagerProps.animalsList;
+            if (typeof state.entityManagerProps.animalsList !== "undefined") {
+              clearInterval(animalsUpdateInterval);
+            }
+          }, 1000);
+          state.socketManager =
+            getAllPropertyNames(gameInstance).find(
+              (networkClientKey) =>
+                typeof gameInstance[networkClientKey]?.sendBytePacket !==
+                "undefined",
+            ) || state.socketManager;
+          try {
+            appState = document
+              .getElementById("app")
+              ._vnode.appContext.config.globalProperties.$simpleState.states.find(
+                (gameStore) => gameStore._storeMeta.id === "game",
+              );
+          } catch {}
+          let animalsCheckInterval;
+          try {
+            clearInterval(animalsCheckInterval);
+          } catch {}
+          animalsCheckInterval = setInterval(() => {
+            try {
+              if (!playerData?.myAnimals?.[0]) {
+                return;
+              }
+              const myAnimal = playerData.myAnimals[0];
+              if (myAnimal.fadingTrail) {
+                const fadingTrailPrototype = Object.getPrototypeOf(
+                  myAnimal.fadingTrail,
+                );
+                wrapPropertyWithProxy(fadingTrailPrototype, "enable", {
+                  apply() {},
+                });
+              }
+              if (myAnimal.bubblesEmitter) {
+                const bubblesEmitterPrototype = Object.getPrototypeOf(
+                  myAnimal.bubblesEmitter,
+                );
+                Object.defineProperty(bubblesEmitterPrototype, "emit", {
+                  set: () => {},
+                });
+              }
+              clearInterval(animalsCheckInterval);
+            } catch {}
+          }, 200);
+          if (lastTimestamp < Date.now() - 3000) {
+            showNotification("✅ Astraphobia client loaded in game");
+            lastTimestamp = Date.now();
+          }
+          initControlOverlay();
+        }
+      } catch {}
+      return storage.apply(thisArg2, args2, extraArg3);
+    },
+  });
+};
 const disableGameRestrictions = () => {
   if (isReady) {
     return;
   }
-  if (!coreSharedState.playerData) {
+  if (!playerData) {
     setTimeout(disableGameRestrictions, 500);
     return;
   }
   setInterval(() => {
     try {
-      coreSharedState.gameInstance.viewport.clampZoom({
+      gameInstance.viewport.clampZoom({
         minWidth: 0,
         maxWidth: 10000000,
       });
-      coreSharedState.gameInstance.viewport.plugins.plugins.clamp = null;
-      coreSharedState.gameInstance.viewport.plugins.plugins["clamp-zoom"] =
-        null;
+      gameInstance.viewport.plugins.plugins.clamp = null;
+      gameInstance.viewport.plugins.plugins["clamp-zoom"] = null;
     } catch {}
   }, 300);
   try {
     if (state.setFlash) {
-      coreSharedState.playerData[state.setFlash] = () => {};
+      playerData[state.setFlash] = () => {};
     }
     if (state.terrainManager) {
-      const terrainManager = coreSharedState.playerData[state.terrainManager];
+      const terrainManager = playerData[state.terrainManager];
       if (terrainManager && terrainManager.shadow) {
         terrainManager.shadow.setShadowSize(1000000);
         terrainManager.shadow.setShadowSize = () => {};
@@ -281,9 +414,6 @@ export const coreSharedState = {
   isProcessing: false,
   rotationInterval: null,
   angleIndex: 0,
-  gameInstance: null,
-  appState: null,
-  playerData: null,
   isInitialized_2: false,
   isProcessing_2: false,
   activeKey: "Shift",
@@ -294,11 +424,12 @@ export {
   initInterceptor,
   encryptPacketData,
   sendPacket,
+  initializeAntiTamper,
   disableGameRestrictions,
-  stateMap,
   angleSteps,
   radius,
+  gameInstance,
+  playerData,
   isReady,
   securityConfigs,
-  state,
 };

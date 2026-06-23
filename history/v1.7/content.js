@@ -1,10 +1,9 @@
 import { typeText, showNotification } from "./src/ui/interaction.js";
-import { setTheme, initHomeBackground, injectStyles } from "./src/ui/theme.js";
 import {
-  startScheduledTask,
-  stopInterval,
-  simulateChatInput,
-} from "./src/features/chat.js";
+  updateLockButtonUI,
+  drawRadar,
+  initRadarDragging,
+} from "./src/ui/radar.js";
 import {
   startCircularMovement,
   stopMouseSimulation,
@@ -12,21 +11,6 @@ import {
   moveMouseToSide,
   simulateClick,
 } from "./src/features/movement.js";
-import { initAntiTamper } from "./src/features/antidetection.js";
-import { initializeViewportHacks } from "./src/features/xray.js";
-import {
-  updateLockButtonUI,
-  drawRadar,
-  initRadarDragging,
-} from "./src/ui/radar.js";
-import {
-  drawEspEntities,
-  drawTrackedEntityIndicator,
-  renderEspOverlay,
-  clearTracking,
-  trackPlayer,
-  toggleMinimapSize,
-} from "./src/features/esp.js";
 import {
   updateLockOnTarget,
   toggleLock,
@@ -45,9 +29,23 @@ import {
   detectAndHandleStuck,
   setupPatrolPoints,
   autoFarmLoop,
-  startAutoFarm,
   stopAutoFarm,
 } from "./src/features/autofarm.js";
+import { setTheme, initHomeBackground, injectStyles } from "./src/ui/theme.js";
+import {
+  startScheduledTask,
+  stopInterval,
+  simulateChatInput,
+} from "./src/features/chat.js";
+import { initializeViewportHacks } from "./src/features/xray.js";
+import {
+  drawEspEntities,
+  drawTrackedEntityIndicator,
+  renderEspOverlay,
+  clearTracking,
+  trackPlayer,
+  toggleMinimapSize,
+} from "./src/features/esp.js";
 import {
   refreshUI,
   showHalloweenCodeModal,
@@ -58,10 +56,10 @@ import {
   createAutomationPanel,
   createSettingsPanel,
   createUpdatePanel,
+  togglePanelsVisibility,
 } from "./src/ui/panels.js";
 import { initAdBlocker } from "./src/features/adblock.js";
 import {
-  startEntityTrail,
   stopMouseSimulation_2,
   toggleEntityTrail,
   drawEntityTrail,
@@ -74,13 +72,18 @@ import {
   getFirstAnimalPosition,
   getEntityPosition,
   calculateDirection,
+  startEntityTrail,
   clearTracking_2,
   clearTracking_3,
+  startAutoFarm,
+  initAntiTamper,
   initializeApp,
   stateMap,
   angleDegrees,
   radius,
   offsetValue,
+  gameInstance,
+  animalData,
   settings,
   isEnabled,
   dragState,

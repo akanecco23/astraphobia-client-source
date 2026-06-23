@@ -2,13 +2,12 @@ import { simulateTyping, autoTypeChat, showToast } from "./interaction.js";
 import {
   setupTextEncoderHook,
   isInitialized_2,
+  initHooks,
   coreSharedState,
 } from "../core.js";
 import { generateRandomString } from "../utils.js";
 import { toggleMouseSimulation } from "../features/movement.js";
 import { startScheduledTask, stopInterval } from "../features/chat.js";
-import { initHooks } from "../features/entitytrail.js";
-import { initAdBlocker } from "../features/adblock.js";
 
 function createUpdateHistoryPanel() {
   const historyStyleElement = document.createElement("style");
@@ -408,23 +407,11 @@ function togglePanels() {
   settingsPanel.style.display = newDisplay;
   plusPanel.style.display = newDisplay;
 }
-function initAllPanels() {
-  const mainPanel = createToolsPanel();
-  const historyPanel = createUpdateHistoryPanel();
-  const settingsPanel = initSettingsPanel();
-  const plusPanel = initPlusPanel();
-  initAdBlocker();
-  return {
-    mainPanel: mainPanel,
-    historyPanel: historyPanel,
-    settingsPanel: settingsPanel,
-    plusPanel: plusPanel,
-  };
-}
 
 export {
   createUpdateHistoryPanel,
   createToolsPanel,
   initPlusPanel,
   initSettingsPanel,
+  togglePanels,
 };

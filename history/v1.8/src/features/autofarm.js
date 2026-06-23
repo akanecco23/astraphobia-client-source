@@ -10,6 +10,7 @@ import {
   getFirstAnimalPosition,
   randomAngle,
   timeLimit,
+  startAutoFarm,
   state,
 } from "../core.js";
 import { aimAtTarget } from "./aimbot.js";
@@ -592,29 +593,6 @@ function autoFarmLoop() {
   }
   setTimeout(autoFarmLoop, 60);
 }
-function startAutoFarm(farmMode) {
-  window.autoFarmMode = farmMode || "nearest";
-  window.autoFarmActive = true;
-  window.autoFarmStats.startTime = Date.now();
-  window.autoFarmStats.collected = 0;
-  window.autoFarmCurrentTarget = null;
-  window.autoFarmTargetStartTime = 0;
-  window.autoFarmSkipIds.clear();
-  window.autoFarmSkipAreas = [];
-  window.autoFarmSkipClearTime = Date.now();
-  state.currentPosition_2 = null;
-  state.counter_2 = 0;
-  state.lastValue2 = 0;
-  state.lastTimestamp_2 = 0;
-  if (farmMode === "patrol") {
-    setupPatrolPoints();
-  }
-  showNotification("Auto farm started (" + window.autoFarmMode + ")");
-  if (!state.isActive_2) {
-    state.isActive_2 = true;
-    autoFarmLoop();
-  }
-}
 function stopAutoFarm() {
   window.autoFarmActive = false;
   state.isActive_2 = false;
@@ -662,6 +640,5 @@ export {
   detectAndHandleStuck,
   setupPatrolPoints,
   autoFarmLoop,
-  startAutoFarm,
   stopAutoFarm,
 };

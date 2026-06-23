@@ -1,10 +1,16 @@
 import { showToast } from "./ui/interaction.js";
+import { getAllPropertyNames } from "./utils.js";
 import { handleAnimalAction } from "./features/autofarm.js";
-import { togglePanels } from "./ui/panels.js";
-import { initHooks } from "./features/entitytrail.js";
+import {
+  createUpdateHistoryPanel,
+  createToolsPanel,
+  initPlusPanel,
+  initSettingsPanel,
+  togglePanels,
+} from "./ui/panels.js";
 import { initAdBlocker } from "./features/adblock.js";
 
-let privateStateMap = new WeakMap();
+const privateStateMap = new WeakMap();
 function wrapWithProxy(targetObject, propertyKey, proxyHandler) {
   const originalValue = targetObject[propertyKey];
   const proxyValue = new Proxy(originalValue, proxyHandler);
@@ -131,7 +137,9 @@ function setupTextEncoderHook(unusedParam) {
 
 const angleSteps = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
 const orbitRadius = 300;
-
+let gameInstance;
+let globalState;
+let playerData;
 let isRunning = false;
 let isInitialized_2 = false;
 const encryptPacketData = (message, terminatorCode, suffix = "") => {
@@ -210,35 +218,184 @@ const securityConfig = {
   },
 };
 const sendPacket = (payload, additionalData = "") => {
-  if (
-    coreSharedState.gameInstance &&
-    coreSharedState.globalState &&
-    state.socketManager
-  ) {
-    coreSharedState.gameInstance[state.socketManager].sendBytePacket(
-      encryptPacketData(
-        coreSharedState.globalState.token,
-        payload,
-        additionalData,
-      ),
+  if (gameInstance && globalState && state.socketManager) {
+    gameInstance[state.socketManager].sendBytePacket(
+      encryptPacketData(globalState.token, payload, additionalData),
     );
   }
 };
 const state = {};
 const counter = 0;
+const initHooks = () => {
+  const propertyCache = {};
+  for (const propertyName of Object.getOwnPropertyNames(Reflect)) {
+    propertyCache[propertyName] = Reflect[propertyName];
+  }
+  const ProxyConstructor = Proxy;
+  const lookupGetter = Object.prototype.__lookupGetter__;
+  const wrapWithProxy = (state, key, value) => {
+    const wrappedValue = new ProxyConstructor(state[key], value);
+    privateStateMap.set(wrappedValue, state[key]);
+    state[key] = wrappedValue;
+  };
+  wrapWithProxy(Function.prototype, "toString", {
+    apply(thisContext, key_2, context) {
+      return propertyCache.apply(
+        thisContext,
+        privateStateMap.get(key_2) || key_2,
+        context,
+      );
+    },
+  });
+  wrapWithProxy(window, "Proxy", {
+    construct(constructor, constructorArgs) {
+      const instance = propertyCache.construct(constructor, constructorArgs);
+      return instance;
+    },
+  });
+  wrapWithProxy(ProxyConstructor, "revocable", {
+    apply(targetFunction, functionArgs, functionContext) {
+      const functionResult = propertyCache.apply(
+        targetFunction,
+        functionArgs,
+        functionContext,
+      );
+      return functionResult;
+    },
+  });
+  let lastExecutionTime = 0;
+  wrapWithProxy(Function.prototype, "bind", {
+    apply(targetFunction2, functionArgs2, functionContext2) {
+      try {
+        try {
+          if (
+            lookupGetter.call(
+              functionContext2[0],
+              "aboveBgPlatformsContainer",
+            ) != null
+          ) {
+            return propertyCache.apply(
+              targetFunction2,
+              functionArgs2,
+              functionContext2,
+            );
+          }
+        } catch {}
+        if (
+          functionContext2[0] &&
+          functionContext2[0].aboveBgPlatformsContainer != null
+        ) {
+          playerData = functionContext2[0];
+          gameInstance = functionContext2[0].game;
+          const allKeys = getAllPropertyNames(playerData);
+          const obfuscatedKeys = allKeys.filter((obfuscatedKey) =>
+            obfuscatedKey.startsWith("_0x"),
+          );
+          state.setFlash =
+            Object.getOwnPropertyNames(playerData.__proto__.__proto__)
+              .filter((obfuscatedName) => obfuscatedName.startsWith("_0x"))
+              .find(
+                (functionKey) => playerData[functionKey] instanceof Function,
+              ) || state.setFlash;
+          state.terrainManager =
+            obfuscatedKeys.find(
+              (shadowObjectKey) =>
+                typeof playerData[shadowObjectKey]?.shadow !== "undefined",
+            ) || state.terrainManager;
+          state.entityManager =
+            obfuscatedKeys.find(
+              (entitiesListKey) =>
+                typeof playerData[entitiesListKey]?.entitiesList !==
+                "undefined",
+            ) || state.entityManager;
+          state.entityManagerProps = {};
+          const entityManagerKeys = getAllPropertyNames(
+            playerData[state.entityManager],
+          );
+          const animalsUpdateInterval = setInterval(() => {
+            state.entityManagerProps.animalsList =
+              entityManagerKeys
+                .filter((variableName) => variableName.startsWith("_0x"))
+                .find(
+                  (entityType) =>
+                    typeof playerData?.[state.entityManager]?.[
+                      entityType
+                    ]?.[0] !== "undefined",
+                ) || state.entityManagerProps.animalsList;
+            if (typeof state.entityManagerProps.animalsList !== "undefined") {
+              clearInterval(animalsUpdateInterval);
+            }
+          }, 1000);
+          state.socketManager =
+            getAllPropertyNames(gameInstance).find(
+              (packetSenderKey) =>
+                typeof gameInstance[packetSenderKey]?.sendBytePacket !==
+                "undefined",
+            ) || state.socketManager;
+          try {
+            globalState = document
+              .getElementById("app")
+              ._vnode.appContext.config.globalProperties.$simpleState.states.find(
+                (gameStore) => gameStore._storeMeta.id === "game",
+              );
+          } catch {}
+          let animalsCheckInterval;
+          try {
+            clearInterval(animalsCheckInterval);
+          } catch {}
+          animalsCheckInterval = setInterval(() => {
+            try {
+              if (!playerData?.myAnimals?.[0]) {
+                return;
+              }
+              const myAnimal = playerData.myAnimals[0];
+              if (myAnimal.fadingTrail) {
+                const fadingTrailProto = Object.getPrototypeOf(
+                  myAnimal.fadingTrail,
+                );
+                wrapWithProxy(fadingTrailProto, "enable", {
+                  apply() {},
+                });
+              }
+              if (myAnimal.bubblesEmitter) {
+                const bubblesEmitterProto = Object.getPrototypeOf(
+                  myAnimal.bubblesEmitter,
+                );
+                Object.defineProperty(bubblesEmitterProto, "emit", {
+                  set: () => {},
+                });
+              }
+              clearInterval(animalsCheckInterval);
+            } catch {}
+          }, 200);
+          if (lastExecutionTime < Date.now() - 3000) {
+            showToast("✅ Astraphobia client loaded in game");
+            lastExecutionTime = Date.now();
+          }
+          disableZoomClamp();
+          initGameCheats();
+        }
+      } catch {}
+      return propertyCache.apply(
+        targetFunction2,
+        functionArgs2,
+        functionContext2,
+      );
+    },
+  });
+};
 const disableZoomClamp = () => {
   if (isRunning) {
     return;
   }
   setInterval(() => {
     try {
-      coreSharedState.gameInstance.viewport.clampZoom({
+      gameInstance.viewport.clampZoom({
         minWidth: 0,
         maxWidth: 10000000,
       });
-      coreSharedState.gameInstance.viewport.plugins.plugins.clamp = null;
-      coreSharedState.gameInstance.viewport.plugins.plugins["clamp-zoom"] =
-        null;
+      gameInstance.viewport.plugins.plugins.clamp = null;
+      gameInstance.viewport.plugins.plugins["clamp-zoom"] = null;
     } catch {}
   }, 300);
   isRunning = true;
@@ -281,11 +438,10 @@ const initGameCheats = () => {
     "click",
     (animalsProcessHandler) => {
       try {
-        if (!coreSharedState.playerData?.myAnimals?.[0]) {
+        if (!playerData?.myAnimals?.[0]) {
           return;
         }
-        const visibleFishLevel =
-          coreSharedState.playerData.myAnimals[0].visibleFishLevel;
+        const visibleFishLevel = playerData.myAnimals[0].visibleFishLevel;
         const fishLevelConfig = {
           ...securityConfig.default,
           ...securityConfig[visibleFishLevel],
@@ -297,7 +453,7 @@ const initGameCheats = () => {
           } else if (
             animalsProcessHandler.shiftKey &&
             visibleFishLevel !== 101 &&
-            coreSharedState.playerData.myAnimals[0]._standing
+            playerData.myAnimals[0]._standing
           ) {
             handleAnimalAction(
               Math.floor(Math.random() * 1647483648) + 500000000,
@@ -308,10 +464,8 @@ const initGameCheats = () => {
               handleAnimalAction(1000);
               return;
             }
-            let keyMap = Object.getOwnPropertyNames(
-              coreSharedState.gameInstance,
-            )
-              .map((serviceKey) => coreSharedState.gameInstance[serviceKey])
+            let keyMap = Object.getOwnPropertyNames(gameInstance)
+              .map((serviceKey) => gameInstance[serviceKey])
               .find((keyCollection) => keyCollection.keys instanceof Array);
             if (keyMap) {
               keyMap.pointerDown = true;
@@ -321,7 +475,7 @@ const initGameCheats = () => {
           }
         } else if (animalsProcessHandler.altKey) {
           handleAnimalAction(
-            coreSharedState.playerData?.myAnimals?.[0]?._standing
+            playerData?.myAnimals?.[0]?._standing
               ? 41
               : Math.floor(fishLevelConfig.secLoadTime / 2),
           );
@@ -349,6 +503,19 @@ const initGameCheats = () => {
   isInitialized_2 = true;
 };
 
+function initAllPanels() {
+  const mainPanel = createToolsPanel();
+  const historyPanel = createUpdateHistoryPanel();
+  const settingsPanel = initSettingsPanel();
+  const plusPanel = initPlusPanel();
+  initAdBlocker();
+  return {
+    mainPanel: mainPanel,
+    historyPanel: historyPanel,
+    settingsPanel: settingsPanel,
+    plusPanel: plusPanel,
+  };
+}
 document.addEventListener("keydown", (keyboardEvent) => {
   if (
     keyboardEvent.key === coreSharedState.pressedKey &&
@@ -371,9 +538,6 @@ export const coreSharedState = {
   isProcessing: false,
   rotationInterval: null,
   angleIndex: 0,
-  gameInstance: null,
-  globalState: null,
-  playerData: null,
   pressedKey: "Shift",
 };
 
@@ -382,12 +546,13 @@ export {
   setupTextEncoderHook,
   encryptPacketData,
   sendPacket,
+  initHooks,
   disableZoomClamp,
   initGameCheats,
-  privateStateMap,
+  initAllPanels,
   angleSteps,
   orbitRadius,
+  playerData,
   isInitialized_2,
   securityConfig,
-  state,
 };

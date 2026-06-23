@@ -10,6 +10,7 @@ import {
   getEntityPosition,
   calculateDirection,
   getFirstAnimalPosition,
+  animalData,
   state,
 } from "../core.js";
 import { drawRadar } from "../ui/radar.js";
@@ -329,18 +330,18 @@ function trackPlayer() {
   }
 }
 function toggleMinimapSize() {
-  if (!state.animalData || !state.animalData.minimap) {
+  if (!animalData || !animalData.minimap) {
     showNotification("Minimap not available");
     return;
   }
   if (state.isMinimapSmall) {
-    state.animalData.minimap.scale.set(1);
-    state.animalData.minimap.pivot.set(0, 0);
+    animalData.minimap.scale.set(1);
+    animalData.minimap.pivot.set(0, 0);
     state.isMinimapSmall = false;
     showNotification("Minimap restored");
   } else {
-    state.animalData.minimap.scale.set(0.5);
-    state.animalData.minimap.pivot.set(-70, -45);
+    animalData.minimap.scale.set(0.5);
+    animalData.minimap.pivot.set(-70, -45);
     state.isMinimapSmall = true;
     showNotification("Small minimap enabled");
   }

@@ -9,6 +9,7 @@ import {
   getEntityPosition,
   calculateDirection,
   findEntityById,
+  playerData,
   getFirstAnimalPosition,
   coreSharedState,
 } from "../core.js";
@@ -316,7 +317,7 @@ function renderEspLoop() {
   const centerX = espCanvas.width / 2;
   const centerY = espCanvas.height / 2;
   drawEsp(ctx, entities, centerX, centerY, renderScale);
-  drawTrackedEntity(ctx, espCanvas, coreSharedState.playerData, renderScale);
+  drawTrackedEntity(ctx, espCanvas, playerData, renderScale);
   drawRadar(ctx, espCanvas, entities);
   requestAnimationFrame(renderEspLoop);
 }
@@ -337,18 +338,18 @@ function trackPlayer() {
   }
 }
 function toggleMinimapSize() {
-  if (!coreSharedState.playerData || !coreSharedState.playerData.minimap) {
+  if (!playerData || !playerData.minimap) {
     showToast("Minimap not available");
     return;
   }
   if (coreSharedState.isToggled) {
-    coreSharedState.playerData.minimap.scale.set(1);
-    coreSharedState.playerData.minimap.pivot.set(0, 0);
+    playerData.minimap.scale.set(1);
+    playerData.minimap.pivot.set(0, 0);
     coreSharedState.isToggled = false;
     showToast("Minimap restored");
   } else {
-    coreSharedState.playerData.minimap.scale.set(0.5);
-    coreSharedState.playerData.minimap.pivot.set(-70, -45);
+    playerData.minimap.scale.set(0.5);
+    playerData.minimap.pivot.set(-70, -45);
     coreSharedState.isToggled = true;
     showToast("Small minimap enabled");
   }

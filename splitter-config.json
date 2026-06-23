@@ -5,8 +5,14 @@
     "description": "Module definitions and bootstrap patterns for the splitter. Modules are discovered automatically by the LLM."
   },
   "modules": {
-    "core": { "path": "core" },
-    "utils": { "path": "utils" },
+    "core": {
+      "path": "core",
+      "description": "initialization, bootstrap, game hook, proxy wrapping, state resolution, obfuscated key discovery, player data, game instance, socket manager, packet encoding, viewport, zoom clamp, control overlay, Reflect, PropertyNames, sendBytePacket, TextEncoder"
+    },
+    "utils": {
+      "path": "utils",
+      "description": "shared utilities, property enumeration, distance calculation, entity lookup, canvas helpers"
+    },
     "storage": { "path": "storage" },
     "features_aimbot": {
       "path": "features/aimbot",
@@ -44,9 +50,9 @@
       "path": "features/antidetection",
       "description": "Anti-detection and anti-ban"
     },
-    "ui": {
+    "ui_panels": {
       "path": "ui/panels",
-      "description": "Main UI panels, toggle, settings menu"
+      "description": "Main UI panels, toggle, settings menu, panel creation, DOM construction, innerHTML, createElement, appendChild, deep-tools-panel, plus-panel"
     },
     "ui_interaction": {
       "path": "ui/interaction",
@@ -67,9 +73,9 @@
   },
   "bootstrap": {
     "exactNames": ["initializeApplication"],
-    "prefixes": ["launch"],
-    "suffixes": ["OnLoad", "Bootstrap"],
-    "minCallees": 5
+    "prefixes": ["launch", "init", "start", "setup"],
+    "suffixes": ["OnLoad", "Bootstrap", "Application"],
+    "minCallees": 3
   },
   "scoreThreshold": 5
 }

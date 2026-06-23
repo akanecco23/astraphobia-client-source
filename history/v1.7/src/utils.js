@@ -1,4 +1,10 @@
-import { stateMap, getGameState, getEntityManager, state } from "./core.js";
+import {
+  stateMap,
+  getGameState,
+  getEntityManager,
+  gameInstance,
+  state,
+} from "./core.js";
 
 function generateRandomString(length) {
   let resultString = "";
@@ -197,8 +203,8 @@ function getZoomLevel() {
     ) {
       zoomLevel = cameraState.camera.currentZoomLevel;
     }
-    if (state.gameInstance?.viewport?.scale?.x) {
-      zoomLevel = state.gameInstance.viewport.scale.x;
+    if (gameInstance?.viewport?.scale?.x) {
+      zoomLevel = gameInstance.viewport.scale.x;
     }
   } catch (error) {}
   return zoomLevel;

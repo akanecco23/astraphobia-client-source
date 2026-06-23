@@ -2,17 +2,14 @@ Index: content.js
 ===================================================================
 --- content.js	v1.7
 +++ content.js	v1.8
-@@ -1,46 +1,46 @@
+@@ -1,112 +1,110 @@
  import { typeText, showNotification } from "./src/ui/interaction.js";
--import { setTheme, initHomeBackground, injectStyles } from "./src/ui/theme.js";
-+import { applyTheme, initBackground, injectStyles } from "./src/ui/theme.js";
  import {
-   startScheduledTask,
-   stopInterval,
--  simulateChatInput,
-+  typeAndSendMessage,
- } from "./src/features/chat.js";
-+import { interceptTextEncoder } from "./src/features/antidetection.js";
+   updateLockButtonUI,
+   drawRadar,
+-  initRadarDragging,
++  initRadarDrag,
+ } from "./src/ui/radar.js";
  import {
    startCircularMovement,
    stopMouseSimulation,
@@ -21,26 +18,6 @@ Index: content.js
 +  moveMouseSide,
    simulateClick,
  } from "./src/features/movement.js";
--import { initAntiTamper } from "./src/features/antidetection.js";
--import { initializeViewportHacks } from "./src/features/xray.js";
-+import { initializeAstraVision } from "./src/features/xray.js";
- import {
-   updateLockButtonUI,
-   drawRadar,
--  initRadarDragging,
-+  initRadarDrag,
- } from "./src/ui/radar.js";
- import {
--  drawEspEntities,
--  drawTrackedEntityIndicator,
--  renderEspOverlay,
-+  drawEsp,
-+  drawTrackedEntity,
-+  renderEspLoop,
-   clearTracking,
-   trackPlayer,
-   toggleMinimapSize,
- } from "./src/features/esp.js";
  import {
    updateLockOnTarget,
    toggleLock,
@@ -61,9 +38,30 @@ Index: content.js
    simulateEvolveKey,
    detectAndHandleStuck,
    setupPatrolPoints,
-@@ -49,61 +49,61 @@
+   autoFarmLoop,
    stopAutoFarm,
  } from "./src/features/autofarm.js";
+-import { setTheme, initHomeBackground, injectStyles } from "./src/ui/theme.js";
++import { applyTheme, initBackground, injectStyles } from "./src/ui/theme.js";
+ import {
+   startScheduledTask,
+   stopInterval,
+-  simulateChatInput,
++  typeAndSendMessage,
+ } from "./src/features/chat.js";
+-import { initializeViewportHacks } from "./src/features/xray.js";
++import { initializeAstraVision } from "./src/features/xray.js";
+ import {
+-  drawEspEntities,
+-  drawTrackedEntityIndicator,
+-  renderEspOverlay,
++  drawEsp,
++  drawTrackedEntity,
++  renderEspLoop,
+   clearTracking,
+   trackPlayer,
+   toggleMinimapSize,
+ } from "./src/features/esp.js";
  import {
    refreshUI,
 -  showHalloweenCodeModal,
@@ -76,10 +74,10 @@ Index: content.js
    createSettingsPanel,
 -  createUpdatePanel,
 +  createUpdateHistoryPanel,
+   togglePanelsVisibility,
  } from "./src/ui/panels.js";
  import { initAdBlocker } from "./src/features/adblock.js";
  import {
-   startEntityTrail,
    stopMouseSimulation_2,
    toggleEntityTrail,
    drawEntityTrail,
@@ -89,6 +87,7 @@ Index: content.js
  import {
 -  hookTextEncoder,
 +  wrapWithProxy,
++  interceptTextEncoder,
    getGameState,
    getEntityManager,
 +  getFirstAnimal,
@@ -96,8 +95,11 @@ Index: content.js
    getEntityPosition,
    calculateDirection,
 +  findEntityById,
+   startEntityTrail,
    clearTracking_2,
    clearTracking_3,
+   startAutoFarm,
+-  initAntiTamper,
 +  initGameHooks,
    initializeApp,
 -  stateMap,
@@ -105,8 +107,8 @@ Index: content.js
 +  angles,
    radius,
    offsetValue,
-+  gameInstance,
-+  animalData,
+   gameInstance,
+   animalData,
    settings,
 -  isEnabled,
 +  isProcessed,
@@ -157,10 +159,17 @@ Index: src/core.js
 ===================================================================
 --- src/core.js	v1.7
 +++ src/core.js	v1.8
-@@ -1,153 +1,48 @@
+@@ -1,50 +1,51 @@
  import { showNotification } from "./ui/interaction.js";
+ import {
+-  getEntityById,
+   calculateDistance,
+   getNearbyEntities,
+-  proxyProperty,
+   getAllPropertyNames,
+ } from "./utils.js";
+ import { setupPatrolPoints, autoFarmLoop } from "./features/autofarm.js";
 -import { setTheme, initHomeBackground, injectStyles } from "./ui/theme.js";
-+import { getAllPropertyNames } from "./utils.js";
 +import { applyTheme, initBackground, injectStyles } from "./ui/theme.js";
  import {
    createToolsPanel,
@@ -175,127 +184,23 @@ Index: src/core.js
  import { initAdBlocker } from "./features/adblock.js";
 -import { initRadarDragging } from "./ui/radar.js";
 -import { renderEspOverlay, trackPlayer } from "./features/esp.js";
--import { renderOverlayLoop } from "./features/entitytrail.js";
 +import { initRadarDrag } from "./ui/radar.js";
 +import { renderEspLoop, trackPlayer } from "./features/esp.js";
-+import { renderOverlay } from "./features/entitytrail.js";
++import { renderOverlay, toggleEntityTrail } from "./features/entitytrail.js";
  import {
+-  renderOverlayLoop,
+-  toggleEntityTrail,
+-} from "./features/entitytrail.js";
+-import {
    updateLockOnTarget,
    autoDodgeLoop,
    toggleLock,
  } from "./features/aimbot.js";
 -import { moveMouseToSide } from "./features/movement.js";
--import { initAntiTamper } from "./features/antidetection.js";
 -let stateMap = new WeakMap();
 -let isActive = false;
 -function hookTextEncoder() {
 -  if (isActive) {
--    return;
--  }
--  function unescapeString(inputString) {
--    if (typeof inputString !== "string") {
--      return inputString;
--    }
--    return inputString.replace(
--      /\\(\\|n|r|t|b|f|v|\d{1,3}|x([\da-fA-F]{2})|u([\da-fA-F]{4})|u\{(0*[\da-fA-F]{1,6})\})/g,
--      (match, octalString, hexString1, hexString2, hexString3) => {
--        switch (octalString[0]) {
--          case "\\":
--            return "\\";
--          case "n":
--            return "\n";
--          case "r":
--            return "\r";
--          case "t":
--            return "\t";
--          case "b":
--            return "\b";
--          case "f":
--            return "\f";
--          case "v":
--            return "";
--          case "0":
--          case "1":
--          case "2":
--          case "3":
--          case "4":
--          case "5":
--          case "6":
--          case "7":
--            return String.fromCharCode(Number.parseInt(octalString, 8) || 0);
--          default:
--            if (hexString1 != null) {
--              return String.fromCharCode(Number.parseInt(hexString1, 16) || 0);
--            }
--            if (hexString2 != null) {
--              return String.fromCharCode(Number.parseInt(hexString2, 16) || 0);
--            }
--            if (hexString3 != null) {
--              const codePoint = Number.parseInt(hexString3, 16) || 0;
--              if (codePoint > 1114111) {
--                return match;
--              } else {
--                return String.fromCodePoint(codePoint);
--              }
--            }
--            return octalString;
--        }
--      },
--    );
--  }
--  const actionIds = {
--    spawn: 22,
--    createTribe: 5,
--    chat: 100,
--  };
--  const originalEncode = TextEncoder.prototype.encode;
--  TextEncoder.prototype.encode = function (...inputData) {
--    try {
--      const commandPatterns = [
--        /^(\x14{3}\d+\|6\|)(.+)$/gm,
--        /^(\x14{3}\d+\|8\|)(.+)$/gm,
--        /^(\x14{3}\d+\|14\|)(.+)$/gm,
--        /^(\x13{3}[01])(.+)$/gm,
--      ];
--      for (
--        let patternIndex = 0;
--        patternIndex < commandPatterns.length;
--        patternIndex++
--      ) {
--        const matchResult = commandPatterns[patternIndex].exec(inputData[0]);
--        if (matchResult && matchResult.length === 3) {
--          const commandHandler = [
--            actionIds.spawn,
--            actionIds.spawn,
--            actionIds.createTribe,
--            actionIds.chat,
--          ][patternIndex];
--          inputData[0] =
--            matchResult[1] +
--            unescapeString(matchResult[2]).substr(0, commandHandler);
--          break;
--        }
--      }
--    } catch {}
--    return Reflect.apply(originalEncode, this, inputData);
--  };
--  const inputMaxLengthObserver = new MutationObserver(() => {
--    document
--      .querySelector(".play-game .el-input__inner")
--      ?.setAttribute("maxlength", "80");
--    document
--      .querySelector(".new-tribe .el-input__inner")
--      ?.setAttribute("maxlength", "20");
--    document
--      .querySelector(".chat-input input")
--      ?.setAttribute("maxLength", "1000");
--  });
--  inputMaxLengthObserver.observe(document.body, {
--    childList: true,
--    subtree: true,
--  });
--  isActive = true;
--  showNotification("Special characters enabled");
 +import { moveMouseSide } from "./features/movement.js";
 +const stateMap = new WeakMap();
 +function wrapWithProxy(targetObject, propertyKey, proxyHandler) {
@@ -303,49 +208,123 @@ Index: src/core.js
 +  const proxyValue = new Proxy(originalValue, proxyHandler);
 +  stateMap.set(proxyValue, originalValue);
 +  targetObject[propertyKey] = proxyValue;
++}
++let isFinished = false;
++function interceptTextEncoder() {
++  if (isFinished) {
+     return;
+   }
+   function unescapeString(inputString) {
+     if (typeof inputString !== "string") {
+       return inputString;
+     }
+     return inputString.replace(
+       /\\(\\|n|r|t|b|f|v|\d{1,3}|x([\da-fA-F]{2})|u([\da-fA-F]{4})|u\{(0*[\da-fA-F]{1,6})\})/g,
+-      (match, octalString, hexString1, hexString2, hexString3) => {
+-        switch (octalString[0]) {
++      (match, octalStr, hexStr1, hexStr2, hexStr3) => {
++        switch (octalStr[0]) {
+           case "\\":
+             return "\\";
+           case "n":
+             return "\n";
+@@ -65,36 +66,36 @@
+           case "4":
+           case "5":
+           case "6":
+           case "7":
+-            return String.fromCharCode(Number.parseInt(octalString, 8) || 0);
++            return String.fromCharCode(Number.parseInt(octalStr, 8) || 0);
+           default:
+-            if (hexString1 != null) {
+-              return String.fromCharCode(Number.parseInt(hexString1, 16) || 0);
++            if (hexStr1 != null) {
++              return String.fromCharCode(Number.parseInt(hexStr1, 16) || 0);
+             }
+-            if (hexString2 != null) {
+-              return String.fromCharCode(Number.parseInt(hexString2, 16) || 0);
++            if (hexStr2 != null) {
++              return String.fromCharCode(Number.parseInt(hexStr2, 16) || 0);
+             }
+-            if (hexString3 != null) {
+-              const codePoint = Number.parseInt(hexString3, 16) || 0;
++            if (hexStr3 != null) {
++              const codePoint = Number.parseInt(hexStr3, 16) || 0;
+               if (codePoint > 1114111) {
+                 return match;
+               } else {
+                 return String.fromCodePoint(codePoint);
+               }
+             }
+-            return octalString;
++            return octalStr;
+         }
+       },
+     );
+   }
+-  const actionIds = {
++  const actionCodes = {
+     spawn: 22,
+     createTribe: 5,
+     chat: 100,
+   };
+   const originalEncode = TextEncoder.prototype.encode;
+-  TextEncoder.prototype.encode = function (...inputData) {
++  TextEncoder.prototype.encode = function (...inputArgs) {
+     try {
+       const commandPatterns = [
+         /^(\x14{3}\d+\|6\|)(.+)$/gm,
+         /^(\x14{3}\d+\|8\|)(.+)$/gm,
+@@ -105,24 +106,24 @@
+         let patternIndex = 0;
+         patternIndex < commandPatterns.length;
+         patternIndex++
+       ) {
+-        const matchResult = commandPatterns[patternIndex].exec(inputData[0]);
++        const matchResult = commandPatterns[patternIndex].exec(inputArgs[0]);
+         if (matchResult && matchResult.length === 3) {
+-          const commandHandler = [
+-            actionIds.spawn,
+-            actionIds.spawn,
+-            actionIds.createTribe,
+-            actionIds.chat,
++          const actionHandler = [
++            actionCodes.spawn,
++            actionCodes.spawn,
++            actionCodes.createTribe,
++            actionCodes.chat,
+           ][patternIndex];
+-          inputData[0] =
++          inputArgs[0] =
+             matchResult[1] +
+-            unescapeString(matchResult[2]).substr(0, commandHandler);
++            unescapeString(matchResult[2]).substr(0, actionHandler);
+           break;
+         }
+       }
+     } catch {}
+-    return Reflect.apply(originalEncode, this, inputData);
++    return Reflect.apply(originalEncode, this, inputArgs);
+   };
+   const inputMaxLengthObserver = new MutationObserver(() => {
+     document
+       .querySelector(".play-game .el-input__inner")
+@@ -137,12 +138,12 @@
+   inputMaxLengthObserver.observe(document.body, {
+     childList: true,
+     subtree: true,
+   });
+-  isActive = true;
++  isFinished = true;
+   showNotification("Special characters enabled");
  }
 -const angleDegrees = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
 +const angles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
  const radius = 300;
  const offsetValue = 400;
-+let gameInstance;
-+let appState;
-+let animalData;
- const settings = {};
- function getGameState() {
-   try {
--    if (
--      state.animalData &&
--      state.animalData.myAnimals &&
--      state.animalData.myAnimals.length > 0
--    ) {
--      return state.animalData;
-+    if (animalData && animalData.myAnimals && animalData.myAnimals.length > 0) {
-+      return animalData;
-     }
-     const states = window.__ss?.states;
-     if (!states) {
--      return state.animalData || null;
-+      return animalData || null;
-     }
-     for (let i = 0; i < states.length; i++) {
-       if (states[i]?.gameScene?.myAnimals) {
-         return states[i].gameScene;
-@@ -159,11 +54,11 @@
-           }
-         }
-       }
-     }
--    return state.animalData || null;
-+    return animalData || null;
-   } catch (error) {
--    return state.animalData || null;
-+    return animalData || null;
-   }
- }
- function getEntityManager(gameState) {
-   if (!gameState) {
-@@ -195,18 +90,35 @@
+ let gameInstance;
+ let appState;
+@@ -204,18 +205,35 @@
      }
    }
    return null;
@@ -386,7 +365,7 @@ Index: src/core.js
    } catch (error) {
      return null;
    }
-@@ -252,9 +164,45 @@
+@@ -261,9 +279,45 @@
      dirX: dirX,
      dirY: dirY,
    };
@@ -429,11 +408,22 @@ Index: src/core.js
 +  }
 +}
 +let isProcessed = false;
- let dragState = {
-   dragging: false,
-   offsetX: 0,
-   offsetY: 0,
-@@ -270,37 +218,157 @@
+ function startEntityTrail() {
+   if (state.trailInterval) {
+     clearInterval(state.trailInterval);
+     state.trailInterval = null;
+@@ -271,9 +325,9 @@
+   state.trailInterval = setInterval(() => {
+     if (!window.entityTrailEnabled || !window.entityTrailTargetId) {
+       return;
+     }
+-    const targetEntityId = getEntityById(window.entityTrailTargetId);
++    const targetEntityId = findEntityById(window.entityTrailTargetId);
+     if (!targetEntityId) {
+       const gameState = getNearbyEntities();
+       if (gameState && gameState.players && gameState.players.length > 0) {
+         window.entityTrailTargetId = gameState.players[0].id;
+@@ -323,12 +377,12 @@
  function clearTracking_3() {
    window.autoDodgeEnabled = false;
    showNotification("Auto dodge disabled");
@@ -446,128 +436,181 @@ Index: src/core.js
 +const timeThreshold = 20000;
 +const timeLimit = 600;
  let randomAngle = 0;
--let pressedKey = "Shift";
+ function startAutoFarm(farmMode) {
+   window.autoFarmMode = farmMode || "nearest";
+   window.autoFarmActive = true;
+@@ -338,98 +392,93 @@
+   window.autoFarmTargetStartTime = 0;
+   window.autoFarmSkipIds.clear();
+   window.autoFarmSkipAreas = [];
+   window.autoFarmSkipClearTime = Date.now();
+-  state.currentPosition = null;
++  state.currentPosition_2 = null;
+   state.counter_2 = 0;
++  state.lastValue2 = 0;
+   state.lastTimestamp_2 = 0;
+-  state.previousTimestamp = 0;
+   if (farmMode === "patrol") {
+     setupPatrolPoints();
+   }
+   showNotification("Auto farm started (" + window.autoFarmMode + ")");
+-  if (!state.isActive_3) {
+-    state.isActive_3 = true;
++  if (!state.isActive_2) {
++    state.isActive_2 = true;
+     autoFarmLoop();
+   }
+ }
+-let isReady = false;
+-const initAntiTamper = () => {
+-  if (isReady) {
 +let isReady_2 = false;
 +const initGameHooks = () => {
 +  if (isReady_2) {
-+    return;
-+  }
+     return;
+   }
+-  isReady = true;
 +  isReady_2 = true;
-+  const cache = {};
+   const cache = {};
+-  for (const reflectMethod of Object.getOwnPropertyNames(Reflect)) {
+-    cache[reflectMethod] = Reflect[reflectMethod];
 +  for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
 +    cache[propertyKey] = Reflect[propertyKey];
-+  }
+   }
+-  const Proxy = Proxy;
 +  const ProxyConstructor = Proxy;
-+  const lookupGetter = Object.prototype.__lookupGetter__;
+   const lookupGetter = Object.prototype.__lookupGetter__;
+-  const wrapProperty = (target, key, value) => {
+-    const instance = new Proxy(target[key], value);
+-    stateMap.set(instance, target[key]);
+-    target[key] = instance;
 +  const wrapValue = (target, key, value) => {
 +    const wrappedValue = new ProxyConstructor(target[key], value);
 +    stateMap.set(wrappedValue, target[key]);
 +    target[key] = wrappedValue;
-+  };
+   };
+-  wrapProperty(Function.prototype, "toString", {
+-    apply(thisArg, argsKey, callContext) {
+-      return cache.apply(
+-        thisArg,
+-        stateMap.get(argsKey) || argsKey,
+-        callContext,
+-      );
 +  wrapValue(Function.prototype, "toString", {
 +    apply(thisArg, argsKey, context) {
 +      return cache.apply(thisArg, stateMap.get(argsKey) || argsKey, context);
-+    },
-+  });
+     },
+   });
+-  wrapProperty(window, "Proxy", {
 +  wrapValue(window, "Proxy", {
-+    construct(constructor, constructorArgs) {
-+      return cache.construct(constructor, constructorArgs);
-+    },
-+  });
+     construct(constructor, constructorArgs) {
+       return cache.construct(constructor, constructorArgs);
+     },
+   });
+-  wrapProperty(Proxy, "revocable", {
+-    apply(applyThisArg, applyArgs, applyContext) {
+-      return cache.apply(applyThisArg, applyArgs, applyContext);
 +  wrapValue(ProxyConstructor, "revocable", {
 +    apply(targetContext, argsArray, extraArgs) {
 +      return cache.apply(targetContext, argsArray, extraArgs);
-+    },
-+  });
+     },
+   });
+-  let lastExecutionTime = 0;
+-  wrapProperty(Function.prototype, "bind", {
+-    apply(thisContext, args, extraArgs) {
 +  let lastTimestamp = 0;
 +  wrapValue(Function.prototype, "bind", {
 +    apply(thisContext, argsArray_2, extraParam) {
-+      try {
-+        try {
-+          if (
+       try {
+         try {
+           if (
+-            lookupGetter.call(extraArgs[0], "aboveBgPlatformsContainer") != null
 +            lookupGetter.call(extraParam[0], "aboveBgPlatformsContainer") !=
 +            null
-+          ) {
+           ) {
+-            return cache.apply(thisContext, args, extraArgs);
 +            return cache.apply(thisContext, argsArray_2, extraParam);
-+          }
-+        } catch {}
+           }
+         } catch {}
+-        if (extraArgs[0] && extraArgs[0].aboveBgPlatformsContainer != null) {
+-          animalData = extraArgs[0];
+-          gameInstance = extraArgs[0].game;
 +        if (extraParam[0] && extraParam[0].aboveBgPlatformsContainer != null) {
 +          animalData = extraParam[0];
 +          gameInstance = extraParam[0].game;
-+          window.__cachedEM = null;
+           window.__cachedEM = null;
+-          const propertyNames = getAllPropertyNames(animalData);
+-          const obfuscatedPropertyNames = propertyNames.filter((varName) =>
 +          const allKeys = getAllPropertyNames(animalData);
 +          const obfuscatedKeys = allKeys.filter((varName) =>
-+            varName.startsWith("_0x"),
-+          );
-+          settings.setFlash =
-+            Object.getOwnPropertyNames(animalData.__proto__.__proto__)
+             varName.startsWith("_0x"),
+           );
+           settings.setFlash =
+             Object.getOwnPropertyNames(animalData.__proto__.__proto__)
+-              .filter((propName) => propName.startsWith("_0x"))
 +              .filter((identifier) => identifier.startsWith("_0x"))
-+              .find(
+               .find(
+-                (methodName) => animalData[methodName] instanceof Function,
 +                (functionKey) => animalData[functionKey] instanceof Function,
-+              ) || settings.setFlash;
-+          settings.terrainManager =
+               ) || settings.setFlash;
+           settings.terrainManager =
+-            obfuscatedPropertyNames.find(
+-              (shadowEntityKey) =>
+-                typeof animalData[shadowEntityKey]?.shadow !== "undefined",
 +            obfuscatedKeys.find(
 +              (shadowKey) =>
 +                typeof animalData[shadowKey]?.shadow !== "undefined",
-+            ) || settings.terrainManager;
-+          settings.entityManager =
+             ) || settings.terrainManager;
+           settings.entityManager =
+-            obfuscatedPropertyNames.find(
+-              (entitiesListKey) =>
+-                typeof animalData[entitiesListKey]?.entitiesList !==
+-                "undefined",
 +            obfuscatedKeys.find(
 +              (entitiesKey) =>
 +                typeof animalData[entitiesKey]?.entitiesList !== "undefined",
-+            ) || settings.entityManager;
-+          settings.socketManager =
-+            getAllPropertyNames(gameInstance).find(
+             ) || settings.entityManager;
+           settings.socketManager =
+             getAllPropertyNames(gameInstance).find(
+-              (networkClientKey) =>
+-                typeof gameInstance[networkClientKey]?.sendBytePacket !==
+-                "undefined",
 +              (networkKey) =>
 +                typeof gameInstance[networkKey]?.sendBytePacket !== "undefined",
-+            ) || settings.socketManager;
-+          try {
-+            appState = document
-+              .getElementById("app")
-+              ._vnode.appContext.config.globalProperties.$simpleState.states.find(
-+                (gameStore) => gameStore._storeMeta.id === "game",
-+              );
-+          } catch {}
-+          let intervalId;
-+          try {
-+            clearInterval(intervalId);
-+          } catch {}
-+          intervalId = setInterval(() => {
-+            try {
-+              if (!animalData?.myAnimals?.[0]) {
-+                return;
-+              }
-+              const firstAnimal = animalData.myAnimals[0];
-+              if (firstAnimal.fadingTrail) {
+             ) || settings.socketManager;
+           try {
+             appState = document
+               .getElementById("app")
+@@ -447,9 +496,9 @@
+                 return;
+               }
+               const firstAnimal = animalData.myAnimals[0];
+               if (firstAnimal.fadingTrail) {
+-                proxyProperty(
 +                wrapWithProxy(
-+                  Object.getPrototypeOf(firstAnimal.fadingTrail),
-+                  "enable",
-+                  {
-+                    apply() {},
-+                  },
-+                );
-+              }
-+              if (firstAnimal.bubblesEmitter) {
-+                Object.defineProperty(
-+                  Object.getPrototypeOf(firstAnimal.bubblesEmitter),
-+                  "emit",
-+                  {
-+                    set: () => {},
-+                  },
-+                );
-+              }
-+              clearInterval(intervalId);
-+            } catch {}
-+          }, 200);
+                   Object.getPrototypeOf(firstAnimal.fadingTrail),
+                   "enable",
+                   {
+                     apply() {},
+@@ -467,42 +516,41 @@
+               }
+               clearInterval(intervalId);
+             } catch {}
+           }, 200);
+-          if (lastExecutionTime < Date.now() - 3000) {
 +          if (state.lastTimestamp < Date.now() - 3000) {
-+            showNotification("Client loaded");
+             showNotification("Client loaded");
+-            lastExecutionTime = Date.now();
 +            state.lastTimestamp = Date.now();
-+          }
-+        }
-+      } catch {}
+           }
+         }
+       } catch {}
+-      return cache.apply(thisContext, args, extraArgs);
 +      return cache.apply(thisContext, argsArray_2, extraParam);
-+    },
-+  });
-+};
+     },
+   });
+ };
+-let pressedKey = "Shift";
  let isEnabled_2 = false;
  function initializeApp() {
    if (isEnabled_2) {
@@ -603,7 +646,7 @@ Index: src/core.js
    }, 1000);
  }
  document.addEventListener(
-@@ -314,14 +382,14 @@
+@@ -516,14 +564,14 @@
      }
      if (event.key.toLowerCase() === state.currentKey.toLowerCase()) {
        event.preventDefault();
@@ -621,7 +664,27 @@ Index: src/core.js
    },
    true,
  );
-@@ -355,9 +423,9 @@
+@@ -552,14 +600,14 @@
+     if (event_3.repeat) {
+       return;
+     }
+     const entityTraceKey = window.entityTraceKey.toLowerCase();
+-    const lowercaseKey = event_3.key.toLowerCase();
+-    const lowercaseCode = event_3.code.toLowerCase();
++    const entityKey = event_3.key.toLowerCase();
++    const entityCode = event_3.code.toLowerCase();
+     if (
+-      lowercaseKey === entityTraceKey ||
+-      lowercaseCode === entityTraceKey ||
+-      lowercaseCode === "key" + entityTraceKey
++      entityKey === entityTraceKey ||
++      entityCode === entityTraceKey ||
++      entityCode === "key" + entityTraceKey
+     ) {
+       event_3.preventDefault();
+       toggleEntityTrail();
+     }
+@@ -580,9 +628,9 @@
    }
  });
  document.addEventListener("keydown", (keyboardEvent) => {
@@ -632,7 +695,7 @@ Index: src/core.js
      !keyboardEvent.target.matches("input,textarea,button,select")
    ) {
      keyboardEvent.preventDefault();
-@@ -365,65 +433,66 @@
+@@ -590,66 +638,68 @@
    }
  });
  window.addEventListener("load", () => {
@@ -655,14 +718,10 @@ Index: src/core.js
    isProcessing: false,
 -  animationIntervalId: null,
 -  angleIndex: 0,
-+  isFinished: false,
 +  secondaryIntervalId: null,
 +  currentIndex: 0,
    currentKey: "q",
 -  activeKey: "e",
--  gameInstance: null,
--  appState: null,
--  animalData: null,
 -  isProcessed: false,
 +  currentKey_2: "e",
 +  isEnabled: false,
@@ -684,7 +743,6 @@ Index: src/core.js
 +  dataList: [],
    lastTimestamp_2: 0,
 -  lastOffset: 0,
--  isReady: false,
 +  lastValue_2: 0,
 +  isActive_2: false,
 +  currentPosition_2: null,
@@ -696,6 +754,7 @@ Index: src/core.js
  export {
 -  hookTextEncoder,
 +  wrapWithProxy,
++  interceptTextEncoder,
    getGameState,
    getEntityManager,
 +  getFirstAnimal,
@@ -703,8 +762,11 @@ Index: src/core.js
    getEntityPosition,
    calculateDirection,
 +  findEntityById,
+   startEntityTrail,
    clearTracking_2,
    clearTracking_3,
+   startAutoFarm,
+-  initAntiTamper,
 +  initGameHooks,
    initializeApp,
 -  stateMap,
@@ -712,8 +774,8 @@ Index: src/core.js
 +  angles,
    radius,
    offsetValue,
-+  gameInstance,
-+  animalData,
+   gameInstance,
+   animalData,
    settings,
 -  isEnabled,
 +  isProcessed,
@@ -1207,254 +1269,11 @@ Index: src/features/aimbot.js
    autoDodgeLoop,
    enableAutoDodge,
  };
-Index: src/features/antidetection.js
-===================================================================
---- src/features/antidetection.js	v1.7
-+++ src/features/antidetection.js	v1.8
-@@ -1,133 +1,114 @@
--import { proxyProperty, getAllPropertyNames } from "../utils.js";
- import { showNotification } from "../ui/interaction.js";
--import { stateMap, settings, state } from "../core.js";
-+import { state } from "../core.js";
- 
--const initAntiTamper = () => {
--  if (state.isReady) {
-+function interceptTextEncoder() {
-+  if (state.isFinished) {
-     return;
-   }
--  state.isReady = true;
--  const cache = {};
--  for (const reflectMethod of Object.getOwnPropertyNames(Reflect)) {
--    cache[reflectMethod] = Reflect[reflectMethod];
-+  function unescapeString(inputString) {
-+    if (typeof inputString !== "string") {
-+      return inputString;
-+    }
-+    return inputString.replace(
-+      /\\(\\|n|r|t|b|f|v|\d{1,3}|x([\da-fA-F]{2})|u([\da-fA-F]{4})|u\{(0*[\da-fA-F]{1,6})\})/g,
-+      (match, octalStr, hexStr1, hexStr2, hexStr3) => {
-+        switch (octalStr[0]) {
-+          case "\\":
-+            return "\\";
-+          case "n":
-+            return "\n";
-+          case "r":
-+            return "\r";
-+          case "t":
-+            return "\t";
-+          case "b":
-+            return "\b";
-+          case "f":
-+            return "\f";
-+          case "v":
-+            return "";
-+          case "0":
-+          case "1":
-+          case "2":
-+          case "3":
-+          case "4":
-+          case "5":
-+          case "6":
-+          case "7":
-+            return String.fromCharCode(Number.parseInt(octalStr, 8) || 0);
-+          default:
-+            if (hexStr1 != null) {
-+              return String.fromCharCode(Number.parseInt(hexStr1, 16) || 0);
-+            }
-+            if (hexStr2 != null) {
-+              return String.fromCharCode(Number.parseInt(hexStr2, 16) || 0);
-+            }
-+            if (hexStr3 != null) {
-+              const codePoint = Number.parseInt(hexStr3, 16) || 0;
-+              if (codePoint > 1114111) {
-+                return match;
-+              } else {
-+                return String.fromCodePoint(codePoint);
-+              }
-+            }
-+            return octalStr;
-+        }
-+      },
-+    );
-   }
--  const Proxy = Proxy;
--  const lookupGetter = Object.prototype.__lookupGetter__;
--  const wrapProperty = (target, key, value) => {
--    const instance = new Proxy(target[key], value);
--    stateMap.set(instance, target[key]);
--    target[key] = instance;
-+  const actionCodes = {
-+    spawn: 22,
-+    createTribe: 5,
-+    chat: 100,
-   };
--  wrapProperty(Function.prototype, "toString", {
--    apply(thisArg, argsKey, callContext) {
--      return cache.apply(
--        thisArg,
--        stateMap.get(argsKey) || argsKey,
--        callContext,
--      );
--    },
--  });
--  wrapProperty(window, "Proxy", {
--    construct(constructor, constructorArgs) {
--      return cache.construct(constructor, constructorArgs);
--    },
--  });
--  wrapProperty(Proxy, "revocable", {
--    apply(applyThisArg, applyArgs, applyContext) {
--      return cache.apply(applyThisArg, applyArgs, applyContext);
--    },
--  });
--  let lastExecutionTime = 0;
--  wrapProperty(Function.prototype, "bind", {
--    apply(thisContext, args, extraArgs) {
--      try {
--        try {
--          if (
--            lookupGetter.call(extraArgs[0], "aboveBgPlatformsContainer") != null
--          ) {
--            return cache.apply(thisContext, args, extraArgs);
--          }
--        } catch {}
--        if (extraArgs[0] && extraArgs[0].aboveBgPlatformsContainer != null) {
--          state.animalData = extraArgs[0];
--          state.gameInstance = extraArgs[0].game;
--          window.__cachedEM = null;
--          const propertyNames = getAllPropertyNames(state.animalData);
--          const obfuscatedPropertyNames = propertyNames.filter((varName) =>
--            varName.startsWith("_0x"),
--          );
--          settings.setFlash =
--            Object.getOwnPropertyNames(state.animalData.__proto__.__proto__)
--              .filter((propName) => propName.startsWith("_0x"))
--              .find(
--                (methodName) =>
--                  state.animalData[methodName] instanceof Function,
--              ) || settings.setFlash;
--          settings.terrainManager =
--            obfuscatedPropertyNames.find(
--              (shadowEntityKey) =>
--                typeof state.animalData[shadowEntityKey]?.shadow !==
--                "undefined",
--            ) || settings.terrainManager;
--          settings.entityManager =
--            obfuscatedPropertyNames.find(
--              (entitiesListKey) =>
--                typeof state.animalData[entitiesListKey]?.entitiesList !==
--                "undefined",
--            ) || settings.entityManager;
--          settings.socketManager =
--            getAllPropertyNames(state.gameInstance).find(
--              (networkClientKey) =>
--                typeof state.gameInstance[networkClientKey]?.sendBytePacket !==
--                "undefined",
--            ) || settings.socketManager;
--          try {
--            state.appState = document
--              .getElementById("app")
--              ._vnode.appContext.config.globalProperties.$simpleState.states.find(
--                (gameStore) => gameStore._storeMeta.id === "game",
--              );
--          } catch {}
--          let intervalId;
--          try {
--            clearInterval(intervalId);
--          } catch {}
--          intervalId = setInterval(() => {
--            try {
--              if (!state.animalData?.myAnimals?.[0]) {
--                return;
--              }
--              const firstAnimal = state.animalData.myAnimals[0];
--              if (firstAnimal.fadingTrail) {
--                proxyProperty(
--                  Object.getPrototypeOf(firstAnimal.fadingTrail),
--                  "enable",
--                  {
--                    apply() {},
--                  },
--                );
--              }
--              if (firstAnimal.bubblesEmitter) {
--                Object.defineProperty(
--                  Object.getPrototypeOf(firstAnimal.bubblesEmitter),
--                  "emit",
--                  {
--                    set: () => {},
--                  },
--                );
--              }
--              clearInterval(intervalId);
--            } catch {}
--          }, 200);
--          if (lastExecutionTime < Date.now() - 3000) {
--            showNotification("Client loaded");
--            lastExecutionTime = Date.now();
--          }
-+  const originalEncode = TextEncoder.prototype.encode;
-+  TextEncoder.prototype.encode = function (...inputArgs) {
-+    try {
-+      const commandPatterns = [
-+        /^(\x14{3}\d+\|6\|)(.+)$/gm,
-+        /^(\x14{3}\d+\|8\|)(.+)$/gm,
-+        /^(\x14{3}\d+\|14\|)(.+)$/gm,
-+        /^(\x13{3}[01])(.+)$/gm,
-+      ];
-+      for (
-+        let patternIndex = 0;
-+        patternIndex < commandPatterns.length;
-+        patternIndex++
-+      ) {
-+        const matchResult = commandPatterns[patternIndex].exec(inputArgs[0]);
-+        if (matchResult && matchResult.length === 3) {
-+          const actionHandler = [
-+            actionCodes.spawn,
-+            actionCodes.spawn,
-+            actionCodes.createTribe,
-+            actionCodes.chat,
-+          ][patternIndex];
-+          inputArgs[0] =
-+            matchResult[1] +
-+            unescapeString(matchResult[2]).substr(0, actionHandler);
-+          break;
-         }
--      } catch {}
--      return cache.apply(thisContext, args, extraArgs);
--    },
-+      }
-+    } catch {}
-+    return Reflect.apply(originalEncode, this, inputArgs);
-+  };
-+  const inputMaxLengthObserver = new MutationObserver(() => {
-+    document
-+      .querySelector(".play-game .el-input__inner")
-+      ?.setAttribute("maxlength", "80");
-+    document
-+      .querySelector(".new-tribe .el-input__inner")
-+      ?.setAttribute("maxlength", "20");
-+    document
-+      .querySelector(".chat-input input")
-+      ?.setAttribute("maxLength", "1000");
-   });
--};
-+  inputMaxLengthObserver.observe(document.body, {
-+    childList: true,
-+    subtree: true,
-+  });
-+  state.isFinished = true;
-+  showNotification("Special characters enabled");
-+}
- 
--export { initAntiTamper };
-+export { interceptTextEncoder };
 Index: src/features/autofarm.js
 ===================================================================
 --- src/features/autofarm.js	v1.7
 +++ src/features/autofarm.js	v1.8
-@@ -1,19 +1,19 @@
+@@ -1,20 +1,20 @@
  import { calculateDistance, isPlayer, getGameCanvas } from "../utils.js";
  import { showNotification } from "../ui/interaction.js";
  import {
@@ -1470,6 +1289,7 @@ Index: src/features/autofarm.js
    randomAngle,
 -  timeThreshold,
 +  timeLimit,
+   startAutoFarm,
    state,
  } from "../core.js";
 -import { movePointerToTarget } from "./aimbot.js";
@@ -1478,7 +1298,7 @@ Index: src/features/autofarm.js
  window.autoFarmActive = false;
  window.autoFarmMode = "nearest";
  window.autoFarmRange = 3000;
-@@ -35,13 +35,13 @@
+@@ -36,13 +36,13 @@
  
  function handleFarmFailure(x, y) {
    const currentTime = Date.now();
@@ -1494,7 +1314,7 @@ Index: src/features/autofarm.js
    if (existingArea) {
      existingArea.failCount++;
      existingArea.time = currentTime;
-@@ -52,9 +52,9 @@
+@@ -53,9 +53,9 @@
    } else {
      window.autoFarmSkipAreas.push({
        x: x,
@@ -1505,7 +1325,7 @@ Index: src/features/autofarm.js
        failCount: 1,
        skipped: false,
      });
-@@ -62,9 +62,9 @@
+@@ -63,9 +63,9 @@
  }
  function isAreaSkipped(x, y) {
    const currentTime = Date.now();
@@ -1516,7 +1336,7 @@ Index: src/features/autofarm.js
    return window.autoFarmSkipAreas.some(
      (cell) =>
        cell.skipped && calculateDistance(x, y, cell.x, cell.y) < cell.radius,
-@@ -134,27 +134,27 @@
+@@ -135,27 +135,27 @@
    } catch (error) {
      return null;
    }
@@ -1551,7 +1371,7 @@ Index: src/features/autofarm.js
          !targetEntity ||
          targetEntity.id === myAnimal.id ||
          window.autoFarmSkipIds.has(targetEntity.id)
-@@ -176,61 +176,66 @@
+@@ -177,61 +177,66 @@
          isAreaSkipped(targetX, targetY)
        ) {
          return;
@@ -1639,7 +1459,7 @@ Index: src/features/autofarm.js
  function calculatePlayerAvoidanceVector() {
    if (!window.autoFarmAvoidPlayers) {
      return {
-@@ -275,24 +280,24 @@
+@@ -276,24 +281,24 @@
            : targetEntity.position?.y;
        if (targetX == null || targetY == null) {
          return;
@@ -1671,7 +1491,7 @@ Index: src/features/autofarm.js
        }
      });
    } catch (data) {}
-@@ -304,16 +309,16 @@
+@@ -305,16 +310,16 @@
  function simulateEvolveKey() {
    if (!window.autoFarmEvolve) {
      return;
@@ -1692,7 +1512,7 @@ Index: src/features/autofarm.js
      code: "Digit" + randomDigit,
      keyCode: randomDigit.charCodeAt(0),
      which: randomDigit.charCodeAt(0),
-@@ -324,30 +329,34 @@
+@@ -325,30 +330,34 @@
      if (!targetElement) {
        return;
      }
@@ -1735,7 +1555,7 @@ Index: src/features/autofarm.js
      ) {
        state.counter_2++;
        if (state.counter_2 >= 1 && window.autoFarmCurrentTarget) {
-@@ -364,9 +373,9 @@
+@@ -365,9 +374,9 @@
          state.counter_2 = 0;
          window.autoFarmCurrentTarget = null;
          window.autoFarmTargetStartTime = 0;
@@ -1746,7 +1566,7 @@ Index: src/features/autofarm.js
            currentPos.y + Math.sin(randomAngle) * 1500,
            true,
          );
-@@ -375,9 +384,9 @@
+@@ -376,9 +385,9 @@
      } else {
        state.counter_2 = 0;
      }
@@ -1757,7 +1577,7 @@ Index: src/features/autofarm.js
      y: currentPos.y,
    };
    return false;
-@@ -398,20 +407,20 @@
+@@ -399,20 +408,20 @@
    window.autoFarmPatrolIndex = 0;
  }
  function autoFarmLoop() {
@@ -1783,7 +1603,7 @@ Index: src/features/autofarm.js
      handleFarmFailure(
        window.autoFarmCurrentTarget.x,
        window.autoFarmCurrentTarget.y,
-@@ -422,163 +431,162 @@
+@@ -423,172 +432,171 @@
      setTimeout(autoFarmLoop, 100);
      return;
    }
@@ -2016,27 +1836,7 @@ Index: src/features/autofarm.js
    } catch (errorMessage) {
      console.error("[AutoFarm]", errorMessage);
    }
-@@ -593,24 +601,24 @@
-   window.autoFarmTargetStartTime = 0;
-   window.autoFarmSkipIds.clear();
-   window.autoFarmSkipAreas = [];
-   window.autoFarmSkipClearTime = Date.now();
--  state.currentPosition = null;
-+  state.currentPosition_2 = null;
-   state.counter_2 = 0;
-+  state.lastValue2 = 0;
-   state.lastTimestamp_2 = 0;
--  state.previousTimestamp = 0;
-   if (farmMode === "patrol") {
-     setupPatrolPoints();
-   }
-   showNotification("Auto farm started (" + window.autoFarmMode + ")");
--  if (!state.isActive_3) {
--    state.isActive_3 = true;
-+  if (!state.isActive_2) {
-+    state.isActive_2 = true;
-     autoFarmLoop();
-   }
+   setTimeout(autoFarmLoop, 60);
  }
  function stopAutoFarm() {
    window.autoFarmActive = false;
@@ -2046,7 +1846,7 @@ Index: src/features/autofarm.js
      "Farm stopped. ~" +
        window.autoFarmStats.collected +
        " food in " +
-@@ -646,10 +654,10 @@
+@@ -624,10 +632,10 @@
  export {
    handleFarmFailure,
    isAreaSkipped,
@@ -2138,38 +1938,18 @@ Index: src/features/entitytrail.js
 ===================================================================
 --- src/features/entitytrail.js	v1.7
 +++ src/features/entitytrail.js	v1.8
-@@ -1,12 +1,16 @@
+@@ -1,9 +1,9 @@
+ import { showNotification } from "../ui/interaction.js";
+ import { refreshUI } from "../ui/panels.js";
  import {
--  getEntityById,
-+  getEntityPosition,
-+  findEntityById,
-+  getFirstAnimalPosition,
-+  state,
-+} from "../core.js";
-+import {
-   calculateDistance,
    getNearbyEntities,
 -  getZoomLevel,
 +  getZoomScale,
    getOrCreateOverlayCanvas,
  } from "../utils.js";
--import { getEntityPosition, getFirstAnimalPosition, state } from "../core.js";
- import { showNotification } from "../ui/interaction.js";
- import { refreshUI } from "../ui/panels.js";
+ import { startEntityTrail, getFirstAnimalPosition, state } from "../core.js";
  
- function startEntityTrail() {
-@@ -17,9 +21,9 @@
-   state.trailInterval = setInterval(() => {
-     if (!window.entityTrailEnabled || !window.entityTrailTargetId) {
-       return;
-     }
--    const targetEntityId = getEntityById(window.entityTrailTargetId);
-+    const targetEntityId = findEntityById(window.entityTrailTargetId);
-     if (!targetEntityId) {
-       const gameState = getNearbyEntities();
-       if (gameState && gameState.players && gameState.players.length > 0) {
-         window.entityTrailTargetId = gameState.players[0].id;
-@@ -87,73 +91,72 @@
+@@ -41,73 +41,72 @@
    startEntityTrail();
    showNotification("Tracing: " + targetPlayerName);
    refreshUI();
@@ -2276,28 +2056,8 @@ Index: src/features/entitytrail.js
  window.entityTrailColor = {
    r: 255,
    g: 150,
-@@ -173,14 +176,14 @@
-     if (event_3.repeat) {
-       return;
-     }
-     const entityTraceKey = window.entityTraceKey.toLowerCase();
--    const lowercaseKey = event_3.key.toLowerCase();
--    const lowercaseCode = event_3.code.toLowerCase();
-+    const entityKey = event_3.key.toLowerCase();
-+    const entityCode = event_3.code.toLowerCase();
-     if (
--      lowercaseKey === entityTraceKey ||
--      lowercaseCode === entityTraceKey ||
--      lowercaseCode === "key" + entityTraceKey
-+      entityKey === entityTraceKey ||
-+      entityCode === entityTraceKey ||
-+      entityCode === "key" + entityTraceKey
-     ) {
-       event_3.preventDefault();
-       toggleEntityTrail();
-     }
-@@ -192,6 +195,6 @@
-   startEntityTrail,
+@@ -122,6 +121,6 @@
+ export {
    stopMouseSimulation_2,
    toggleEntityTrail,
    drawEntityTrail,
@@ -2308,7 +2068,7 @@ Index: src/features/esp.js
 ===================================================================
 --- src/features/esp.js	v1.7
 +++ src/features/esp.js	v1.8
-@@ -1,18 +1,20 @@
+@@ -1,19 +1,20 @@
  import {
 -  isPlayer,
 -  getEntityById,
@@ -2323,7 +2083,7 @@ Index: src/features/esp.js
    calculateDirection,
 +  findEntityById,
    getFirstAnimalPosition,
-+  animalData,
+   animalData,
    state,
  } from "../core.js";
 +import {
@@ -2337,7 +2097,7 @@ Index: src/features/esp.js
  import { showNotification } from "../ui/interaction.js";
  
  window.espEnabled = false;
-@@ -28,44 +30,55 @@
+@@ -29,44 +30,55 @@
  };
  window.espTrackedEntityId = null;
  window.espMode = "players";
@@ -2402,7 +2162,7 @@ Index: src/features/esp.js
        ctx.fillText(
          entity.entity?.name || "ID:" + entity.id,
          screenX - boxSize / 2,
-@@ -86,48 +99,48 @@
+@@ -87,48 +99,48 @@
        }
        if (window.lockEnabled && window.lockTargetId === entity.id) {
          ctx.strokeStyle = "#ff0000";
@@ -2462,7 +2222,7 @@ Index: src/features/esp.js
          ctx.fillText(
            Math.round(entity.distance).toString(),
            screenX + boxSize / 2 + 3,
-@@ -136,13 +149,13 @@
+@@ -137,13 +149,13 @@
        }
      }
    });
@@ -2478,7 +2238,7 @@ Index: src/features/esp.js
      return;
    }
    if (!isPlayer(trackedEntity)) {
-@@ -154,21 +167,21 @@
+@@ -155,21 +167,21 @@
      return;
    }
    const centerX = canvas.width / 2;
@@ -2505,7 +2265,7 @@ Index: src/features/esp.js
    ctx.moveTo(centerX, centerY);
    ctx.lineTo(screenX, screenY);
    ctx.strokeStyle = "rgba(255,0,255,0.6)";
-@@ -178,48 +191,48 @@
+@@ -179,48 +191,48 @@
    ctx.setLineDash([]);
    ctx.strokeStyle = "rgba(255,0,255," + pulseOpacity + ")";
    ctx.lineWidth = 3;
@@ -2570,7 +2330,7 @@ Index: src/features/esp.js
    );
    const rectY = Math.max(
      5,
-@@ -283,35 +296,35 @@
+@@ -284,35 +296,35 @@
      ctx.fillText(Math.round(distance).toString(), posX, posY + 4);
      ctx.textAlign = "left";
    }
@@ -2626,30 +2386,7 @@ Index: src/features/esp.js
  function clearTracking() {
    window.espEnabled = !window.espEnabled;
    showNotification(window.espEnabled ? "ESP enabled" : "ESP disabled");
-@@ -328,29 +341,29 @@
-     showNotification("No players nearby");
-   }
- }
- function toggleMinimapSize() {
--  if (!state.animalData || !state.animalData.minimap) {
-+  if (!animalData || !animalData.minimap) {
-     showNotification("Minimap not available");
-     return;
-   }
-   if (state.isMinimapSmall) {
--    state.animalData.minimap.scale.set(1);
--    state.animalData.minimap.pivot.set(0, 0);
-+    animalData.minimap.scale.set(1);
-+    animalData.minimap.pivot.set(0, 0);
-     state.isMinimapSmall = false;
-     showNotification("Minimap restored");
-   } else {
--    state.animalData.minimap.scale.set(0.5);
--    state.animalData.minimap.pivot.set(-70, -45);
-+    animalData.minimap.scale.set(0.5);
-+    animalData.minimap.pivot.set(-70, -45);
-     state.isMinimapSmall = true;
-     showNotification("Small minimap enabled");
+@@ -347,11 +359,11 @@
    }
  }
  
@@ -2776,7 +2513,7 @@ Index: src/features/xray.js
 --- src/features/xray.js	v1.7
 +++ src/features/xray.js	v1.8
 @@ -1,38 +1,50 @@
--import { settings, state } from "../core.js";
+-import { gameInstance, animalData, settings, state } from "../core.js";
 +import { showNotification } from "../ui/interaction.js";
 +import { gameInstance, animalData, state } from "../core.js";
  
@@ -2786,25 +2523,24 @@ Index: src/features/xray.js
 +  if (state.isEnabled) {
      return;
    }
--  if (!state.animalData) {
+   if (!animalData) {
 -    setTimeout(initializeViewportHacks, 500);
-+  if (!animalData) {
 +    setTimeout(initializeAstraVision, 500);
      return;
    }
 -  setInterval(() => {
 -    try {
--      state.gameInstance.viewport.clampZoom({
+-      gameInstance.viewport.clampZoom({
 -        minWidth: 0,
 -        maxWidth: 10000000,
 -      });
--      state.gameInstance.viewport.plugins.plugins.clamp = null;
--      state.gameInstance.viewport.plugins.plugins["clamp-zoom"] = null;
+-      gameInstance.viewport.plugins.plugins.clamp = null;
+-      gameInstance.viewport.plugins.plugins["clamp-zoom"] = null;
 -    } catch {}
 -  }, 300);
    try {
 -    if (settings.setFlash) {
--      state.animalData[settings.setFlash] = () => {};
+-      animalData[settings.setFlash] = () => {};
 +    if (animalData.terrainManager && animalData.terrainManager.shadow) {
 +      animalData.terrainManager.shadow.setShadowSize(1000000);
 +      animalData.terrainManager.shadow.setShadowSize = () => {};
@@ -2817,7 +2553,7 @@ Index: src/features/xray.js
 +      }
      }
 -    if (settings.terrainManager) {
--      const terrainManager = state.animalData[settings.terrainManager];
+-      const terrainManager = animalData[settings.terrainManager];
 -      if (terrainManager?.shadow) {
 -        terrainManager.shadow.setShadowSize(1000000);
 -        terrainManager.shadow.setShadowSize = () => {};
@@ -2902,7 +2638,7 @@ Index: src/ui/panels.js
 ===================================================================
 --- src/ui/panels.js	v1.7
 +++ src/ui/panels.js	v1.8
-@@ -1,23 +1,22 @@
+@@ -1,53 +1,52 @@
  import { showNotification, typeText } from "./interaction.js";
  import {
    startScheduledTask,
@@ -2910,33 +2646,30 @@ Index: src/ui/panels.js
 -  simulateChatInput,
 +  typeAndSendMessage,
  } from "../features/chat.js";
-+import { interceptTextEncoder } from "../features/antidetection.js";
-+import { generateRandomString } from "../utils.js";
-+import { toggleMouseSimulation } from "../features/movement.js";
  import {
    radius,
 -  hookTextEncoder,
 -  pressedKey,
++  interceptTextEncoder,
    clearTracking_2,
+-  initAntiTamper,
 +  initGameHooks,
    clearTracking_3,
+   startAutoFarm,
    settings,
    state,
  } from "../core.js";
--import { generateRandomString } from "../utils.js";
--import { toggleMouseSimulation } from "../features/movement.js";
--import { initAntiTamper } from "../features/antidetection.js";
+ import { generateRandomString } from "../utils.js";
+ import { toggleMouseSimulation } from "../features/movement.js";
 -import { initializeViewportHacks } from "../features/xray.js";
 +import { initializeAstraVision } from "../features/xray.js";
  import {
    clearTracking,
    trackPlayer,
    toggleMinimapSize,
-@@ -27,30 +26,30 @@
-   setupPatrolPoints,
-   startAutoFarm,
-   stopAutoFarm,
- } from "../features/autofarm.js";
+ } from "../features/esp.js";
+ import { toggleLock, enableAutoDodge } from "../features/aimbot.js";
+ import { setupPatrolPoints, stopAutoFarm } from "../features/autofarm.js";
 -import { setTheme, initHomeBackground } from "./theme.js";
 +import { applyTheme, initBackground } from "./theme.js";
  
@@ -2974,7 +2707,7 @@ Index: src/ui/panels.js
      if (inputCode === "HappyHalloween9" || inputCode === "TrickOrTreat9") {
        localStorage.setItem("halloweenUnlocked", "true");
        showNotification("Halloween theme unlocked");
-@@ -63,15 +62,15 @@
+@@ -60,15 +59,15 @@
        }, 500);
        showNotification("Invalid code");
      }
@@ -2992,7 +2725,7 @@ Index: src/ui/panels.js
    });
    codeInput.focus();
  }
-@@ -95,19 +94,19 @@
+@@ -92,19 +91,19 @@
      hasMoved = false;
      offsetX = event.clientX - element.getBoundingClientRect().left;
      offsetY = event.clientY - element.getBoundingClientRect().top;
@@ -3017,7 +2750,7 @@ Index: src/ui/panels.js
          element.style.right = "auto";
        }
      };
-@@ -134,102 +133,101 @@
+@@ -131,102 +130,101 @@
    toolsPanel.innerHTML =
      '\n      <div class="ast-header"><span class="ast-header-title">Astraphobia Client</span><button class="ast-header-min" id="mainMin">−</button></div>\n      <div class="ast-body" id="mainBody">\n        <span class="ast-section-label">Chat</span>\n        <textarea class="ast-textarea" id="chatMsg" placeholder="Message..." rows="2"></textarea>\n        <button class="ast-btn" id="sendBtn">Send Chat</button>\n        <div class="ast-row" style="margin-top:4px;">\n          <input class="ast-input" type="number" id="delayInput" min="1" max="300" value="10" style="width:50px;text-align:center;">\n          <span style="font-size:11px;color:#888;">sec</span>\n          <button class="ast-btn" id="autoChatBtn" style="flex:1;margin-bottom:0;">Auto Chat</button>\n        </div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Tools</span>\n        <button class="ast-btn" id="patchBtn">Special Characters</button>\n        <button class="ast-btn" id="spoofBtn">Spoof Username</button>\n        <button class="ast-btn" id="spinBtn">Auto Spin</button>\n        <div class="ast-key-row"><span>Spin key</span><input class="ast-key-capture" id="spinKeyInput" type="text" placeholder="..." readonly></div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Turn Controls</span>\n        <div class="ast-key-row">\n          <span>Turn Left</span>\n          <input class="ast-key-capture" id="turnLeftKeyInput" type="text" value="Q" readonly>\n        </div>\n        <div class="ast-key-row">\n          <span>Turn Right</span>\n          <input class="ast-key-capture" id="turnRightKeyInput" type="text" value="E" readonly>\n        </div>\n        <div class="ast-credits">Made by Astraphobia</div>\n      </div>';
    document.body.appendChild(toolsPanel);
@@ -3176,7 +2909,7 @@ Index: src/ui/panels.js
    makeDraggable(toolsPanel);
    return toolsPanel;
  }
-@@ -240,37 +238,37 @@
+@@ -237,37 +235,37 @@
    visionPanel.style.cssText = "top:20px;right:20px;width:230px;";
    visionPanel.innerHTML =
      '\n      <div class="ast-header"><span class="ast-header-title">Astraphobia Client</span><button class="ast-header-min" id="visionMin">−</button></div>\n      <div class="ast-body" id="visionBody">\n        <span class="ast-section-label">Vision</span>\n        <button class="ast-btn patched" id="thresherBtn" disabled>Thresher Boost (Patched)</button>\n        <button class="ast-btn" id="astraVisionBtn">Astra-Vision</button>\n        <button class="ast-btn" id="smallMinimapBtn">Small Minimap</button>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">ESP</span>\n        <button class="ast-btn" id="espBtn">ESP</button>\n        <select class="ast-select" id="espModeSelect"><option value="players">Players</option><option value="food">Food</option></select>\n        <button class="ast-btn" id="trackNearestBtn">Track Nearest (F3)</button>\n        <button class="ast-btn" id="untrackBtn">Untrack (F4)</button>\n        <div class="ast-sep"></div>\n        <button class="ast-btn" id="espColorsToggleBtn" style="display:flex;align-items:center;justify-content:space-between;">\n          <span style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-sec,#888);">ESP Colors</span>\n          <span id="espColorsArrow" style="color:var(--text-sec,#888);font-size:12px;">▼</span>\n        </button>\n        <div id="espColorsSection" style="display:none;">\n          <div class="ast-key-row"><span>Close (&lt;500)</span><input type="color" id="espColorClose" value="#ff0000" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Medium (&lt;1500)</span><input type="color" id="espColorMedium" value="#ffff00" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Far (&lt;3000)</span><input type="color" id="espColorFar" value="#00ffff" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Very Far</span><input type="color" id="espColorVeryFar" value="#00ff00" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Tracked</span><input type="color" id="espColorTracked" value="#ff00ff" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Food Close</span><input type="color" id="espColorFoodClose" value="#00ff00" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Food Medium</span><input type="color" id="espColorFoodMedium" value="#88ff88" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Food Far</span><input type="color" id="espColorFoodFar" value="#44cc44" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n        </div>\n      </div>';
@@ -3227,7 +2960,7 @@ Index: src/ui/panels.js
      smallMinimapBtn.textContent = state.isMinimapSmall
        ? "Minimap: Small"
        : "Small Minimap";
-@@ -283,11 +281,11 @@
+@@ -280,11 +278,11 @@
      espBtn.classList.toggle("toggle-on", window.espEnabled);
    };
    const espModeSelect = visionPanel.querySelector("#espModeSelect");
@@ -3242,7 +2975,7 @@ Index: src/ui/panels.js
    visionPanel.querySelector("#trackNearestBtn").onclick = () => trackPlayer();
    visionPanel.querySelector("#untrackBtn").onclick = () => clearTracking_2();
    const espColorsToggleBtn = visionPanel.querySelector("#espColorsToggleBtn");
-@@ -341,16 +339,14 @@
+@@ -338,16 +336,14 @@
    const lockButton = combatPanel.querySelector("#lockBtn");
    lockButton.onclick = () => toggleLock();
    const lockKeyInput = combatPanel.querySelector("#lockKeyInput");
@@ -3264,7 +2997,7 @@ Index: src/ui/panels.js
    const trailColorPicker = combatPanel.querySelector("#trailColorPicker");
    trailColorPicker.addEventListener("input", (colorChangeEvent) => {
      const colorValue = colorChangeEvent.target.value;
-@@ -361,16 +357,16 @@
+@@ -358,16 +354,16 @@
      };
    });
    const traceKeyInput = combatPanel.querySelector("#traceKeyInput");
@@ -3288,7 +3021,7 @@ Index: src/ui/panels.js
    makeDraggable(combatPanel);
    return combatPanel;
  }
-@@ -379,18 +375,19 @@
+@@ -376,18 +372,19 @@
    automationPanel.id = "automation-panel";
    automationPanel.className = "ast-panel";
    automationPanel.style.cssText = "bottom:20px;left:260px;width:230px;";
@@ -3316,7 +3049,7 @@ Index: src/ui/panels.js
    const autoDodgeButton = automationPanel.querySelector("#autoDodgeBtn");
    autoDodgeButton.onclick = () => {
      if (window.autoDodgeEnabled) {
-@@ -416,29 +413,50 @@
+@@ -413,29 +410,50 @@
        autoFarmButton.textContent = "Stop Farm (F5)";
        autoFarmButton.classList.add("toggle-on");
      }
@@ -3377,7 +3110,7 @@ Index: src/ui/panels.js
    return automationPanel;
  }
  function createSettingsPanel() {
-@@ -446,24 +464,25 @@
+@@ -443,24 +461,25 @@
    settingsPanel.id = "settings-panel";
    settingsPanel.className = "ast-panel";
    settingsPanel.style.cssText = "top:20px;left:20px;width:220px;";
@@ -3411,7 +3144,7 @@ Index: src/ui/panels.js
        keyboardEvent.key.length === 1
          ? keyboardEvent.key.toUpperCase()
          : keyboardEvent.key;
-@@ -476,47 +495,193 @@
+@@ -473,47 +492,193 @@
        showNotification("Enter a URL");
        return;
      }
@@ -3621,7 +3354,7 @@ Index: src/ui/panels.js
        : "−";
    };
    makeDraggable(updatePanel);
-@@ -530,28 +695,28 @@
+@@ -527,29 +692,29 @@
      "automation-panel",
      "update-history",
      "settings-panel",
@@ -3655,6 +3388,7 @@ Index: src/ui/panels.js
    createSettingsPanel,
 -  createUpdatePanel,
 +  createUpdateHistoryPanel,
+   togglePanelsVisibility,
  };
 Index: src/ui/radar.js
 ===================================================================
@@ -4006,22 +3740,19 @@ Index: src/utils.js
 ===================================================================
 --- src/utils.js	v1.7
 +++ src/utils.js	v1.8
-@@ -1,5 +1,13 @@
--import { stateMap, getGameState, getEntityManager, state } from "./core.js";
-+import {
-+  getGameState,
-+  getEntityManager,
+@@ -1,8 +1,10 @@
+ import {
+-  stateMap,
+   getGameState,
+   getEntityManager,
 +  getFirstAnimal,
 +  getFirstAnimalPosition,
 +  getEntityPosition,
-+  gameInstance,
-+  state,
-+} from "./core.js";
+   gameInstance,
+   state,
+ } from "./core.js";
  
- function generateRandomString(length) {
-   let resultString = "";
-   for (let i = 0; i < length; i++) {
-@@ -7,14 +15,8 @@
+@@ -13,14 +15,8 @@
      resultString += String.fromCodePoint(randomCodePoint);
    }
    return resultString;
@@ -4036,7 +3767,7 @@ Index: src/utils.js
    return (
      document.querySelector("#gameCanvas") ||
      document.querySelector("canvas") ||
-@@ -62,147 +64,100 @@
+@@ -68,147 +64,100 @@
      return true;
    }
    return false;
@@ -4220,8 +3951,8 @@ Index: src/utils.js
 -      zoomLevel = cameraState.camera.currentZoomLevel;
 +      return camera.camera.currentZoomLevel;
      }
--    if (state.gameInstance?.viewport?.scale?.x) {
--      zoomLevel = state.gameInstance.viewport.scale.x;
+-    if (gameInstance?.viewport?.scale?.x) {
+-      zoomLevel = gameInstance.viewport.scale.x;
 +    if (gameInstance?.viewport) {
 +      const viewport = gameInstance.viewport;
 +      if (
@@ -4242,7 +3973,7 @@ Index: src/utils.js
  function getOrCreateOverlayCanvas(canvasId, zIndex) {
    let overlayCanvas = document.getElementById(canvasId);
    if (!overlayCanvas) {
-@@ -237,15 +192,12 @@
+@@ -243,15 +192,12 @@
  }
  
  export {

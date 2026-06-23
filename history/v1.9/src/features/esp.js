@@ -1,4 +1,5 @@
 import {
+  gameInstance,
   isValidEntity,
   getEntityPosition,
   calculateDirection,
@@ -7,6 +8,7 @@ import {
   getFirstAnimalPosition,
   getGameState_2,
   getViewportScale,
+  playerData,
   state,
 } from "../core.js";
 import { calculateDistance, getOrCreateCanvas } from "../utils.js";
@@ -39,8 +41,8 @@ function drawEsp(ctx, gameData, offsetX, offsetY, scale) {
   let viewportOffsetX = 0;
   let viewportOffsetY = 0;
   try {
-    if (state.gameInstance?.viewport) {
-      const viewport = state.gameInstance.viewport;
+    if (gameInstance?.viewport) {
+      const viewport = gameInstance.viewport;
       if (viewport.center && viewport.center.x != null) {
         viewportOffsetX = (viewport.center.x - myPos.x) * scale;
         viewportOffsetY = (viewport.center.y - myPos.y) * scale;
@@ -336,18 +338,18 @@ function clearTracking() {
   showNotification("Tracking cleared");
 }
 function toggleMinimapSize() {
-  if (!state.playerData || !state.playerData.minimap) {
+  if (!playerData || !playerData.minimap) {
     showNotification("Minimap not available");
     return;
   }
   if (state.isMinimapSmall) {
-    state.playerData.minimap.scale.set(1);
-    state.playerData.minimap.pivot.set(0, 0);
+    playerData.minimap.scale.set(1);
+    playerData.minimap.pivot.set(0, 0);
     state.isMinimapSmall = false;
     showNotification("Minimap restored");
   } else {
-    state.playerData.minimap.scale.set(0.5);
-    state.playerData.minimap.pivot.set(-70, -45);
+    playerData.minimap.scale.set(0.5);
+    playerData.minimap.pivot.set(-70, -45);
     state.isMinimapSmall = true;
     showNotification("Small minimap enabled");
   }

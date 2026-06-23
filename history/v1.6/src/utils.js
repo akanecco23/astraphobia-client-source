@@ -2,6 +2,7 @@ import {
   getGameState,
   getEntityManager,
   angle,
+  game,
   coreSharedState,
 } from "./core.js";
 
@@ -146,8 +147,8 @@ function getZoomLevel() {
     ) {
       zoomLevel = cameraState.camera.currentZoomLevel;
     }
-    if (coreSharedState.game?.viewport?.scale?.x) {
-      zoomLevel = coreSharedState.game.viewport.scale.x;
+    if (game?.viewport?.scale?.x) {
+      zoomLevel = game.viewport.scale.x;
     }
   } catch (error) {}
   return zoomLevel;
