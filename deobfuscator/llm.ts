@@ -1,4 +1,5 @@
 import type { LLMConfig, TransformEntry } from "./types.js";
+import { GoogleGenAI } from "@google/genai";
 import { log } from "./logger.js";
 
 export interface ResolvedLLMConfig extends LLMConfig {
@@ -9,88 +10,91 @@ export interface ResolvedLLMConfig extends LLMConfig {
 const MAX_RETRIES = 5;
 const BASE_DELAY_MS = 1000;
 
-const FALLBACK_MODELS = [
-  "moonshotai/kimi-k2.6",
-  "z-ai/glm-5.1",
-  "nvidia/nemotron-3-ultra-550b-a55b",
-  "qwen/qwen3.5-397b-a17b",
-  "stepfun-ai/step-3.7-flash",
-  "google/gemma-4-31b-it",
-  "minimaxai/minimax-m2.7",
-];
-
 export class LLMClient {
   enabled: boolean;
-  apiBase: string;
-  apiKey: string;
   model: string;
   maxTokens: number;
   temperature: number;
   concurrency: number;
-  private modelIndex: number;
+  private apiKeys: string[];
+  private keyIndex: number;
 
   constructor(config: ResolvedLLMConfig) {
     this.enabled = config.enabled;
-    this.apiBase = config.api_base ?? "https://api.openai.com/v1";
-    this.apiKey = config.api_key ?? "";
-    this.model = config.model ?? "gpt-4o-mini";
+    this.model = config.model ?? "gemma-4-31b-it";
     this.maxTokens = parseInt(String(config.max_tokens ?? "16000"), 10);
     this.temperature = config.temperature ?? 0.1;
     this.concurrency = config.concurrency ?? 4;
-    this.modelIndex = FALLBACK_MODELS.indexOf(this.model);
-    if (this.modelIndex < 0) this.modelIndex = 0;
+    this.apiKeys = (config.api_key ?? "")
+      .split(",")
+      .map((k) => k.trim())
+      .filter(Boolean);
+    this.keyIndex = 0;
   }
 
-  private rotateModel(): string {
-    this.modelIndex = (this.modelIndex + 1) % FALLBACK_MODELS.length;
-    this.model = FALLBACK_MODELS[this.modelIndex]!;
-    log("warn", `Rotated to model: ${this.model}`);
-    return this.model;
+  private getClient(): GoogleGenAI {
+    if (this.apiKeys.length === 0) {
+      throw new Error("No Gemini API keys configured");
+    }
+    return new GoogleGenAI({
+      apiKey: this.apiKeys[this.keyIndex % this.apiKeys.length]!,
+    });
   }
 
-  private async fetchWithBackoff(
-    url: string,
-    init: RequestInit,
+  private rotateKey(): void {
+    this.keyIndex = (this.keyIndex + 1) % this.apiKeys.length;
+    log(
+      "warn",
+      `Rotated to Gemini API key #${this.keyIndex + 1}/${this.apiKeys.length}`,
+    );
+  }
+
+  private async generateWithBackoff(
+    params: {
+      model: string;
+      contents: string;
+      config?: {
+        systemInstruction?: string;
+        temperature?: number;
+        maxOutputTokens?: number;
+      };
+    },
     attempt = 0,
-  ): Promise<Response> {
-    let resp: Response;
+  ): Promise<string> {
+    const ai = this.getClient();
     try {
-      resp = await fetch(url, init);
-    } catch (e) {
+      const response = await ai.models.generateContent(params);
+      return response.text ?? "";
+    } catch (e: unknown) {
+      const err = e as { status?: number; message?: string };
+      const status = err?.status;
+      if (
+        (status === 429 || status === 503 || status === 504) &&
+        attempt < MAX_RETRIES &&
+        this.apiKeys.length > 1
+      ) {
+        this.rotateKey();
+        const delay =
+          BASE_DELAY_MS * Math.pow(2, attempt) * (0.75 + Math.random() * 0.5);
+        log(
+          "warn",
+          `Rate limited/overloaded (${status}), rotating key, retrying in ${Math.round(delay)}ms (attempt ${attempt + 1}/${MAX_RETRIES})`,
+        );
+        await new Promise((r) => setTimeout(r, delay));
+        return this.generateWithBackoff(params, attempt + 1);
+      }
       if (attempt < MAX_RETRIES) {
         const delay =
           BASE_DELAY_MS * Math.pow(2, attempt) * (0.75 + Math.random() * 0.5);
         log(
           "warn",
-          `Fetch error, retrying in ${Math.round(delay)}ms (attempt ${attempt + 1}/${MAX_RETRIES}): ${(e as Error).message}`,
+          `API error, retrying in ${Math.round(delay)}ms (attempt ${attempt + 1}/${MAX_RETRIES}): ${err?.message ?? String(e)}`,
         );
         await new Promise((r) => setTimeout(r, delay));
-        return this.fetchWithBackoff(url, init, attempt + 1);
+        return this.generateWithBackoff(params, attempt + 1);
       }
       throw e;
     }
-    if (
-      (resp.status === 429 || resp.status === 503 || resp.status === 504) &&
-      attempt < MAX_RETRIES
-    ) {
-      const nextModel = this.rotateModel();
-      const newInit = {
-        ...init,
-        body: JSON.stringify({
-          ...JSON.parse(init.body as string),
-          model: nextModel,
-        }),
-      };
-      const delay =
-        BASE_DELAY_MS * Math.pow(2, attempt) * (0.75 + Math.random() * 0.5);
-      log(
-        "warn",
-        `Rate limited/overloaded (${resp.status}), retrying with ${nextModel} in ${Math.round(delay)}ms (attempt ${attempt + 1}/${MAX_RETRIES})`,
-      );
-      await new Promise((r) => setTimeout(r, delay));
-      return this.fetchWithBackoff(url, newInit, attempt + 1);
-    }
-    return resp;
   }
 
   async renameFunction(fnCode: string): Promise<Record<string, string>> {
@@ -103,7 +107,7 @@ export class LLMClient {
   async renameFunctionBatch(
     fns: { code: string; name: string }[],
   ): Promise<Record<string, string>[]> {
-    if (!this.enabled || !this.apiKey) return fns.map(() => ({}));
+    if (!this.enabled || this.apiKeys.length === 0) return fns.map(() => ({}));
     const CHUNK_SIZE = 8000;
     const chunks: { code: string; name: string }[][] = [];
     let current: { code: string; name: string }[] = [];
@@ -144,37 +148,17 @@ export class LLMClient {
       ].join("\n");
 
       try {
-        const resp = await this.fetchWithBackoff(
-          `${this.apiBase}/chat/completions`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${this.apiKey}`,
-            },
-            body: JSON.stringify({
-              model: this.model,
-              messages: [
-                {
-                  role: "system",
-                  content:
-                    "You are a JavaScript reverse-engineering expert. You rename obfuscated variables to meaningful camelCase names. You ONLY output valid JSON. No explanation.",
-                },
-                { role: "user", content: prompt },
-              ],
-              max_tokens: this.maxTokens,
-              temperature: this.temperature,
-            }),
+        const text = await this.generateWithBackoff({
+          model: this.model,
+          contents: prompt,
+          config: {
+            systemInstruction:
+              "You are a JavaScript reverse-engineering expert. You rename obfuscated variables to meaningful camelCase names. You ONLY output valid JSON. No explanation.",
+            maxOutputTokens: this.maxTokens,
+            temperature: this.temperature,
           },
-        );
-        if (!resp.ok)
-          throw new Error(`API ${resp.status}: ${await resp.text()}`);
-        const data = (await resp.json()) as {
-          choices?: { message?: { content?: string } }[];
-        };
-        const mapping = parseResponse(
-          data.choices?.[0]?.message?.content ?? "",
-        );
+        });
+        const mapping = parseResponse(text);
         for (let i = 0; i < chunk.length; i++) {
           allResults[fnOffset + i] = mapping;
         }
@@ -191,7 +175,7 @@ export class LLMClient {
   }
 
   async renameAllInContext(codeChunk: string): Promise<Record<string, string>> {
-    if (!this.enabled || !this.apiKey) return {};
+    if (!this.enabled || this.apiKeys.length === 0) return {};
     const prompt = [
       "Rename ALL obfuscated identifiers in this JavaScript code to meaningful camelCase names.",
       "This includes function names, variable names, parameter names, and property names that are obfuscated.",
@@ -206,34 +190,17 @@ export class LLMClient {
     ].join("\n");
 
     try {
-      const resp = await this.fetchWithBackoff(
-        `${this.apiBase}/chat/completions`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${this.apiKey}`,
-          },
-          body: JSON.stringify({
-            model: this.model,
-            messages: [
-              {
-                role: "system",
-                content:
-                  "You are a JavaScript reverse-engineering expert. You rename obfuscated identifiers to meaningful camelCase names. You ONLY output valid JSON. No explanation.",
-              },
-              { role: "user", content: prompt },
-            ],
-            max_tokens: this.maxTokens,
-            temperature: this.temperature,
-          }),
+      const text = await this.generateWithBackoff({
+        model: this.model,
+        contents: prompt,
+        config: {
+          systemInstruction:
+            "You are a JavaScript reverse-engineering expert. You rename obfuscated identifiers to meaningful camelCase names. You ONLY output valid JSON. No explanation.",
+          maxOutputTokens: this.maxTokens,
+          temperature: this.temperature,
         },
-      );
-      if (!resp.ok) throw new Error(`API ${resp.status}: ${await resp.text()}`);
-      const data = (await resp.json()) as {
-        choices?: { message?: { content?: string } }[];
-      };
-      return parseResponse(data.choices?.[0]?.message?.content ?? "");
+      });
+      return parseResponse(text);
     } catch (e) {
       log("error", `LLM renameAll error: ${(e as Error).message}`);
       return {};
@@ -243,7 +210,7 @@ export class LLMClient {
   async renameVarBatchWithContext(
     vars: { name: string; declaration: string; usages: string[] }[],
   ): Promise<Record<string, string>> {
-    if (!this.enabled || !this.apiKey) return {};
+    if (!this.enabled || this.apiKeys.length === 0) return {};
     const prompt = [
       "Below are obfuscated JavaScript variables and how they are declared/used.",
       "For each variable name shown, suggest ONE meaningful camelCase name that describes its PURPOSE/CONTENT.",
@@ -260,41 +227,23 @@ export class LLMClient {
     ].join("\n");
 
     try {
-      const resp = await this.fetchWithBackoff(
-        `${this.apiBase}/chat/completions`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${this.apiKey}`,
-          },
-          body: JSON.stringify({
-            model: this.model,
-            messages: [
-              {
-                role: "system",
-                content:
-                  "You are a JavaScript reverse-engineering expert. You name variables cleanly based on declaration + usage context. You ONLY output valid JSON. No explanation.",
-              },
-              { role: "user", content: prompt },
-            ],
-            max_tokens: this.maxTokens,
-            temperature: 0,
-          }),
+      const text = await this.generateWithBackoff({
+        model: this.model,
+        contents: prompt,
+        config: {
+          systemInstruction:
+            "You are a JavaScript reverse-engineering expert. You name variables cleanly based on declaration + usage context. You ONLY output valid JSON. No explanation.",
+          maxOutputTokens: this.maxTokens,
+          temperature: 0,
         },
-      );
-      if (!resp.ok) throw new Error(`API ${resp.status}: ${await resp.text()}`);
-      const data = (await resp.json()) as {
-        choices?: { message?: { content?: string } }[];
-      };
-      const content = data.choices?.[0]?.message?.content ?? "";
-      const out = parseResponse(content);
+      });
+      const out = parseResponse(text);
       if (Object.keys(out).length === 0 && vars.length > 0) {
         log(
           "warn",
           `LLM renameVars returned no names for: ${vars.map((i) => i.name).join(", ")}`,
         );
-        log("warn", `Raw response: ${content.slice(0, 500)}`);
+        log("warn", `Raw response: ${text.slice(0, 500)}`);
       } else if (vars.length <= 3) {
         log(
           "info",
@@ -309,7 +258,7 @@ export class LLMClient {
   }
 
   async suggestTransforms(codeSnippet: string): Promise<TransformEntry[]> {
-    if (!this.enabled || !this.apiKey) return [];
+    if (!this.enabled || this.apiKeys.length === 0) return [];
     const prompt = [
       "Analyze this obfuscated JavaScript code and suggest AST transforms to clean it up.",
       "Available transform types: unwrap_iife, hoist_declarations, extract_constant, group_variables.",
@@ -322,35 +271,17 @@ export class LLMClient {
     ].join("\n");
 
     try {
-      const resp = await this.fetchWithBackoff(
-        `${this.apiBase}/chat/completions`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${this.apiKey}`,
-          },
-          body: JSON.stringify({
-            model: this.model,
-            messages: [
-              {
-                role: "system",
-                content:
-                  "You suggest AST transforms to clean up obfuscated JS. You ONLY output valid JSON arrays.",
-              },
-              { role: "user", content: prompt },
-            ],
-            max_tokens: 4000,
-            temperature: 0,
-          }),
+      const text = await this.generateWithBackoff({
+        model: this.model,
+        contents: prompt,
+        config: {
+          systemInstruction:
+            "You suggest AST transforms to clean up obfuscated JS. You ONLY output valid JSON arrays.",
+          maxOutputTokens: 4000,
+          temperature: 0,
         },
-      );
-      if (!resp.ok) return [];
-      const data = (await resp.json()) as {
-        choices?: { message?: { content?: string } }[];
-      };
-      const content = data.choices?.[0]?.message?.content ?? "[]";
-      let jsonStr = content.trim();
+      });
+      let jsonStr = text.trim();
       const fence = jsonStr.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
       if (fence?.[1]) jsonStr = fence[1];
       else {
@@ -372,37 +303,19 @@ export class LLMClient {
       temperature?: number;
     },
   ): Promise<string> {
-    if (!this.enabled || !this.apiKey) return "";
+    if (!this.enabled || this.apiKeys.length === 0) return "";
     try {
-      const resp = await this.fetchWithBackoff(
-        `${this.apiBase}/chat/completions`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${this.apiKey}`,
-          },
-          body: JSON.stringify({
-            model: this.model,
-            messages: [
-              {
-                role: "system",
-                content:
-                  opts?.systemPrompt ??
-                  "You are a helpful assistant. You ONLY output valid JSON.",
-              },
-              { role: "user", content: prompt },
-            ],
-            max_tokens: opts?.maxTokens ?? this.maxTokens,
-            temperature: opts?.temperature ?? this.temperature,
-          }),
+      return await this.generateWithBackoff({
+        model: this.model,
+        contents: prompt,
+        config: {
+          systemInstruction:
+            opts?.systemPrompt ??
+            "You are a helpful assistant. You ONLY output valid JSON.",
+          maxOutputTokens: opts?.maxTokens ?? this.maxTokens,
+          temperature: opts?.temperature ?? this.temperature,
         },
-      );
-      if (!resp.ok) throw new Error(`API ${resp.status}: ${await resp.text()}`);
-      const data = (await resp.json()) as {
-        choices?: { message?: { content?: string } }[];
-      };
-      return data.choices?.[0]?.message?.content ?? "";
+      });
     } catch (e) {
       log("error", `LLM chat error: ${(e as Error).message}`);
       return "";
@@ -414,7 +327,7 @@ export class LLMClient {
     funcName: string,
     existingModules: string[],
   ): Promise<string> {
-    if (!this.enabled || !this.apiKey) return "core";
+    if (!this.enabled || this.apiKeys.length === 0) return "core";
     const prompt = [
       `A function named "${funcName}" needs to be assigned to a module.`,
       `Existing modules: ${existingModules.join(", ")}`,
@@ -429,34 +342,17 @@ export class LLMClient {
     ].join("\n");
 
     try {
-      const resp = await this.fetchWithBackoff(
-        `${this.apiBase}/chat/completions`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${this.apiKey}`,
-          },
-          body: JSON.stringify({
-            model: this.model,
-            messages: [
-              {
-                role: "system",
-                content:
-                  "You are a JavaScript code organization expert. You assign functions to modules based on their purpose. You ONLY output a module name.",
-              },
-              { role: "user", content: prompt },
-            ],
-            max_tokens: 50,
-            temperature: 0,
-          }),
+      const text = await this.generateWithBackoff({
+        model: this.model,
+        contents: prompt,
+        config: {
+          systemInstruction:
+            "You are a JavaScript code organization expert. You assign functions to modules based on their purpose. You ONLY output a module name.",
+          maxOutputTokens: 50,
+          temperature: 0,
         },
-      );
-      if (!resp.ok) throw new Error(`API ${resp.status}`);
-      const data = (await resp.json()) as {
-        choices?: { message?: { content?: string } }[];
-      };
-      const content = data.choices?.[0]?.message?.content?.trim() ?? "core";
+      });
+      const content = text.trim();
       const name = content.replace(/[^a-zA-Z0-9_]/g, "");
       return name || "core";
     } catch (e) {

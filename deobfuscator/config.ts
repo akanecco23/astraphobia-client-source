@@ -20,18 +20,14 @@ export function resolveLLMConfig(
   overrides: Partial<LLMConfig> & { enabled?: boolean },
 ): LLMConfig & { enabled: boolean; concurrency: number } {
   return {
-    enabled: overrides.enabled ?? (process.env.LLM_API_KEY ? true : false),
-    api_base: (
-      process.env.LLM_API_BASE ||
-      overrides.api_base ||
-      "https://api.openai.com/v1"
-    ).replace(/\/+$/, ""),
-    api_key: process.env.LLM_API_KEY || overrides.api_key || "",
-    model: process.env.LLM_MODEL || overrides.model || "gpt-4o-mini",
-    max_tokens: process.env.LLM_MAX_TOKENS || overrides.max_tokens || "16000",
+    enabled: overrides.enabled ?? (process.env.GEMINI_API_KEY ? true : false),
+    api_key: process.env.GEMINI_API_KEY || overrides.api_key || "",
+    model: process.env.GEMINI_MODEL || overrides.model || "gemma-4-31b-it",
+    max_tokens:
+      process.env.GEMINI_MAX_TOKENS || overrides.max_tokens || "16000",
     temperature: overrides.temperature ?? 0.1,
     concurrency: parseInt(
-      String(process.env.LLM_CONCURRENCY || overrides.concurrency || "4"),
+      String(process.env.GEMINI_CONCURRENCY || overrides.concurrency || "4"),
       10,
     ),
   };
