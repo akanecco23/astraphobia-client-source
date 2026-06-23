@@ -66,7 +66,10 @@ export function isObfuscated(name: string): boolean {
 }
 
 export function parseCode(code: string) {
-  return parse(code, {
+  // Remove "use strict" directives to avoid strict mode parsing errors
+  // (e.g., obfuscated code may use `arguments` as a binding name)
+  const sanitized = code.replace(/\s*["']use strict["'];?\s*/g, "");
+  return parse(sanitized, {
     sourceType: "script",
     allowReturnOutsideFunction: true,
     plugins: [
@@ -144,15 +147,22 @@ export function computeFunctionFingerprint(funcNode: t.Node): Fingerprint {
       }
       return items;
     };
-    fp.stringLiterals = extract(/(["'`])((?:(?!\1).){1,80})\1/g, 20);
+    const isObfuscatedName = (s: string) =>
+      /^(_0x[a-f0-9]+|[a-z]{1,2}_?[0-9a-f]{4,})$/.test(s);
+    fp.stringLiterals = extract(/(["'`])((?:(?!\1).){1,80})\1/g, 20).filter(
+      (s) => !isObfuscatedName(s),
+    );
     fp.propertyAccesses = extract(
       /(\b[A-Za-z_$][\w$]*)\.([A-Za-z_$][\w$]*)/g,
       30,
-    );
+    ).filter((s) => {
+      const parts = s.split(".");
+      return !parts.some((p) => isObfuscatedName(p));
+    });
     fp.calledFunctions = extract(
       /(\b[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)\s*\(/g,
       20,
-    );
+    ).filter((s) => !isObfuscatedName(s));
   } catch {
     /* */
   }

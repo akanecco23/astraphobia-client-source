@@ -8,6 +8,7 @@ import {
   readdirSync,
   rmSync,
   statSync,
+  cpSync,
 } from "fs";
 import {
   applyRenames,
@@ -409,6 +410,55 @@ function showStatus(config: ReturnType<typeof loadConfig>): void {
   }
 }
 
+function generateCombinedPatch(
+  oldDir: string,
+  newDir: string,
+  oldLabel: string,
+  newLabel: string,
+): string {
+  const patches: string[] = [];
+
+  function walk(dir: string, prefix: string): Map<string, string> {
+    const files = new Map<string, string>();
+    if (!existsSync(dir)) return files;
+
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const fullPath = join(dir, entry.name);
+      const relPath = prefix ? `${prefix}/${entry.name}` : entry.name;
+
+      if (entry.isDirectory()) {
+        const subFiles = walk(fullPath, relPath);
+        for (const [k, v] of subFiles) files.set(k, v);
+      } else if (
+        entry.isFile() &&
+        (entry.name.endsWith(".js") || entry.name.endsWith(".json"))
+      ) {
+        files.set(relPath, readFileSync(fullPath, "utf-8"));
+      }
+    }
+    return files;
+  }
+
+  const oldFiles = walk(oldDir, "");
+  const newFiles = walk(newDir, "");
+
+  const allPaths = new Set([...oldFiles.keys(), ...newFiles.keys()]);
+  const sorted = [...allPaths].sort();
+
+  for (const path of sorted) {
+    const oldContent = oldFiles.get(path) ?? "";
+    const newContent = newFiles.get(path) ?? "";
+
+    if (oldContent === newContent) continue;
+
+    patches.push(
+      Diff.createPatch(path, oldContent, newContent, oldLabel, newLabel),
+    );
+  }
+
+  return patches.join("");
+}
+
 program
   .name("deobfuscate")
   .description("Astraphobia Client Deobfuscator")
@@ -452,6 +502,121 @@ program
       if (VERSIONS[v]) await processVersion(config, VERSIONS[v]!, v, !opts.llm);
       if (v === opts.end) break;
     }
+  });
+
+program
+  .command("backward")
+  .description(
+    "Process versions backwards (newest first), building history/ and patches",
+  )
+  .option("--start <ver>", "Canonical (newest) version to start from", "1.9")
+  .option("--end <ver>", "Earliest version to process", "1.1")
+  .option("--no-llm", "Skip LLM renaming")
+  .option("--config <path>", "Config file path", "config.json")
+  .option("--fresh", "Clear mapping.json and transforms.json before starting")
+  .action(async (opts) => {
+    const config = loadConfig(opts.config);
+    const sorted = Object.keys(VERSIONS).sort(
+      (a, b) => parseFloat(a) - parseFloat(b),
+    );
+
+    const startNum = parseFloat(opts.start);
+    const endNum = parseFloat(opts.end);
+
+    const versions = sorted
+      .filter((v) => {
+        const n = parseFloat(v);
+        return n >= endNum && n <= startNum;
+      })
+      .reverse();
+
+    if (versions.length === 0) {
+      log("error", "No versions to process");
+      process.exit(1);
+    }
+
+    const historyDir = resolve(getRoot(), "history");
+    const mappingPath = resolve(getRoot(), "mapping.json");
+    const transformsPath = resolve(getRoot(), "transforms.json");
+
+    if (opts.fresh) {
+      if (existsSync(mappingPath)) {
+        rmSync(mappingPath);
+        log("info", "Cleared mapping.json");
+      }
+      if (existsSync(transformsPath)) {
+        rmSync(transformsPath);
+        log("info", "Cleared transforms.json");
+      }
+    }
+
+    mkdirSync(historyDir, { recursive: true });
+
+    for (let i = 0; i < versions.length; i++) {
+      const v = versions[i]!;
+      log("cyan", `=== Backward [${i + 1}/${versions.length}]: v${v} ===`);
+
+      if (VERSIONS[v]) {
+        const ok = await processVersion(config, VERSIONS[v]!, v, !opts.llm);
+        if (!ok) {
+          log("error", `Failed to process v${v}, stopping`);
+          break;
+        }
+      }
+
+      const srcDir = resolvePath(config, "src_dir", "./src");
+      const verHistoryDir = join(historyDir, `v${v}`);
+      if (existsSync(verHistoryDir)) {
+        rmSync(verHistoryDir, { recursive: true });
+      }
+      cpSync(srcDir, verHistoryDir, { recursive: true });
+      log("info", `Saved extension/ -> history/v${v}/`);
+
+      if (i > 0) {
+        const newerV = versions[i - 1]!;
+        const olderDir = join(historyDir, `v${v}`);
+        const newerDir = join(historyDir, `v${newerV}`);
+        const patchPath = join(historyDir, `v${v}_to_v${newerV}.patch`);
+
+        const patch = generateCombinedPatch(
+          olderDir,
+          newerDir,
+          `v${v}`,
+          `v${newerV}`,
+        );
+        writeFileSync(patchPath, patch, "utf-8");
+        log(
+          "info",
+          `Generated patch: v${v}_to_v${newerV}.patch (${patch.length} bytes)`,
+        );
+      } else {
+        // Check for an existing newer version in history/ to patch against
+        const vNum = parseFloat(v);
+        const newerV = sorted
+          .filter((sv) => parseFloat(sv) > vNum)
+          .sort((a, b) => parseFloat(a) - parseFloat(b))[0];
+        if (newerV) {
+          const newerDir = join(historyDir, `v${newerV}`);
+          if (existsSync(newerDir)) {
+            const olderDir = join(historyDir, `v${v}`);
+            const patchPath = join(historyDir, `v${v}_to_v${newerV}.patch`);
+            const patch = generateCombinedPatch(
+              olderDir,
+              newerDir,
+              `v${v}`,
+              `v${newerV}`,
+            );
+            writeFileSync(patchPath, patch, "utf-8");
+            log(
+              "info",
+              `Generated patch: v${v}_to_v${newerV}.patch (${patch.length} bytes)`,
+            );
+          }
+        }
+      }
+    }
+
+    log("info", `Backward processing complete. History saved to ${historyDir}`);
   });
 
 program

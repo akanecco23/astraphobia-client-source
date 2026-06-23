@@ -131,10 +131,41 @@ function collectWindowInits(
 
   // Remove window init assignments that belong to another module.
   for (const mod of moduleFiles) {
-    const modAst = parse(mod.code, {
-      sourceType: "module",
-      allowReturnOutsideFunction: true,
-    });
+    const sanitized = mod.code.replace(/\s*["']use strict["'];?\s*/g, "");
+    let modAst;
+    try {
+      modAst = parse(sanitized, {
+        sourceType: "module",
+        allowReturnOutsideFunction: true,
+      });
+    } catch (e) {
+      if ((e as any)?.reasonCode === "StrictEvalArgumentsBinding") {
+        const fixed = sanitized.replace(
+          /([,(]\s*)\barguments\b(?=\s*[,)])/g,
+          "$1_arguments",
+        );
+        modAst = parse(fixed, {
+          sourceType: "module",
+          allowReturnOutsideFunction: true,
+        });
+      } else {
+        console.error(
+          "PARSE ERROR (first loop, mod=" + mod.name + "):",
+          String(e),
+        );
+        const lines2 = sanitized.split("\n");
+        const errLine = (e as any)?.loc?.line || 0;
+        const start2 = Math.max(0, errLine - 5);
+        const end2 = Math.min(lines2.length, errLine + 5);
+        console.error(
+          "Code around error (lines " + (start2 + 1) + "-" + end2 + "):",
+        );
+        for (let i = start2; i < end2; i++) {
+          console.error("  " + (i + 1) + ": " + lines2[i]);
+        }
+        throw e;
+      }
+    }
     let removed = false;
     modAst.program.body = modAst.program.body.filter((stmt) => {
       if (
@@ -169,10 +200,31 @@ function collectWindowInits(
 
   // Skip adding inits that are already present in their target module.
   for (const [mod, inits] of initsByModule) {
-    const modAst = parse(mod.code, {
-      sourceType: "module",
-      allowReturnOutsideFunction: true,
-    });
+    const sanitized = mod.code.replace(/\s*["']use strict["'];?\s*/g, "");
+    let modAst;
+    try {
+      modAst = parse(sanitized, {
+        sourceType: "module",
+        allowReturnOutsideFunction: true,
+      });
+    } catch (e) {
+      if ((e as any)?.reasonCode === "StrictEvalArgumentsBinding") {
+        const fixed = sanitized.replace(
+          /([,(]\s*)\barguments\b(?=\s*[,)])/g,
+          "$1_arguments",
+        );
+        modAst = parse(fixed, {
+          sourceType: "module",
+          allowReturnOutsideFunction: true,
+        });
+      } else {
+        console.error(
+          "PARSE ERROR (second loop, mod=" + mod.name + "):",
+          String(e),
+        );
+        throw e;
+      }
+    }
     const existing = new Set<string>();
     for (const stmt of modAst.program.body) {
       if (
@@ -286,6 +338,47 @@ function relativePath(from: string, to: string): string {
 function getModulePath(config: SplitterConfig, modName: string): string {
   return config.modules[modName]?.path ?? modName;
 }
+function isInsideParamList(code: string, matchIndex: number): boolean {
+  let k = matchIndex;
+  while (k < code.length) {
+    const ch = code[k]!;
+    if (ch === "{" || ch === ";" || ch === "\n") break;
+    if (ch === "=" && code[k + 1] === ">") return true;
+    if (ch === "(") break;
+    k++;
+  }
+
+  let depth = 0;
+  for (let i = matchIndex - 1; i >= 0; i--) {
+    if (code[i] === ")") depth++;
+    else if (code[i] === "(") {
+      if (depth === 0) {
+        const before = code.slice(Math.max(0, i - 30), i);
+        if (/\bfunction\b\s*\w*\s*$/.test(before)) return true;
+        if (/\bcatch\s*$/.test(before)) return true;
+
+        let j = matchIndex;
+        let ad = 0;
+        while (j < code.length) {
+          if (code[j] === "(") ad++;
+          else if (code[j] === ")") {
+            if (ad === 0) {
+              let k2 = j + 1;
+              while (k2 < code.length && code[k2] === " ") k2++;
+              if (code[k2] === "=" && code[k2 + 1] === ">") return true;
+              break;
+            }
+            ad--;
+          }
+          j++;
+        }
+        return false;
+      }
+      depth--;
+    }
+  }
+  return false;
+}
 
 function replaceOutsideStrings(
   code: string,
@@ -326,9 +419,11 @@ function replaceOutsideStrings(
   m = re.exec(code);
   while (m !== null) {
     if (!inString(m.index)) {
-      parts.push(code.slice(lastIdx, m.index));
-      parts.push(replacement);
-      lastIdx = m.index + m[0]!.length;
+      if (!isInsideParamList(code, m.index)) {
+        parts.push(code.slice(lastIdx, m.index));
+        parts.push(replacement);
+        lastIdx = m.index + m[0]!.length;
+      }
     }
     m = re.exec(code);
   }
@@ -398,8 +493,17 @@ function fixSharedMutableState(modules: ModuleFile[]): void {
 
   const stateNames = new Map<string, string>();
   for (const ownerName of needsState.keys()) {
-    const stateName =
+    let stateName =
       ownerName === "core" ? "state" : `${ownerName.replace(/_/g, "")}State`;
+    const owner = moduleMap.get(ownerName)!;
+    const hasConflict =
+      new RegExp(`\\b(?:let|const|var)\\s+${stateName}\\b`).test(owner.code) ||
+      new RegExp(`import\\s*\\{[^}]*\\b${stateName}\\b[^}]*\\}`).test(
+        owner.code,
+      );
+    if (hasConflict) {
+      stateName = `${ownerName.replace(/_/g, "")}SharedState`;
+    }
     stateNames.set(ownerName, stateName);
   }
 
@@ -449,9 +553,9 @@ function fixSharedMutableState(modules: ModuleFile[]): void {
               .split(",")
               .map((n: string) => n.trim())
               .filter((n: string) => !varNames.has(n.split(" as ")[0]!.trim()));
-            return kept.length > 0
-              ? `import { ${kept.join(", ")}, ${stateName} } from '${fullImportPath}';`
-              : `import { ${stateName} } from '${fullImportPath}';`;
+            const hasState = kept.includes(stateName);
+            const finalImports = hasState ? kept : [...kept, stateName];
+            return `import { ${finalImports.join(", ")} } from '${fullImportPath}';`;
           },
         );
         for (const vn of varNames) {
@@ -464,10 +568,14 @@ function fixSharedMutableState(modules: ModuleFile[]): void {
       owner.code = replaceOutsideStrings(owner.code, vn, `${stateName}.${vn}`);
     }
 
-    owner.code =
-      owner.code.trimEnd() +
-      `\n\nexport const ${stateName} = {\n${stateEntries.join(",\n")}\n};\n\n` +
-      `export { ${remainingExports.join(", ")} };\n`;
+    if (
+      !new RegExp(`\\bexport\\s+const\\s+${stateName}\\s*=`).test(owner.code)
+    ) {
+      owner.code =
+        owner.code.trimEnd() +
+        `\n\nexport const ${stateName} = {\n${stateEntries.join(",\n")}\n};\n\n` +
+        `export { ${remainingExports.join(", ")} };\n`;
+    }
   }
 }
 
