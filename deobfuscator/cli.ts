@@ -536,6 +536,7 @@ program
     }
 
     const historyDir = resolve(getRoot(), "history");
+    const historyDiffsDir = join(historyDir, "diffs");
     const mappingPath = resolve(getRoot(), "mapping.json");
     const transformsPath = resolve(getRoot(), "transforms.json");
 
@@ -551,6 +552,7 @@ program
     }
 
     mkdirSync(historyDir, { recursive: true });
+    mkdirSync(historyDiffsDir, { recursive: true });
 
     for (let i = 0; i < versions.length; i++) {
       const v = versions[i]!;
@@ -576,7 +578,7 @@ program
         const newerV = versions[i - 1]!;
         const olderDir = join(historyDir, `v${v}`);
         const newerDir = join(historyDir, `v${newerV}`);
-        const patchPath = join(historyDir, `v${v}_to_v${newerV}.patch`);
+        const patchPath = join(historyDiffsDir, `v${v}_to_v${newerV}.patch`);
 
         const patch = generateCombinedPatch(
           olderDir,
@@ -599,7 +601,10 @@ program
           const newerDir = join(historyDir, `v${newerV}`);
           if (existsSync(newerDir)) {
             const olderDir = join(historyDir, `v${v}`);
-            const patchPath = join(historyDir, `v${v}_to_v${newerV}.patch`);
+            const patchPath = join(
+              historyDiffsDir,
+              `v${v}_to_v${newerV}.patch`,
+            );
             const patch = generateCombinedPatch(
               olderDir,
               newerDir,

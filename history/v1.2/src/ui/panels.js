@@ -257,8 +257,8 @@ function createPlusPanel() {
   const minPlusBtn = container.querySelector("#minPlus");
   const plusContent = container.querySelector("#plusContent");
   let isHidden = false;
-  minPlusBtn.onclick = (arg_5f0a) => {
-    arg_5f0a.stopPropagation();
+  minPlusBtn.onclick = (event) => {
+    event.stopPropagation();
     isHidden = !isHidden;
     plusContent.style.display = isHidden ? "none" : "block";
     container.style.height = isHidden ? "50px" : "auto";
@@ -294,23 +294,23 @@ function createPlusPanel() {
   let offsetY;
   let isDragging = false;
   let isMinimized = false;
-  container.addEventListener("mousedown", (arg_281e) => {
+  container.addEventListener("mousedown", (clickEvent) => {
     if (
-      arg_281e.target.tagName === "BUTTON" ||
-      arg_281e.target.tagName === "TEXTAREA" ||
-      arg_281e.target.tagName === "INPUT" ||
-      arg_281e.target.classList.contains("credits")
+      clickEvent.target.tagName === "BUTTON" ||
+      clickEvent.target.tagName === "TEXTAREA" ||
+      clickEvent.target.tagName === "INPUT" ||
+      clickEvent.target.classList.contains("credits")
     ) {
       return;
     }
     isDragging = true;
     isMinimized = false;
-    offsetX = arg_281e.clientX - container.getBoundingClientRect().left;
-    offsetY = arg_281e.clientY - container.getBoundingClientRect().top;
+    offsetX = clickEvent.clientX - container.getBoundingClientRect().left;
+    offsetY = clickEvent.clientY - container.getBoundingClientRect().top;
     container.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
-      const deltaX = mouseEvent.clientX - arg_281e.clientX;
-      const deltaY = mouseEvent.clientY - arg_281e.clientY;
+      const deltaX = mouseEvent.clientX - clickEvent.clientX;
+      const deltaY = mouseEvent.clientY - clickEvent.clientY;
       if (!isMinimized && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
         isMinimized = true;
       }
@@ -330,9 +330,9 @@ function createPlusPanel() {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   });
-  container.addEventListener("click", (arg_cd86) => {
+  container.addEventListener("click", (keyboardEvent) => {
     if (isMinimized) {
-      arg_cd86.stopImmediatePropagation();
+      keyboardEvent.stopImmediatePropagation();
     }
   });
   return container;

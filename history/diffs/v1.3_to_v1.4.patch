@@ -1,0 +1,1852 @@
+Index: content.js
+===================================================================
+--- content.js	v1.3
++++ content.js	v1.4
+@@ -2,43 +2,43 @@
+   generateRandomString,
+   getGameCanvas,
+   getAllPropertyNames,
+ } from "./src/utils.js";
++import { simulateTyping, showNotification } from "./src/ui/interaction.js";
+ import { handleAnimalAction } from "./src/features/autofarm.js";
++import { toggleMinimapSize } from "./src/features/esp.js";
++import { initBackgroundImage, setTheme } from "./src/ui/theme.js";
+ import {
++  initControlOverlay,
++  setupUpdateHistory,
++  injectPlusPanelStyles,
++  injectSettingsStyles,
++  togglePanels,
++} from "./src/ui/panels.js";
++import {
+   startScheduledTask,
+   stopInterval,
+   autoChat,
+ } from "./src/features/chat.js";
+-import { startAntiAfk } from "./src/features/antidetection.js";
+ import {
++  startAntiAfkMouseMovement,
+   stopMouseSimulation,
+   toggleMouseSimulation,
+ } from "./src/features/movement.js";
+-import { toggleMinimapSize } from "./src/features/esp.js";
+-import {
+-  initControlOverlay,
+-  createUpdateHistoryPanel,
+-  createDeepToolsPanel,
+-  injectPlusPanelStyles,
+-  injectSettingsStyles,
+-  togglePanels,
+-} from "./src/ui/panels.js";
+-import { initBackgroundImage } from "./src/ui/theme.js";
+ import { initAdBlocker } from "./src/features/adblock.js";
+ import {
+-  wrapWithProxy,
+-  hookTextEncoder,
++  wrapPropertyWithProxy,
++  initPacketInterceptor,
+   encryptPacketData,
+   sendPacket,
+-  initHooks,
++  setupProxyHooks,
+   disableGameRestrictions,
++  setupToolsPanel,
+   initializePanels,
+-  angles,
+-  radius,
+-  game,
+-  player,
+-  isActive,
++  rotationAngles,
++  orbitRadius,
++  gameInstance,
++  playerData,
++  isReady,
+   securitySettings,
+-  coreSharedState,
++  state,
+ } from "./src/core.js";
+-import { simulateTyping, showNotification } from "./src/ui/interaction.js";
+Index: manifest.json
+===================================================================
+--- manifest.json	v1.3
++++ manifest.json	v1.4
+@@ -1,8 +1,8 @@
+ {
+   "manifest_version": 3,
+   "name": "Astraphobia Client",
+-  "version": "1.3",
++  "version": "1.4",
+   "description": "ASTRAPHOBIA CLIENT ON TOP",
+   "author": "Astraphobia",
+   "content_scripts": [
+     {
+Index: src/core.js
+===================================================================
+--- src/core.js	v1.3
++++ src/core.js	v1.4
+@@ -1,27 +1,28 @@
+-import { showNotification } from "./ui/interaction.js";
+-import { getAllPropertyNames } from "./utils.js";
++import { showNotification, simulateTyping } from "./ui/interaction.js";
++import { getAllPropertyNames, generateRandomString } from "./utils.js";
+ import {
+   initControlOverlay,
+-  createUpdateHistoryPanel,
+-  createDeepToolsPanel,
++  setupUpdateHistory,
+   injectPlusPanelStyles,
+   injectSettingsStyles,
+   togglePanels,
+ } from "./ui/panels.js";
++import { startScheduledTask, stopInterval, autoChat } from "./features/chat.js";
++import { toggleMouseSimulation } from "./features/movement.js";
+ import { initBackgroundImage } from "./ui/theme.js";
+ import { initAdBlocker } from "./features/adblock.js";
+ 
+ const stateMap = new WeakMap();
+-function wrapWithProxy(targetObject, propertyKey, proxyHandler) {
++function wrapPropertyWithProxy(targetObject, propertyKey, proxyHandler) {
+   const originalValue = targetObject[propertyKey];
+   const proxyValue = new Proxy(originalValue, proxyHandler);
+   stateMap.set(proxyValue, originalValue);
+   targetObject[propertyKey] = proxyValue;
+ }
+ 
+ let isInitialized = false;
+-function hookTextEncoder(config) {
++function initPacketInterceptor(config) {
+   if (isInitialized) {
+     return;
+   }
+   function unescapeString(inputString) {
+@@ -29,10 +30,10 @@
+       return inputString;
+     }
+     return inputString.replace(
+       /\\(\\|n|r|t|b|f|v|\d{1,3}|x([\da-fA-F]{2})|u([\da-fA-F]{4})|u\{(0*[\da-fA-F]{1,6})\})/g,
+-      (match, sequence, hexValue1, hexValue2, hexValue3) => {
+-        switch (sequence[0]) {
++      (context, escapeSequence, hexValue1, hexValue2, hexValue3) => {
++        switch (escapeSequence[0]) {
+           case "\\":
+             return "\\";
+           case "n":
+             return "\n";
+@@ -53,9 +54,9 @@
+           case "4":
+           case "5":
+           case "6":
+           case "7":
+-            return String.fromCharCode(Number.parseInt(sequence, 8) || 0);
++            return String.fromCharCode(Number.parseInt(escapeSequence, 8) || 0);
+           default:
+             if (hexValue1 != null) {
+               return String.fromCharCode(Number.parseInt(hexValue1, 16) || 0);
+             }
+@@ -64,53 +65,53 @@
+             }
+             if (hexValue3 != null) {
+               const codePoint = Number.parseInt(hexValue3, 16) || 0;
+               if (codePoint > 1114111) {
+-                return match;
++                return context;
+               } else {
+                 return String.fromCodePoint(codePoint);
+               }
+             }
+-            return sequence;
++            return escapeSequence;
+         }
+       },
+     );
+   }
+-  const packetTypes = {
++  const actionIds = {
+     spawn: 22,
+     createTribe: 5,
+     chat: 100,
+   };
+   const originalEncode = TextEncoder.prototype.encode;
+-  TextEncoder.prototype.encode = function (...inputArgs) {
++  TextEncoder.prototype.encode = function (...inputPayload) {
+     try {
+-      const messagePatterns = [
++      const commandPatterns = [
+         /^(\x14{3}\d+\|6\|)(.+)$/gm,
+         /^(\x14{3}\d+\|8\|)(.+)$/gm,
+         /^(\x14{3}\d+\|14\|)(.+)$/gm,
+         /^(\x13{3}[01])(.+)$/gm,
+       ];
+       for (
+         let patternIndex = 0;
+-        patternIndex < messagePatterns.length;
++        patternIndex < commandPatterns.length;
+         patternIndex++
+       ) {
+-        const regexMatch = messagePatterns[patternIndex].exec(inputArgs[0]);
+-        if (regexMatch && regexMatch.length === 3) {
++        const matchResult = commandPatterns[patternIndex].exec(inputPayload[0]);
++        if (matchResult && matchResult.length === 3) {
+           const actionHandler = [
+-            packetTypes.spawn,
+-            packetTypes.spawn,
+-            packetTypes.createTribe,
+-            packetTypes.chat,
++            actionIds.spawn,
++            actionIds.spawn,
++            actionIds.createTribe,
++            actionIds.chat,
+           ][patternIndex];
+-          inputArgs[0] =
+-            regexMatch[1] +
+-            unescapeString(regexMatch[2]).substr(0, actionHandler);
++          inputPayload[0] =
++            matchResult[1] +
++            unescapeString(matchResult[2]).substr(0, actionHandler);
+           break;
+         }
+       }
+     } catch {}
+-    return Reflect.apply(originalEncode, this, inputArgs);
++    return Reflect.apply(originalEncode, this, inputPayload);
+   };
+   const inputMaxLengthObserver = new MutationObserver(() => {
+     document
+       .querySelector(".play-game .el-input__inner")
+@@ -135,17 +136,17 @@
+   }
+   showNotification("✅ Special Characters enabled! (One-time use)");
+ }
+ 
+-const angles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
+-const radius = 300;
+-let game;
+-let appState;
+-let player;
+-let isActive = false;
++const rotationAngles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
++const orbitRadius = 300;
++let gameInstance;
++let globalState;
++let playerData;
++let isReady = false;
+ 
+-const encryptPacketData = (inputData, checksumByte, suffix = "") => {
+-  const stringTable = [
++const encryptPacketData = (message, byteValue, suffix = "") => {
++  const stringPool = [
+     "ode",
+     "eat",
+     "fr",
+     "bite",
+@@ -157,52 +158,49 @@
+     "L",
+     "en",
+     "setter",
+   ];
+-  if (!inputData) {
++  if (!message) {
+     return null;
+   }
+-  const plainText = ((plainText, keyText) => {
++  const plainText = ((firstText, secondText) => {
+     const textEncoder = new TextEncoder();
+-    const plainTextBytes =
+-      textEncoder[stringTable[5] + stringTable[0]](plainText);
+-    const keyBytes = textEncoder[stringTable[10] + stringTable[7]](keyText);
+-    const cipherTextBytes = new Uint8Array(
+-      plainTextBytes["l" + stringTable[4] + stringTable[6].slice(0, 2)],
++    const firstEncodedBytes =
++      textEncoder[stringPool[5] + stringPool[0]](firstText);
++    const secondEncodedBytes =
++      textEncoder[stringPool[10] + stringPool[7]](secondText);
++    const byteBuffer = new Uint8Array(
++      firstEncodedBytes["l" + stringPool[4] + stringPool[6].slice(0, 2)],
+     );
+-    for (let i = 0; i < plainTextBytes.length; i++) {
+-      cipherTextBytes[i] =
+-        plainTextBytes[i] ^
+-        keyBytes[
++    for (let i = 0; i < firstEncodedBytes.length; i++) {
++      byteBuffer[i] =
++        firstEncodedBytes[i] ^
++        secondEncodedBytes[
+           i %
+-            keyBytes[
++            secondEncodedBytes[
+               "" +
+-                stringTable[9].toLowerCase() +
+-                stringTable[10] +
++                stringPool[9].toLowerCase() +
++                stringPool[10] +
+                 "g" +
+-                stringTable[6].slice(0, 2)
++                stringPool[6].slice(0, 2)
+             ]
+         ];
+     }
+-    return btoa(String.fromCharCode(...cipherTextBytes));
++    return btoa(String.fromCharCode(...byteBuffer));
+   })(
+-    String.fromCharCode(checksumByte)[stringTable[8] + stringTable[1]](3) +
+-      suffix,
+-    inputData,
++    String.fromCharCode(byteValue)[stringPool[8] + stringPool[1]](3) + suffix,
++    message,
+   );
+-  const encodedBytes = new TextEncoder()[stringTable[5] + stringTable[0]](
++  const encodedText = new TextEncoder()[stringPool[5] + stringPool[0]](
+     plainText,
+   );
+-  const totalBufferSize = 1 + encodedBytes.byteLength + 1;
+-  const arrayBuffer = new ArrayBuffer(totalBufferSize);
+-  const dataView = new DataView(arrayBuffer);
++  const totalBufferSize = 1 + encodedText.byteLength + 1;
++  const buffer = new ArrayBuffer(totalBufferSize);
++  const dataView = new DataView(buffer);
+   dataView.setUint8(0, 25);
+-  new Uint8Array(arrayBuffer)[stringTable[11].slice(0, (9 / 27) * 9)](
+-    encodedBytes,
+-    1,
+-  );
+-  dataView.setUint8(totalBufferSize - 1, checksumByte);
+-  return arrayBuffer;
++  new Uint8Array(buffer)[stringPool[11].slice(0, (9 / 27) * 9)](encodedText, 1);
++  dataView.setUint8(totalBufferSize - 1, byteValue);
++  return buffer;
+ };
+ const securitySettings = {
+   107: {
+     hasSec: true,
+@@ -214,210 +212,354 @@
+     secLoadTime: 500,
+     hasScaling: false,
+   },
+ };
+-const sendPacket = (payload, additionalData = "") => {
+-  if (game && appState && state.socketManager) {
+-    game[state.socketManager].sendBytePacket(
+-      encryptPacketData(appState.token._value, payload, additionalData),
++const sendPacket = (payload, metadata = "") => {
++  if (gameInstance && globalState && stateCache.socketManager) {
++    gameInstance[stateCache.socketManager].sendBytePacket(
++      encryptPacketData(globalState.token._value, payload, metadata),
+     );
+   }
+ };
+-const state = {};
++const stateCache = {};
+ const counter = 0;
+-const initHooks = () => {
++const setupProxyHooks = () => {
+   const propertyCache = {};
+-  for (const propName of Object.getOwnPropertyNames(Reflect)) {
+-    propertyCache[propName] = Reflect[propName];
++  for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
++    propertyCache[propertyKey] = Reflect[propertyKey];
+   }
+-  const ProxyClass = Proxy;
++  const ProxyConstructor = Proxy;
+   const lookupGetter = Object.prototype.__lookupGetter__;
+-  const createPropertyProxy = (targetObject, propertyKey, propertyValue) => {
+-    const propertyInstance = new ProxyClass(
+-      targetObject[propertyKey],
+-      propertyValue,
++  const wrapWithProxy = (contextMap, contextKey, contextValue) => {
++    const contextInstance = new ProxyConstructor(
++      contextMap[contextKey],
++      contextValue,
+     );
+-    stateMap.set(propertyInstance, targetObject[propertyKey]);
+-    targetObject[propertyKey] = propertyInstance;
++    stateMap.set(contextInstance, contextMap[contextKey]);
++    contextMap[contextKey] = contextInstance;
+   };
+-  createPropertyProxy(Function.prototype, "toString", {
+-    apply(thisContext, propertyKey_2, thisArg) {
++  wrapWithProxy(Function.prototype, "toString", {
++    apply(thisArg, propertyKey, applyParams) {
+       return propertyCache.apply(
+-        thisContext,
+-        stateMap.get(propertyKey_2) || propertyKey_2,
+         thisArg,
++        stateMap.get(propertyKey) || propertyKey,
++        applyParams,
+       );
+     },
+   });
+-  createPropertyProxy(window, "Proxy", {
++  wrapWithProxy(window, "Proxy", {
+     construct(constructor, constructorArgs) {
+       const instance = propertyCache.construct(constructor, constructorArgs);
+       return instance;
+     },
+   });
+-  createPropertyProxy(ProxyClass, "revocable", {
+-    apply(targetFunction, functionArgs, functionContext) {
+-      const functionResult = propertyCache.apply(
+-        targetFunction,
+-        functionArgs,
+-        functionContext,
+-      );
+-      return functionResult;
++  wrapWithProxy(ProxyConstructor, "revocable", {
++    apply(context, args, options) {
++      const result = propertyCache.apply(context, args, options);
++      return result;
+     },
+   });
+-  let lastTimestamp = 0;
+-  createPropertyProxy(Function.prototype, "bind", {
+-    apply(targetFunction2, functionArgs2, functionContext2) {
++  let lastExecutionTime = 0;
++  wrapWithProxy(Function.prototype, "bind", {
++    apply(callContext, callArgs, callOptions) {
+       try {
+         try {
+           if (
+-            lookupGetter.call(
+-              functionContext2[0],
+-              "aboveBgPlatformsContainer",
+-            ) != null
++            lookupGetter.call(callOptions[0], "aboveBgPlatformsContainer") !=
++            null
+           ) {
+-            return propertyCache.apply(
+-              targetFunction2,
+-              functionArgs2,
+-              functionContext2,
+-            );
++            return propertyCache.apply(callContext, callArgs, callOptions);
+           }
+         } catch {}
+         if (
+-          functionContext2[0] &&
+-          functionContext2[0].aboveBgPlatformsContainer != null
++          callOptions[0] &&
++          callOptions[0].aboveBgPlatformsContainer != null
+         ) {
+-          player = functionContext2[0];
+-          game = functionContext2[0].game;
+-          const allKeys = getAllPropertyNames(player);
+-          const obfuscatedKeys = allKeys.filter((varName) =>
+-            varName.startsWith("_0x"),
++          playerData = callOptions[0];
++          gameInstance = callOptions[0].game;
++          const allKeys = getAllPropertyNames(playerData);
++          const obfuscatedKeys = allKeys.filter((obfuscatedVarName) =>
++            obfuscatedVarName.startsWith("_0x"),
+           );
+-          state.setFlash =
+-            Object.getOwnPropertyNames(player.__proto__.__proto__)
+-              .filter((propName) => propName.startsWith("_0x"))
+-              .find((methodName) => player[methodName] instanceof Function) ||
+-            state.setFlash;
+-          state.terrainManager =
++          stateCache.setFlash =
++            Object.getOwnPropertyNames(playerData.__proto__.__proto__)
++              .filter((obfuscatedPropName) =>
++                obfuscatedPropName.startsWith("_0x"),
++              )
++              .find(
++                (functionKey) => playerData[functionKey] instanceof Function,
++              ) || stateCache.setFlash;
++          stateCache.terrainManager =
+             obfuscatedKeys.find(
+-              (shadowKey) => typeof player[shadowKey]?.shadow !== "undefined",
+-            ) || state.terrainManager;
+-          state.entityManager =
++              (shadowObjectKey) =>
++                typeof playerData[shadowObjectKey]?.shadow !== "undefined",
++            ) || stateCache.terrainManager;
++          stateCache.entityManager =
+             obfuscatedKeys.find(
+               (entitiesListKey) =>
+-                typeof player[entitiesListKey]?.entitiesList !== "undefined",
+-            ) || state.entityManager;
+-          state.entityManagerProps = {};
++                typeof playerData[entitiesListKey]?.entitiesList !==
++                "undefined",
++            ) || stateCache.entityManager;
++          stateCache.entityManagerProps = {};
+           const entityManagerKeys = getAllPropertyNames(
+-            player[state.entityManager],
++            playerData[stateCache.entityManager],
+           );
+-          const animalsUpdateInterval = setInterval(() => {
+-            state.entityManagerProps.animalsList =
++          const animalsListInterval = setInterval(() => {
++            stateCache.entityManagerProps.animalsList =
+               entityManagerKeys
+                 .filter((variableName) => variableName.startsWith("_0x"))
+                 .find(
+-                  (entityKey) =>
+-                    typeof player?.[state.entityManager]?.[entityKey]?.[0] !==
+-                    "undefined",
+-                ) || state.entityManagerProps.animalsList;
+-            if (typeof state.entityManagerProps.animalsList !== "undefined") {
+-              clearInterval(animalsUpdateInterval);
++                  (entityName) =>
++                    typeof playerData?.[stateCache.entityManager]?.[
++                      entityName
++                    ]?.[0] !== "undefined",
++                ) || stateCache.entityManagerProps.animalsList;
++            if (
++              typeof stateCache.entityManagerProps.animalsList !== "undefined"
++            ) {
++              clearInterval(animalsListInterval);
+             }
+           }, 1000);
+-          state.socketManager =
+-            getAllPropertyNames(game).find(
+-              (packetSenderKey) =>
+-                typeof game[packetSenderKey]?.sendBytePacket !== "undefined",
+-            ) || state.socketManager;
++          stateCache.socketManager =
++            getAllPropertyNames(gameInstance).find(
++              (networkClientKey) =>
++                typeof gameInstance[networkClientKey]?.sendBytePacket !==
++                "undefined",
++            ) || stateCache.socketManager;
+           try {
+-            appState = document
++            globalState = document
+               .getElementById("app")
+               ._vnode.appContext.config.globalProperties.$simpleState.states.find(
+                 (gameStore) => gameStore._storeMeta.id === "game",
+               );
+           } catch {}
+-          let myAnimalsUpdateInterval;
++          let myAnimalsInterval;
+           try {
+-            clearInterval(myAnimalsUpdateInterval);
++            clearInterval(myAnimalsInterval);
+           } catch {}
+-          myAnimalsUpdateInterval = setInterval(() => {
++          myAnimalsInterval = setInterval(() => {
+             try {
+-              if (!player?.myAnimals?.[0]) {
++              if (!playerData?.myAnimals?.[0]) {
+                 return;
+               }
+-              const myAnimal = player.myAnimals[0];
+-              if (myAnimal.fadingTrail) {
++              const firstAnimal = playerData.myAnimals[0];
++              if (firstAnimal.fadingTrail) {
+                 const fadingTrailPrototype = Object.getPrototypeOf(
+-                  myAnimal.fadingTrail,
++                  firstAnimal.fadingTrail,
+                 );
+-                wrapWithProxy(fadingTrailPrototype, "enable", {
++                wrapPropertyWithProxy(fadingTrailPrototype, "enable", {
+                   apply() {},
+                 });
+               }
+-              if (myAnimal.bubblesEmitter) {
++              if (firstAnimal.bubblesEmitter) {
+                 const bubblesEmitterPrototype = Object.getPrototypeOf(
+-                  myAnimal.bubblesEmitter,
++                  firstAnimal.bubblesEmitter,
+                 );
+                 Object.defineProperty(bubblesEmitterPrototype, "emit", {
+                   set: () => {},
+                 });
+               }
+-              clearInterval(myAnimalsUpdateInterval);
++              clearInterval(myAnimalsInterval);
+             } catch {}
+           }, 200);
+-          if (lastTimestamp < Date.now() - 3000) {
++          if (lastExecutionTime < Date.now() - 3000) {
+             showNotification("✅ Astraphobia client loaded in game");
+-            lastTimestamp = Date.now();
++            lastExecutionTime = Date.now();
+           }
+           initControlOverlay();
+         }
+       } catch {}
+-      return propertyCache.apply(
+-        targetFunction2,
+-        functionArgs2,
+-        functionContext2,
+-      );
++      return propertyCache.apply(callContext, callArgs, callOptions);
+     },
+   });
+ };
+ const disableGameRestrictions = () => {
+-  if (isActive) {
++  if (isReady) {
+     return;
+   }
+-  if (!player) {
++  if (!playerData) {
+     setTimeout(disableGameRestrictions, 500);
+     return;
+   }
+   setInterval(() => {
+     try {
+-      game.viewport.clampZoom({
++      gameInstance.viewport.clampZoom({
+         minWidth: 0,
+         maxWidth: 10000000,
+       });
+-      game.viewport.plugins.plugins.clamp = null;
+-      game.viewport.plugins.plugins["clamp-zoom"] = null;
++      gameInstance.viewport.plugins.plugins.clamp = null;
++      gameInstance.viewport.plugins.plugins["clamp-zoom"] = null;
+     } catch {}
+   }, 300);
+   try {
+-    if (state.setFlash) {
+-      player[state.setFlash] = () => {};
++    if (stateCache.setFlash) {
++      playerData[stateCache.setFlash] = () => {};
+     }
+-    if (state.terrainManager) {
+-      const terrainManager = player[state.terrainManager];
++    if (stateCache.terrainManager) {
++      const terrainManager = playerData[stateCache.terrainManager];
+       if (terrainManager && terrainManager.shadow) {
+         terrainManager.shadow.setShadowSize(1000000);
+         terrainManager.shadow.setShadowSize = () => {};
+       }
+     }
+   } catch (error) {
+     console.error(error);
+   }
+-  isActive = true;
++  isReady = true;
+ };
++function setupToolsPanel() {
++  const toolsStyle = document.createElement("style");
++  toolsStyle.textContent =
++    "\n      :root {\n        --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);\n        --shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.4);\n      }\n      #deep-tools-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n      }\n      #deep-tools-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #deep-tools-panel textarea {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 8px;\n        padding: 10px;\n        transition: all 0.2s ease;\n        font-size: 13px;\n      }\n      #deep-tools-panel textarea:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);\n      }\n      #deep-tools-panel input[type=\"number\"] {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 60px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #deep-tools-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        position: relative;\n        overflow: hidden;\n      }\n      #deep-tools-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #deep-tools-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #deep-tools-panel button:hover:not(:disabled) {\n        background: var(--hover-bg);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2);\n        color: var(--accent-hover);\n      }\n      #deep-tools-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #deep-tools-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #deep-tools-panel .credits {\n        margin-top: 12px;\n        font-size: 11px;\n        color: var(--text-secondary);\n        line-height: 1.4;\n      }\n      #deep-tools-panel .auto-chat-controls {\n        display: flex;\n        gap: 8px;\n        margin-bottom: 10px;\n        align-items: center;\n        justify-content: center;\n      }\n      #deep-tools-panel .spin-keybind {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        margin-bottom: 10px;\n        font-size: 12px;\n      }\n      #deep-tools-panel .spin-keybind label {\n        color: var(--text-primary);\n      }\n      #deep-tools-panel #spinKeyInput {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 50px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #aim-overlay, #ctrl-overlay {\n        z-index: 10000 !important;\n      }\n      div.game {\n        position: relative;\n      }\n      /* Ad Removal */\n      div.sidebar.left > div.ad-block {\n        opacity: 0 !important;\n        pointer-events: none !important;\n        display: none !important;\n      }\n      div.sidebar.left > a {\n        display: none !important;\n      }\n      div.sidebar.left {\n        max-width: 30vw;\n        width: 21rem;\n        bottom: 0 !important;\n      }\n    ";
++  document.head.appendChild(toolsStyle);
++  const container = document.createElement("div");
++  container.id = "deep-tools-panel";
++  container.style.position = "fixed";
++  container.style.bottom = "20px";
++  container.style.right = "20px";
++  container.style.color = "var(--text-primary)";
++  container.style.padding = "16px";
++  container.style.borderRadius = "16px";
++  container.style.fontSize = "14px";
++  container.style.zIndex = "99999";
++  container.style.userSelect = "none";
++  container.style.width = "240px";
++  container.style.textAlign = "center";
++  container.style.cursor = "move";
++  container.style.overflow = "hidden";
++  container.innerHTML =
++    '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        ASTRAPHOBIA CLIENT\n      </div>\n      <div id="panelContent">\n        <textarea id="chatMsg" placeholder="Type message..." style="width:100%; height:50px; margin-bottom:10px; resize:none;"></textarea>\n        <button id="sendBtn" style="width:100%; margin-bottom:10px;">Send Typed Chat</button>\n        <div class="auto-chat-controls">\n          <input type="number" id="delayInput" min="1" max="300" value="10" style="margin-right:8px;">\n          <span style="font-size:12px;">sec</span>\n        </div>\n        <button id="autoChatBtn" style="width:100%; margin-bottom:10px;">Enable Auto Chat</button>\n        <button id="patchBtn" style="width:100%; margin-bottom:10px;">Enable Special Characters(in chat/clan/name)</button>\n        <button id="spoofBtn" style="width:100%; margin-bottom:10px;">Spoof Username:Random Unicode Name(ban decrease)</button>\n        <button id="spinBtn" style="width:100%; margin-bottom:10px;">Enable Auto Spin</button>\n        <div class="spin-keybind">\n          <label for="spinKeyInput">Keybind:</label>\n          <input type="text" id="spinKeyInput" placeholder="PRESS" readonly>\n        </div>\n        <div class="credits">\n          Coder: Astraphobia<br>\n          Owner/Founder: Astraphobia<br>\n          Designer/Marketer: Astraphobia<br>\n          Tester: Astraphobia\n        </div>\n      </div>\n    ';
++  document.body.appendChild(container);
++  container.querySelector("#sendBtn").onclick = () => {
++    const chatMessage = container.querySelector("#chatMsg").value;
++    if (chatMessage) {
++      autoChat(chatMessage);
++    }
++  };
++  const patchButton = container.querySelector("#patchBtn");
++  patchButton.onclick = () => initPacketInterceptor(patchButton);
++  const spoofButton = container.querySelector("#spoofBtn");
++  spoofButton.onclick = () => {
++    const randomValue = generateRandomString(8);
++    if (simulateTyping(".play-game .el-input__inner", randomValue)) {
++      showNotification("Spoofed name!");
++    } else if (simulateTyping(".new-tribe .el-input__inner", randomValue)) {
++      showNotification("Spoofed tribe name!");
++    } else {
++      showNotification("No name input found! Enable special characters first.");
++    }
++  };
++  const spinButton = container.querySelector("#spinBtn");
++  spinButton.onclick = () => {
++    toggleMouseSimulation();
++    if (state.animationIntervalId) {
++      spinButton.textContent = "Disable Auto Spin";
++      spinButton.style.color = "var(--accent)";
++      spinButton.style.opacity = "0.6";
++    } else {
++      spinButton.textContent = "Enable Auto Spin";
++      spinButton.style.color = "var(--accent)";
++      spinButton.style.opacity = "1";
++    }
++  };
++  const spinKeyInput = container.querySelector("#spinKeyInput");
++  let pressedKey = null;
++  spinKeyInput.addEventListener("keydown", (keyboardEvent) => {
++    keyboardEvent.preventDefault();
++    pressedKey = keyboardEvent.code || keyboardEvent.key;
++    spinKeyInput.value = pressedKey.replace("Key", "").toLowerCase();
++  });
++  document.addEventListener("keydown", (keyboardEvent_2) => {
++    if (
++      pressedKey &&
++      keyboardEvent_2.code === pressedKey &&
++      !keyboardEvent_2.target.matches("input, textarea, button")
++    ) {
++      keyboardEvent_2.preventDefault();
++      toggleMouseSimulation();
++      if (state.animationIntervalId) {
++        spinButton.textContent = "Disable Auto Spin";
++        spinButton.style.color = "var(--accent)";
++        spinButton.style.opacity = "0.6";
++      } else {
++        spinButton.textContent = "Enable Auto Spin";
++        spinButton.style.color = "var(--accent)";
++        spinButton.style.opacity = "1";
++      }
++    }
++  });
++  const autoChatButton = container.querySelector("#autoChatBtn");
++  autoChatButton.onclick = () => {
++    const chatMessage_2 = container.querySelector("#chatMsg").value;
++    const delayInput = container.querySelector("#delayInput");
++    const delayValue = parseInt(delayInput.value) || 10;
++    if (!chatMessage_2) {
++      showNotification("⚠️ Enter a message first!");
++      return;
++    }
++    if (state.isProcessing) {
++      stopInterval();
++      autoChatButton.textContent = "Enable Auto Chat";
++      autoChatButton.style.color = "var(--accent)";
++      autoChatButton.style.opacity = "1";
++    } else {
++      startScheduledTask(chatMessage_2, delayValue);
++      autoChatButton.textContent = "Disable Auto Chat";
++      autoChatButton.style.color = "var(--accent)";
++      autoChatButton.style.opacity = "0.6";
++    }
++  };
++  let offsetX;
++  let offsetY;
++  let isActive = false;
++  let isDragging = false;
++  container.addEventListener("mousedown", (clickEvent) => {
++    if (
++      clickEvent.target.tagName === "BUTTON" ||
++      clickEvent.target.tagName === "TEXTAREA" ||
++      clickEvent.target.tagName === "INPUT" ||
++      clickEvent.target.classList.contains("credits")
++    ) {
++      return;
++    }
++    isActive = true;
++    isDragging = false;
++    offsetX = clickEvent.clientX - container.getBoundingClientRect().left;
++    offsetY = clickEvent.clientY - container.getBoundingClientRect().top;
++    container.style.transition = "none";
++    const handleMouseMove = (mouseEvent) => {
++      const deltaX = mouseEvent.clientX - clickEvent.clientX;
++      const deltaY = mouseEvent.clientY - clickEvent.clientY;
++      if (!isDragging && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
++        isDragging = true;
++      }
++      if (isActive) {
++        container.style.left = mouseEvent.clientX - offsetX + "px";
++        container.style.top = mouseEvent.clientY - offsetY + "px";
++        container.style.bottom = "auto";
++        container.style.right = "auto";
++      }
++    };
++    const handleMouseUp = () => {
++      isActive = false;
++      container.style.transition = "all 0.3s ease";
++      document.removeEventListener("mousemove", handleMouseMove);
++      document.removeEventListener("mouseup", handleMouseUp);
++    };
++    document.addEventListener("mousemove", handleMouseMove);
++    document.addEventListener("mouseup", handleMouseUp);
++  });
++  container.addEventListener("click", (event) => {
++    if (isDragging) {
++      event.stopImmediatePropagation();
++    }
++  });
++  return container;
++}
+ 
+ function initializePanels() {
+-  const mainPanelElement = createDeepToolsPanel();
+-  const historyPanelElement = createUpdateHistoryPanel();
++  const mainPanelElement = setupToolsPanel();
++  const historyPanelElement = setupUpdateHistory();
+   const settingsPanelElement = injectSettingsStyles();
+   const plusPanelElement = injectPlusPanelStyles();
+   initBackgroundImage();
+   initAdBlocker();
+@@ -429,9 +571,9 @@
+   };
+ }
+ document.addEventListener("keydown", (event) => {
+   if (
+-    event.key === coreSharedState.currentKey &&
++    event.key === state.currentKey &&
+     !event.repeat &&
+     !event.target.matches("input, textarea, button")
+   ) {
+     event.preventDefault();
+@@ -439,35 +581,36 @@
+   }
+ });
+ window.addEventListener("load", () => {
+   setTimeout(() => {
+-    initHooks();
++    setupProxyHooks();
+     initAdBlocker();
+     initBackgroundImage();
+   }, 1000);
+ });
+ 
+-export const coreSharedState = {
+-  updateInterval: null,
++export const state = {
++  mainIntervalId: null,
+   isProcessing: false,
+-  animationInterval: null,
++  animationIntervalId: null,
+   angleIndex: 0,
+   isInitialized_2: false,
+-  isActive_2: false,
++  isProcessing_2: false,
+   currentKey: "Shift",
+ };
+ 
+ export {
+-  wrapWithProxy,
+-  hookTextEncoder,
++  wrapPropertyWithProxy,
++  initPacketInterceptor,
+   encryptPacketData,
+   sendPacket,
+-  initHooks,
++  setupProxyHooks,
+   disableGameRestrictions,
++  setupToolsPanel,
+   initializePanels,
+-  angles,
+-  radius,
+-  game,
+-  player,
+-  isActive,
++  rotationAngles,
++  orbitRadius,
++  gameInstance,
++  playerData,
++  isReady,
+   securitySettings,
+ };
+Index: src/features/adblock.js
+===================================================================
+--- src/features/adblock.js	v1.3
++++ src/features/adblock.js	v1.4
+@@ -13,10 +13,10 @@
+     "div.sidebar.left > div:has(> iframe)",
+     'div.sidebar.left > div:has(> a[href*="doubleclick"]',
+   ];
+   const removeAds = () => {
+-    adSelectors.forEach((selector) => {
+-      document.querySelectorAll(selector).forEach((targetElement) => {
++    adSelectors.forEach((cssSelector) => {
++      document.querySelectorAll(cssSelector).forEach((targetElement) => {
+         targetElement.style.display = "none !important";
+         targetElement.style.opacity = "0 !important";
+         targetElement.style.pointerEvents = "none !important";
+         targetElement.style.visibility = "hidden !important";
+Index: src/features/antidetection.js
+===================================================================
+--- src/features/antidetection.js	v1.3
++++ src/features/antidetection.js	v1.4
+@@ -1,31 +0,0 @@
+-import { getGameCanvas } from "../utils.js";
+-import { showNotification } from "../ui/interaction.js";
+-import { angles, radius, coreSharedState } from "../core.js";
+-
+-function startAntiAfk() {
+-  if (coreSharedState.animationInterval) {
+-    return;
+-  }
+-  const gameCanvas = getGameCanvas();
+-  if (!gameCanvas) {
+-    showNotification("Game canvas not found!");
+-    return;
+-  }
+-  coreSharedState.animationInterval = setInterval(() => {
+-    const angleDegrees = angles[coreSharedState.angleIndex];
+-    const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
+-    const offsetX = Math.round(radius * Math.sin(angleRadians));
+-    const offsetY = Math.round(radius * Math.cos(angleRadians));
+-    gameCanvas.dispatchEvent(
+-      new MouseEvent("pointermove", {
+-        clientX: window.innerWidth / 2 + offsetX,
+-        clientY: window.innerHeight / 2 + offsetY,
+-        bubbles: true,
+-      }),
+-    );
+-    coreSharedState.angleIndex =
+-      (coreSharedState.angleIndex + 1) % angles.length;
+-  }, 15);
+-}
+-
+-export { startAntiAfk };
+Index: src/features/autofarm.js
+===================================================================
+--- src/features/autofarm.js	v1.3
++++ src/features/autofarm.js	v1.4
+@@ -1,24 +1,19 @@
+-import {
+-  player,
+-  securitySettings,
+-  sendPacket,
+-  coreSharedState,
+-} from "../core.js";
++import { playerData, securitySettings, sendPacket, state } from "../core.js";
+ 
+ const handleAnimalAction = (currentValue) => {
+   const id1 = 1;
+   const id4 = 4;
+   const id5 = 5;
+   try {
+     const fishLevelConfig = {
+       ...securitySettings.default,
+-      ...(securitySettings[player?.myAnimals?.[0]?.visibleFishLevel] || {}),
++      ...(securitySettings[playerData?.myAnimals?.[0]?.visibleFishLevel] || {}),
+     };
+-    if (currentValue < (player?.myAnimals?.[0]?._standing ? 40 : 100)) {
++    if (currentValue < (playerData?.myAnimals?.[0]?._standing ? 40 : 100)) {
+       return sendPacket(id1);
+     }
+-    if (player?.myAnimals?.[0]?._standing) {
++    if (playerData?.myAnimals?.[0]?._standing) {
+       return sendPacket(id5, currentValue);
+     }
+     if (fishLevelConfig.hasScaling) {
+       return sendPacket(id5, currentValue);
+Index: src/features/chat.js
+===================================================================
+--- src/features/chat.js	v1.3
++++ src/features/chat.js	v1.4
+@@ -1,23 +1,23 @@
+-import { coreSharedState } from "../core.js";
++import { state } from "../core.js";
+ 
+ function startScheduledTask(taskData, intervalSeconds) {
+-  if (coreSharedState.updateInterval) {
+-    clearInterval(coreSharedState.updateInterval);
++  if (state.mainIntervalId) {
++    clearInterval(state.mainIntervalId);
+   }
+-  coreSharedState.isProcessing = true;
+-  coreSharedState.updateInterval = setInterval(() => {
++  state.isProcessing = true;
++  state.mainIntervalId = setInterval(() => {
+     autoChat(taskData);
+   }, intervalSeconds * 1000);
+ }
+ function stopInterval() {
+-  if (coreSharedState.updateInterval) {
+-    clearInterval(coreSharedState.updateInterval);
+-    coreSharedState.updateInterval = null;
++  if (state.mainIntervalId) {
++    clearInterval(state.mainIntervalId);
++    state.mainIntervalId = null;
+   }
+-  coreSharedState.isProcessing = false;
++  state.isProcessing = false;
+ }
+-function autoChat(textToType) {
++function autoChat(messageText) {
+   const chatInput =
+     document.querySelector(".chat-input input") ||
+     document.querySelector('input[placeholder*="chat" i]') ||
+     document.querySelector('input[type="text"]');
+@@ -28,9 +28,9 @@
+   chatInput.focus();
+   chatInput.value = "";
+   let charIndex = 0;
+   const typeCharacter = () => {
+-    if (charIndex >= textToType.length) {
++    if (charIndex >= messageText.length) {
+       const sendButton =
+         document.querySelector(".chat-input button") ||
+         document.querySelector('button[aria-label*="send" i]') ||
+         document.querySelector("button");
+@@ -53,9 +53,9 @@
+         }, 100);
+       }
+       return;
+     }
+-    chatInput.value += textToType[charIndex];
++    chatInput.value += messageText[charIndex];
+     chatInput.dispatchEvent(
+       new InputEvent("input", {
+         bubbles: true,
+       }),
+Index: src/features/esp.js
+===================================================================
+--- src/features/esp.js	v1.3
++++ src/features/esp.js	v1.4
+@@ -1,21 +1,21 @@
+ import { showNotification } from "../ui/interaction.js";
+-import { player, coreSharedState } from "../core.js";
++import { playerData, state } from "../core.js";
+ 
+ function toggleMinimapSize() {
+-  if (!player || !player.minimap) {
++  if (!playerData || !playerData.minimap) {
+     showNotification("Minimap not available yet!");
+     return;
+   }
+-  if (coreSharedState.isActive_2) {
+-    player.minimap.scale.set(1);
+-    player.minimap.pivot.set(0, 0);
+-    coreSharedState.isActive_2 = false;
++  if (state.isProcessing_2) {
++    playerData.minimap.scale.set(1);
++    playerData.minimap.pivot.set(0, 0);
++    state.isProcessing_2 = false;
+     showNotification("🗺️ Minimap restored to normal!");
+   } else {
+-    player.minimap.scale.set(0.5);
+-    player.minimap.pivot.set(-70, -45);
+-    coreSharedState.isActive_2 = true;
++    playerData.minimap.scale.set(0.5);
++    playerData.minimap.pivot.set(-70, -45);
++    state.isProcessing_2 = true;
+     showNotification("🗺️ Small Minimap enabled!");
+   }
+ }
+ 
+Index: src/features/movement.js
+===================================================================
+--- src/features/movement.js	v1.3
++++ src/features/movement.js	v1.4
+@@ -1,18 +1,47 @@
+-import { startAntiAfk } from "./antidetection.js";
+-import { coreSharedState } from "../core.js";
++import { getGameCanvas } from "../utils.js";
++import { showNotification } from "../ui/interaction.js";
++import { rotationAngles, orbitRadius, state } from "../core.js";
+ 
++function startAntiAfkMouseMovement() {
++  if (state.animationIntervalId) {
++    return;
++  }
++  const gameCanvas = getGameCanvas();
++  if (!gameCanvas) {
++    showNotification("Game canvas not found!");
++    return;
++  }
++  state.animationIntervalId = setInterval(() => {
++    const angleDegrees = rotationAngles[state.angleIndex];
++    const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
++    const offsetX = Math.round(orbitRadius * Math.sin(angleRadians));
++    const offsetY = Math.round(orbitRadius * Math.cos(angleRadians));
++    gameCanvas.dispatchEvent(
++      new MouseEvent("pointermove", {
++        clientX: window.innerWidth / 2 + offsetX,
++        clientY: window.innerHeight / 2 + offsetY,
++        bubbles: true,
++      }),
++    );
++    state.angleIndex = (state.angleIndex + 1) % rotationAngles.length;
++  }, 15);
++}
+ function stopMouseSimulation() {
+-  if (coreSharedState.animationInterval) {
+-    clearInterval(coreSharedState.animationInterval);
+-    coreSharedState.animationInterval = null;
++  if (state.animationIntervalId) {
++    clearInterval(state.animationIntervalId);
++    state.animationIntervalId = null;
+   }
+ }
+ function toggleMouseSimulation() {
+-  if (coreSharedState.animationInterval) {
++  if (state.animationIntervalId) {
+     stopMouseSimulation();
+   } else {
+-    startAntiAfk();
++    startAntiAfkMouseMovement();
+   }
+ }
+ 
+-export { stopMouseSimulation, toggleMouseSimulation };
++export {
++  startAntiAfkMouseMovement,
++  stopMouseSimulation,
++  toggleMouseSimulation,
++};
+Index: src/ui/interaction.js
+===================================================================
+--- src/ui/interaction.js	v1.3
++++ src/ui/interaction.js	v1.4
+@@ -1,45 +1,43 @@
+-import { radius, coreSharedState } from "../core.js";
+-
+-function simulateTyping(selector, textToType) {
+-  const inputElement = document.querySelector(selector);
+-  if (!inputElement) {
++function simulateTyping(selector, text) {
++  const element = document.querySelector(selector);
++  if (!element) {
+     return false;
+   }
+-  inputElement.focus();
+-  inputElement.value = "";
+-  let charIndex = 0;
+-  const typeNextChar = () => {
+-    if (charIndex >= textToType.length) {
+-      inputElement.dispatchEvent(
++  element.focus();
++  element.value = "";
++  let currentIndex = 0;
++  const typeText = () => {
++    if (currentIndex >= text.length) {
++      element.dispatchEvent(
+         new Event("change", {
+           bubbles: true,
+         }),
+       );
+-      inputElement.dispatchEvent(
++      element.dispatchEvent(
+         new Event("input", {
+           bubbles: true,
+         }),
+       );
+       setTimeout(() => {}, 100);
+       return;
+     }
+-    inputElement.value += textToType[charIndex];
+-    inputElement.dispatchEvent(
++    element.value += text[currentIndex];
++    element.dispatchEvent(
+       new InputEvent("input", {
+         bubbles: true,
+       }),
+     );
+-    charIndex++;
+-    setTimeout(typeNextChar, 25);
++    currentIndex++;
++    setTimeout(typeText, 25);
+   };
+-  typeNextChar();
++  typeText();
+   return true;
+ }
+ function showNotification(message) {
+   const notificationDiv = document.createElement("div");
+   notificationDiv.style.cssText =
+-    "position: fixed; top: 20px; right: 20px; background: rgba(15, 15, 35, 0.95); color: #ffffff; padding: 12px 18px; border-radius: 12px; z-index: 10001; font-size: 14px; opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease; pointer-events: none; backdrop-filter: blur(10px); border: 1px solid rgba(0, 212, 255, 0.2);";
++    "position: fixed; top: 20px; right: 20px; background: var(--bg-primary); color: var(--text-primary); padding: 12px 18px; border-radius: 12px; z-index: 10001; font-size: 14px; opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease; pointer-events: none; backdrop-filter: blur(10px); border: 1px solid var(--border);";
+   notificationDiv.textContent = message;
+   document.body.appendChild(notificationDiv);
+   setTimeout(() => {
+     notificationDiv.style.opacity = "1";
+Index: src/ui/panels.js
+===================================================================
+--- src/ui/panels.js	v1.3
++++ src/ui/panels.js	v1.4
+@@ -1,28 +1,20 @@
+ import { handleAnimalAction } from "../features/autofarm.js";
++import { showNotification } from "./interaction.js";
+ import {
+-  startScheduledTask,
+-  stopInterval,
+-  autoChat,
+-} from "../features/chat.js";
+-import {
+-  game,
+-  player,
++  gameInstance,
++  playerData,
+   securitySettings,
+-  radius,
+-  hookTextEncoder,
+-  isActive,
+-  initHooks,
++  isReady,
++  setupProxyHooks,
+   disableGameRestrictions,
+-  coreSharedState,
++  state,
+ } from "../core.js";
+-import { generateRandomString } from "../utils.js";
+-import { simulateTyping, showNotification } from "./interaction.js";
+-import { toggleMouseSimulation } from "../features/movement.js";
+ import { toggleMinimapSize } from "../features/esp.js";
++import { setTheme } from "./theme.js";
+ 
+ const initControlOverlay = () => {
+-  if (coreSharedState.isInitialized_2) {
++  if (state.isInitialized_2) {
+     return;
+   }
+   function sendActionSequence() {
+     try {
+@@ -42,11 +34,11 @@
+     try {
+       document.getElementById("ctrl-overlay").remove();
+     } catch {}
+     const overlayDiv = document.createElement("div");
+-    const gameContainer = document.querySelector("div.game");
+-    if (gameContainer) {
+-      gameContainer.insertBefore(overlayDiv, gameContainer.children[0]);
++    const gameDiv = document.querySelector("div.game");
++    if (gameDiv) {
++      gameDiv.insertBefore(overlayDiv, gameDiv.children[0]);
+     }
+     overlayDiv.outerHTML =
+       '<div id="ctrl-overlay" style="width: 100%;height: 100%;position: absolute;display: block;z-index:10000;pointer-events:none;"></div>';
+     document
+@@ -55,57 +47,57 @@
+   }
+   createControlOverlay();
+   window.addEventListener(
+     "click",
+-    (myAnimalsHandler) => {
++    (callbackParam) => {
+       try {
+-        if (!player?.myAnimals?.[0]) {
++        if (!playerData?.myAnimals?.[0]) {
+           return;
+         }
+-        const visibleFishLevel = player.myAnimals[0].visibleFishLevel;
+-        const fishSettings = {
++        const visibleFishLevel = playerData.myAnimals[0].visibleFishLevel;
++        const fishLevelConfig = {
+           ...securitySettings.default,
+           ...securitySettings[visibleFishLevel],
+         };
+-        if (myAnimalsHandler.ctrlKey) {
+-          if (myAnimalsHandler.shiftKey && visibleFishLevel === 107) {
++        if (callbackParam.ctrlKey) {
++          if (callbackParam.shiftKey && visibleFishLevel === 107) {
+             sendActionSequence();
+             return;
+           } else if (
+-            myAnimalsHandler.shiftKey &&
++            callbackParam.shiftKey &&
+             visibleFishLevel !== 101 &&
+-            player.myAnimals[0]._standing
++            playerData.myAnimals[0]._standing
+           ) {
+             handleAnimalAction(
+               Math.floor(Math.random() * 1647483648) + 500000000,
+             );
+             return;
+           } else {
+-            let keyMap = Object.getOwnPropertyNames(game)
+-              .map((clientKey) => game[clientKey])
+-              .find((inputMap) => inputMap.keys instanceof Array);
+-            if (keyMap) {
+-              keyMap.pointerDown = true;
+-              keyMap.pressElapsed = Infinity;
+-              keyMap.setPointerDown(false);
++            let keyMapping = Object.getOwnPropertyNames(gameInstance)
++              .map((clientKey) => gameInstance[clientKey])
++              .find((keyCollection) => keyCollection.keys instanceof Array);
++            if (keyMapping) {
++              keyMapping.pointerDown = true;
++              keyMapping.pressElapsed = Infinity;
++              keyMapping.setPointerDown(false);
+             }
+           }
+-        } else if (myAnimalsHandler.altKey) {
++        } else if (callbackParam.altKey) {
+           handleAnimalAction(
+-            player?.myAnimals?.[0]?._standing
++            playerData?.myAnimals?.[0]?._standing
+               ? 41
+-              : Math.floor(fishSettings.secLoadTime / 2),
++              : Math.floor(fishLevelConfig.secLoadTime / 2),
+           );
+         }
+       } catch {}
+     },
+     false,
+   );
+   window.addEventListener(
+     "keyup",
+-    (keyboardEvent) => {
++    (event) => {
+       try {
+-        if (!keyboardEvent.ctrlKey && !keyboardEvent.altKey) {
++        if (!event.ctrlKey && !event.altKey) {
+           document.getElementById("ctrl-overlay").style.pointerEvents = "none";
+         }
+       } catch {}
+     },
+@@ -115,50 +107,50 @@
+     try {
+       document.getElementById("ctrl-overlay").style.pointerEvents = "none";
+     } catch {}
+   });
+-  coreSharedState.isInitialized_2 = true;
++  state.isInitialized_2 = true;
+ };
+-function createUpdateHistoryPanel() {
++function setupUpdateHistory() {
+   const historyStyle = document.createElement("style");
+   historyStyle.textContent =
+-    "\n      #update-history {\n        position: fixed;\n        bottom: 20px;\n        left: 20px;\n        background: rgba(15, 15, 35, 0.95);\n        color: #ffffff;\n        padding: 16px;\n        border-radius: 16px;\n        font-size: 13px;\n        z-index: 9999;\n        max-width: 240px;\n        max-height: 280px;\n        overflow-y: auto;\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        cursor: move;\n        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);\n        border: 1px solid rgba(0, 212, 255, 0.2);\n        transition: all 0.3s ease;\n        backdrop-filter: blur(20px);\n      }\n      #update-history:hover {\n        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);\n        transform: translateY(-2px);\n      }\n      #update-history ul {\n        margin: 0;\n        padding-left: 18px;\n      }\n      #update-history li {\n        margin-bottom: 6px;\n        line-height: 1.4;\n      }\n      #update-history h3 {\n        margin: 0 0 12px 0;\n        font-size: 15px;\n        color: #00d4ff;\n        position: relative;\n        padding-right: 28px;\n        font-weight: 600;\n      }\n      #update-history button.min-btn {\n        background: none;\n        border: none;\n        color: #00d4ff;\n        font-size: 20px;\n        cursor: pointer;\n        position: absolute;\n        top: 30%;\n        right: 8px;\n        transform: translateY(-50%);\n        z-index: 1;\n        transition: all 0.2s ease;\n        width: 24px;\n        height: 24px;\n        line-height: 24px;\n        border-radius: 50%;\n      }\n      #update-history button.min-btn:hover {\n        color: #ffffff;\n        background: rgba(0, 212, 255, 0.2);\n      }\n    ";
++    "\n      #update-history {\n        position: fixed;\n        bottom: 20px;\n        left: 20px;\n        background: var(--bg-primary);\n        color: var(--text-primary);\n        padding: 16px;\n        border-radius: 16px;\n        font-size: 13px;\n        z-index: 9999;\n        max-width: 240px;\n        max-height: 280px;\n        overflow-y: auto;\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        cursor: move;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        transition: all 0.3s ease;\n        backdrop-filter: blur(20px);\n      }\n      #update-history:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #update-history ul {\n        margin: 0;\n        padding-left: 18px;\n      }\n      #update-history li {\n        margin-bottom: 6px;\n        line-height: 1.4;\n        color: var(--text-primary);\n      }\n      #update-history h3 {\n        margin: 0 0 12px 0;\n        font-size: 15px;\n        color: var(--accent);\n        position: relative;\n        padding-right: 28px;\n        font-weight: 600;\n      }\n      #update-history button.min-btn {\n        background: none;\n        border: none;\n        color: var(--accent);\n        font-size: 20px;\n        cursor: pointer;\n        position: absolute;\n        top: 30%;\n        right: 8px;\n        transform: translateY(-50%);\n        z-index: 1;\n        transition: all 0.2s ease;\n        width: 24px;\n        height: 24px;\n        line-height: 24px;\n        border-radius: 50%;\n      }\n      #update-history button.min-btn:hover {\n        color: var(--accent-hover);\n        background: rgba(var(--accent-rgb), 0.2);\n      }\n    ";
+   document.head.appendChild(historyStyle);
+   const historyPanel = document.createElement("div");
+   historyPanel.id = "update-history";
+   historyPanel.innerHTML =
+-    '\n      <h3>Update History <button class="min-btn" id="minHist">−</button></h3>\n      <div id="historyContent">\n        <ul>\n          <li>v1.3 - New Blue Themed UI with new UI animations and Client Logo! No more minimize or maximize for everything but Update History because of toogle client tool. Updated Astraphobia Client Website and Discord! Also, added new small minimap feature.</li>\n          <li>v1.2 - Astra-Vision added - no ink flash or deep darkness effects + no-zoom limit, added new client ui rework, and custom-background feature (images and gif\'s).</li>\n          <li>v1.1 - Added built-in ad blocker, removed boost trail, spoofing for username, keybind selector for auto spin, added settings GUI, added shift keybind to toogle all panels.</li>\n          <li>v1.0 - Initial release with auto chat, auto-spin, special character bypass, and thresher super boost, no-zoom limit is automatically enabled.</li>\n        </ul>\n      </div>\n    ';
++    '\n      <h3>Update History <button class="min-btn" id="minHist">−</button></h3>\n      <div id="historyContent">\n        <ul>\n          <li>v1.4 - New Themes Selection (NO MORE PLAIN RED UI MORE MODERN COLORS).</li>\n          <li>v1.3 - New Blue Themed UI with new UI animations and Client Logo! No more minimize or maximize for everything but Update History because of toogle client tool. Updated Astraphobia Client Website and Discord! Also, added new small minimap feature.</li>\n          <li>v1.2 - Astra-Vision added - no ink flash or deep darkness effects + no-zoom limit, added new client ui rework, and custom-background feature (images and gif\'s).</li>\n          <li>v1.1 - Added built-in ad blocker, removed boost trail, spoofing for username, keybind selector for auto spin, added settings GUI, added shift keybind to toogle all panels.</li>\n          <li>v1.0 - Initial release with auto chat, auto-spin, special character bypass, and thresher super boost, no-zoom limit is automatically enabled.</li>\n        </ul>\n      </div>\n    ';
+   document.body.appendChild(historyPanel);
+-  const minHistElement = historyPanel.querySelector("#minHist");
+-  const historyContentElement = historyPanel.querySelector("#historyContent");
++  const minHistBtn = historyPanel.querySelector("#minHist");
++  const historyContent = historyPanel.querySelector("#historyContent");
+   let isHistoryHidden = false;
+-  minHistElement.onclick = (toggleEvent) => {
+-    toggleEvent.stopPropagation();
++  minHistBtn.onclick = (event) => {
++    event.stopPropagation();
+     isHistoryHidden = !isHistoryHidden;
+-    historyContentElement.style.display = isHistoryHidden ? "none" : "block";
++    historyContent.style.display = isHistoryHidden ? "none" : "block";
+     historyPanel.style.height = isHistoryHidden ? "60px" : "auto";
+-    minHistElement.textContent = isHistoryHidden ? "+" : "−";
++    minHistBtn.textContent = isHistoryHidden ? "+" : "−";
+   };
+   let offsetX;
+   let offsetY;
+   let isDragging = false;
+-  let isResizing = false;
++  let isActive = false;
+   historyPanel.addEventListener("mousedown", (clickEvent) => {
+     if (
+       ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(clickEvent.target.tagName)
+     ) {
+       return;
+     }
+     isDragging = true;
+-    isResizing = false;
++    isActive = false;
+     offsetX = clickEvent.clientX - historyPanel.getBoundingClientRect().left;
+     offsetY = clickEvent.clientY - historyPanel.getBoundingClientRect().top;
+     historyPanel.style.transition = "none";
+     const handleMouseMove = (mouseEvent) => {
+       const deltaX = mouseEvent.clientX - clickEvent.clientX;
+       const deltaY = mouseEvent.clientY - clickEvent.clientY;
+-      if (!isResizing && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+-        isResizing = true;
++      if (!isActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
++        isActive = true;
+       }
+       if (isDragging) {
+         historyPanel.style.left = mouseEvent.clientX - offsetX + "px";
+         historyPanel.style.top = mouseEvent.clientY - offsetY + "px";
+@@ -174,162 +166,19 @@
+     };
+     document.addEventListener("mousemove", handleMouseMove);
+     document.addEventListener("mouseup", handleMouseUp);
+   });
+-  historyPanel.addEventListener("click", (interceptEvent) => {
+-    if (isResizing) {
+-      interceptEvent.stopImmediatePropagation();
++  historyPanel.addEventListener("click", (inputEvent) => {
++    if (isActive) {
++      inputEvent.stopImmediatePropagation();
+     }
+   });
+   return historyPanel;
+ }
+-function createDeepToolsPanel() {
+-  const toolsStyle = document.createElement("style");
+-  toolsStyle.textContent =
+-    "\n      :root {\n        --bg-primary: rgba(15, 15, 35, 0.95);\n        --bg-secondary: rgba(45, 45, 75, 0.8);\n        --text-primary: #ffffff;\n        --text-secondary: #b0b0d4;\n        --accent: #00d4ff;\n        --accent-hover: #ffffff;\n        --border: rgba(0, 212, 255, 0.2);\n        --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);\n        --shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.4);\n      }\n      #deep-tools-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n      }\n      #deep-tools-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #deep-tools-panel textarea {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 8px;\n        padding: 10px;\n        transition: all 0.2s ease;\n        font-size: 13px;\n      }\n      #deep-tools-panel textarea:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);\n      }\n      #deep-tools-panel input[type=\"number\"] {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 60px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #deep-tools-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        position: relative;\n        overflow: hidden;\n      }\n      #deep-tools-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #deep-tools-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #deep-tools-panel button:hover:not(:disabled) {\n        background: rgba(45, 45, 75, 1);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);\n        color: var(--accent-hover);\n      }\n      #deep-tools-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #deep-tools-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #deep-tools-panel .credits {\n        margin-top: 12px;\n        font-size: 11px;\n        color: var(--text-secondary);\n        line-height: 1.4;\n      }\n      #deep-tools-panel .auto-chat-controls {\n        display: flex;\n        gap: 8px;\n        margin-bottom: 10px;\n        align-items: center;\n        justify-content: center;\n      }\n      #deep-tools-panel .spin-keybind {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        margin-bottom: 10px;\n        font-size: 12px;\n      }\n      #deep-tools-panel .spin-keybind label {\n        color: var(--text-primary);\n      }\n      #deep-tools-panel #spinKeyInput {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 50px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #aim-overlay, #ctrl-overlay {\n        z-index: 10000 !important;\n      }\n      div.game {\n        position: relative;\n      }\n      /* Ad Removal */\n      div.sidebar.left > div.ad-block {\n        opacity: 0 !important;\n        pointer-events: none !important;\n        display: none !important;\n      }\n      div.sidebar.left > a {\n        display: none !important;\n      }\n      div.sidebar.left {\n        max-width: 30vw;\n        width: 21rem;\n        bottom: 0 !important;\n      }\n    ";
+-  document.head.appendChild(toolsStyle);
+-  const container = document.createElement("div");
+-  container.id = "deep-tools-panel";
+-  container.style.position = "fixed";
+-  container.style.bottom = "20px";
+-  container.style.right = "20px";
+-  container.style.color = "var(--text-primary)";
+-  container.style.padding = "16px";
+-  container.style.borderRadius = "16px";
+-  container.style.fontSize = "14px";
+-  container.style.zIndex = "99999";
+-  container.style.userSelect = "none";
+-  container.style.width = "240px";
+-  container.style.textAlign = "center";
+-  container.style.cursor = "move";
+-  container.style.overflow = "hidden";
+-  container.innerHTML =
+-    '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        ASTRAPHOBIA CLIENT\n      </div>\n      <div id="panelContent">\n        <textarea id="chatMsg" placeholder="Type message..." style="width:100%; height:50px; margin-bottom:10px; resize:none;"></textarea>\n        <button id="sendBtn" style="width:100%; margin-bottom:10px;">Send Typed Chat</button>\n        <div class="auto-chat-controls">\n          <input type="number" id="delayInput" min="1" max="300" value="10" style="margin-right:8px;">\n          <span style="font-size:12px;">sec</span>\n        </div>\n        <button id="autoChatBtn" style="width:100%; margin-bottom:10px;">Enable Auto Chat</button>\n        <button id="patchBtn" style="width:100%; margin-bottom:10px;">Enable Special Characters(in chat/clan/name)</button>\n        <button id="spoofBtn" style="width:100%; margin-bottom:10px;">Spoof Username:Random Unicode Name(ban decrease)</button>\n        <button id="spinBtn" style="width:100%; margin-bottom:10px;">Enable Auto Spin</button>\n        <div class="spin-keybind">\n          <label for="spinKeyInput">Keybind:</label>\n          <input type="text" id="spinKeyInput" placeholder="PRESS" readonly>\n        </div>\n        <div class="credits">\n          Coder: Astraphobia<br>\n          Owner/Founder: Astraphobia<br>\n          Designer/Marketer: Astraphobia<br>\n          Tester: Astraphobia\n        </div>\n      </div>\n    ';
+-  document.body.appendChild(container);
+-  container.querySelector("#sendBtn").onclick = () => {
+-    const chatMessage = container.querySelector("#chatMsg").value;
+-    if (chatMessage) {
+-      autoChat(chatMessage);
+-    }
+-  };
+-  const patchButton = container.querySelector("#patchBtn");
+-  patchButton.onclick = () => hookTextEncoder(patchButton);
+-  const spoofButton = container.querySelector("#spoofBtn");
+-  spoofButton.onclick = () => {
+-    const maxLength = generateRandomString(8);
+-    if (simulateTyping(".play-game .el-input__inner", maxLength)) {
+-      showNotification("Spoofed name!");
+-    } else if (simulateTyping(".new-tribe .el-input__inner", maxLength)) {
+-      showNotification("Spoofed tribe name!");
+-    } else {
+-      showNotification("No name input found! Enable special characters first.");
+-    }
+-  };
+-  const spinButton = container.querySelector("#spinBtn");
+-  spinButton.onclick = () => {
+-    toggleMouseSimulation();
+-    if (coreSharedState.animationInterval) {
+-      spinButton.textContent = "Disable Auto Spin";
+-      spinButton.style.color = "#27ae60";
+-    } else {
+-      spinButton.textContent = "Enable Auto Spin";
+-      spinButton.style.color = "var(--accent)";
+-    }
+-  };
+-  const spinKeyInput = container.querySelector("#spinKeyInput");
+-  let lastKeyCode = null;
+-  spinKeyInput.addEventListener("keydown", (event) => {
+-    event.preventDefault();
+-    lastKeyCode = event.code || event.key;
+-    spinKeyInput.value = lastKeyCode.replace("Key", "").toLowerCase();
+-  });
+-  document.addEventListener("keydown", (keyEvent) => {
+-    if (
+-      lastKeyCode &&
+-      keyEvent.code === lastKeyCode &&
+-      !keyEvent.target.matches("input, textarea, button")
+-    ) {
+-      keyEvent.preventDefault();
+-      toggleMouseSimulation();
+-      if (coreSharedState.animationInterval) {
+-        spinButton.textContent = "Disable Auto Spin";
+-        spinButton.style.color = "#27ae60";
+-      } else {
+-        spinButton.textContent = "Enable Auto Spin";
+-        spinButton.style.color = "var(--accent)";
+-      }
+-    }
+-  });
+-  const autoChatButton = container.querySelector("#autoChatBtn");
+-  autoChatButton.onclick = () => {
+-    const chatMessageValue = container.querySelector("#chatMsg").value;
+-    const delayInput = container.querySelector("#delayInput");
+-    const delayValue = parseInt(delayInput.value) || 10;
+-    if (!chatMessageValue) {
+-      showNotification("⚠️ Enter a message first!");
+-      return;
+-    }
+-    if (coreSharedState.isProcessing) {
+-      stopInterval();
+-      autoChatButton.textContent = "Enable Auto Chat";
+-      autoChatButton.style.color = "var(--accent)";
+-    } else {
+-      startScheduledTask(chatMessageValue, delayValue);
+-      autoChatButton.textContent = "Disable Auto Chat";
+-      autoChatButton.style.color = "#27ae60";
+-    }
+-  };
+-  let offsetX;
+-  let offsetY;
+-  let isDragging = false;
+-  let isEnabled = false;
+-  container.addEventListener("mousedown", (clickEvent) => {
+-    if (
+-      clickEvent.target.tagName === "BUTTON" ||
+-      clickEvent.target.tagName === "TEXTAREA" ||
+-      clickEvent.target.tagName === "INPUT" ||
+-      clickEvent.target.classList.contains("credits")
+-    ) {
+-      return;
+-    }
+-    isDragging = true;
+-    isEnabled = false;
+-    offsetX = clickEvent.clientX - container.getBoundingClientRect().left;
+-    offsetY = clickEvent.clientY - container.getBoundingClientRect().top;
+-    container.style.transition = "none";
+-    const handleMouseMove = (mouseEvent) => {
+-      const deltaX = mouseEvent.clientX - clickEvent.clientX;
+-      const deltaY = mouseEvent.clientY - clickEvent.clientY;
+-      if (!isEnabled && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+-        isEnabled = true;
+-      }
+-      if (isDragging) {
+-        container.style.left = mouseEvent.clientX - offsetX + "px";
+-        container.style.top = mouseEvent.clientY - offsetY + "px";
+-        container.style.bottom = "auto";
+-        container.style.right = "auto";
+-      }
+-    };
+-    const handleMouseUp = () => {
+-      isDragging = false;
+-      container.style.transition = "all 0.3s ease";
+-      document.removeEventListener("mousemove", handleMouseMove);
+-      document.removeEventListener("mouseup", handleMouseUp);
+-    };
+-    document.addEventListener("mousemove", handleMouseMove);
+-    document.addEventListener("mouseup", handleMouseUp);
+-  });
+-  container.addEventListener("click", (eventToStop) => {
+-    if (isEnabled) {
+-      eventToStop.stopImmediatePropagation();
+-    }
+-  });
+-  return container;
+-}
+ function injectPlusPanelStyles() {
+   const styleElement = document.createElement("style");
+   styleElement.textContent =
+-    "\n      #plus-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n      }\n      #plus-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #plus-panel textarea {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 8px;\n        padding: 10px;\n        transition: all 0.2s ease;\n        font-size: 13px;\n      }\n      #plus-panel textarea:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);\n      }\n      #plus-panel input[type=\"number\"] {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 60px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #plus-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        position: relative;\n        overflow: hidden;\n        width: 100%;\n        margin-bottom: 10px;\n      }\n      #plus-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #plus-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #plus-panel button:hover:not(:disabled) {\n        background: rgba(45, 45, 75, 1);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);\n        color: var(--accent-hover);\n      }\n      #plus-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #plus-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n    ";
++    "\n      #plus-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n      }\n      #plus-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #plus-panel textarea {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 8px;\n        padding: 10px;\n        transition: all 0.2s ease;\n        font-size: 13px;\n      }\n      #plus-panel textarea:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);\n      }\n      #plus-panel input[type=\"number\"] {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 60px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #plus-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        position: relative;\n        overflow: hidden;\n        width: 100%;\n        margin-bottom: 10px;\n      }\n      #plus-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #plus-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #plus-panel button:hover:not(:disabled) {\n        background: var(--hover-bg);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2);\n        color: var(--accent-hover);\n      }\n      #plus-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #plus-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n    ";
+   document.head.appendChild(styleElement);
+   const uiContainer = document.createElement("div");
+   uiContainer.id = "plus-panel";
+   uiContainer.style.position = "fixed";
+@@ -349,48 +198,52 @@
+     '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        ASTRAPHOBIA CLIENT+\n      </div>\n      <div id="plusContent">\n        <button id="thresherBtn">Enable Thresher Super Boost(ctrl + shift and click)(minumum required 2 boost)</button>\n        <button id="astraVisionBtn">Enable Astra-Vision (no-zoom limit, no ink flash or deep darkness)</button>\n        <button id="smallMinimapBtn">Enable Small Minimap</button>\n      </div>\n    ';
+   document.body.appendChild(uiContainer);
+   const thresherButton = uiContainer.querySelector("#thresherBtn");
+   thresherButton.onclick = () => {
+-    if (coreSharedState.isInitialized_2) {
++    if (state.isInitialized_2) {
+       showNotification("Thresher Super Boost is already active!");
+       return;
+     }
+-    initHooks();
++    setupProxyHooks();
+     thresherButton.textContent = "Thresher Super Boost Active";
+-    thresherButton.style.color = "#27ae60";
++    thresherButton.style.color = "var(--accent)";
++    thresherButton.style.opacity = "0.6";
+     thresherButton.disabled = true;
+   };
+   const astraVisionButton = uiContainer.querySelector("#astraVisionBtn");
+   astraVisionButton.onclick = () => {
+-    if (isActive) {
++    if (isReady) {
+       showNotification("Astra-Vision already enabled!");
+       return;
+     }
+-    initHooks();
++    setupProxyHooks();
+     disableGameRestrictions();
+     astraVisionButton.textContent = "Astra-Vision Active";
+-    astraVisionButton.style.color = "#27ae60";
++    astraVisionButton.style.color = "var(--accent)";
++    astraVisionButton.style.opacity = "0.6";
+     astraVisionButton.disabled = true;
+     showNotification(
+       "👁️ Astra-Vision enabled! (zoom-limit unlocked, no ink-flash or deep darkness effects)",
+     );
+   };
+   const smallMinimapButton = uiContainer.querySelector("#smallMinimapBtn");
+   smallMinimapButton.onclick = () => {
+-    initHooks();
++    setupProxyHooks();
+     toggleMinimapSize();
+-    if (coreSharedState.isActive_2) {
++    if (state.isProcessing_2) {
+       smallMinimapButton.textContent = "Disable Small Minimap";
+-      smallMinimapButton.style.color = "#27ae60";
++      smallMinimapButton.style.color = "var(--accent)";
++      smallMinimapButton.style.opacity = "0.6";
+     } else {
+       smallMinimapButton.textContent = "Enable Small Minimap";
+       smallMinimapButton.style.color = "var(--accent)";
++      smallMinimapButton.style.opacity = "1";
+     }
+   };
+-  let offsetX;
+-  let offsetY;
+-  let isDragging = false;
++  let relativeX;
++  let relativeY;
+   let isActive = false;
++  let isEnabled = false;
+   uiContainer.addEventListener("mousedown", (event) => {
+     if (
+       event.target.tagName === "BUTTON" ||
+       event.target.tagName === "TEXTAREA" ||
+@@ -398,55 +251,55 @@
+       event.target.classList.contains("credits")
+     ) {
+       return;
+     }
+-    isDragging = true;
+-    isActive = false;
+-    offsetX = event.clientX - uiContainer.getBoundingClientRect().left;
+-    offsetY = event.clientY - uiContainer.getBoundingClientRect().top;
++    isActive = true;
++    isEnabled = false;
++    relativeX = event.clientX - uiContainer.getBoundingClientRect().left;
++    relativeY = event.clientY - uiContainer.getBoundingClientRect().top;
+     uiContainer.style.transition = "none";
+     const handleMouseMove = (mouseEvent) => {
+       const deltaX = mouseEvent.clientX - event.clientX;
+       const deltaY = mouseEvent.clientY - event.clientY;
+-      if (!isActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+-        isActive = true;
++      if (!isEnabled && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
++        isEnabled = true;
+       }
+-      if (isDragging) {
+-        uiContainer.style.left = mouseEvent.clientX - offsetX + "px";
+-        uiContainer.style.top = mouseEvent.clientY - offsetY + "px";
++      if (isActive) {
++        uiContainer.style.left = mouseEvent.clientX - relativeX + "px";
++        uiContainer.style.top = mouseEvent.clientY - relativeY + "px";
+         uiContainer.style.bottom = "auto";
+         uiContainer.style.right = "auto";
+       }
+     };
+     const handleMouseUp = () => {
+-      isDragging = false;
++      isActive = false;
+       uiContainer.style.transition = "all 0.3s ease";
+       document.removeEventListener("mousemove", handleMouseMove);
+       document.removeEventListener("mouseup", handleMouseUp);
+     };
+     document.addEventListener("mousemove", handleMouseMove);
+     document.addEventListener("mouseup", handleMouseUp);
+   });
+   uiContainer.addEventListener("click", (event_2) => {
+-    if (isActive) {
++    if (isEnabled) {
+       event_2.stopImmediatePropagation();
+     }
+   });
+   return uiContainer;
+ }
+ function injectSettingsStyles() {
+   const styleElement = document.createElement("style");
+   styleElement.textContent =
+-    "\n      #settings-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n        position: fixed;\n        top: 20px;\n        left: 20px;\n        color: var(--text-primary);\n        padding: 16px;\n        font-size: 14px;\n        z-index: 99999;\n        user-select: none;\n        width: 240px;\n        text-align: center;\n        cursor: move;\n        overflow: hidden;\n      }\n      #settings-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #settings-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        width: 100%;\n        margin-bottom: 10px;\n        position: relative;\n        overflow: hidden;\n      }\n      #settings-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #settings-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #settings-panel button:hover:not(:disabled) {\n        background: rgba(45, 45, 75, 1);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);\n        color: var(--accent-hover);\n      }\n      #settings-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #settings-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #settings-panel .keybind-set, #settings-panel .bg-set {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        margin-bottom: 10px;\n        font-size: 12px;\n      }\n      #settings-panel .keybind-set label, #settings-panel .bg-set label {\n        color: var(--text-primary);\n      }\n      #settings-panel #toggleKeyInput, #settings-panel #bgUrl {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #settings-panel #toggleKeyInput {\n        width: 80px;\n      }\n      #settings-panel #bgUrl {\n        width: 120px;\n      }\n      #settings-panel .section-header {\n        font-weight: bold;\n        color: var(--accent);\n        margin: 12px 0 6px 0;\n        font-size: 13px;\n      }\n    ";
++    "\n      #settings-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n        position: fixed;\n        top: 20px;\n        left: 20px;\n        color: var(--text-primary);\n        padding: 16px;\n        font-size: 14px;\n        z-index: 99999;\n        user-select: none;\n        width: 240px;\n        text-align: center;\n        cursor: move;\n        overflow: hidden;\n      }\n      #settings-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #settings-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        width: 100%;\n        margin-bottom: 10px;\n        position: relative;\n        overflow: hidden;\n      }\n      #settings-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #settings-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #settings-panel button:hover:not(:disabled) {\n        background: var(--hover-bg);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2);\n        color: var(--accent-hover);\n      }\n      #settings-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #settings-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #settings-panel .keybind-set, #settings-panel .bg-set {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        margin-bottom: 10px;\n        font-size: 12px;\n      }\n      #settings-panel .keybind-set label, #settings-panel .bg-set label {\n        color: var(--text-primary);\n      }\n      #settings-panel #toggleKeyInput, #settings-panel #bgUrl {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #settings-panel #toggleKeyInput {\n        width: 80px;\n      }\n      #settings-panel #bgUrl {\n        width: 120px;\n      }\n      #settings-panel .section-header {\n        font-weight: bold;\n        color: var(--accent);\n        margin: 12px 0 6px 0;\n        font-size: 13px;\n      }\n      #settings-panel select {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 100%;\n        margin-bottom: 10px;\n        transition: all 0.2s ease;\n      }\n      #settings-panel select:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);\n      }\n    ";
+   document.head.appendChild(styleElement);
+-  const mainContainer = document.createElement("div");
+-  mainContainer.id = "settings-panel";
+-  mainContainer.innerHTML =
+-    '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        SETTINGS\n      </div>\n      <div id="settingsContent">\n        <div class="keybind-set">\n          <label for="toggleKeyInput">Toggle Client:</label>\n          <input type="text" id="toggleKeyInput" placeholder="PRESS" readonly>\n        </div>\n        <div class="section-header">Custom Background</div>\n        <div class="bg-set">\n          <label for="bgUrl">BG URL:</label>\n          <input type="text" id="bgUrl" placeholder="Image/GIF URL">\n        </div>\n        <button id="applyBg">Apply Custom Background</button>\n      </div>\n    ';
+-  document.body.appendChild(mainContainer);
+-  const bgUrlInput = mainContainer.querySelector("#bgUrl");
++  const container = document.createElement("div");
++  container.id = "settings-panel";
++  container.innerHTML =
++    '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        SETTINGS\n      </div>\n      <div id="settingsContent">\n        <div class="keybind-set">\n          <label for="toggleKeyInput">Toggle Client:</label>\n          <input type="text" id="toggleKeyInput" placeholder="PRESS" readonly>\n        </div>\n        <div class="section-header">Custom Background</div>\n        <div class="bg-set">\n          <label for="bgUrl">BG URL:</label>\n          <input type="text" id="bgUrl" placeholder="Image/GIF URL">\n        </div>\n        <button id="applyBg">Apply Custom Background</button>\n        <div class="section-header">Themes</div>\n        <select id="themeSelect">\n          <option value="blue">Blue (Default)</option>\n          <option value="red">Red</option>\n          <option value="green">Green</option>\n        </select>\n      </div>\n    ';
++  document.body.appendChild(container);
++  const bgUrlInput = container.querySelector("#bgUrl");
+   bgUrlInput.value = localStorage.getItem("bgUrl") || "";
+-  const applyBgButton = mainContainer.querySelector("#applyBg");
++  const applyBgButton = container.querySelector("#applyBg");
+   applyBgButton.onclick = () => {
+     const backgroundUrl = bgUrlInput.value.trim();
+     if (backgroundUrl === "") {
+       showNotification("Enter a URL first!");
+@@ -473,60 +326,68 @@
+       updateBackgroundImage();
+     }
+     showNotification("Custom Background applied!");
+   };
+-  const toggleKeyInputButton = mainContainer.querySelector("#toggleKeyInput");
+-  toggleKeyInputButton.value = coreSharedState.currentKey;
+-  toggleKeyInputButton.addEventListener("keydown", (event) => {
+-    event.preventDefault();
+-    coreSharedState.currentKey = event.key;
+-    toggleKeyInputButton.value = coreSharedState.currentKey;
++  const themeSelect = container.querySelector("#themeSelect");
++  const currentTheme = localStorage.getItem("theme") || "blue";
++  themeSelect.value = currentTheme;
++  setTheme(currentTheme);
++  themeSelect.onchange = (themeChangeEvent) => {
++    setTheme(themeChangeEvent.target.value);
++    showNotification("Theme changed to " + themeChangeEvent.target.value);
++  };
++  const toggleKeyInput = container.querySelector("#toggleKeyInput");
++  toggleKeyInput.value = state.currentKey;
++  toggleKeyInput.addEventListener("keydown", (keyboardEvent) => {
++    keyboardEvent.preventDefault();
++    state.currentKey = keyboardEvent.key;
++    toggleKeyInput.value = state.currentKey;
+   });
+   let offsetX;
+   let offsetY;
+   let isDragging = false;
+   let isToggled = false;
+-  mainContainer.addEventListener("mousedown", (event_2) => {
++  container.addEventListener("mousedown", (uiEvent) => {
+     if (
+-      event_2.target.tagName === "BUTTON" ||
+-      event_2.target.tagName === "INPUT" ||
+-      event_2.target.classList.contains("credits")
++      uiEvent.target.tagName === "BUTTON" ||
++      uiEvent.target.tagName === "INPUT" ||
++      uiEvent.target.classList.contains("credits")
+     ) {
+       return;
+     }
+     isDragging = true;
+     isToggled = false;
+-    offsetX = event_2.clientX - mainContainer.getBoundingClientRect().left;
+-    offsetY = event_2.clientY - mainContainer.getBoundingClientRect().top;
+-    mainContainer.style.transition = "none";
++    offsetX = uiEvent.clientX - container.getBoundingClientRect().left;
++    offsetY = uiEvent.clientY - container.getBoundingClientRect().top;
++    container.style.transition = "none";
+     const handleMouseMove = (mouseEvent) => {
+-      const deltaX = mouseEvent.clientX - event_2.clientX;
+-      const deltaY = mouseEvent.clientY - event_2.clientY;
++      const deltaX = mouseEvent.clientX - uiEvent.clientX;
++      const deltaY = mouseEvent.clientY - uiEvent.clientY;
+       if (!isToggled && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+         isToggled = true;
+       }
+       if (isDragging) {
+-        mainContainer.style.left = mouseEvent.clientX - offsetX + "px";
+-        mainContainer.style.top = mouseEvent.clientY - offsetY + "px";
+-        mainContainer.style.bottom = "auto";
+-        mainContainer.style.right = "auto";
++        container.style.left = mouseEvent.clientX - offsetX + "px";
++        container.style.top = mouseEvent.clientY - offsetY + "px";
++        container.style.bottom = "auto";
++        container.style.right = "auto";
+       }
+     };
+     const handleMouseUp = () => {
+       isDragging = false;
+-      mainContainer.style.transition = "all 0.3s ease";
++      container.style.transition = "all 0.3s ease";
+       document.removeEventListener("mousemove", handleMouseMove);
+       document.removeEventListener("mouseup", handleMouseUp);
+     };
+     document.addEventListener("mousemove", handleMouseMove);
+     document.addEventListener("mouseup", handleMouseUp);
+   });
+-  mainContainer.addEventListener("click", (event_3) => {
++  container.addEventListener("click", (interceptedEvent) => {
+     if (isToggled) {
+-      event_3.stopImmediatePropagation();
++      interceptedEvent.stopImmediatePropagation();
+     }
+   });
+-  return mainContainer;
++  return container;
+ }
+ function togglePanels() {
+   const deepToolsPanel = document.getElementById("deep-tools-panel");
+   const updateHistoryPanel = document.getElementById("update-history");
+@@ -541,10 +402,9 @@
+ }
+ 
+ export {
+   initControlOverlay,
+-  createUpdateHistoryPanel,
+-  createDeepToolsPanel,
++  setupUpdateHistory,
+   injectPlusPanelStyles,
+   injectSettingsStyles,
+   togglePanels,
+ };
+Index: src/ui/theme.js
+===================================================================
+--- src/ui/theme.js	v1.3
++++ src/ui/theme.js	v1.4
+@@ -11,17 +11,66 @@
+       "important",
+     );
+   };
+   if (!homeBgElement) {
+-    const elementCheckInterval = setInterval(() => {
++    const bgCheckInterval = setInterval(() => {
+       homeBgElement = document.querySelector(".home-bg");
+       if (homeBgElement != null) {
+-        clearInterval(elementCheckInterval);
++        clearInterval(bgCheckInterval);
+         applyBackgroundImage();
+       }
+     }, 100);
+   } else {
+     applyBackgroundImage();
+   }
+ }
++function setTheme(themeColor) {
++  const rootElement = document.documentElement;
++  const themeConfigs = {
++    blue: {
++      "--bg-primary": "rgba(15, 15, 35, 0.95)",
++      "--bg-secondary": "rgba(45, 45, 75, 0.8)",
++      "--text-primary": "#ffffff",
++      "--text-secondary": "#b0b0d4",
++      "--accent": "#00d4ff",
++      "--accent-hover": "#ffffff",
++      "--border": "rgba(0, 212, 255, 0.2)",
++      "--accent-rgb": "0, 212, 255",
++      "--hover-bg": "rgba(45, 45, 75, 1)",
++      "--shadow": "0 8px 32px rgba(0, 0, 0, 0.3)",
++      "--shadow-hover": "0 12px 40px rgba(0, 0, 0, 0.4)",
++    },
++    red: {
++      "--bg-primary": "rgba(25, 10, 10, 0.95)",
++      "--bg-secondary": "rgba(55, 30, 30, 0.8)",
++      "--text-primary": "#ffffff",
++      "--text-secondary": "#ffcccc",
++      "--accent": "#ff4757",
++      "--accent-hover": "#ffffff",
++      "--border": "rgba(255, 71, 87, 0.2)",
++      "--accent-rgb": "255, 71, 87",
++      "--hover-bg": "rgba(75, 45, 45, 1)",
++      "--shadow": "0 8px 32px rgba(0, 0, 0, 0.3)",
++      "--shadow-hover": "0 12px 40px rgba(0, 0, 0, 0.4)",
++    },
++    green: {
++      "--bg-primary": "rgba(10, 25, 10, 0.95)",
++      "--bg-secondary": "rgba(30, 55, 30, 0.8)",
++      "--text-primary": "#ffffff",
++      "--text-secondary": "#ccffcc",
++      "--accent": "#2ed573",
++      "--accent-hover": "#ffffff",
++      "--border": "rgba(46, 213, 115, 0.2)",
++      "--accent-rgb": "46, 213, 115",
++      "--hover-bg": "rgba(45, 75, 45, 1)",
++      "--shadow": "0 8px 32px rgba(0, 0, 0, 0.3)",
++      "--shadow-hover": "0 12px 40px rgba(0, 0, 0, 0.4)",
++    },
++  };
++  const selectedTheme = themeConfigs[themeColor] || themeConfigs.blue;
++  Object.entries(selectedTheme).forEach(([styleProperty, styleValue]) => {
++    rootElement.style.setProperty(styleProperty, styleValue);
++  });
++  localStorage.setItem("theme", themeColor);
++}
+ 
+-export { initBackgroundImage };
++export { initBackgroundImage, setTheme };
+Index: src/utils.js
+===================================================================
+--- src/utils.js	v1.3
++++ src/utils.js	v1.4
+@@ -12,12 +12,12 @@
+     document.querySelector("canvas") ||
+     document.querySelector("#canvas-container canvas")
+   );
+ }
+-const getAllPropertyNames = (inspectedObject) => {
++const getAllPropertyNames = (targetObject) => {
+   return [
+-    ...Object.getOwnPropertyNames(Object.getPrototypeOf(inspectedObject)),
+-    ...Object.getOwnPropertyNames(inspectedObject),
++    ...Object.getOwnPropertyNames(Object.getPrototypeOf(targetObject)),
++    ...Object.getOwnPropertyNames(targetObject),
+   ];
+ };
+ 
+ export { generateRandomString, getGameCanvas, getAllPropertyNames };

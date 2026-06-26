@@ -252,8 +252,8 @@ function initPlusPanel() {
   const minPlusBtn = plusPanelElement.querySelector("#minPlus");
   const plusContent = plusPanelElement.querySelector("#plusContent");
   let isHidden = false;
-  minPlusBtn.onclick = (arg_d823) => {
-    arg_d823.stopPropagation();
+  minPlusBtn.onclick = (eventHandler) => {
+    eventHandler.stopPropagation();
     isHidden = !isHidden;
     plusContent.style.display = isHidden ? "none" : "block";
     plusPanelElement.style.height = isHidden ? "50px" : "auto";
@@ -274,23 +274,24 @@ function initPlusPanel() {
   let offsetY;
   let isDraggingPlusPanel = false;
   let isDragging = false;
-  plusPanelElement.addEventListener("mousedown", (arg_da20) => {
+  plusPanelElement.addEventListener("mousedown", (clickEvent) => {
     if (
-      arg_da20.target.tagName === "BUTTON" ||
-      arg_da20.target.tagName === "TEXTAREA" ||
-      arg_da20.target.tagName === "INPUT" ||
-      arg_da20.target.classList.contains("credits")
+      clickEvent.target.tagName === "BUTTON" ||
+      clickEvent.target.tagName === "TEXTAREA" ||
+      clickEvent.target.tagName === "INPUT" ||
+      clickEvent.target.classList.contains("credits")
     ) {
       return;
     }
     isDraggingPlusPanel = true;
     isDragging = false;
-    offsetX = arg_da20.clientX - plusPanelElement.getBoundingClientRect().left;
-    offsetY = arg_da20.clientY - plusPanelElement.getBoundingClientRect().top;
+    offsetX =
+      clickEvent.clientX - plusPanelElement.getBoundingClientRect().left;
+    offsetY = clickEvent.clientY - plusPanelElement.getBoundingClientRect().top;
     plusPanelElement.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
-      const deltaX = mouseEvent.clientX - arg_da20.clientX;
-      const deltaY = mouseEvent.clientY - arg_da20.clientY;
+      const deltaX = mouseEvent.clientX - clickEvent.clientX;
+      const deltaY = mouseEvent.clientY - clickEvent.clientY;
       if (!isDragging && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
         isDragging = true;
       }
@@ -311,9 +312,9 @@ function initPlusPanel() {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", stopDraggingPlusPanel);
   });
-  plusPanelElement.addEventListener("click", (arg_5954) => {
+  plusPanelElement.addEventListener("click", (inputEvent) => {
     if (isDragging) {
-      arg_5954.stopImmediatePropagation();
+      inputEvent.stopImmediatePropagation();
     }
   });
   return plusPanelElement;

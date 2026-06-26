@@ -1,7 +1,7 @@
 {
   "_meta": {
     "version": "1.1",
-    "lastUpdated": "2026-06-23T17:33:39.752Z",
+    "lastUpdated": "2026-06-26T02:41:03.244Z",
     "description": "Edit name/module fields to customize. Params/locals are ordered by position."
   },
   "functions": {
@@ -15030,107 +15030,107 @@
       "module": "core"
     },
     "global/_0x86eddf/anon::_0x457d30": {
-      "name": "arg_ebd1",
+      "name": "toggleEvent",
       "module": "core"
     },
     "global/_0x86eddf/anon::_0x5881d1": {
-      "name": "var_c5cf",
+      "name": "chatMessage",
       "module": "core"
     },
     "global/_0x86eddf/anon::_0x32bd40": {
-      "name": "var_58c3",
+      "name": "chatInputContent",
       "module": "core"
     },
     "global/_0x86eddf/anon::_0x269a31": {
-      "name": "var_2f90",
+      "name": "messageDelay",
       "module": "core"
     },
     "global/_0x86eddf/anon::_0x6afb82": {
-      "name": "var_fdc7",
+      "name": "randomIdentifier",
       "module": "core"
     },
     "global/_0x86eddf/anon::_0x3ca345": {
-      "name": "arg_ac29",
+      "name": "keyboardEvent",
       "module": "core"
     },
     "global/_0x86eddf/anon::_0x28d349": {
-      "name": "arg_3e00",
+      "name": "shortcutEvent",
       "module": "core"
     },
     "global/_0x86eddf/anon::_0x124532": {
-      "name": "arg_de7",
+      "name": "contextMenuEvent",
       "module": "core"
     },
     "global/_0x86eddf/anon::_0x134000": {
-      "name": "arg_1244",
+      "name": "dragEvent",
       "module": "core"
     },
     "global/_0x525a0d/anon::_0x16e7c1": {
-      "name": "arg_b829",
+      "name": "event",
       "module": "core"
     },
     "global/_0x525a0d/anon::_0x843b8b": {
-      "name": "arg_5759",
+      "name": "clickEvent",
       "module": "core"
     },
     "global/_0x525a0d/anon::_0x49fb41": {
-      "name": "arg_98a2",
+      "name": "inputEvent",
       "module": "core"
     },
     "global/_0x911c18/anon::_0x22f6e1": {
-      "name": "arg_bc94",
+      "name": "event",
       "module": "core"
     },
     "global/_0x911c18/anon::_0x4b5403": {
-      "name": "arg_81e8",
+      "name": "clickEvent",
       "module": "core"
     },
     "global/_0x911c18/anon::_0x40e8fa": {
-      "name": "arg_d242",
+      "name": "inputEvent",
       "module": "core"
     },
     "global/_0x4a2da8/anon::_0x4bfabb": {
-      "name": "arg_7846",
+      "name": "event",
       "module": "core"
     },
     "global/_0x4a2da8/anon::_0x4d4c85": {
-      "name": "arg_eef9",
+      "name": "event_2",
       "module": "core"
     },
     "global/_0x36bd4b/anon::_0x501e4c": {
-      "name": "arg_6d48",
+      "name": "toggleEvent",
       "module": "core"
     },
     "global/_0x36bd4b/anon::_0x3195d1": {
-      "name": "arg_129f",
+      "name": "clickEvent",
       "module": "core"
     },
     "global/_0x36bd4b/anon::_0x15dfb8": {
-      "name": "arg_222a",
+      "name": "interceptEvent",
       "module": "core"
     },
     "global/_0x405622/anon::_0x57c7fb": {
-      "name": "arg_5f0a",
+      "name": "event",
       "module": "core"
     },
     "global/_0x405622/anon::_0x417aa8": {
-      "name": "arg_281e",
+      "name": "clickEvent",
       "module": "core"
     },
     "global/_0x405622/anon::_0x33cbb9": {
-      "name": "arg_cd86",
+      "name": "keyboardEvent",
       "module": "core"
     },
     "global/_0x1588db/anon::_0x5371bd": {
-      "name": "arg_d823",
+      "name": "eventHandler",
       "module": "core"
     },
     "global/_0x1588db/anon::_0x3c1426": {
-      "name": "arg_da20",
+      "name": "clickEvent",
       "module": "core"
     },
     "global/_0x1588db/anon::_0x2b7d8f": {
-      "name": "arg_5954",
+      "name": "inputEvent",
       "module": "core"
     }
   }

@@ -1,0 +1,2161 @@
+Index: content.js
+===================================================================
+--- content.js	v1.4
++++ content.js	v1.5
+@@ -2,43 +2,47 @@
+   generateRandomString,
+   getGameCanvas,
+   getAllPropertyNames,
+ } from "./src/utils.js";
+-import { simulateTyping, showNotification } from "./src/ui/interaction.js";
+ import { handleAnimalAction } from "./src/features/autofarm.js";
+-import { toggleMinimapSize } from "./src/features/esp.js";
+-import { initBackgroundImage, setTheme } from "./src/ui/theme.js";
+ import {
+-  initControlOverlay,
+-  setupUpdateHistory,
+-  injectPlusPanelStyles,
+-  injectSettingsStyles,
+-  togglePanels,
+-} from "./src/ui/panels.js";
+-import {
+   startScheduledTask,
+   stopInterval,
+   autoChat,
+ } from "./src/features/chat.js";
++import { startAntiAfk } from "./src/features/antidetection.js";
+ import {
+-  startAntiAfkMouseMovement,
+   stopMouseSimulation,
+   toggleMouseSimulation,
+ } from "./src/features/movement.js";
++import { toggleMinimapScale } from "./src/ui/radar.js";
+ import { initAdBlocker } from "./src/features/adblock.js";
+ import {
++  applyHomeBackground,
++  applyThemeColors,
++  setBlueTheme,
++} from "./src/ui/theme.js";
++import {
++  createHalloweenModal,
++  initControlOverlay,
++  createUpdateHistoryStyles,
++  injectDeepToolsStyles,
++  injectPlusPanelStyles,
++  injectSettingsPanelStyles,
++  togglePanels,
++} from "./src/ui/panels.js";
++import {
+   wrapPropertyWithProxy,
+-  initPacketInterceptor,
++  initInterceptor,
+   encryptPacketData,
+   sendPacket,
+-  setupProxyHooks,
++  initializeAntiTamper,
+   disableGameRestrictions,
+-  setupToolsPanel,
+-  initializePanels,
+-  rotationAngles,
+-  orbitRadius,
++  angleSteps,
++  radius,
+   gameInstance,
+   playerData,
+   isReady,
+-  securitySettings,
+-  state,
++  securityConfigs,
++  coreSharedState,
+ } from "./src/core.js";
++import { simulateTyping, showNotification } from "./src/ui/interaction.js";
+Index: manifest.json
+===================================================================
+--- manifest.json	v1.4
++++ manifest.json	v1.5
+@@ -1,9 +1,9 @@
+ {
+   "manifest_version": 3,
+   "name": "Astraphobia Client",
+-  "version": "1.4",
+-  "description": "ASTRAPHOBIA CLIENT ON TOP",
++  "version": "1.5",
++  "description": "Happy Halloween! ASTRAPHOBIA CLIENT ON TOP",
+   "author": "Astraphobia",
+   "content_scripts": [
+     {
+       "matches": ["*://*.deeeep.io/*"],
+Index: src/core.js
+===================================================================
+--- src/core.js	v1.4
++++ src/core.js	v1.5
+@@ -1,28 +1,20 @@
+-import { showNotification, simulateTyping } from "./ui/interaction.js";
+-import { getAllPropertyNames, generateRandomString } from "./utils.js";
+-import {
+-  initControlOverlay,
+-  setupUpdateHistory,
+-  injectPlusPanelStyles,
+-  injectSettingsStyles,
+-  togglePanels,
+-} from "./ui/panels.js";
+-import { startScheduledTask, stopInterval, autoChat } from "./features/chat.js";
+-import { toggleMouseSimulation } from "./features/movement.js";
+-import { initBackgroundImage } from "./ui/theme.js";
++import { showNotification } from "./ui/interaction.js";
++import { getAllPropertyNames } from "./utils.js";
++import { initControlOverlay, togglePanels } from "./ui/panels.js";
+ import { initAdBlocker } from "./features/adblock.js";
++import { applyHomeBackground } from "./ui/theme.js";
+ 
+ const stateMap = new WeakMap();
+ function wrapPropertyWithProxy(targetObject, propertyKey, proxyHandler) {
+   const originalValue = targetObject[propertyKey];
+-  const proxyValue = new Proxy(originalValue, proxyHandler);
+-  stateMap.set(proxyValue, originalValue);
+-  targetObject[propertyKey] = proxyValue;
++  const proxyInstance = new Proxy(originalValue, proxyHandler);
++  stateMap.set(proxyInstance, originalValue);
++  targetObject[propertyKey] = proxyInstance;
+ }
+ 
+ let isInitialized = false;
+-function initPacketInterceptor(config) {
++function initInterceptor(config) {
+   if (isInitialized) {
+     return;
+   }
+   function unescapeString(inputString) {
+@@ -30,9 +22,9 @@
+       return inputString;
+     }
+     return inputString.replace(
+       /\\(\\|n|r|t|b|f|v|\d{1,3}|x([\da-fA-F]{2})|u([\da-fA-F]{4})|u\{(0*[\da-fA-F]{1,6})\})/g,
+-      (context, escapeSequence, hexValue1, hexValue2, hexValue3) => {
++      (match, escapeSequence, hexPart1, hexPart2, hexPart3) => {
+         switch (escapeSequence[0]) {
+           case "\\":
+             return "\\";
+           case "n":
+@@ -56,18 +48,18 @@
+           case "6":
+           case "7":
+             return String.fromCharCode(Number.parseInt(escapeSequence, 8) || 0);
+           default:
+-            if (hexValue1 != null) {
+-              return String.fromCharCode(Number.parseInt(hexValue1, 16) || 0);
++            if (hexPart1 != null) {
++              return String.fromCharCode(Number.parseInt(hexPart1, 16) || 0);
+             }
+-            if (hexValue2 != null) {
+-              return String.fromCharCode(Number.parseInt(hexValue2, 16) || 0);
++            if (hexPart2 != null) {
++              return String.fromCharCode(Number.parseInt(hexPart2, 16) || 0);
+             }
+-            if (hexValue3 != null) {
+-              const codePoint = Number.parseInt(hexValue3, 16) || 0;
++            if (hexPart3 != null) {
++              const codePoint = Number.parseInt(hexPart3, 16) || 0;
+               if (codePoint > 1114111) {
+-                return context;
++                return match;
+               } else {
+                 return String.fromCodePoint(codePoint);
+               }
+             }
+@@ -75,15 +67,15 @@
+         }
+       },
+     );
+   }
+-  const actionIds = {
++  const actionMap = {
+     spawn: 22,
+     createTribe: 5,
+     chat: 100,
+   };
+   const originalEncode = TextEncoder.prototype.encode;
+-  TextEncoder.prototype.encode = function (...inputPayload) {
++  TextEncoder.prototype.encode = function (...inputArgs) {
+     try {
+       const commandPatterns = [
+         /^(\x14{3}\d+\|6\|)(.+)$/gm,
+         /^(\x14{3}\d+\|8\|)(.+)$/gm,
+@@ -94,24 +86,24 @@
+         let patternIndex = 0;
+         patternIndex < commandPatterns.length;
+         patternIndex++
+       ) {
+-        const matchResult = commandPatterns[patternIndex].exec(inputPayload[0]);
++        const matchResult = commandPatterns[patternIndex].exec(inputArgs[0]);
+         if (matchResult && matchResult.length === 3) {
+-          const actionHandler = [
+-            actionIds.spawn,
+-            actionIds.spawn,
+-            actionIds.createTribe,
+-            actionIds.chat,
++          const actionType = [
++            actionMap.spawn,
++            actionMap.spawn,
++            actionMap.createTribe,
++            actionMap.chat,
+           ][patternIndex];
+-          inputPayload[0] =
++          inputArgs[0] =
+             matchResult[1] +
+-            unescapeString(matchResult[2]).substr(0, actionHandler);
++            unescapeString(matchResult[2]).substr(0, actionType);
+           break;
+         }
+       }
+     } catch {}
+-    return Reflect.apply(originalEncode, this, inputPayload);
++    return Reflect.apply(originalEncode, this, inputArgs);
+   };
+   const inputMaxLengthObserver = new MutationObserver(() => {
+     document
+       .querySelector(".play-game .el-input__inner")
+@@ -136,17 +128,17 @@
+   }
+   showNotification("✅ Special Characters enabled! (One-time use)");
+ }
+ 
+-const rotationAngles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
+-const orbitRadius = 300;
++const angleSteps = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
++const radius = 300;
+ let gameInstance;
+-let globalState;
++let appState;
+ let playerData;
+ let isReady = false;
+ 
+-const encryptPacketData = (message, byteValue, suffix = "") => {
+-  const stringPool = [
++const encryptPacketData = (isEnabled, charCode, suffix = "") => {
++  const stringTable = [
+     "ode",
+     "eat",
+     "fr",
+     "bite",
+@@ -158,51 +150,53 @@
+     "L",
+     "en",
+     "setter",
+   ];
+-  if (!message) {
++  if (!isEnabled) {
+     return null;
+   }
+-  const plainText = ((firstText, secondText) => {
++  const plainText = ((inputString, keyString) => {
+     const textEncoder = new TextEncoder();
+-    const firstEncodedBytes =
+-      textEncoder[stringPool[5] + stringPool[0]](firstText);
+-    const secondEncodedBytes =
+-      textEncoder[stringPool[10] + stringPool[7]](secondText);
+-    const byteBuffer = new Uint8Array(
+-      firstEncodedBytes["l" + stringPool[4] + stringPool[6].slice(0, 2)],
++    const encodedInput =
++      textEncoder[stringTable[5] + stringTable[0]](inputString);
++    const encodedKey = textEncoder[stringTable[10] + stringTable[7]](keyString);
++    const resultBuffer = new Uint8Array(
++      encodedInput["l" + stringTable[4] + stringTable[6].slice(0, 2)],
+     );
+-    for (let i = 0; i < firstEncodedBytes.length; i++) {
+-      byteBuffer[i] =
+-        firstEncodedBytes[i] ^
+-        secondEncodedBytes[
+-          i %
+-            secondEncodedBytes[
++    for (let index = 0; index < encodedInput.length; index++) {
++      resultBuffer[index] =
++        encodedInput[index] ^
++        encodedKey[
++          index %
++            encodedKey[
+               "" +
+-                stringPool[9].toLowerCase() +
+-                stringPool[10] +
++                stringTable[9].toLowerCase() +
++                stringTable[10] +
+                 "g" +
+-                stringPool[6].slice(0, 2)
++                stringTable[6].slice(0, 2)
+             ]
+         ];
+     }
+-    return btoa(String.fromCharCode(...byteBuffer));
++    return btoa(String.fromCharCode(...resultBuffer));
+   })(
+-    String.fromCharCode(byteValue)[stringPool[8] + stringPool[1]](3) + suffix,
+-    message,
++    String.fromCharCode(charCode)[stringTable[8] + stringTable[1]](3) + suffix,
++    isEnabled,
+   );
+-  const encodedText = new TextEncoder()[stringPool[5] + stringPool[0]](
++  const encodedBytes = new TextEncoder()[stringTable[5] + stringTable[0]](
+     plainText,
+   );
+-  const totalBufferSize = 1 + encodedText.byteLength + 1;
+-  const buffer = new ArrayBuffer(totalBufferSize);
+-  const dataView = new DataView(buffer);
++  const bufferLength = 1 + encodedBytes.byteLength + 1;
++  const arrayBuffer = new ArrayBuffer(bufferLength);
++  const dataView = new DataView(arrayBuffer);
+   dataView.setUint8(0, 25);
+-  new Uint8Array(buffer)[stringPool[11].slice(0, (9 / 27) * 9)](encodedText, 1);
+-  dataView.setUint8(totalBufferSize - 1, byteValue);
+-  return buffer;
++  new Uint8Array(arrayBuffer)[stringTable[11].slice(0, (9 / 27) * 9)](
++    encodedBytes,
++    1,
++  );
++  dataView.setUint8(bufferLength - 1, charCode);
++  return arrayBuffer;
+ };
+-const securitySettings = {
++const securityConfigs = {
+   107: {
+     hasSec: true,
+     secLoadTime: 750,
+     hasScaling: true,
+@@ -212,164 +206,154 @@
+     secLoadTime: 500,
+     hasScaling: false,
+   },
+ };
+-const sendPacket = (payload, metadata = "") => {
+-  if (gameInstance && globalState && stateCache.socketManager) {
+-    gameInstance[stateCache.socketManager].sendBytePacket(
+-      encryptPacketData(globalState.token._value, payload, metadata),
++const sendPacket = (payload, additionalData = "") => {
++  if (gameInstance && appState && state.socketManager) {
++    gameInstance[state.socketManager].sendBytePacket(
++      encryptPacketData(appState.token._value, payload, additionalData),
+     );
+   }
+ };
+-const stateCache = {};
++const state = {};
+ const counter = 0;
+-const setupProxyHooks = () => {
+-  const propertyCache = {};
++const initializeAntiTamper = () => {
++  const storage = {};
+   for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
+-    propertyCache[propertyKey] = Reflect[propertyKey];
++    storage[propertyKey] = Reflect[propertyKey];
+   }
+   const ProxyConstructor = Proxy;
+   const lookupGetter = Object.prototype.__lookupGetter__;
+-  const wrapWithProxy = (contextMap, contextKey, contextValue) => {
+-    const contextInstance = new ProxyConstructor(
+-      contextMap[contextKey],
+-      contextValue,
++  const createProxyHook = (dataStore, storeIndex, storeValue) => {
++    const processedValue = new ProxyConstructor(
++      dataStore[storeIndex],
++      storeValue,
+     );
+-    stateMap.set(contextInstance, contextMap[contextKey]);
+-    contextMap[contextKey] = contextInstance;
++    stateMap.set(processedValue, dataStore[storeIndex]);
++    dataStore[storeIndex] = processedValue;
+   };
+-  wrapWithProxy(Function.prototype, "toString", {
+-    apply(thisArg, propertyKey, applyParams) {
+-      return propertyCache.apply(
+-        thisArg,
+-        stateMap.get(propertyKey) || propertyKey,
+-        applyParams,
+-      );
++  createProxyHook(Function.prototype, "toString", {
++    apply(context, argsKey, extraArg) {
++      return storage.apply(context, stateMap.get(argsKey) || argsKey, extraArg);
+     },
+   });
+-  wrapWithProxy(window, "Proxy", {
++  createProxyHook(window, "Proxy", {
+     construct(constructor, constructorArgs) {
+-      const instance = propertyCache.construct(constructor, constructorArgs);
++      const instance = storage.construct(constructor, constructorArgs);
+       return instance;
+     },
+   });
+-  wrapWithProxy(ProxyConstructor, "revocable", {
+-    apply(context, args, options) {
+-      const result = propertyCache.apply(context, args, options);
++  createProxyHook(ProxyConstructor, "revocable", {
++    apply(thisArg, args, extraArg2) {
++      const result = storage.apply(thisArg, args, extraArg2);
+       return result;
+     },
+   });
+-  let lastExecutionTime = 0;
+-  wrapWithProxy(Function.prototype, "bind", {
+-    apply(callContext, callArgs, callOptions) {
++  let lastTimestamp = 0;
++  createProxyHook(Function.prototype, "bind", {
++    apply(thisArg2, args2, extraArg3) {
+       try {
+         try {
+           if (
+-            lookupGetter.call(callOptions[0], "aboveBgPlatformsContainer") !=
+-            null
++            lookupGetter.call(extraArg3[0], "aboveBgPlatformsContainer") != null
+           ) {
+-            return propertyCache.apply(callContext, callArgs, callOptions);
++            return storage.apply(thisArg2, args2, extraArg3);
+           }
+         } catch {}
+-        if (
+-          callOptions[0] &&
+-          callOptions[0].aboveBgPlatformsContainer != null
+-        ) {
+-          playerData = callOptions[0];
+-          gameInstance = callOptions[0].game;
++        if (extraArg3[0] && extraArg3[0].aboveBgPlatformsContainer != null) {
++          playerData = extraArg3[0];
++          gameInstance = extraArg3[0].game;
+           const allKeys = getAllPropertyNames(playerData);
+           const obfuscatedKeys = allKeys.filter((obfuscatedVarName) =>
+             obfuscatedVarName.startsWith("_0x"),
+           );
+-          stateCache.setFlash =
++          state.setFlash =
+             Object.getOwnPropertyNames(playerData.__proto__.__proto__)
+               .filter((obfuscatedPropName) =>
+                 obfuscatedPropName.startsWith("_0x"),
+               )
+               .find(
+-                (functionKey) => playerData[functionKey] instanceof Function,
+-              ) || stateCache.setFlash;
+-          stateCache.terrainManager =
++                (methodName) => playerData[methodName] instanceof Function,
++              ) || state.setFlash;
++          state.terrainManager =
+             obfuscatedKeys.find(
+-              (shadowObjectKey) =>
+-                typeof playerData[shadowObjectKey]?.shadow !== "undefined",
+-            ) || stateCache.terrainManager;
+-          stateCache.entityManager =
++              (shadowEntityKey) =>
++                typeof playerData[shadowEntityKey]?.shadow !== "undefined",
++            ) || state.terrainManager;
++          state.entityManager =
+             obfuscatedKeys.find(
+               (entitiesListKey) =>
+                 typeof playerData[entitiesListKey]?.entitiesList !==
+                 "undefined",
+-            ) || stateCache.entityManager;
+-          stateCache.entityManagerProps = {};
++            ) || state.entityManager;
++          state.entityManagerProps = {};
+           const entityManagerKeys = getAllPropertyNames(
+-            playerData[stateCache.entityManager],
++            playerData[state.entityManager],
+           );
+-          const animalsListInterval = setInterval(() => {
+-            stateCache.entityManagerProps.animalsList =
++          const animalsUpdateInterval = setInterval(() => {
++            state.entityManagerProps.animalsList =
+               entityManagerKeys
+                 .filter((variableName) => variableName.startsWith("_0x"))
+                 .find(
+                   (entityName) =>
+-                    typeof playerData?.[stateCache.entityManager]?.[
++                    typeof playerData?.[state.entityManager]?.[
+                       entityName
+                     ]?.[0] !== "undefined",
+-                ) || stateCache.entityManagerProps.animalsList;
+-            if (
+-              typeof stateCache.entityManagerProps.animalsList !== "undefined"
+-            ) {
+-              clearInterval(animalsListInterval);
++                ) || state.entityManagerProps.animalsList;
++            if (typeof state.entityManagerProps.animalsList !== "undefined") {
++              clearInterval(animalsUpdateInterval);
+             }
+           }, 1000);
+-          stateCache.socketManager =
++          state.socketManager =
+             getAllPropertyNames(gameInstance).find(
+               (networkClientKey) =>
+                 typeof gameInstance[networkClientKey]?.sendBytePacket !==
+                 "undefined",
+-            ) || stateCache.socketManager;
++            ) || state.socketManager;
+           try {
+-            globalState = document
++            appState = document
+               .getElementById("app")
+               ._vnode.appContext.config.globalProperties.$simpleState.states.find(
+                 (gameStore) => gameStore._storeMeta.id === "game",
+               );
+           } catch {}
+-          let myAnimalsInterval;
++          let animalsCheckInterval;
+           try {
+-            clearInterval(myAnimalsInterval);
++            clearInterval(animalsCheckInterval);
+           } catch {}
+-          myAnimalsInterval = setInterval(() => {
++          animalsCheckInterval = setInterval(() => {
+             try {
+               if (!playerData?.myAnimals?.[0]) {
+                 return;
+               }
+-              const firstAnimal = playerData.myAnimals[0];
+-              if (firstAnimal.fadingTrail) {
++              const myAnimal = playerData.myAnimals[0];
++              if (myAnimal.fadingTrail) {
+                 const fadingTrailPrototype = Object.getPrototypeOf(
+-                  firstAnimal.fadingTrail,
++                  myAnimal.fadingTrail,
+                 );
+                 wrapPropertyWithProxy(fadingTrailPrototype, "enable", {
+                   apply() {},
+                 });
+               }
+-              if (firstAnimal.bubblesEmitter) {
++              if (myAnimal.bubblesEmitter) {
+                 const bubblesEmitterPrototype = Object.getPrototypeOf(
+-                  firstAnimal.bubblesEmitter,
++                  myAnimal.bubblesEmitter,
+                 );
+                 Object.defineProperty(bubblesEmitterPrototype, "emit", {
+                   set: () => {},
+                 });
+               }
+-              clearInterval(myAnimalsInterval);
++              clearInterval(animalsCheckInterval);
+             } catch {}
+           }, 200);
+-          if (lastExecutionTime < Date.now() - 3000) {
++          if (lastTimestamp < Date.now() - 3000) {
+             showNotification("✅ Astraphobia client loaded in game");
+-            lastExecutionTime = Date.now();
++            lastTimestamp = Date.now();
+           }
+           initControlOverlay();
+         }
+       } catch {}
+-      return propertyCache.apply(callContext, callArgs, callOptions);
++      return storage.apply(thisArg2, args2, extraArg3);
+     },
+   });
+ };
+ const disableGameRestrictions = () => {
+@@ -390,13 +374,13 @@
+       gameInstance.viewport.plugins.plugins["clamp-zoom"] = null;
+     } catch {}
+   }, 300);
+   try {
+-    if (stateCache.setFlash) {
+-      playerData[stateCache.setFlash] = () => {};
++    if (state.setFlash) {
++      playerData[state.setFlash] = () => {};
+     }
+-    if (stateCache.terrainManager) {
+-      const terrainManager = playerData[stateCache.terrainManager];
++    if (state.terrainManager) {
++      const terrainManager = playerData[state.terrainManager];
+       if (terrainManager && terrainManager.shadow) {
+         terrainManager.shadow.setShadowSize(1000000);
+         terrainManager.shadow.setShadowSize = () => {};
+       }
+@@ -405,212 +389,47 @@
+     console.error(error);
+   }
+   isReady = true;
+ };
+-function setupToolsPanel() {
+-  const toolsStyle = document.createElement("style");
+-  toolsStyle.textContent =
+-    "\n      :root {\n        --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);\n        --shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.4);\n      }\n      #deep-tools-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n      }\n      #deep-tools-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #deep-tools-panel textarea {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 8px;\n        padding: 10px;\n        transition: all 0.2s ease;\n        font-size: 13px;\n      }\n      #deep-tools-panel textarea:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);\n      }\n      #deep-tools-panel input[type=\"number\"] {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 60px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #deep-tools-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        position: relative;\n        overflow: hidden;\n      }\n      #deep-tools-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #deep-tools-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #deep-tools-panel button:hover:not(:disabled) {\n        background: var(--hover-bg);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2);\n        color: var(--accent-hover);\n      }\n      #deep-tools-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #deep-tools-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #deep-tools-panel .credits {\n        margin-top: 12px;\n        font-size: 11px;\n        color: var(--text-secondary);\n        line-height: 1.4;\n      }\n      #deep-tools-panel .auto-chat-controls {\n        display: flex;\n        gap: 8px;\n        margin-bottom: 10px;\n        align-items: center;\n        justify-content: center;\n      }\n      #deep-tools-panel .spin-keybind {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        margin-bottom: 10px;\n        font-size: 12px;\n      }\n      #deep-tools-panel .spin-keybind label {\n        color: var(--text-primary);\n      }\n      #deep-tools-panel #spinKeyInput {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 50px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #aim-overlay, #ctrl-overlay {\n        z-index: 10000 !important;\n      }\n      div.game {\n        position: relative;\n      }\n      /* Ad Removal */\n      div.sidebar.left > div.ad-block {\n        opacity: 0 !important;\n        pointer-events: none !important;\n        display: none !important;\n      }\n      div.sidebar.left > a {\n        display: none !important;\n      }\n      div.sidebar.left {\n        max-width: 30vw;\n        width: 21rem;\n        bottom: 0 !important;\n      }\n    ";
+-  document.head.appendChild(toolsStyle);
+-  const container = document.createElement("div");
+-  container.id = "deep-tools-panel";
+-  container.style.position = "fixed";
+-  container.style.bottom = "20px";
+-  container.style.right = "20px";
+-  container.style.color = "var(--text-primary)";
+-  container.style.padding = "16px";
+-  container.style.borderRadius = "16px";
+-  container.style.fontSize = "14px";
+-  container.style.zIndex = "99999";
+-  container.style.userSelect = "none";
+-  container.style.width = "240px";
+-  container.style.textAlign = "center";
+-  container.style.cursor = "move";
+-  container.style.overflow = "hidden";
+-  container.innerHTML =
+-    '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        ASTRAPHOBIA CLIENT\n      </div>\n      <div id="panelContent">\n        <textarea id="chatMsg" placeholder="Type message..." style="width:100%; height:50px; margin-bottom:10px; resize:none;"></textarea>\n        <button id="sendBtn" style="width:100%; margin-bottom:10px;">Send Typed Chat</button>\n        <div class="auto-chat-controls">\n          <input type="number" id="delayInput" min="1" max="300" value="10" style="margin-right:8px;">\n          <span style="font-size:12px;">sec</span>\n        </div>\n        <button id="autoChatBtn" style="width:100%; margin-bottom:10px;">Enable Auto Chat</button>\n        <button id="patchBtn" style="width:100%; margin-bottom:10px;">Enable Special Characters(in chat/clan/name)</button>\n        <button id="spoofBtn" style="width:100%; margin-bottom:10px;">Spoof Username:Random Unicode Name(ban decrease)</button>\n        <button id="spinBtn" style="width:100%; margin-bottom:10px;">Enable Auto Spin</button>\n        <div class="spin-keybind">\n          <label for="spinKeyInput">Keybind:</label>\n          <input type="text" id="spinKeyInput" placeholder="PRESS" readonly>\n        </div>\n        <div class="credits">\n          Coder: Astraphobia<br>\n          Owner/Founder: Astraphobia<br>\n          Designer/Marketer: Astraphobia<br>\n          Tester: Astraphobia\n        </div>\n      </div>\n    ';
+-  document.body.appendChild(container);
+-  container.querySelector("#sendBtn").onclick = () => {
+-    const chatMessage = container.querySelector("#chatMsg").value;
+-    if (chatMessage) {
+-      autoChat(chatMessage);
+-    }
+-  };
+-  const patchButton = container.querySelector("#patchBtn");
+-  patchButton.onclick = () => initPacketInterceptor(patchButton);
+-  const spoofButton = container.querySelector("#spoofBtn");
+-  spoofButton.onclick = () => {
+-    const randomValue = generateRandomString(8);
+-    if (simulateTyping(".play-game .el-input__inner", randomValue)) {
+-      showNotification("Spoofed name!");
+-    } else if (simulateTyping(".new-tribe .el-input__inner", randomValue)) {
+-      showNotification("Spoofed tribe name!");
+-    } else {
+-      showNotification("No name input found! Enable special characters first.");
+-    }
+-  };
+-  const spinButton = container.querySelector("#spinBtn");
+-  spinButton.onclick = () => {
+-    toggleMouseSimulation();
+-    if (state.animationIntervalId) {
+-      spinButton.textContent = "Disable Auto Spin";
+-      spinButton.style.color = "var(--accent)";
+-      spinButton.style.opacity = "0.6";
+-    } else {
+-      spinButton.textContent = "Enable Auto Spin";
+-      spinButton.style.color = "var(--accent)";
+-      spinButton.style.opacity = "1";
+-    }
+-  };
+-  const spinKeyInput = container.querySelector("#spinKeyInput");
+-  let pressedKey = null;
+-  spinKeyInput.addEventListener("keydown", (keyboardEvent) => {
+-    keyboardEvent.preventDefault();
+-    pressedKey = keyboardEvent.code || keyboardEvent.key;
+-    spinKeyInput.value = pressedKey.replace("Key", "").toLowerCase();
+-  });
+-  document.addEventListener("keydown", (keyboardEvent_2) => {
+-    if (
+-      pressedKey &&
+-      keyboardEvent_2.code === pressedKey &&
+-      !keyboardEvent_2.target.matches("input, textarea, button")
+-    ) {
+-      keyboardEvent_2.preventDefault();
+-      toggleMouseSimulation();
+-      if (state.animationIntervalId) {
+-        spinButton.textContent = "Disable Auto Spin";
+-        spinButton.style.color = "var(--accent)";
+-        spinButton.style.opacity = "0.6";
+-      } else {
+-        spinButton.textContent = "Enable Auto Spin";
+-        spinButton.style.color = "var(--accent)";
+-        spinButton.style.opacity = "1";
+-      }
+-    }
+-  });
+-  const autoChatButton = container.querySelector("#autoChatBtn");
+-  autoChatButton.onclick = () => {
+-    const chatMessage_2 = container.querySelector("#chatMsg").value;
+-    const delayInput = container.querySelector("#delayInput");
+-    const delayValue = parseInt(delayInput.value) || 10;
+-    if (!chatMessage_2) {
+-      showNotification("⚠️ Enter a message first!");
+-      return;
+-    }
+-    if (state.isProcessing) {
+-      stopInterval();
+-      autoChatButton.textContent = "Enable Auto Chat";
+-      autoChatButton.style.color = "var(--accent)";
+-      autoChatButton.style.opacity = "1";
+-    } else {
+-      startScheduledTask(chatMessage_2, delayValue);
+-      autoChatButton.textContent = "Disable Auto Chat";
+-      autoChatButton.style.color = "var(--accent)";
+-      autoChatButton.style.opacity = "0.6";
+-    }
+-  };
+-  let offsetX;
+-  let offsetY;
+-  let isActive = false;
+-  let isDragging = false;
+-  container.addEventListener("mousedown", (clickEvent) => {
+-    if (
+-      clickEvent.target.tagName === "BUTTON" ||
+-      clickEvent.target.tagName === "TEXTAREA" ||
+-      clickEvent.target.tagName === "INPUT" ||
+-      clickEvent.target.classList.contains("credits")
+-    ) {
+-      return;
+-    }
+-    isActive = true;
+-    isDragging = false;
+-    offsetX = clickEvent.clientX - container.getBoundingClientRect().left;
+-    offsetY = clickEvent.clientY - container.getBoundingClientRect().top;
+-    container.style.transition = "none";
+-    const handleMouseMove = (mouseEvent) => {
+-      const deltaX = mouseEvent.clientX - clickEvent.clientX;
+-      const deltaY = mouseEvent.clientY - clickEvent.clientY;
+-      if (!isDragging && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+-        isDragging = true;
+-      }
+-      if (isActive) {
+-        container.style.left = mouseEvent.clientX - offsetX + "px";
+-        container.style.top = mouseEvent.clientY - offsetY + "px";
+-        container.style.bottom = "auto";
+-        container.style.right = "auto";
+-      }
+-    };
+-    const handleMouseUp = () => {
+-      isActive = false;
+-      container.style.transition = "all 0.3s ease";
+-      document.removeEventListener("mousemove", handleMouseMove);
+-      document.removeEventListener("mouseup", handleMouseUp);
+-    };
+-    document.addEventListener("mousemove", handleMouseMove);
+-    document.addEventListener("mouseup", handleMouseUp);
+-  });
+-  container.addEventListener("click", (event) => {
+-    if (isDragging) {
+-      event.stopImmediatePropagation();
+-    }
+-  });
+-  return container;
+-}
+ 
+-function initializePanels() {
+-  const mainPanelElement = setupToolsPanel();
+-  const historyPanelElement = setupUpdateHistory();
+-  const settingsPanelElement = injectSettingsStyles();
+-  const plusPanelElement = injectPlusPanelStyles();
+-  initBackgroundImage();
+-  initAdBlocker();
+-  return {
+-    mainPanel: mainPanelElement,
+-    historyPanel: historyPanelElement,
+-    settingsPanel: settingsPanelElement,
+-    plusPanel: plusPanelElement,
+-  };
+-}
+-document.addEventListener("keydown", (event) => {
++document.addEventListener("keydown", (keyboardEvent) => {
+   if (
+-    event.key === state.currentKey &&
+-    !event.repeat &&
+-    !event.target.matches("input, textarea, button")
++    keyboardEvent.key === coreSharedState.activeKey &&
++    !keyboardEvent.repeat &&
++    !keyboardEvent.target.matches("input, textarea, button")
+   ) {
+-    event.preventDefault();
++    keyboardEvent.preventDefault();
+     togglePanels();
+   }
+ });
+ window.addEventListener("load", () => {
+   setTimeout(() => {
+-    setupProxyHooks();
++    initializeAntiTamper();
+     initAdBlocker();
+-    initBackgroundImage();
++    applyHomeBackground();
+   }, 1000);
+ });
+ 
+-export const state = {
+-  mainIntervalId: null,
++export const coreSharedState = {
++  updateInterval: null,
+   isProcessing: false,
+-  animationIntervalId: null,
++  rotationInterval: null,
+   angleIndex: 0,
+   isInitialized_2: false,
+   isProcessing_2: false,
+-  currentKey: "Shift",
++  activeKey: "Shift",
+ };
+ 
+ export {
+   wrapPropertyWithProxy,
+-  initPacketInterceptor,
++  initInterceptor,
+   encryptPacketData,
+   sendPacket,
+-  setupProxyHooks,
++  initializeAntiTamper,
+   disableGameRestrictions,
+-  setupToolsPanel,
+-  initializePanels,
+-  rotationAngles,
+-  orbitRadius,
++  angleSteps,
++  radius,
+   gameInstance,
+   playerData,
+   isReady,
+-  securitySettings,
++  securityConfigs,
+ };
+Index: src/features/adblock.js
+===================================================================
+--- src/features/adblock.js	v1.4
++++ src/features/adblock.js	v1.5
+@@ -10,13 +10,13 @@
+     '[id*="ad"], [id*="banner"]',
+     ".sidebar.left > a",
+     ".sidebar.left > div:not(.sidebar-content)",
+     "div.sidebar.left > div:has(> iframe)",
+-    'div.sidebar.left > div:has(> a[href*="doubleclick"]',
++    'div.sidebar.left > div:has(> a[href*="doubleclick"])',
+   ];
+   const removeAds = () => {
+-    adSelectors.forEach((cssSelector) => {
+-      document.querySelectorAll(cssSelector).forEach((targetElement) => {
++    adSelectors.forEach((elementSelector) => {
++      document.querySelectorAll(elementSelector).forEach((targetElement) => {
+         targetElement.style.display = "none !important";
+         targetElement.style.opacity = "0 !important";
+         targetElement.style.pointerEvents = "none !important";
+         targetElement.style.visibility = "hidden !important";
+@@ -32,10 +32,10 @@
+       leftSidebar.style.overflow = "hidden";
+     }
+   };
+   removeAds();
+-  const mutationObserver = new MutationObserver(removeAds);
+-  mutationObserver.observe(document.body, {
++  const observer = new MutationObserver(removeAds);
++  observer.observe(document.body, {
+     childList: true,
+     subtree: true,
+     attributes: true,
+   });
+Index: src/features/antidetection.js
+===================================================================
+--- src/features/antidetection.js	v1.4
++++ src/features/antidetection.js	v1.5
+@@ -0,0 +1,31 @@
++import { getGameCanvas } from "../utils.js";
++import { showNotification } from "../ui/interaction.js";
++import { angleSteps, radius, coreSharedState } from "../core.js";
++
++function startAntiAfk() {
++  if (coreSharedState.rotationInterval) {
++    return;
++  }
++  const gameCanvas = getGameCanvas();
++  if (!gameCanvas) {
++    showNotification("Game canvas not found!");
++    return;
++  }
++  coreSharedState.rotationInterval = setInterval(() => {
++    const angleDegrees = angleSteps[coreSharedState.angleIndex];
++    const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
++    const offsetX = Math.round(radius * Math.sin(angleRadians));
++    const offsetY = Math.round(radius * Math.cos(angleRadians));
++    gameCanvas.dispatchEvent(
++      new MouseEvent("pointermove", {
++        clientX: window.innerWidth / 2 + offsetX,
++        clientY: window.innerHeight / 2 + offsetY,
++        bubbles: true,
++      }),
++    );
++    coreSharedState.angleIndex =
++      (coreSharedState.angleIndex + 1) % angleSteps.length;
++  }, 15);
++}
++
++export { startAntiAfk };
+Index: src/features/autofarm.js
+===================================================================
+--- src/features/autofarm.js	v1.4
++++ src/features/autofarm.js	v1.5
+@@ -1,25 +1,30 @@
+-import { playerData, securitySettings, sendPacket, state } from "../core.js";
++import {
++  playerData,
++  securityConfigs,
++  sendPacket,
++  coreSharedState,
++} from "../core.js";
+ 
+ const handleAnimalAction = (currentValue) => {
+   const id1 = 1;
+   const id4 = 4;
+   const id5 = 5;
+   try {
+-    const fishLevelConfig = {
+-      ...securitySettings.default,
+-      ...(securitySettings[playerData?.myAnimals?.[0]?.visibleFishLevel] || {}),
++    const fishLevelSettings = {
++      ...securityConfigs.default,
++      ...(securityConfigs[playerData?.myAnimals?.[0]?.visibleFishLevel] || {}),
+     };
+     if (currentValue < (playerData?.myAnimals?.[0]?._standing ? 40 : 100)) {
+       return sendPacket(id1);
+     }
+     if (playerData?.myAnimals?.[0]?._standing) {
+       return sendPacket(id5, currentValue);
+     }
+-    if (fishLevelConfig.hasScaling) {
++    if (fishLevelSettings.hasScaling) {
+       return sendPacket(id5, currentValue);
+     }
+-    if (fishLevelConfig.hasSec) {
++    if (fishLevelSettings.hasSec) {
+       return sendPacket(id4, currentValue);
+     }
+     return sendPacket(id1);
+   } catch {}
+Index: src/features/chat.js
+===================================================================
+--- src/features/chat.js	v1.4
++++ src/features/chat.js	v1.5
+@@ -1,21 +1,21 @@
+-import { state } from "../core.js";
++import { coreSharedState } from "../core.js";
+ 
+ function startScheduledTask(taskData, intervalSeconds) {
+-  if (state.mainIntervalId) {
+-    clearInterval(state.mainIntervalId);
++  if (coreSharedState.updateInterval) {
++    clearInterval(coreSharedState.updateInterval);
+   }
+-  state.isProcessing = true;
+-  state.mainIntervalId = setInterval(() => {
++  coreSharedState.isProcessing = true;
++  coreSharedState.updateInterval = setInterval(() => {
+     autoChat(taskData);
+   }, intervalSeconds * 1000);
+ }
+ function stopInterval() {
+-  if (state.mainIntervalId) {
+-    clearInterval(state.mainIntervalId);
+-    state.mainIntervalId = null;
++  if (coreSharedState.updateInterval) {
++    clearInterval(coreSharedState.updateInterval);
++    coreSharedState.updateInterval = null;
+   }
+-  state.isProcessing = false;
++  coreSharedState.isProcessing = false;
+ }
+ function autoChat(messageText) {
+   const chatInput =
+     document.querySelector(".chat-input input") ||
+Index: src/features/esp.js
+===================================================================
+--- src/features/esp.js	v1.4
++++ src/features/esp.js	v1.5
+@@ -1,22 +0,0 @@
+-import { showNotification } from "../ui/interaction.js";
+-import { playerData, state } from "../core.js";
+-
+-function toggleMinimapSize() {
+-  if (!playerData || !playerData.minimap) {
+-    showNotification("Minimap not available yet!");
+-    return;
+-  }
+-  if (state.isProcessing_2) {
+-    playerData.minimap.scale.set(1);
+-    playerData.minimap.pivot.set(0, 0);
+-    state.isProcessing_2 = false;
+-    showNotification("🗺️ Minimap restored to normal!");
+-  } else {
+-    playerData.minimap.scale.set(0.5);
+-    playerData.minimap.pivot.set(-70, -45);
+-    state.isProcessing_2 = true;
+-    showNotification("🗺️ Small Minimap enabled!");
+-  }
+-}
+-
+-export { toggleMinimapSize };
+Index: src/features/movement.js
+===================================================================
+--- src/features/movement.js	v1.4
++++ src/features/movement.js	v1.5
+@@ -1,47 +1,18 @@
+-import { getGameCanvas } from "../utils.js";
+-import { showNotification } from "../ui/interaction.js";
+-import { rotationAngles, orbitRadius, state } from "../core.js";
++import { startAntiAfk } from "./antidetection.js";
++import { coreSharedState } from "../core.js";
+ 
+-function startAntiAfkMouseMovement() {
+-  if (state.animationIntervalId) {
+-    return;
+-  }
+-  const gameCanvas = getGameCanvas();
+-  if (!gameCanvas) {
+-    showNotification("Game canvas not found!");
+-    return;
+-  }
+-  state.animationIntervalId = setInterval(() => {
+-    const angleDegrees = rotationAngles[state.angleIndex];
+-    const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
+-    const offsetX = Math.round(orbitRadius * Math.sin(angleRadians));
+-    const offsetY = Math.round(orbitRadius * Math.cos(angleRadians));
+-    gameCanvas.dispatchEvent(
+-      new MouseEvent("pointermove", {
+-        clientX: window.innerWidth / 2 + offsetX,
+-        clientY: window.innerHeight / 2 + offsetY,
+-        bubbles: true,
+-      }),
+-    );
+-    state.angleIndex = (state.angleIndex + 1) % rotationAngles.length;
+-  }, 15);
+-}
+ function stopMouseSimulation() {
+-  if (state.animationIntervalId) {
+-    clearInterval(state.animationIntervalId);
+-    state.animationIntervalId = null;
++  if (coreSharedState.rotationInterval) {
++    clearInterval(coreSharedState.rotationInterval);
++    coreSharedState.rotationInterval = null;
+   }
+ }
+ function toggleMouseSimulation() {
+-  if (state.animationIntervalId) {
++  if (coreSharedState.rotationInterval) {
+     stopMouseSimulation();
+   } else {
+-    startAntiAfkMouseMovement();
++    startAntiAfk();
+   }
+ }
+ 
+-export {
+-  startAntiAfkMouseMovement,
+-  stopMouseSimulation,
+-  toggleMouseSimulation,
+-};
++export { stopMouseSimulation, toggleMouseSimulation };
+Index: src/ui/interaction.js
+===================================================================
+--- src/ui/interaction.js	v1.4
++++ src/ui/interaction.js	v1.5
+@@ -1,53 +1,55 @@
+-function simulateTyping(selector, text) {
+-  const element = document.querySelector(selector);
+-  if (!element) {
++import { radius, coreSharedState } from "../core.js";
++
++function simulateTyping(inputSelector, textToType) {
++  const inputElement = document.querySelector(inputSelector);
++  if (!inputElement) {
+     return false;
+   }
+-  element.focus();
+-  element.value = "";
+-  let currentIndex = 0;
+-  const typeText = () => {
+-    if (currentIndex >= text.length) {
+-      element.dispatchEvent(
++  inputElement.focus();
++  inputElement.value = "";
++  let charIndex = 0;
++  const typeCharacter = () => {
++    if (charIndex >= textToType.length) {
++      inputElement.dispatchEvent(
+         new Event("change", {
+           bubbles: true,
+         }),
+       );
+-      element.dispatchEvent(
++      inputElement.dispatchEvent(
+         new Event("input", {
+           bubbles: true,
+         }),
+       );
+       setTimeout(() => {}, 100);
+       return;
+     }
+-    element.value += text[currentIndex];
+-    element.dispatchEvent(
++    inputElement.value += textToType[charIndex];
++    inputElement.dispatchEvent(
+       new InputEvent("input", {
+         bubbles: true,
+       }),
+     );
+-    currentIndex++;
+-    setTimeout(typeText, 25);
++    charIndex++;
++    setTimeout(typeCharacter, 25);
+   };
+-  typeText();
++  typeCharacter();
+   return true;
+ }
+ function showNotification(message) {
+-  const notificationDiv = document.createElement("div");
+-  notificationDiv.style.cssText =
++  const notificationElement = document.createElement("div");
++  notificationElement.style.cssText =
+     "position: fixed; top: 20px; right: 20px; background: var(--bg-primary); color: var(--text-primary); padding: 12px 18px; border-radius: 12px; z-index: 10001; font-size: 14px; opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease; pointer-events: none; backdrop-filter: blur(10px); border: 1px solid var(--border);";
+-  notificationDiv.textContent = message;
+-  document.body.appendChild(notificationDiv);
++  notificationElement.textContent = message;
++  document.body.appendChild(notificationElement);
+   setTimeout(() => {
+-    notificationDiv.style.opacity = "1";
+-    notificationDiv.style.transform = "translateY(0)";
++    notificationElement.style.opacity = "1";
++    notificationElement.style.transform = "translateY(0)";
+   }, 10);
+   setTimeout(() => {
+-    notificationDiv.style.opacity = "0";
+-    notificationDiv.style.transform = "translateY(-10px)";
+-    setTimeout(() => notificationDiv.remove(), 300);
++    notificationElement.style.opacity = "0";
++    notificationElement.style.transform = "translateY(-10px)";
++    setTimeout(() => notificationElement.remove(), 300);
+   }, 3000);
+ }
+ 
+ export { simulateTyping, showNotification };
+Index: src/ui/panels.js
+===================================================================
+--- src/ui/panels.js	v1.4
++++ src/ui/panels.js	v1.5
+@@ -1,20 +1,87 @@
++import { showNotification, simulateTyping } from "./interaction.js";
+ import { handleAnimalAction } from "../features/autofarm.js";
+-import { showNotification } from "./interaction.js";
+ import {
++  startScheduledTask,
++  stopInterval,
++  autoChat,
++} from "../features/chat.js";
++import {
++  radius,
+   gameInstance,
+   playerData,
+-  securitySettings,
++  securityConfigs,
++  initInterceptor,
+   isReady,
+-  setupProxyHooks,
++  initializeAntiTamper,
+   disableGameRestrictions,
+-  state,
++  coreSharedState,
+ } from "../core.js";
+-import { toggleMinimapSize } from "../features/esp.js";
+-import { setTheme } from "./theme.js";
++import { generateRandomString } from "../utils.js";
++import { toggleMouseSimulation } from "../features/movement.js";
++import { toggleMinimapScale } from "./radar.js";
++import { applyThemeColors } from "./theme.js";
+ 
++function createHalloweenModal(modalConfig) {
++  const modalContainer = document.createElement("div");
++  modalContainer.id = "halloween-code-modal";
++  modalContainer.style.cssText =
++    "\n      position: fixed;\n      top: 0; left: 0;\n      width: 100%; height: 100%;\n      background: linear-gradient(135deg, rgba(13, 0, 13, 0.98), rgba(43, 20, 43, 0.98));\n      z-index: 100001;\n      display: flex;\n      align-items: center;\n      justify-content: center;\n      opacity: 0;\n      transition: opacity 0.5s ease;\n    ";
++  const styleElement = document.createElement("style");
++  styleElement.textContent =
++    "\n      @keyframes glow-pulse {\n        0%, 100% { text-shadow: 0 0 10px #ff6600, 0 0 20px #ff6600; }\n        50% { text-shadow: 0 0 20px #ff6600, 0 0 40px #ff6600, 0 0 60px #ff6600; }\n      }\n      .halloween-title {\n        animation: glow-pulse 2s ease-in-out infinite;\n      }\n      .halloween-input {\n        background: rgba(43, 20, 43, 0.8);\n        border: 2px solid #ff6600;\n        color: #ffffff;\n        border-radius: 10px;\n        padding: 15px;\n        font-size: 16px;\n        text-align: center;\n        width: 100%;\n        margin: 20px 0;\n        transition: all 0.3s ease;\n      }\n      .halloween-input:focus {\n        outline: none;\n        border-color: #8b00ff;\n        box-shadow: 0 0 20px rgba(255, 102, 0, 0.5), 0 0 40px rgba(139, 0, 255, 0.3);\n      }\n      .halloween-btn {\n        background: linear-gradient(135deg, #ff6600, #ff9933);\n        color: #ffffff;\n        border: none;\n        border-radius: 10px;\n        padding: 15px 30px;\n        font-size: 16px;\n        font-weight: bold;\n        cursor: pointer;\n        transition: all 0.3s ease;\n        margin: 5px;\n        text-transform: uppercase;\n        letter-spacing: 1px;\n      }\n      .halloween-btn:hover {\n        transform: translateY(-3px);\n        box-shadow: 0 8px 20px rgba(255, 102, 0, 0.6);\n        background: linear-gradient(135deg, #ff9933, #ff6600);\n      }\n      .halloween-close {\n        position: absolute;\n        top: 20px;\n        right: 30px;\n        font-size: 40px;\n        color: #ff6600;\n        cursor: pointer;\n        transition: all 0.3s ease;\n        z-index: 10;\n      }\n      .halloween-close:hover {\n        color: #8b00ff;\n        transform: rotate(90deg) scale(1.2);\n      }\n      @keyframes shake {\n        0%, 100% { transform: translateX(0); }\n        25% { transform: translateX(-10px); }\n        75% { transform: translateX(10px); }\n      }\n    ";
++  document.head.appendChild(styleElement);
++  modalContainer.innerHTML =
++    '\n      <span class="halloween-close">&times;</span>\n      <div style="background: rgba(0,0,0,0.7); padding: 40px; border-radius: 20px; text-align: center; max-width: 500px; border: 3px solid #ff6600; box-shadow: 0 0 50px rgba(255, 102, 0, 0.5);">\n        <h2 class="halloween-title" style="color: #ff6600; margin: 0 0 10px 0; font-size: 32px;">HALLOWEEN ACCESS CODE</h2>\n        <p style="color: #ffcc99; margin: 10px 0 20px 0; font-size: 14px;">Enter the secret code given from Astraphobia to unlock the spooky Halloween theme!</p>\n        <input class="halloween-input" id="halloweenCodeInput" type="text" placeholder="Enter code here...">\n        <div style="margin-top: 20px;">\n          <button class="halloween-btn" id="submitHalloweenCode">Redeem Code</button>\n        </div>\n      </div>\n    ';
++  document.body.appendChild(modalContainer);
++  setTimeout(() => {
++    modalContainer.style.opacity = "1";
++  }, 10);
++  const halloweenCodeInput = modalContainer.querySelector(
++    "#halloweenCodeInput",
++  );
++  const submitHalloweenCodeButton = modalContainer.querySelector(
++    "#submitHalloweenCode",
++  );
++  const halloweenCloseButton = modalContainer.querySelector(".halloween-close");
++  const removeHalloweenModal = () => {
++    modalContainer.style.opacity = "0";
++    setTimeout(() => {
++      modalContainer.remove();
++      styleElement.remove();
++    }, 500);
++  };
++  submitHalloweenCodeButton.onclick = () => {
++    const inputCode = halloweenCodeInput.value.trim();
++    if (inputCode === "HappyHalloween9" || inputCode === "TrickOrTreat9") {
++      localStorage.setItem("halloweenUnlocked", "true");
++      showNotification("🎃 Halloween theme unlocked! Congrats!");
++      removeHalloweenModal();
++      modalConfig(true);
++    } else {
++      halloweenCodeInput.style.animation = "shake 0.3s";
++      halloweenCodeInput.style.borderColor = "#ff0000";
++      setTimeout(() => {
++        halloweenCodeInput.style.animation = "";
++        halloweenCodeInput.style.borderColor = "#ff6600";
++      }, 300);
++      showNotification("❌ Invalid code! Try again...");
++    }
++  };
++  halloweenCloseButton.onclick = () => {
++    showNotification("❌ Halloween theme cancelled. Returning to Blue theme.");
++    removeHalloweenModal();
++    modalConfig(false);
++  };
++  halloweenCodeInput.addEventListener("keypress", (event) => {
++    if (event.key === "Enter") {
++      submitHalloweenCodeButton.click();
++    }
++  });
++  halloweenCodeInput.focus();
++}
+ const initControlOverlay = () => {
+-  if (state.isInitialized_2) {
++  if (coreSharedState.isInitialized_2) {
+     return;
+   }
+   function sendActionSequence() {
+     try {
+@@ -34,11 +101,11 @@
+     try {
+       document.getElementById("ctrl-overlay").remove();
+     } catch {}
+     const overlayDiv = document.createElement("div");
+-    const gameDiv = document.querySelector("div.game");
+-    if (gameDiv) {
+-      gameDiv.insertBefore(overlayDiv, gameDiv.children[0]);
++    const gameContainer = document.querySelector("div.game");
++    if (gameContainer) {
++      gameContainer.insertBefore(overlayDiv, gameContainer.children[0]);
+     }
+     overlayDiv.outerHTML =
+       '<div id="ctrl-overlay" style="width: 100%;height: 100%;position: absolute;display: block;z-index:10000;pointer-events:none;"></div>';
+     document
+@@ -47,57 +114,57 @@
+   }
+   createControlOverlay();
+   window.addEventListener(
+     "click",
+-    (callbackParam) => {
++    (processAnimals) => {
+       try {
+         if (!playerData?.myAnimals?.[0]) {
+           return;
+         }
+         const visibleFishLevel = playerData.myAnimals[0].visibleFishLevel;
+-        const fishLevelConfig = {
+-          ...securitySettings.default,
+-          ...securitySettings[visibleFishLevel],
++        const mergedFishConfig = {
++          ...securityConfigs.default,
++          ...securityConfigs[visibleFishLevel],
+         };
+-        if (callbackParam.ctrlKey) {
+-          if (callbackParam.shiftKey && visibleFishLevel === 107) {
++        if (processAnimals.ctrlKey) {
++          if (processAnimals.shiftKey && visibleFishLevel === 107) {
+             sendActionSequence();
+             return;
+           } else if (
+-            callbackParam.shiftKey &&
++            processAnimals.shiftKey &&
+             visibleFishLevel !== 101 &&
+             playerData.myAnimals[0]._standing
+           ) {
+             handleAnimalAction(
+               Math.floor(Math.random() * 1647483648) + 500000000,
+             );
+             return;
+           } else {
+-            let keyMapping = Object.getOwnPropertyNames(gameInstance)
+-              .map((clientKey) => gameInstance[clientKey])
+-              .find((keyCollection) => keyCollection.keys instanceof Array);
+-            if (keyMapping) {
+-              keyMapping.pointerDown = true;
+-              keyMapping.pressElapsed = Infinity;
+-              keyMapping.setPointerDown(false);
++            let propertyMap = Object.getOwnPropertyNames(gameInstance)
++              .map((serviceKey) => gameInstance[serviceKey])
++              .find((keyMap) => keyMap.keys instanceof Array);
++            if (propertyMap) {
++              propertyMap.pointerDown = true;
++              propertyMap.pressElapsed = Infinity;
++              propertyMap.setPointerDown(false);
+             }
+           }
+-        } else if (callbackParam.altKey) {
++        } else if (processAnimals.altKey) {
+           handleAnimalAction(
+             playerData?.myAnimals?.[0]?._standing
+               ? 41
+-              : Math.floor(fishLevelConfig.secLoadTime / 2),
++              : Math.floor(mergedFishConfig.secLoadTime / 2),
+           );
+         }
+       } catch {}
+     },
+     false,
+   );
+   window.addEventListener(
+     "keyup",
+-    (event) => {
++    (keyboardEvent) => {
+       try {
+-        if (!event.ctrlKey && !event.altKey) {
++        if (!keyboardEvent.ctrlKey && !keyboardEvent.altKey) {
+           document.getElementById("ctrl-overlay").style.pointerEvents = "none";
+         }
+       } catch {}
+     },
+@@ -107,116 +174,289 @@
+     try {
+       document.getElementById("ctrl-overlay").style.pointerEvents = "none";
+     } catch {}
+   });
+-  state.isInitialized_2 = true;
++  coreSharedState.isInitialized_2 = true;
+ };
+-function setupUpdateHistory() {
+-  const historyStyle = document.createElement("style");
+-  historyStyle.textContent =
+-    "\n      #update-history {\n        position: fixed;\n        bottom: 20px;\n        left: 20px;\n        background: var(--bg-primary);\n        color: var(--text-primary);\n        padding: 16px;\n        border-radius: 16px;\n        font-size: 13px;\n        z-index: 9999;\n        max-width: 240px;\n        max-height: 280px;\n        overflow-y: auto;\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        cursor: move;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        transition: all 0.3s ease;\n        backdrop-filter: blur(20px);\n      }\n      #update-history:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #update-history ul {\n        margin: 0;\n        padding-left: 18px;\n      }\n      #update-history li {\n        margin-bottom: 6px;\n        line-height: 1.4;\n        color: var(--text-primary);\n      }\n      #update-history h3 {\n        margin: 0 0 12px 0;\n        font-size: 15px;\n        color: var(--accent);\n        position: relative;\n        padding-right: 28px;\n        font-weight: 600;\n      }\n      #update-history button.min-btn {\n        background: none;\n        border: none;\n        color: var(--accent);\n        font-size: 20px;\n        cursor: pointer;\n        position: absolute;\n        top: 30%;\n        right: 8px;\n        transform: translateY(-50%);\n        z-index: 1;\n        transition: all 0.2s ease;\n        width: 24px;\n        height: 24px;\n        line-height: 24px;\n        border-radius: 50%;\n      }\n      #update-history button.min-btn:hover {\n        color: var(--accent-hover);\n        background: rgba(var(--accent-rgb), 0.2);\n      }\n    ";
+-  document.head.appendChild(historyStyle);
+-  const historyPanel = document.createElement("div");
+-  historyPanel.id = "update-history";
+-  historyPanel.innerHTML =
+-    '\n      <h3>Update History <button class="min-btn" id="minHist">−</button></h3>\n      <div id="historyContent">\n        <ul>\n          <li>v1.4 - New Themes Selection (NO MORE PLAIN RED UI MORE MODERN COLORS).</li>\n          <li>v1.3 - New Blue Themed UI with new UI animations and Client Logo! No more minimize or maximize for everything but Update History because of toogle client tool. Updated Astraphobia Client Website and Discord! Also, added new small minimap feature.</li>\n          <li>v1.2 - Astra-Vision added - no ink flash or deep darkness effects + no-zoom limit, added new client ui rework, and custom-background feature (images and gif\'s).</li>\n          <li>v1.1 - Added built-in ad blocker, removed boost trail, spoofing for username, keybind selector for auto spin, added settings GUI, added shift keybind to toogle all panels.</li>\n          <li>v1.0 - Initial release with auto chat, auto-spin, special character bypass, and thresher super boost, no-zoom limit is automatically enabled.</li>\n        </ul>\n      </div>\n    ';
+-  document.body.appendChild(historyPanel);
+-  const minHistBtn = historyPanel.querySelector("#minHist");
+-  const historyContent = historyPanel.querySelector("#historyContent");
++function createUpdateHistoryStyles() {
++  const styleElement = document.createElement("style");
++  styleElement.textContent =
++    "\n      #update-history {\n        position: fixed;\n        bottom: 20px;\n        left: 20px;\n        background: var(--bg-primary);\n        color: var(--text-primary);\n        padding: 16px;\n        border-radius: 16px;\n        font-size: 13px;\n        z-index: 9999;\n        max-width: 240px;\n        max-height: 280px;\n        overflow-y: auto;\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        cursor: move;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        transition: all 0.3s ease;\n        backdrop-filter: blur(20px);\n      }\n      #update-history:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #update-history ul {\n        margin: 0;\n        padding-left: 18px;\n      }\n      #update-history li {\n        margin-bottom: 6px;\n        line-height: 1.4;\n        color: var(--text-primary);\n      }\n      #update-history h3 {\n        margin: 0 0 12px 0;\n        font-size: 15px;\n        color: var(--accent);\n        position: relative;\n        padding-right: 28px;\n        font-weight: 600;\n      }\n      #update-history button.min-btn {\n        background: none;\n        border: none;\n        color: var(--accent);\n        font-size: 20px;\n        cursor: pointer;\n        position: absolute;\n        top: 30%;\n        right: 8px;\n        transform: translateY(-50%);\n        z-index: 1;\n        transition: all 0.2s ease;\n        width: 24px;\n        height: 24px;\n        line-height: 24px;\n        border-radius: 50%;\n      }\n      #update-history button.min-btn:hover {\n        color: var(--accent-hover);\n        background: rgba(var(--accent-rgb), 0.2);\n      }\n      #update-history.themestarwars::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at center, rgba(255,255,255,0.1) 1px, transparent 1px);\n        background-size: 20px 20px;\n        animation: twinkle-stars 20s linear infinite;\n      }\n      #update-history.themekfc::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 20% 30%, rgba(244,0,0,0.1) 2px, transparent 2px),\n                    radial-gradient(circle at 80% 70%, rgba(255,204,0,0.05) 1px, transparent 1px);\n        background-size: 40px 40px;\n      }\n      #update-history.themehalloween::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 30% 20%, rgba(255, 102, 0, 0.1) 1px, transparent 1px),\n                    radial-gradient(circle at 70% 80%, rgba(139, 0, 255, 0.05) 2px, transparent 2px);\n        background-size: 30px 30px;\n        animation: halloween-glow 15s ease-in-out infinite alternate;\n      }\n      #update-history.themehalloween .bat {\n        position: absolute;\n        font-size: 20px;\n        animation: fly-bat 10s linear infinite;\n        pointer-events: none;\n        opacity: 0.7;\n      }\n      #update-history.themehalloween .bat:nth-child(1) { top: 10%; left: -10%; animation-delay: 0s; }\n      #update-history.themehalloween .bat:nth-child(2) { top: 50%; right: -10%; animation-delay: 3s; animation-direction: reverse; }\n      #update-history.themehalloween .bat:nth-child(3) { top: 80%; left: -10%; animation-delay: 6s; }\n      @keyframes fly-bat {\n        0% { transform: translateX(0) rotate(0deg); }\n        100% { transform: translateX(120%) rotate(360deg); }\n      }\n      @keyframes twinkle-stars {\n        0% { background-position: 0 0; }\n        100% { background-position: 20px 20px; }\n      }\n      @keyframes halloween-glow {\n        0% { opacity: 0.8; }\n        100% { opacity: 1; }\n      }\n    ";
++  document.head.appendChild(styleElement);
++  const draggableElement = document.createElement("div");
++  draggableElement.id = "update-history";
++  draggableElement.innerHTML =
++    '\n      <h3>Update History <button class="min-btn" id="minHist">−</button></h3>\n      <div id="historyContent">\n        <ul>\n          <li>v1.5 - Added Star Wars theme, Pink theme, KFC theme (More Glow in KFC Theme), new Halloween theme + Mini-Game, new Astraphobia Client Halloween Icon and updated Halloween Astraphobia Client Website.</li>\n          <li>v1.4 - New Themes Selection (NO MORE PLAIN RED UI MORE MODERN COLORS).</li>\n          <li>v1.3 - New Blue Themed UI with new UI animations and Client Logo! No more minimize or maximize for everything but Update History because of toogle client tool. Updated Astraphobia Client Website and Discord! Also, added new small minimap feature.</li>\n          <li>v1.2 - Astra-Vision added - no ink flash or deep darkness effects + no-zoom limit, added new client ui rework, and custom-background feature (images and gif\'s).</li>\n          <li>v1.1 - Added built-in ad blocker, removed boost trail, spoofing for username, keybind selector for auto spin, added settings GUI, added shift keybind to toogle all panels.</li>\n          <li>v1.0 - Initial release with auto chat, auto-spin, special character bypass, and thresher super boost, no-zoom limit is automatically enabled.</li>\n        </ul>\n      </div>\n    ';
++  document.body.appendChild(draggableElement);
++  const minHistElement = draggableElement.querySelector("#minHist");
++  const historyContentElement =
++    draggableElement.querySelector("#historyContent");
+   let isHistoryHidden = false;
+-  minHistBtn.onclick = (event) => {
++  minHistElement.onclick = (event) => {
+     event.stopPropagation();
+     isHistoryHidden = !isHistoryHidden;
+-    historyContent.style.display = isHistoryHidden ? "none" : "block";
+-    historyPanel.style.height = isHistoryHidden ? "60px" : "auto";
+-    minHistBtn.textContent = isHistoryHidden ? "+" : "−";
++    historyContentElement.style.display = isHistoryHidden ? "none" : "block";
++    draggableElement.style.height = isHistoryHidden ? "60px" : "auto";
++    minHistElement.textContent = isHistoryHidden ? "+" : "−";
+   };
+   let offsetX;
+   let offsetY;
++  let isMoving = false;
+   let isDragging = false;
+-  let isActive = false;
+-  historyPanel.addEventListener("mousedown", (clickEvent) => {
++  draggableElement.addEventListener("mousedown", (clickEvent) => {
+     if (
+       ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(clickEvent.target.tagName)
+     ) {
+       return;
+     }
+-    isDragging = true;
+-    isActive = false;
+-    offsetX = clickEvent.clientX - historyPanel.getBoundingClientRect().left;
+-    offsetY = clickEvent.clientY - historyPanel.getBoundingClientRect().top;
+-    historyPanel.style.transition = "none";
++    isMoving = true;
++    isDragging = false;
++    offsetX =
++      clickEvent.clientX - draggableElement.getBoundingClientRect().left;
++    offsetY = clickEvent.clientY - draggableElement.getBoundingClientRect().top;
++    draggableElement.style.transition = "none";
+     const handleMouseMove = (mouseEvent) => {
+       const deltaX = mouseEvent.clientX - clickEvent.clientX;
+       const deltaY = mouseEvent.clientY - clickEvent.clientY;
+-      if (!isActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+-        isActive = true;
++      if (!isDragging && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
++        isDragging = true;
+       }
+-      if (isDragging) {
+-        historyPanel.style.left = mouseEvent.clientX - offsetX + "px";
+-        historyPanel.style.top = mouseEvent.clientY - offsetY + "px";
+-        historyPanel.style.bottom = "auto";
+-        historyPanel.style.right = "auto";
++      if (isMoving) {
++        draggableElement.style.left = mouseEvent.clientX - offsetX + "px";
++        draggableElement.style.top = mouseEvent.clientY - offsetY + "px";
++        draggableElement.style.bottom = "auto";
++        draggableElement.style.right = "auto";
+       }
+     };
+     const handleMouseUp = () => {
+-      isDragging = false;
+-      historyPanel.style.transition = "all 0.3s ease";
++      isMoving = false;
++      draggableElement.style.transition = "all 0.3s ease";
+       document.removeEventListener("mousemove", handleMouseMove);
+       document.removeEventListener("mouseup", handleMouseUp);
+     };
+     document.addEventListener("mousemove", handleMouseMove);
+     document.addEventListener("mouseup", handleMouseUp);
+   });
+-  historyPanel.addEventListener("click", (inputEvent) => {
+-    if (isActive) {
++  draggableElement.addEventListener("click", (inputEvent) => {
++    if (isDragging) {
+       inputEvent.stopImmediatePropagation();
+     }
+   });
+-  return historyPanel;
++  if (localStorage.getItem("theme") === "halloween") {
++    for (let loopIndex = 0; loopIndex < 3; loopIndex++) {
++      const spanElement = document.createElement("span");
++      spanElement.className = "bat";
++      spanElement.textContent = "🦇";
++      draggableElement.appendChild(spanElement);
++    }
++  }
++  return draggableElement;
+ }
++function injectDeepToolsStyles() {
++  const deepToolsStyleElement = document.createElement("style");
++  deepToolsStyleElement.textContent =
++    "\n      :root {\n        --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);\n        --shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.4);\n      }\n      #deep-tools-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n        position: relative;\n      }\n      #deep-tools-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #deep-tools-panel textarea {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 8px;\n        padding: 10px;\n        transition: all 0.2s ease;\n        font-size: 13px;\n      }\n      #deep-tools-panel textarea:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);\n      }\n      #deep-tools-panel input[type=\"number\"] {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 60px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #deep-tools-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        position: relative;\n        overflow: hidden;\n      }\n      #deep-tools-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #deep-tools-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #deep-tools-panel button:hover:not(:disabled) {\n        background: var(--hover-bg);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2);\n        color: var(--accent-hover);\n      }\n      #deep-tools-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #deep-tools-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #deep-tools-panel .credits {\n        margin-top: 12px;\n        font-size: 11px;\n        color: var(--text-secondary);\n        line-height: 1.4;\n      }\n      #deep-tools-panel .auto-chat-controls {\n        display: flex;\n        gap: 8px;\n        margin-bottom: 10px;\n        align-items: center;\n        justify-content: center;\n      }\n      #deep-tools-panel .spin-keybind {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        margin-bottom: 10px;\n        font-size: 12px;\n      }\n      #deep-tools-panel .spin-keybind label {\n        color: var(--text-primary);\n      }\n      #deep-tools-panel #spinKeyInput {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 50px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #aim-overlay, #ctrl-overlay {\n        z-index: 10000 !important;\n      }\n      div.game {\n        position: relative;\n      }\n      /* Ad Removal */\n      div.sidebar.left > div.ad-block {\n        opacity: 0 !important;\n        pointer-events: none !important;\n        display: none !important;\n      }\n      div.sidebar.left > a {\n        display: none !important;\n      }\n      div.sidebar.left {\n        max-width: 30vw;\n        width: 21rem;\n        bottom: 0 !important;\n      }\n      /* Theme-specific panel animations */\n      #deep-tools-panel.themestarwars::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        background: radial-gradient(circle at center, rgba(255,255,255,0.1) 1px, transparent 1px);\n        background-size: 20px 20px;\n        animation: twinkle-stars 20s linear infinite;\n        z-index: -1;\n        border-radius: 16px;\n      }\n      #deep-tools-panel.themekfc::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 20% 30%, rgba(244,0,0,0.1) 2px, transparent 2px),\n                    radial-gradient(circle at 80% 70%, rgba(255,204,0,0.05) 1px, transparent 1px);\n        background-size: 40px 40px;\n      }\n      #deep-tools-panel.themehalloween::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 30% 20%, rgba(255, 102, 0, 0.1) 1px, transparent 1px),\n                    radial-gradient(circle at 70% 80%, rgba(139, 0, 255, 0.05) 2px, transparent 2px);\n        background-size: 30px 30px;\n        animation: halloween-glow 15s ease-in-out infinite alternate;\n      }\n      #deep-tools-panel.themehalloween .bat {\n        position: absolute;\n        font-size: 20px;\n        animation: fly-bat 10s linear infinite;\n        pointer-events: none;\n        opacity: 0.7;\n      }\n      #deep-tools-panel.themehalloween .bat:nth-child(1) { top: 10%; left: -10%; animation-delay: 0s; }\n      #deep-tools-panel.themehalloween .bat:nth-child(2) { top: 50%; right: -10%; animation-delay: 3s; animation-direction: reverse; }\n      #deep-tools-panel.themehalloween .bat:nth-child(3) { top: 80%; left: -10%; animation-delay: 6s; }\n      @keyframes fly-bat {\n        0% { transform: translateX(0) rotate(0deg); }\n        100% { transform: translateX(120%) rotate(360deg); }\n      }\n      @keyframes twinkle-stars {\n        0% { background-position: 0 0; }\n        100% { background-position: 20px 20px; }\n      }\n      @keyframes halloween-glow {\n        0% { opacity: 0.8; }\n        100% { opacity: 1; }\n      }\n    ";
++  document.head.appendChild(deepToolsStyleElement);
++  const deepToolsPanel = document.createElement("div");
++  deepToolsPanel.id = "deep-tools-panel";
++  deepToolsPanel.style.position = "fixed";
++  deepToolsPanel.style.bottom = "20px";
++  deepToolsPanel.style.right = "20px";
++  deepToolsPanel.style.color = "var(--text-primary)";
++  deepToolsPanel.style.padding = "16px";
++  deepToolsPanel.style.borderRadius = "16px";
++  deepToolsPanel.style.fontSize = "14px";
++  deepToolsPanel.style.zIndex = "99999";
++  deepToolsPanel.style.userSelect = "none";
++  deepToolsPanel.style.width = "240px";
++  deepToolsPanel.style.textAlign = "center";
++  deepToolsPanel.style.cursor = "move";
++  deepToolsPanel.style.overflow = "hidden";
++  deepToolsPanel.innerHTML =
++    '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        ASTRAPHOBIA CLIENT\n      </div>\n      <div id="panelContent">\n        <textarea id="chatMsg" placeholder="Type message..." style="width:100%; height:50px; margin-bottom:10px; resize:none;"></textarea>\n        <button id="sendBtn" style="width:100%; margin-bottom:10px;">Send Typed Chat</button>\n        <div class="auto-chat-controls">\n          <input type="number" id="delayInput" min="1" max="300" value="10" style="margin-right:8px;">\n          <span style="font-size:12px;">sec</span>\n        </div>\n        <button id="autoChatBtn" style="width:100%; margin-bottom:10px;">Enable Auto Chat</button>\n        <button id="patchBtn" style="width:100%; margin-bottom:10px;">Enable Special Characters(in chat/clan/name)</button>\n        <button id="spoofBtn" style="width:100%; margin-bottom:10px;">Spoof Username:Random Unicode Name(ban decrease)</button>\n        <button id="spinBtn" style="width:100%; margin-bottom:10px;">Enable Auto Spin</button>\n        <div class="spin-keybind">\n          <label for="spinKeyInput">Keybind:</label>\n          <input type="text" id="spinKeyInput" placeholder="PRESS" readonly>\n        </div>\n        <div class="credits">\n          Coder: Astraphobia<br>\n          Owner/Founder: Astraphobia<br>\n          Designer/Marketer: Astraphobia<br>\n          Tester: Astraphobia\n        </div>\n      </div>\n    ';
++  document.body.appendChild(deepToolsPanel);
++  deepToolsPanel.querySelector("#sendBtn").onclick = () => {
++    const chatMessage = deepToolsPanel.querySelector("#chatMsg").value;
++    if (chatMessage) {
++      autoChat(chatMessage);
++    }
++  };
++  const patchButton = deepToolsPanel.querySelector("#patchBtn");
++  patchButton.onclick = () => initInterceptor(patchButton);
++  const spoofButton = deepToolsPanel.querySelector("#spoofBtn");
++  spoofButton.onclick = () => {
++    const inputLimit = generateRandomString(8);
++    if (simulateTyping(".play-game .el-input__inner", inputLimit)) {
++      showNotification("Spoofed name!");
++    } else if (simulateTyping(".new-tribe .el-input__inner", inputLimit)) {
++      showNotification("Spoofed tribe name!");
++    } else {
++      showNotification("No name input found! Enable special characters first.");
++    }
++  };
++  const spinButton = deepToolsPanel.querySelector("#spinBtn");
++  spinButton.onclick = () => {
++    toggleMouseSimulation();
++    if (coreSharedState.rotationInterval) {
++      spinButton.textContent = "Disable Auto Spin";
++      spinButton.style.color = "var(--accent)";
++      spinButton.style.opacity = "0.6";
++    } else {
++      spinButton.textContent = "Enable Auto Spin";
++      spinButton.style.color = "var(--accent)";
++      spinButton.style.opacity = "1";
++    }
++  };
++  const spinKeyInput = deepToolsPanel.querySelector("#spinKeyInput");
++  let pressedKey = null;
++  spinKeyInput.addEventListener("keydown", (event) => {
++    event.preventDefault();
++    pressedKey = event.code || event.key;
++    spinKeyInput.value = pressedKey.replace("Key", "").toLowerCase();
++  });
++  document.addEventListener("keydown", (event_2) => {
++    if (
++      pressedKey &&
++      event_2.code === pressedKey &&
++      !event_2.target.matches("input, textarea, button")
++    ) {
++      event_2.preventDefault();
++      toggleMouseSimulation();
++      if (coreSharedState.rotationInterval) {
++        spinButton.textContent = "Disable Auto Spin";
++        spinButton.style.color = "var(--accent)";
++        spinButton.style.opacity = "0.6";
++      } else {
++        spinButton.textContent = "Enable Auto Spin";
++        spinButton.style.color = "var(--accent)";
++        spinButton.style.opacity = "1";
++      }
++    }
++  });
++  const autoChatButton = deepToolsPanel.querySelector("#autoChatBtn");
++  autoChatButton.onclick = () => {
++    const chatMessageValue = deepToolsPanel.querySelector("#chatMsg").value;
++    const delayInput = deepToolsPanel.querySelector("#delayInput");
++    const delayValue = parseInt(delayInput.value) || 10;
++    if (!chatMessageValue) {
++      showNotification("⚠️ Enter a message first!");
++      return;
++    }
++    if (coreSharedState.isProcessing) {
++      stopInterval();
++      autoChatButton.textContent = "Enable Auto Chat";
++      autoChatButton.style.color = "var(--accent)";
++      autoChatButton.style.opacity = "1";
++    } else {
++      startScheduledTask(chatMessageValue, delayValue);
++      autoChatButton.textContent = "Disable Auto Chat";
++      autoChatButton.style.color = "var(--accent)";
++      autoChatButton.style.opacity = "0.6";
++    }
++  };
++  let deepToolsOffsetX;
++  let deepToolsOffsetY;
++  let deepToolsDragActive = false;
++  let deepToolsIsDragging = false;
++  deepToolsPanel.addEventListener("mousedown", (event_3) => {
++    if (
++      event_3.target.tagName === "BUTTON" ||
++      event_3.target.tagName === "TEXTAREA" ||
++      event_3.target.tagName === "INPUT" ||
++      event_3.target.classList.contains("credits")
++    ) {
++      return;
++    }
++    deepToolsDragActive = true;
++    deepToolsIsDragging = false;
++    deepToolsOffsetX =
++      event_3.clientX - deepToolsPanel.getBoundingClientRect().left;
++    deepToolsOffsetY =
++      event_3.clientY - deepToolsPanel.getBoundingClientRect().top;
++    deepToolsPanel.style.transition = "none";
++    const handleDeepToolsDrag = (mouseEvent) => {
++      const deltaX = mouseEvent.clientX - event_3.clientX;
++      const deltaY = mouseEvent.clientY - event_3.clientY;
++      if (
++        !deepToolsIsDragging &&
++        (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)
++      ) {
++        deepToolsIsDragging = true;
++      }
++      if (deepToolsDragActive) {
++        deepToolsPanel.style.left =
++          mouseEvent.clientX - deepToolsOffsetX + "px";
++        deepToolsPanel.style.top = mouseEvent.clientY - deepToolsOffsetY + "px";
++        deepToolsPanel.style.bottom = "auto";
++        deepToolsPanel.style.right = "auto";
++      }
++    };
++    const handleMouseUp = () => {
++      deepToolsDragActive = false;
++      deepToolsPanel.style.transition = "all 0.3s ease";
++      document.removeEventListener("mousemove", handleDeepToolsDrag);
++      document.removeEventListener("mouseup", handleMouseUp);
++    };
++    document.addEventListener("mousemove", handleDeepToolsDrag);
++    document.addEventListener("mouseup", handleMouseUp);
++  });
++  deepToolsPanel.addEventListener("click", (event_4) => {
++    if (deepToolsIsDragging) {
++      event_4.stopImmediatePropagation();
++    }
++  });
++  if (localStorage.getItem("theme") === "halloween") {
++    for (let loopIndex = 0; loopIndex < 3; loopIndex++) {
++      const spanElement = document.createElement("span");
++      spanElement.className = "bat";
++      spanElement.textContent = "🦇";
++      deepToolsPanel.appendChild(spanElement);
++    }
++  }
++  return deepToolsPanel;
++}
+ function injectPlusPanelStyles() {
+-  const styleElement = document.createElement("style");
+-  styleElement.textContent =
+-    "\n      #plus-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n      }\n      #plus-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #plus-panel textarea {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 8px;\n        padding: 10px;\n        transition: all 0.2s ease;\n        font-size: 13px;\n      }\n      #plus-panel textarea:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);\n      }\n      #plus-panel input[type=\"number\"] {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 60px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #plus-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        position: relative;\n        overflow: hidden;\n        width: 100%;\n        margin-bottom: 10px;\n      }\n      #plus-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #plus-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #plus-panel button:hover:not(:disabled) {\n        background: var(--hover-bg);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2);\n        color: var(--accent-hover);\n      }\n      #plus-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #plus-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n    ";
+-  document.head.appendChild(styleElement);
+-  const uiContainer = document.createElement("div");
+-  uiContainer.id = "plus-panel";
+-  uiContainer.style.position = "fixed";
+-  uiContainer.style.top = "20px";
+-  uiContainer.style.right = "20px";
+-  uiContainer.style.color = "var(--text-primary)";
+-  uiContainer.style.padding = "16px";
+-  uiContainer.style.borderRadius = "16px";
+-  uiContainer.style.fontSize = "14px";
+-  uiContainer.style.zIndex = "99999";
+-  uiContainer.style.userSelect = "none";
+-  uiContainer.style.width = "240px";
+-  uiContainer.style.textAlign = "center";
+-  uiContainer.style.cursor = "move";
+-  uiContainer.style.overflow = "hidden";
+-  uiContainer.innerHTML =
++  const plusPanelStyleElement = document.createElement("style");
++  plusPanelStyleElement.textContent =
++    "\n      #plus-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n        position: relative;\n      }\n      #plus-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #plus-panel textarea {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 8px;\n        padding: 10px;\n        transition: all 0.2s ease;\n        font-size: 13px;\n      }\n      #plus-panel textarea:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);\n      }\n      #plus-panel input[type=\"number\"] {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 60px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #plus-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        position: relative;\n        overflow: hidden;\n        width: 100%;\n        margin-bottom: 10px;\n      }\n      #plus-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #plus-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #plus-panel button:hover:not(:disabled) {\n        background: var(--hover-bg);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2);\n        color: var(--accent-hover);\n      }\n      #plus-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #plus-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      /* Theme-specific panel animations */\n      #plus-panel.themestarwars::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        background: radial-gradient(circle at center, rgba(255,255,255,0.1) 1px, transparent 1px);\n        background-size: 20px 20px;\n        animation: twinkle-stars 20s linear infinite;\n        z-index: -1;\n        border-radius: 16px;\n      }\n      #plus-panel.themekfc::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 20% 30%, rgba(244,0,0,0.1) 2px, transparent 2px),\n                    radial-gradient(circle at 80% 70%, rgba(255,204,0,0.05) 1px, transparent 1px);\n        background-size: 40px 40px;\n      }\n      #plus-panel.themehalloween::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 30% 20%, rgba(255, 102, 0, 0.1) 1px, transparent 1px),\n                    radial-gradient(circle at 70% 80%, rgba(139, 0, 255, 0.05) 2px, transparent 2px);\n        background-size: 30px 30px;\n        animation: halloween-glow 15s ease-in-out infinite alternate;\n      }\n      #plus-panel.themehalloween .bat {\n        position: absolute;\n        font-size: 20px;\n        animation: fly-bat 10s linear infinite;\n        pointer-events: none;\n        opacity: 0.7;\n      }\n      #plus-panel.themehalloween .bat:nth-child(1) { top: 10%; left: -10%; animation-delay: 0s; }\n      #plus-panel.themehalloween .bat:nth-child(2) { top: 50%; right: -10%; animation-delay: 3s; animation-direction: reverse; }\n      #plus-panel.themehalloween .bat:nth-child(3) { top: 80%; left: -10%; animation-delay: 6s; }\n      @keyframes fly-bat {\n        0% { transform: translateX(0) rotate(0deg); }\n        100% { transform: translateX(120%) rotate(360deg); }\n      }\n      @keyframes twinkle-stars {\n        0% { background-position: 0 0; }\n        100% { background-position: 20px 20px; }\n      }\n      @keyframes halloween-glow {\n        0% { opacity: 0.8; }\n        100% { opacity: 1; }\n      }\n    ";
++  document.head.appendChild(plusPanelStyleElement);
++  const plusPanel = document.createElement("div");
++  plusPanel.id = "plus-panel";
++  plusPanel.style.position = "fixed";
++  plusPanel.style.top = "20px";
++  plusPanel.style.right = "20px";
++  plusPanel.style.color = "var(--text-primary)";
++  plusPanel.style.padding = "16px";
++  plusPanel.style.borderRadius = "16px";
++  plusPanel.style.fontSize = "14px";
++  plusPanel.style.zIndex = "99999";
++  plusPanel.style.userSelect = "none";
++  plusPanel.style.width = "240px";
++  plusPanel.style.textAlign = "center";
++  plusPanel.style.cursor = "move";
++  plusPanel.style.overflow = "hidden";
++  plusPanel.innerHTML =
+     '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        ASTRAPHOBIA CLIENT+\n      </div>\n      <div id="plusContent">\n        <button id="thresherBtn">Enable Thresher Super Boost(ctrl + shift and click)(minumum required 2 boost)</button>\n        <button id="astraVisionBtn">Enable Astra-Vision (no-zoom limit, no ink flash or deep darkness)</button>\n        <button id="smallMinimapBtn">Enable Small Minimap</button>\n      </div>\n    ';
+-  document.body.appendChild(uiContainer);
+-  const thresherButton = uiContainer.querySelector("#thresherBtn");
++  document.body.appendChild(plusPanel);
++  const thresherButton = plusPanel.querySelector("#thresherBtn");
+   thresherButton.onclick = () => {
+-    if (state.isInitialized_2) {
++    if (coreSharedState.isInitialized_2) {
+       showNotification("Thresher Super Boost is already active!");
+       return;
+     }
+-    setupProxyHooks();
++    initializeAntiTamper();
+     thresherButton.textContent = "Thresher Super Boost Active";
+     thresherButton.style.color = "var(--accent)";
+     thresherButton.style.opacity = "0.6";
+     thresherButton.disabled = true;
+   };
+-  const astraVisionButton = uiContainer.querySelector("#astraVisionBtn");
++  const astraVisionButton = plusPanel.querySelector("#astraVisionBtn");
+   astraVisionButton.onclick = () => {
+     if (isReady) {
+       showNotification("Astra-Vision already enabled!");
+       return;
+     }
+-    setupProxyHooks();
++    initializeAntiTamper();
+     disableGameRestrictions();
+     astraVisionButton.textContent = "Astra-Vision Active";
+     astraVisionButton.style.color = "var(--accent)";
+     astraVisionButton.style.opacity = "0.6";
+@@ -224,13 +464,13 @@
+     showNotification(
+       "👁️ Astra-Vision enabled! (zoom-limit unlocked, no ink-flash or deep darkness effects)",
+     );
+   };
+-  const smallMinimapButton = uiContainer.querySelector("#smallMinimapBtn");
++  const smallMinimapButton = plusPanel.querySelector("#smallMinimapBtn");
+   smallMinimapButton.onclick = () => {
+-    setupProxyHooks();
+-    toggleMinimapSize();
+-    if (state.isProcessing_2) {
++    initializeAntiTamper();
++    toggleMinimapScale();
++    if (coreSharedState.isProcessing_2) {
+       smallMinimapButton.textContent = "Disable Small Minimap";
+       smallMinimapButton.style.color = "var(--accent)";
+       smallMinimapButton.style.opacity = "0.6";
+     } else {
+@@ -238,156 +478,191 @@
+       smallMinimapButton.style.color = "var(--accent)";
+       smallMinimapButton.style.opacity = "1";
+     }
+   };
+-  let relativeX;
+-  let relativeY;
+-  let isActive = false;
+-  let isEnabled = false;
+-  uiContainer.addEventListener("mousedown", (event) => {
++  let plusPanelOffsetX;
++  let plusPanelOffsetY;
++  let plusPanelDragActive = false;
++  let plusPanelIsDragging = false;
++  plusPanel.addEventListener("mousedown", (event) => {
+     if (
+       event.target.tagName === "BUTTON" ||
+       event.target.tagName === "TEXTAREA" ||
+       event.target.tagName === "INPUT" ||
+       event.target.classList.contains("credits")
+     ) {
+       return;
+     }
+-    isActive = true;
+-    isEnabled = false;
+-    relativeX = event.clientX - uiContainer.getBoundingClientRect().left;
+-    relativeY = event.clientY - uiContainer.getBoundingClientRect().top;
+-    uiContainer.style.transition = "none";
+-    const handleMouseMove = (mouseEvent) => {
++    plusPanelDragActive = true;
++    plusPanelIsDragging = false;
++    plusPanelOffsetX = event.clientX - plusPanel.getBoundingClientRect().left;
++    plusPanelOffsetY = event.clientY - plusPanel.getBoundingClientRect().top;
++    plusPanel.style.transition = "none";
++    const handlePlusPanelDrag = (mouseEvent) => {
+       const deltaX = mouseEvent.clientX - event.clientX;
+       const deltaY = mouseEvent.clientY - event.clientY;
+-      if (!isEnabled && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+-        isEnabled = true;
++      if (
++        !plusPanelIsDragging &&
++        (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)
++      ) {
++        plusPanelIsDragging = true;
+       }
+-      if (isActive) {
+-        uiContainer.style.left = mouseEvent.clientX - relativeX + "px";
+-        uiContainer.style.top = mouseEvent.clientY - relativeY + "px";
+-        uiContainer.style.bottom = "auto";
+-        uiContainer.style.right = "auto";
++      if (plusPanelDragActive) {
++        plusPanel.style.left = mouseEvent.clientX - plusPanelOffsetX + "px";
++        plusPanel.style.top = mouseEvent.clientY - plusPanelOffsetY + "px";
++        plusPanel.style.bottom = "auto";
++        plusPanel.style.right = "auto";
+       }
+     };
+     const handleMouseUp = () => {
+-      isActive = false;
+-      uiContainer.style.transition = "all 0.3s ease";
+-      document.removeEventListener("mousemove", handleMouseMove);
++      plusPanelDragActive = false;
++      plusPanel.style.transition = "all 0.3s ease";
++      document.removeEventListener("mousemove", handlePlusPanelDrag);
+       document.removeEventListener("mouseup", handleMouseUp);
+     };
+-    document.addEventListener("mousemove", handleMouseMove);
++    document.addEventListener("mousemove", handlePlusPanelDrag);
+     document.addEventListener("mouseup", handleMouseUp);
+   });
+-  uiContainer.addEventListener("click", (event_2) => {
+-    if (isEnabled) {
++  plusPanel.addEventListener("click", (event_2) => {
++    if (plusPanelIsDragging) {
+       event_2.stopImmediatePropagation();
+     }
+   });
+-  return uiContainer;
++  if (localStorage.getItem("theme") === "halloween") {
++    for (let index = 0; index < 3; index++) {
++      const spanElement = document.createElement("span");
++      spanElement.className = "bat";
++      spanElement.textContent = "🦇";
++      plusPanel.appendChild(spanElement);
++    }
++  }
++  return plusPanel;
+ }
+-function injectSettingsStyles() {
++function injectSettingsPanelStyles() {
+   const styleElement = document.createElement("style");
+   styleElement.textContent =
+-    "\n      #settings-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n        position: fixed;\n        top: 20px;\n        left: 20px;\n        color: var(--text-primary);\n        padding: 16px;\n        font-size: 14px;\n        z-index: 99999;\n        user-select: none;\n        width: 240px;\n        text-align: center;\n        cursor: move;\n        overflow: hidden;\n      }\n      #settings-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #settings-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        width: 100%;\n        margin-bottom: 10px;\n        position: relative;\n        overflow: hidden;\n      }\n      #settings-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #settings-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #settings-panel button:hover:not(:disabled) {\n        background: var(--hover-bg);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2);\n        color: var(--accent-hover);\n      }\n      #settings-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #settings-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #settings-panel .keybind-set, #settings-panel .bg-set {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        margin-bottom: 10px;\n        font-size: 12px;\n      }\n      #settings-panel .keybind-set label, #settings-panel .bg-set label {\n        color: var(--text-primary);\n      }\n      #settings-panel #toggleKeyInput, #settings-panel #bgUrl {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #settings-panel #toggleKeyInput {\n        width: 80px;\n      }\n      #settings-panel #bgUrl {\n        width: 120px;\n      }\n      #settings-panel .section-header {\n        font-weight: bold;\n        color: var(--accent);\n        margin: 12px 0 6px 0;\n        font-size: 13px;\n      }\n      #settings-panel select {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 100%;\n        margin-bottom: 10px;\n        transition: all 0.2s ease;\n      }\n      #settings-panel select:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);\n      }\n    ";
++    "\n      #settings-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n        position: fixed;\n        top: 20px;\n        left: 20px;\n        color: var(--text-primary);\n        padding: 16px;\n        font-size: 14px;\n        z-index: 99999;\n        user-select: none;\n        width: 240px;\n        text-align: center;\n        cursor: move;\n        overflow: hidden;\n        position: relative;\n      }\n      #settings-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #settings-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        width: 100%;\n        margin-bottom: 10px;\n        position: relative;\n        overflow: hidden;\n      }\n      #settings-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #settings-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #settings-panel button:hover:not(:disabled) {\n        background: var(--hover-bg);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2);\n        color: var(--accent-hover);\n      }\n      #settings-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #settings-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #settings-panel .keybind-set, #settings-panel .bg-set {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        margin-bottom: 10px;\n        font-size: 12px;\n      }\n      #settings-panel .keybind-set label, #settings-panel .bg-set label {\n        color: var(--text-primary);\n      }\n      #settings-panel #toggleKeyInput, #settings-panel #bgUrl {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #settings-panel #toggleKeyInput {\n        width: 80px;\n      }\n      #settings-panel #bgUrl {\n        width: 120px;\n      }\n      #settings-panel .section-header {\n        font-weight: bold;\n        color: var(--accent);\n        margin: 12px 0 6px 0;\n        font-size: 13px;\n      }\n      #settings-panel select {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 100%;\n        margin-bottom: 10px;\n        transition: all 0.2s ease;\n      }\n      #settings-panel select:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);\n      }\n      #settings-panel .limited-edition {\n        font-size: 11px;\n        color: #ff6600;\n        font-style: italic;\n        margin-top: 4px;\n      }\n      /* Theme-specific panel animations */\n      #settings-panel.themestarwars::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        background: radial-gradient(circle at center, rgba(255,255,255,0.1) 1px, transparent 1px);\n        background-size: 20px 20px;\n        animation: twinkle-stars 20s linear infinite;\n        z-index: -1;\n        border-radius: 16px;\n      }\n      #settings-panel.themekfc::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 20% 30%, rgba(244,0,0,0.1) 2px, transparent 2px),\n                    radial-gradient(circle at 80% 70%, rgba(255,204,0,0.05) 1px, transparent 1px);\n        background-size: 40px 40px;\n      }\n      #settings-panel.themehalloween::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 30% 20%, rgba(255, 102, 0, 0.1) 1px, transparent 1px),\n                    radial-gradient(circle at 70% 80%, rgba(139, 0, 255, 0.05) 2px, transparent 2px);\n        background-size: 30px 30px;\n        animation: halloween-glow 15s ease-in-out infinite alternate;\n      }\n      #settings-panel.themehalloween .bat {\n        position: absolute;\n        font-size: 20px;\n        animation: fly-bat 10s linear infinite;\n        pointer-events: none;\n        opacity: 0.7;\n      }\n      #settings-panel.themehalloween .bat:nth-child(1) { top: 10%; left: -10%; animation-delay: 0s; }\n      #settings-panel.themehalloween .bat:nth-child(2) { top: 50%; right: -10%; animation-delay: 3s; animation-direction: reverse; }\n      #settings-panel.themehalloween .bat:nth-child(3) { top: 80%; left: -10%; animation-delay: 6s; }\n      @keyframes fly-bat {\n        0% { transform: translateX(0) rotate(0deg); }\n        100% { transform: translateX(120%) rotate(360deg); }\n      }\n      @keyframes twinkle-stars {\n        0% { background-position: 0 0; }\n        100% { background-position: 20px 20px; }\n      }\n      @keyframes halloween-glow {\n        0% { opacity: 0.8; }\n        100% { opacity: 1; }\n      }\n    ";
+   document.head.appendChild(styleElement);
+-  const container = document.createElement("div");
+-  container.id = "settings-panel";
+-  container.innerHTML =
+-    '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        SETTINGS\n      </div>\n      <div id="settingsContent">\n        <div class="keybind-set">\n          <label for="toggleKeyInput">Toggle Client:</label>\n          <input type="text" id="toggleKeyInput" placeholder="PRESS" readonly>\n        </div>\n        <div class="section-header">Custom Background</div>\n        <div class="bg-set">\n          <label for="bgUrl">BG URL:</label>\n          <input type="text" id="bgUrl" placeholder="Image/GIF URL">\n        </div>\n        <button id="applyBg">Apply Custom Background</button>\n        <div class="section-header">Themes</div>\n        <select id="themeSelect">\n          <option value="blue">Blue (Default)</option>\n          <option value="red">Red</option>\n          <option value="green">Green</option>\n        </select>\n      </div>\n    ';
+-  document.body.appendChild(container);
+-  const bgUrlInput = container.querySelector("#bgUrl");
++  const draggableElement = document.createElement("div");
++  draggableElement.id = "settings-panel";
++  draggableElement.innerHTML =
++    '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        SETTINGS\n      </div>\n      <div id="settingsContent">\n        <div class="keybind-set">\n          <label for="toggleKeyInput">Toggle Client:</label>\n          <input type="text" id="toggleKeyInput" placeholder="PRESS" readonly>\n        </div>\n        <div class="section-header">Custom Background</div>\n        <div class="bg-set">\n          <label for="bgUrl">BG URL:</label>\n          <input type="text" id="bgUrl" placeholder="Image/GIF URL">\n        </div>\n        <button id="applyBg">Apply Custom Background</button>\n        <div class="section-header">Themes</div>\n        <select id="themeSelect">\n          <option value="blue">Blue (Default)</option>\n          <option value="red">Red</option>\n          <option value="green">Green</option>\n          <option value="pink">Pink</option>\n          <option value="starwars">Star Wars</option>\n          <option value="kfc">KFC🍗</option>\n          <option value="halloween">Halloween 🎃</option>\n        </select>\n        <div id="limitedEdition" class="limited-edition" style="display:none;">Limited Edition</div>\n      </div>\n    ';
++  document.body.appendChild(draggableElement);
++  const bgUrlInput = draggableElement.querySelector("#bgUrl");
+   bgUrlInput.value = localStorage.getItem("bgUrl") || "";
+-  const applyBgButton = container.querySelector("#applyBg");
++  const applyBgButton = draggableElement.querySelector("#applyBg");
+   applyBgButton.onclick = () => {
+     const backgroundUrl = bgUrlInput.value.trim();
+     if (backgroundUrl === "") {
+       showNotification("Enter a URL first!");
+       return;
+     }
+     localStorage.setItem("bgUrl", backgroundUrl);
+     let homeBgElement = document.querySelector(".home-bg");
+-    const updateBackgroundImage = () => {
+-      homeBgElement.style.setProperty(
+-        "background-image",
+-        'url("' + backgroundUrl + '")',
+-        "important",
+-      );
++    const updateHomeBackgroundImage = () => {
++      homeBgElement = document.querySelector(".home-bg");
++      if (homeBgElement) {
++        homeBgElement.style.setProperty(
++          "background-image",
++          'url("' + backgroundUrl + '")',
++          "important",
++        );
++      }
+     };
+     if (homeBgElement == null) {
+       const bgCheckInterval = setInterval(() => {
+         homeBgElement = document.querySelector(".home-bg");
+         if (homeBgElement != null) {
+           clearInterval(bgCheckInterval);
++          updateHomeBackgroundImage();
+         }
+-        updateBackgroundImage();
+       }, 100);
+     } else {
+-      updateBackgroundImage();
++      updateHomeBackgroundImage();
+     }
+     showNotification("Custom Background applied!");
+   };
+-  const themeSelect = container.querySelector("#themeSelect");
++  const themeSelect = draggableElement.querySelector("#themeSelect");
+   const currentTheme = localStorage.getItem("theme") || "blue";
+   themeSelect.value = currentTheme;
+-  setTheme(currentTheme);
++  applyThemeColors(currentTheme);
+   themeSelect.onchange = (themeChangeEvent) => {
+-    setTheme(themeChangeEvent.target.value);
+-    showNotification("Theme changed to " + themeChangeEvent.target.value);
++    const selectedTheme = themeChangeEvent.target.value;
++    if (selectedTheme === "halloween") {
++      createHalloweenModal((isHalloween) => {
++        if (isHalloween) {
++          applyThemeColors("halloween");
++        } else {
++          themeChangeEvent.target.value = "blue";
++          applyThemeColors("blue");
++        }
++      });
++    } else {
++      applyThemeColors(selectedTheme);
++      showNotification("Theme changed to " + selectedTheme);
++    }
+   };
+-  const toggleKeyInput = container.querySelector("#toggleKeyInput");
+-  toggleKeyInput.value = state.currentKey;
++  const toggleKeyInput = draggableElement.querySelector("#toggleKeyInput");
++  toggleKeyInput.value = coreSharedState.activeKey;
+   toggleKeyInput.addEventListener("keydown", (keyboardEvent) => {
+     keyboardEvent.preventDefault();
+-    state.currentKey = keyboardEvent.key;
+-    toggleKeyInput.value = state.currentKey;
++    coreSharedState.activeKey = keyboardEvent.key;
++    toggleKeyInput.value = coreSharedState.activeKey;
+   });
+   let offsetX;
+   let offsetY;
++  let isDraggingActive = false;
+   let isDragging = false;
+-  let isToggled = false;
+-  container.addEventListener("mousedown", (uiEvent) => {
++  draggableElement.addEventListener("mousedown", (clickEvent) => {
+     if (
+-      uiEvent.target.tagName === "BUTTON" ||
+-      uiEvent.target.tagName === "INPUT" ||
+-      uiEvent.target.classList.contains("credits")
++      clickEvent.target.tagName === "BUTTON" ||
++      clickEvent.target.tagName === "INPUT" ||
++      clickEvent.target.classList.contains("credits")
+     ) {
+       return;
+     }
+-    isDragging = true;
+-    isToggled = false;
+-    offsetX = uiEvent.clientX - container.getBoundingClientRect().left;
+-    offsetY = uiEvent.clientY - container.getBoundingClientRect().top;
+-    container.style.transition = "none";
++    isDraggingActive = true;
++    isDragging = false;
++    offsetX =
++      clickEvent.clientX - draggableElement.getBoundingClientRect().left;
++    offsetY = clickEvent.clientY - draggableElement.getBoundingClientRect().top;
++    draggableElement.style.transition = "none";
+     const handleMouseMove = (mouseEvent) => {
+-      const deltaX = mouseEvent.clientX - uiEvent.clientX;
+-      const deltaY = mouseEvent.clientY - uiEvent.clientY;
+-      if (!isToggled && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+-        isToggled = true;
++      const deltaX = mouseEvent.clientX - clickEvent.clientX;
++      const deltaY = mouseEvent.clientY - clickEvent.clientY;
++      if (!isDragging && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
++        isDragging = true;
+       }
+-      if (isDragging) {
+-        container.style.left = mouseEvent.clientX - offsetX + "px";
+-        container.style.top = mouseEvent.clientY - offsetY + "px";
+-        container.style.bottom = "auto";
+-        container.style.right = "auto";
++      if (isDraggingActive) {
++        draggableElement.style.left = mouseEvent.clientX - offsetX + "px";
++        draggableElement.style.top = mouseEvent.clientY - offsetY + "px";
++        draggableElement.style.bottom = "auto";
++        draggableElement.style.right = "auto";
+       }
+     };
+     const handleMouseUp = () => {
+-      isDragging = false;
+-      container.style.transition = "all 0.3s ease";
++      isDraggingActive = false;
++      draggableElement.style.transition = "all 0.3s ease";
+       document.removeEventListener("mousemove", handleMouseMove);
+       document.removeEventListener("mouseup", handleMouseUp);
+     };
+     document.addEventListener("mousemove", handleMouseMove);
+     document.addEventListener("mouseup", handleMouseUp);
+   });
+-  container.addEventListener("click", (interceptedEvent) => {
+-    if (isToggled) {
+-      interceptedEvent.stopImmediatePropagation();
++  draggableElement.addEventListener("click", (propagationEvent) => {
++    if (isDragging) {
++      propagationEvent.stopImmediatePropagation();
+     }
+   });
+-  return container;
++  if (localStorage.getItem("theme") === "halloween") {
++    for (let i = 0; i < 3; i++) {
++      const spanElement = document.createElement("span");
++      spanElement.className = "bat";
++      spanElement.textContent = "🦇";
++      draggableElement.appendChild(spanElement);
++    }
++  }
++  return draggableElement;
+ }
+ function togglePanels() {
+   const deepToolsPanel = document.getElementById("deep-tools-panel");
+   const updateHistoryPanel = document.getElementById("update-history");
+@@ -401,10 +676,12 @@
+   plusPanel.style.display = newDisplay;
+ }
+ 
+ export {
++  createHalloweenModal,
+   initControlOverlay,
+-  setupUpdateHistory,
++  createUpdateHistoryStyles,
++  injectDeepToolsStyles,
+   injectPlusPanelStyles,
+-  injectSettingsStyles,
++  injectSettingsPanelStyles,
+   togglePanels,
+ };
+Index: src/ui/radar.js
+===================================================================
+--- src/ui/radar.js	v1.4
++++ src/ui/radar.js	v1.5
+@@ -0,0 +1,22 @@
++import { showNotification } from "./interaction.js";
++import { playerData, coreSharedState } from "../core.js";
++
++function toggleMinimapScale() {
++  if (!playerData || !playerData.minimap) {
++    showNotification("Minimap not available yet!");
++    return;
++  }
++  if (coreSharedState.isProcessing_2) {
++    playerData.minimap.scale.set(1);
++    playerData.minimap.pivot.set(0, 0);
++    coreSharedState.isProcessing_2 = false;
++    showNotification("🗺️ Minimap restored to normal!");
++  } else {
++    playerData.minimap.scale.set(0.5);
++    playerData.minimap.pivot.set(-70, -45);
++    coreSharedState.isProcessing_2 = true;
++    showNotification("🗺️ Small Minimap enabled!");
++  }
++}
++
++export { toggleMinimapScale };
+Index: src/ui/theme.js
+===================================================================
+--- src/ui/theme.js	v1.4
++++ src/ui/theme.js	v1.5
+@@ -1,32 +1,43 @@
+-function initBackgroundImage() {
+-  const backgroundUrl = localStorage.getItem("bgUrl") || "";
+-  if (backgroundUrl === "") {
++import {
++  createUpdateHistoryStyles,
++  injectDeepToolsStyles,
++  injectPlusPanelStyles,
++  injectSettingsPanelStyles,
++} from "./panels.js";
++import { initAdBlocker } from "../features/adblock.js";
++
++function applyHomeBackground() {
++  const storedBgUrl = localStorage.getItem("bgUrl") || "";
++  if (storedBgUrl === "") {
+     return;
+   }
+   let homeBgElement = document.querySelector(".home-bg");
+-  const applyBackgroundImage = () => {
+-    homeBgElement.style.setProperty(
+-      "background-image",
+-      'url("' + backgroundUrl + '")',
+-      "important",
+-    );
++  const setHomeBackgroundImage = () => {
++    homeBgElement = document.querySelector(".home-bg");
++    if (homeBgElement) {
++      homeBgElement.style.setProperty(
++        "background-image",
++        'url("' + storedBgUrl + '")',
++        "important",
++      );
++    }
+   };
+   if (!homeBgElement) {
+     const bgCheckInterval = setInterval(() => {
+       homeBgElement = document.querySelector(".home-bg");
+       if (homeBgElement != null) {
+         clearInterval(bgCheckInterval);
+-        applyBackgroundImage();
++        setHomeBackgroundImage();
+       }
+     }, 100);
+   } else {
+-    applyBackgroundImage();
++    setHomeBackgroundImage();
+   }
+ }
+-function setTheme(themeColor) {
++function applyThemeColors(themeName) {
+   const rootElement = document.documentElement;
+-  const themeConfigs = {
++  const themeConfig = {
+     blue: {
+       "--bg-primary": "rgba(15, 15, 35, 0.95)",
+       "--bg-secondary": "rgba(45, 45, 75, 0.8)",
+       "--text-primary": "#ffffff",
+@@ -64,13 +75,112 @@
+       "--hover-bg": "rgba(45, 75, 45, 1)",
+       "--shadow": "0 8px 32px rgba(0, 0, 0, 0.3)",
+       "--shadow-hover": "0 12px 40px rgba(0, 0, 0, 0.4)",
+     },
++    pink: {
++      "--bg-primary": "rgba(35, 15, 35, 0.95)",
++      "--bg-secondary": "rgba(65, 45, 65, 0.8)",
++      "--text-primary": "#ffffff",
++      "--text-secondary": "#ffb3d9",
++      "--accent": "#ff69b4",
++      "--accent-hover": "#ffffff",
++      "--border": "rgba(255, 105, 180, 0.2)",
++      "--accent-rgb": "255, 105, 180",
++      "--hover-bg": "rgba(85, 65, 85, 1)",
++      "--shadow": "0 8px 32px rgba(0, 0, 0, 0.3)",
++      "--shadow-hover": "0 12px 40px rgba(0, 0, 0, 0.4)",
++    },
++    starwars: {
++      "--bg-primary": "rgba(0, 0, 0, 0.95)",
++      "--bg-secondary": "rgba(50, 50, 50, 0.8)",
++      "--text-primary": "#FFFF00",
++      "--text-secondary": "#CCCC00",
++      "--accent": "#FFD700",
++      "--accent-hover": "#FFFFFF",
++      "--border": "rgba(255, 215, 0, 0.2)",
++      "--accent-rgb": "255, 215, 0",
++      "--hover-bg": "rgba(80, 80, 80, 1)",
++      "--shadow": "0 8px 32px rgba(0, 0, 0, 0.3)",
++      "--shadow-hover": "0 12px 40px rgba(0, 0, 0, 0.4)",
++    },
++    kfc: {
++      "--bg-primary": "rgba(0, 0, 0, 0.92)",
++      "--bg-secondary": "rgba(30, 30, 30, 0.85)",
++      "--text-primary": "#ffffff",
++      "--text-secondary": "#ffcc00",
++      "--accent": "#f40000",
++      "--accent-hover": "#ffffff",
++      "--border": "rgba(244, 0, 0, 0.3)",
++      "--accent-rgb": "244, 0, 0",
++      "--hover-bg": "rgba(50, 0, 0, 1)",
++      "--shadow": "0 8px 32px rgba(0, 0, 0, 0.4)",
++      "--shadow-hover": "0 12px 40px rgba(244, 0, 0, 0.3)",
++    },
++    halloween: {
++      "--bg-primary": "rgba(13, 0, 13, 0.95)",
++      "--bg-secondary": "rgba(43, 20, 43, 0.8)",
++      "--text-primary": "#ffffff",
++      "--text-secondary": "#ffcc99",
++      "--accent": "#ff6600",
++      "--accent-hover": "#ffffff",
++      "--border": "rgba(255, 102, 0, 0.2)",
++      "--accent-rgb": "255, 102, 0",
++      "--hover-bg": "rgba(63, 40, 63, 1)",
++      "--shadow": "0 8px 32px rgba(0, 0, 0, 0.3)",
++      "--shadow-hover": "0 12px 40px rgba(0, 0, 0, 0.4)",
++    },
+   };
+-  const selectedTheme = themeConfigs[themeColor] || themeConfigs.blue;
+-  Object.entries(selectedTheme).forEach(([styleProperty, styleValue]) => {
+-    rootElement.style.setProperty(styleProperty, styleValue);
++  const selectedColor = themeConfig[themeName] || themeConfig.blue;
++  Object.entries(selectedColor).forEach(([cssProperty, cssValue]) => {
++    rootElement.style.setProperty(cssProperty, cssValue);
+   });
+-  localStorage.setItem("theme", themeColor);
++  localStorage.setItem("theme", themeName);
++  const toolPanels = document.querySelectorAll(
++    "#deep-tools-panel, #plus-panel, #settings-panel, #update-history",
++  );
++  toolPanels.forEach((themeElement) => {
++    themeElement.className =
++      themeElement.className.replace(/theme\w+/, "") + (" theme" + themeName);
++  });
++  const limitedEditionElement = document.getElementById("limitedEdition");
++  if (limitedEditionElement) {
++    limitedEditionElement.style.display =
++      themeName === "halloween" ? "block" : "none";
++  }
++  if (themeName === "halloween") {
++    toolPanels.forEach((containerElement) => {
++      containerElement
++        .querySelectorAll(".bat")
++        .forEach((element) => element.remove());
++      for (let index = 0; index < 3; index++) {
++        const spanElement = document.createElement("span");
++        spanElement.className = "bat";
++        spanElement.textContent = "🦇";
++        containerElement.appendChild(spanElement);
++      }
++    });
++  } else {
++    document
++      .querySelectorAll(".bat")
++      .forEach((elementToRemove) => elementToRemove.remove());
++  }
+ }
++function setBlueTheme() {
++  setTimeout(() => {
++    localStorage.setItem("theme", "blue");
++    const initialValue = injectDeepToolsStyles();
++    const sessionData = createUpdateHistoryStyles();
++    const configSettings = injectSettingsPanelStyles();
++    const appContext = injectPlusPanelStyles();
++    applyThemeColors("blue");
++    applyHomeBackground();
++    initAdBlocker();
++  }, 1000);
++  return {
++    mainPanel: null,
++    historyPanel: null,
++    settingsPanel: null,
++    plusPanel: null,
++  };
++}
+ 
+-export { initBackgroundImage, setTheme };
++export { applyHomeBackground, applyThemeColors, setBlueTheme };

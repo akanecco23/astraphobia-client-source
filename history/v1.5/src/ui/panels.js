@@ -191,8 +191,8 @@ function createUpdateHistoryStyles() {
   const historyContentElement =
     draggableElement.querySelector("#historyContent");
   let isHistoryHidden = false;
-  minHistElement.onclick = (arg_b829) => {
-    arg_b829.stopPropagation();
+  minHistElement.onclick = (event) => {
+    event.stopPropagation();
     isHistoryHidden = !isHistoryHidden;
     historyContentElement.style.display = isHistoryHidden ? "none" : "block";
     draggableElement.style.height = isHistoryHidden ? "60px" : "auto";
@@ -202,20 +202,21 @@ function createUpdateHistoryStyles() {
   let offsetY;
   let isMoving = false;
   let isDragging = false;
-  draggableElement.addEventListener("mousedown", (arg_5759) => {
+  draggableElement.addEventListener("mousedown", (clickEvent) => {
     if (
-      ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(arg_5759.target.tagName)
+      ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(clickEvent.target.tagName)
     ) {
       return;
     }
     isMoving = true;
     isDragging = false;
-    offsetX = arg_5759.clientX - draggableElement.getBoundingClientRect().left;
-    offsetY = arg_5759.clientY - draggableElement.getBoundingClientRect().top;
+    offsetX =
+      clickEvent.clientX - draggableElement.getBoundingClientRect().left;
+    offsetY = clickEvent.clientY - draggableElement.getBoundingClientRect().top;
     draggableElement.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
-      const deltaX = mouseEvent.clientX - arg_5759.clientX;
-      const deltaY = mouseEvent.clientY - arg_5759.clientY;
+      const deltaX = mouseEvent.clientX - clickEvent.clientX;
+      const deltaY = mouseEvent.clientY - clickEvent.clientY;
       if (!isDragging && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
         isDragging = true;
       }
@@ -235,9 +236,9 @@ function createUpdateHistoryStyles() {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   });
-  draggableElement.addEventListener("click", (arg_98a2) => {
+  draggableElement.addEventListener("click", (inputEvent) => {
     if (isDragging) {
-      arg_98a2.stopImmediatePropagation();
+      inputEvent.stopImmediatePropagation();
     }
   });
   if (localStorage.getItem("theme") === "halloween") {

@@ -123,8 +123,8 @@ function setupUpdateHistory() {
   const minHistBtn = historyPanel.querySelector("#minHist");
   const historyContent = historyPanel.querySelector("#historyContent");
   let isHistoryHidden = false;
-  minHistBtn.onclick = (arg_bc94) => {
-    arg_bc94.stopPropagation();
+  minHistBtn.onclick = (event) => {
+    event.stopPropagation();
     isHistoryHidden = !isHistoryHidden;
     historyContent.style.display = isHistoryHidden ? "none" : "block";
     historyPanel.style.height = isHistoryHidden ? "60px" : "auto";
@@ -134,20 +134,20 @@ function setupUpdateHistory() {
   let offsetY;
   let isDragging = false;
   let isActive = false;
-  historyPanel.addEventListener("mousedown", (arg_81e8) => {
+  historyPanel.addEventListener("mousedown", (clickEvent) => {
     if (
-      ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(arg_81e8.target.tagName)
+      ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(clickEvent.target.tagName)
     ) {
       return;
     }
     isDragging = true;
     isActive = false;
-    offsetX = arg_81e8.clientX - historyPanel.getBoundingClientRect().left;
-    offsetY = arg_81e8.clientY - historyPanel.getBoundingClientRect().top;
+    offsetX = clickEvent.clientX - historyPanel.getBoundingClientRect().left;
+    offsetY = clickEvent.clientY - historyPanel.getBoundingClientRect().top;
     historyPanel.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
-      const deltaX = mouseEvent.clientX - arg_81e8.clientX;
-      const deltaY = mouseEvent.clientY - arg_81e8.clientY;
+      const deltaX = mouseEvent.clientX - clickEvent.clientX;
+      const deltaY = mouseEvent.clientY - clickEvent.clientY;
       if (!isActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
         isActive = true;
       }
@@ -167,9 +167,9 @@ function setupUpdateHistory() {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   });
-  historyPanel.addEventListener("click", (arg_d242) => {
+  historyPanel.addEventListener("click", (inputEvent) => {
     if (isActive) {
-      arg_d242.stopImmediatePropagation();
+      inputEvent.stopImmediatePropagation();
     }
   });
   return historyPanel;
@@ -243,23 +243,23 @@ function injectPlusPanelStyles() {
   let relativeY;
   let isActive = false;
   let isEnabled = false;
-  uiContainer.addEventListener("mousedown", (arg_7846) => {
+  uiContainer.addEventListener("mousedown", (event) => {
     if (
-      arg_7846.target.tagName === "BUTTON" ||
-      arg_7846.target.tagName === "TEXTAREA" ||
-      arg_7846.target.tagName === "INPUT" ||
-      arg_7846.target.classList.contains("credits")
+      event.target.tagName === "BUTTON" ||
+      event.target.tagName === "TEXTAREA" ||
+      event.target.tagName === "INPUT" ||
+      event.target.classList.contains("credits")
     ) {
       return;
     }
     isActive = true;
     isEnabled = false;
-    relativeX = arg_7846.clientX - uiContainer.getBoundingClientRect().left;
-    relativeY = arg_7846.clientY - uiContainer.getBoundingClientRect().top;
+    relativeX = event.clientX - uiContainer.getBoundingClientRect().left;
+    relativeY = event.clientY - uiContainer.getBoundingClientRect().top;
     uiContainer.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
-      const deltaX = mouseEvent.clientX - arg_7846.clientX;
-      const deltaY = mouseEvent.clientY - arg_7846.clientY;
+      const deltaX = mouseEvent.clientX - event.clientX;
+      const deltaY = mouseEvent.clientY - event.clientY;
       if (!isEnabled && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
         isEnabled = true;
       }
@@ -279,9 +279,9 @@ function injectPlusPanelStyles() {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   });
-  uiContainer.addEventListener("click", (arg_eef9) => {
+  uiContainer.addEventListener("click", (event_2) => {
     if (isEnabled) {
-      arg_eef9.stopImmediatePropagation();
+      event_2.stopImmediatePropagation();
     }
   });
   return uiContainer;

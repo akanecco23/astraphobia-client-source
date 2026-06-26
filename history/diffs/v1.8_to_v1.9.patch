@@ -1,0 +1,5005 @@
+Index: content.js
+===================================================================
+--- content.js	v1.8
++++ content.js	v1.9
+@@ -1,110 +1,136 @@
+-import { typeText, showNotification } from "./src/ui/interaction.js";
+ import {
+-  updateLockButtonUI,
+-  drawRadar,
+-  initRadarDrag,
+-} from "./src/ui/radar.js";
++  simulateTyping,
++  showNotification,
++  initNameAutofill,
++} from "./src/ui/interaction.js";
+ import {
+-  startCircularMovement,
++  startScheduledTask,
++  stopInterval,
++  simulateChatInput,
++} from "./src/features/chat.js";
++import {
++  startMouseSimulation,
+   stopMouseSimulation,
+   toggleMouseSimulation,
+-  moveMouseSide,
++  simulatePointerMove,
+   simulateClick,
++  moveAndClickTarget,
+ } from "./src/features/movement.js";
++import { activateAstraVision } from "./src/features/xray.js";
++import { updateLockButton, drawRadar, initRadarDrag } from "./src/ui/radar.js";
+ import {
+-  updateLockOnTarget,
++  drawEsp,
++  drawTrackedEntity,
++  renderEspLoop,
++  toggleEsp,
++  trackPlayer,
++  clearTracking,
++  toggleMinimapSize,
++} from "./src/features/esp.js";
++import {
++  updateLockTarget,
+   toggleLock,
+-  aimAtTarget,
+   autoDodgeLoop,
+   enableAutoDodge,
++  disableAutoDodge,
+ } from "./src/features/aimbot.js";
+ import {
+   handleFarmFailure,
+   isAreaSkipped,
+   findClosestFarmableEntity,
+-  getNearbyFarmTargets,
+-  findBestFarmSpot,
++  findNearbyFarmableEntities,
++  findDensestFoodCluster,
+   calculatePlayerAvoidanceVector,
+-  simulateEvolveKey,
++  triggerRandomEvolution,
+   detectAndHandleStuck,
+   setupPatrolPoints,
+   autoFarmLoop,
+   stopAutoFarm,
+ } from "./src/features/autofarm.js";
+-import { applyTheme, initBackground, injectStyles } from "./src/ui/theme.js";
+ import {
+-  startScheduledTask,
+-  stopInterval,
+-  typeAndSendMessage,
+-} from "./src/features/chat.js";
+-import { initializeAstraVision } from "./src/features/xray.js";
++  applyTheme,
++  initBackgroundImage,
++  injectStyles,
++} from "./src/ui/theme.js";
+ import {
+-  drawEsp,
+-  drawTrackedEntity,
+-  renderEspLoop,
+-  clearTracking,
+-  trackPlayer,
+-  toggleMinimapSize,
+-} from "./src/features/esp.js";
++  isYouTubeUrl,
++  extractYouTubeId,
++  ensureYouTubeApiReady,
++  getYoutubeHostElement,
++  playYouTubeVideo,
++  stopAndCleanupPlayer,
++  playTrack,
++  pausePlayback,
++  resumePlayback,
++  stopPlayback,
++  isPlaying,
++  playNextOrRandom,
++  playPrevious,
++  addTrackToPlaylist,
++  removeTrackFromPlaylist,
++  updateMusicPanel,
++} from "./src/ui/audio.js";
+ import {
+   refreshUI,
+-  showHalloweenModal,
++  showHalloweenCodeModal,
+   makeDraggable,
+   createToolsPanel,
+   createVisionPanel,
+   createCombatPanel,
+   createAutomationPanel,
+   createSettingsPanel,
+-  createUpdateHistoryPanel,
++  createMusicPanel,
++  createUpdatePanel,
+   togglePanelsVisibility,
+ } from "./src/ui/panels.js";
+-import { initAdBlocker } from "./src/features/adblock.js";
+ import {
+-  stopMouseSimulation_2,
++  stopEntityTrail,
+   toggleEntityTrail,
+   drawEntityTrail,
+-  renderOverlay,
+ } from "./src/features/entitytrail.js";
++import { initAdBlocker } from "./src/features/adblock.js";
+ import {
+-  wrapWithProxy,
+-  interceptTextEncoder,
++  wrapPropertyWithProxy,
++  initNetworkInterceptor,
++  isValidEntity,
+   getGameState,
+   getEntityManager,
+   getFirstAnimal,
+   getFirstAnimalPosition,
+   getEntityPosition,
+   calculateDirection,
+   findEntityById,
++  getGameState_2,
++  getViewportScale,
+   startEntityTrail,
+-  clearTracking_2,
+-  clearTracking_3,
++  renderLoop,
+   startAutoFarm,
+-  initGameHooks,
+-  initializeApp,
++  initAntiDetection,
++  initializeApplication,
++  currentTime,
++  musicPlaylist,
+   angles,
+   radius,
+   offsetValue,
+   gameInstance,
+-  animalData,
+-  settings,
+-  isProcessed,
++  playerData,
++  isLoaded,
+   dragState,
+   maxDistance,
+-  maxDelta,
+-  distanceThreshold,
++  deltaThreshold,
++  maxDistance_2,
+   maxFailCount,
+-  timeThreshold,
+-  timeLimit,
+-  randomAngle,
++  timeoutLimit,
++  tickInterval,
++  angle,
+   state,
+ } from "./src/core.js";
+ import {
+   generateRandomString,
+   getGameCanvas,
+   getAllPropertyNames,
+-  isPlayer,
+   calculateDistance,
+-  getNearbyEntities,
+-  getZoomScale,
+-  getOrCreateOverlayCanvas,
++  getOrCreateCanvas,
+ } from "./src/utils.js";
++
++initializeApplication();
+Index: manifest.json
+===================================================================
+--- manifest.json	v1.8
++++ manifest.json	v1.9
+@@ -1,9 +1,9 @@
+ {
+   "manifest_version": 3,
+   "name": "Astraphobia Client",
+-  "version": "1.8",
+-  "description": "Enjoy v1.8! I put a lot of hard work into this. Astraphobia Client On Top.",
++  "version": "1.9",
++  "description": "Enjoy v1.9! I put a lot of hard work into this. Astraphobia Client On Top.",
+   "author": "Astraphobia",
+   "content_scripts": [
+     {
+       "matches": ["*://*.deeeep.io/*"],
+Index: src/core.js
+===================================================================
+--- src/core.js	v1.8
++++ src/core.js	v1.9
+@@ -1,51 +1,53 @@
+-import { showNotification } from "./ui/interaction.js";
++import { showNotification, initNameAutofill } from "./ui/interaction.js";
+ import {
+   calculateDistance,
+-  getNearbyEntities,
++  getOrCreateCanvas,
+   getAllPropertyNames,
+ } from "./utils.js";
++import { drawEntityTrail, toggleEntityTrail } from "./features/entitytrail.js";
+ import { setupPatrolPoints, autoFarmLoop } from "./features/autofarm.js";
+-import { applyTheme, initBackground, injectStyles } from "./ui/theme.js";
++import { applyTheme, initBackgroundImage, injectStyles } from "./ui/theme.js";
+ import {
+   createToolsPanel,
+   createVisionPanel,
+   createCombatPanel,
+   createAutomationPanel,
+   createSettingsPanel,
+-  createUpdateHistoryPanel,
++  createMusicPanel,
++  createUpdatePanel,
+   togglePanelsVisibility,
+ } from "./ui/panels.js";
+ import { initAdBlocker } from "./features/adblock.js";
+ import { initRadarDrag } from "./ui/radar.js";
+-import { renderEspLoop, trackPlayer } from "./features/esp.js";
+-import { renderOverlay, toggleEntityTrail } from "./features/entitytrail.js";
++import { renderEspLoop, trackPlayer, clearTracking } from "./features/esp.js";
+ import {
+-  updateLockOnTarget,
++  updateLockTarget,
+   autoDodgeLoop,
+   toggleLock,
+ } from "./features/aimbot.js";
+-import { moveMouseSide } from "./features/movement.js";
+-const stateMap = new WeakMap();
+-function wrapWithProxy(targetObject, propertyKey, proxyHandler) {
+-  const originalValue = targetObject[propertyKey];
++import { simulatePointerMove } from "./features/movement.js";
++const stateCache = new WeakMap();
++function wrapPropertyWithProxy(targetObject, propertyName, proxyHandler) {
++  const originalValue = targetObject[propertyName];
+   const proxyValue = new Proxy(originalValue, proxyHandler);
+-  stateMap.set(proxyValue, originalValue);
+-  targetObject[propertyKey] = proxyValue;
++  stateCache.set(proxyValue, originalValue);
++  targetObject[propertyName] = proxyValue;
+ }
+-let isFinished = false;
+-function interceptTextEncoder() {
+-  if (isFinished) {
++let currentTime = 0;
++let isInitialized = false;
++function initNetworkInterceptor() {
++  if (isInitialized) {
+     return;
+   }
+   function unescapeString(inputString) {
+     if (typeof inputString !== "string") {
+       return inputString;
+     }
+     return inputString.replace(
+       /\\(\\|n|r|t|b|f|v|\d{1,3}|x([\da-fA-F]{2})|u([\da-fA-F]{4})|u\{(0*[\da-fA-F]{1,6})\})/g,
+-      (match, octalStr, hexStr1, hexStr2, hexStr3) => {
+-        switch (octalStr[0]) {
++      (match, p1, p2, p3, p4) => {
++        switch (p1[0]) {
+           case "\\":
+             return "\\";
+           case "n":
+             return "\n";
+@@ -66,36 +68,36 @@
+           case "4":
+           case "5":
+           case "6":
+           case "7":
+-            return String.fromCharCode(Number.parseInt(octalStr, 8) || 0);
++            return String.fromCharCode(Number.parseInt(p1, 8) || 0);
+           default:
+-            if (hexStr1 != null) {
+-              return String.fromCharCode(Number.parseInt(hexStr1, 16) || 0);
++            if (p2 != null) {
++              return String.fromCharCode(Number.parseInt(p2, 16) || 0);
+             }
+-            if (hexStr2 != null) {
+-              return String.fromCharCode(Number.parseInt(hexStr2, 16) || 0);
++            if (p3 != null) {
++              return String.fromCharCode(Number.parseInt(p3, 16) || 0);
+             }
+-            if (hexStr3 != null) {
+-              const codePoint = Number.parseInt(hexStr3, 16) || 0;
++            if (p4 != null) {
++              const codePoint = Number.parseInt(p4, 16) || 0;
+               if (codePoint > 1114111) {
+                 return match;
+               } else {
+                 return String.fromCodePoint(codePoint);
+               }
+             }
+-            return octalStr;
++            return p1;
+         }
+       },
+     );
+   }
+-  const actionCodes = {
++  const actionIdMap = {
+     spawn: 22,
+     createTribe: 5,
+     chat: 100,
+   };
+   const originalEncode = TextEncoder.prototype.encode;
+-  TextEncoder.prototype.encode = function (...inputArgs) {
++  TextEncoder.prototype.encode = function (...args) {
+     try {
+       const commandPatterns = [
+         /^(\x14{3}\d+\|6\|)(.+)$/gm,
+         /^(\x14{3}\d+\|8\|)(.+)$/gm,
+@@ -106,24 +108,24 @@
+         let patternIndex = 0;
+         patternIndex < commandPatterns.length;
+         patternIndex++
+       ) {
+-        const matchResult = commandPatterns[patternIndex].exec(inputArgs[0]);
++        const matchResult = commandPatterns[patternIndex].exec(args[0]);
+         if (matchResult && matchResult.length === 3) {
+-          const actionHandler = [
+-            actionCodes.spawn,
+-            actionCodes.spawn,
+-            actionCodes.createTribe,
+-            actionCodes.chat,
++          const commandHandler = [
++            actionIdMap.spawn,
++            actionIdMap.spawn,
++            actionIdMap.createTribe,
++            actionIdMap.chat,
+           ][patternIndex];
+-          inputArgs[0] =
++          args[0] =
+             matchResult[1] +
+-            unescapeString(matchResult[2]).substr(0, actionHandler);
++            unescapeString(matchResult[2]).substr(0, commandHandler);
+           break;
+         }
+       }
+     } catch {}
+-    return Reflect.apply(originalEncode, this, inputArgs);
++    return Reflect.apply(originalEncode, this, args);
+   };
+   const inputMaxLengthObserver = new MutationObserver(() => {
+     document
+       .querySelector(".play-game .el-input__inner")
+@@ -138,26 +140,45 @@
+   inputMaxLengthObserver.observe(document.body, {
+     childList: true,
+     subtree: true,
+   });
+-  isFinished = true;
++  isInitialized = true;
+   showNotification("Special characters enabled");
+ }
++let musicPlaylist = JSON.parse(localStorage.getItem("musicPlaylist") || "[]");
+ const angles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
+ const radius = 300;
+ const offsetValue = 400;
+ let gameInstance;
+ let appState;
+-let animalData;
+-const settings = {};
++let playerData;
++const config = {};
++function isValidEntity(entity) {
++  if (!entity) {
++    return false;
++  }
++  if (entity.type === 1) {
++    return true;
++  }
++  if (entity.playerRoomId != null) {
++    return true;
++  }
++  if (entity.entityName != null && entity.entityName.length > 0) {
++    return true;
++  }
++  if (entity.visibleFishLevel != null && entity.visibleFishLevel > 0) {
++    return true;
++  }
++  return false;
++}
+ function getGameState() {
+   try {
+-    if (animalData && animalData.myAnimals && animalData.myAnimals.length > 0) {
+-      return animalData;
++    if (playerData && playerData.myAnimals && playerData.myAnimals.length > 0) {
++      return playerData;
+     }
+     const states = window.__ss?.states;
+     if (!states) {
+-      return animalData || null;
++      return playerData || null;
+     }
+     for (let i = 0; i < states.length; i++) {
+       if (states[i]?.gameScene?.myAnimals) {
+         return states[i].gameScene;
+@@ -169,11 +190,11 @@
+           }
+         }
+       }
+     }
+-    return animalData || null;
++    return playerData || null;
+   } catch (error) {
+-    return animalData || null;
++    return playerData || null;
+   }
+ }
+ function getEntityManager(gameState) {
+   if (!gameState) {
+@@ -184,10 +205,10 @@
+   }
+   if (window.__cachedEM) {
+     return window.__cachedEM;
+   }
+-  if (settings.entityManager) {
+-    const entityManager = gameState[settings.entityManager];
++  if (config.entityManager) {
++    const entityManager = gameState[config.entityManager];
+     if (entityManager) {
+       window.__cachedEM = entityManager;
+       return entityManager;
+     }
+@@ -230,10 +251,10 @@
+       return null;
+     }
+     const position = animal.position;
+     return {
+-      x: position._x !== undefined ? position._x : position.x,
+-      y: position._y !== undefined ? position._y : position.y,
++      x: state.position._x !== undefined ? state.position._x : state.position.x,
++      y: state.position._y !== undefined ? state.position._y : state.position.y,
+     };
+   } catch (error) {
+     return null;
+   }
+@@ -281,55 +302,132 @@
+   };
+ }
+ function findEntityById(entityId) {
+   try {
+-    const rawState = getGameState();
+-    if (!rawState) {
++    const userData = getGameState();
++    if (!userData) {
+       return null;
+     }
+-    const gameState = getEntityManager(rawState);
++    const gameState = getEntityManager(userData);
+     if (!gameState) {
+       return null;
+     }
+-    let foundEntity = gameState.entitiesById
++    let entity = gameState.entitiesById
+       ? gameState.entitiesById[entityId]
+       : null;
+-    if (!foundEntity && gameState.entitiesList) {
+-      foundEntity = gameState.entitiesList.find((item) => item.id === entityId);
++    if (!entity && gameState.entitiesList) {
++      entity = gameState.entitiesList.find(
++        (currentItem) => currentItem.id === entityId,
++      );
+     }
+-    if (!foundEntity && gameState.animalsByPlayerRoomId) {
++    if (!entity && gameState.animalsByPlayerRoomId) {
+       for (let roomId of Object.keys(gameState.animalsByPlayerRoomId)) {
+-        const roomEntities = gameState.animalsByPlayerRoomId[roomId];
+-        if (Array.isArray(roomEntities)) {
+-          foundEntity = roomEntities.find(
++        const animals = gameState.animalsByPlayerRoomId[roomId];
++        if (Array.isArray(animals)) {
++          entity = animals.find(
+             (selectedItem) => selectedItem && selectedItem.id === entityId,
+           );
+-        } else if (roomEntities && roomEntities.id === entityId) {
+-          foundEntity = roomEntities;
++        } else if (animals && animals.id === entityId) {
++          entity = animals;
+         }
+-        if (foundEntity) {
++        if (entity) {
+           break;
+         }
+       }
+     }
+-    return foundEntity;
++    return entity;
+   } catch (error) {
+     return null;
+   }
+ }
+-let isProcessed = false;
++function getGameState_2() {
++  try {
++    const stateData = getGameState();
++    const parsedState = getEntityManager(stateData);
++    const myPlayerData = getFirstAnimal();
++    const myPosition = getFirstAnimalPosition();
++    if (!parsedState || !myPlayerData || !myPosition) {
++      return null;
++    }
++    const gameState = {
++      myId: myPlayerData.id,
++      myPos: myPosition,
++      entities: [],
++      players: [],
++      food: [],
++    };
++    const entitiesList = parsedState.entitiesList || [];
++    for (let i = 0; i < entitiesList.length; i++) {
++      const entity = entitiesList[i];
++      if (!entity || entity.id === myPlayerData.id) {
++        continue;
++      }
++      if (
++        myPlayerData.playerRoomId &&
++        entity.playerRoomId === myPlayerData.playerRoomId
++      ) {
++        continue;
++      }
++      const entityPos = getEntityPosition(entity);
++      if (!entityPos || entityPos.x == null || entityPos.y == null) {
++        continue;
++      }
++      const dx = entityPos.x - myPosition.x;
++      const dy = entityPos.y - myPosition.y;
++      const distance = Math.sqrt(dx * dx + dy * dy);
++      const entityData = {
++        id: entity.id,
++        x: entityPos.x,
++        y: entityPos.y,
++        distance: distance,
++        angle: Math.atan2(dy, dx),
++        entity: {
++          ...entity,
++          name: entity.entityName || entity.name || null,
++        },
++      };
++      gameState.entities.push(entityData);
++      if (entity.type === 1 || isValidEntity(entity)) {
++        gameState.players.push(entityData);
++      } else if (entity.type === 2 || !isValidEntity(entity)) {
++        gameState.food.push(entityData);
++      }
++    }
++    gameState.players.sort((itemA, itemB) => itemA.distance - itemB.distance);
++    gameState.food.sort(
++      (itemA_2, itemB_2) => itemA_2.distance - itemB_2.distance,
++    );
++    return gameState;
++  } catch (error) {
++    return {
++      error: error.message,
++    };
++  }
++}
++function getViewportScale() {
++  try {
++    const foundState = window.__ss?.states?.find(
++      (gameInstance) => gameInstance?.gameScene?.game?.viewport?.scale?.x,
++    );
++    if (foundState) {
++      return foundState.gameScene.game.viewport.scale.x;
++    }
++  } catch (error) {}
++  return 0.554;
++}
++let isLoaded = false;
+ function startEntityTrail() {
+-  if (state.trailInterval) {
+-    clearInterval(state.trailInterval);
+-    state.trailInterval = null;
++  if (state.entityTrailInterval) {
++    clearInterval(state.entityTrailInterval);
++    state.entityTrailInterval = null;
+   }
+-  state.trailInterval = setInterval(() => {
++  state.entityTrailInterval = setInterval(() => {
+     if (!window.entityTrailEnabled || !window.entityTrailTargetId) {
+       return;
+     }
+     const targetEntityId = findEntityById(window.entityTrailTargetId);
+     if (!targetEntityId) {
+-      const gameState = getNearbyEntities();
++      const gameState = getGameState_2();
+       if (gameState && gameState.players && gameState.players.length > 0) {
+         window.entityTrailTargetId = gameState.players[0].id;
+       }
+       return;
+@@ -360,30 +458,32 @@
+       window.entityTrailHistory.shift();
+     }
+   }, window.entityTrailRecordInterval);
+ }
++function renderLoop() {
++  const canvas = getOrCreateCanvas("ast-overlay", 999997);
++  const ctx = canvas.getContext("2d");
++  ctx.clearRect(0, 0, canvas.width, canvas.height);
++  const playerPos = getFirstAnimalPosition();
++  if (playerPos && window.entityTrailEnabled) {
++    drawEntityTrail(ctx, canvas, playerPos, getViewportScale());
++  }
++  requestAnimationFrame(renderLoop);
++}
+ let dragState = {
+   dragging: false,
+   offsetX: 0,
+   offsetY: 0,
+   x: null,
+   y: 20,
+ };
+-function clearTracking_2() {
+-  window.espTrackedEntityId = null;
+-  showNotification("Tracking cleared");
+-}
+ const maxDistance = 600;
+-const maxDelta = 800;
+-function clearTracking_3() {
+-  window.autoDodgeEnabled = false;
+-  showNotification("Auto dodge disabled");
+-}
+-const distanceThreshold = 400;
++const deltaThreshold = 800;
++const maxDistance_2 = 400;
+ const maxFailCount = 2;
+-const timeThreshold = 20000;
+-const timeLimit = 600;
+-let randomAngle = 0;
++const timeoutLimit = 20000;
++const tickInterval = 600;
++let angle = 0;
+ function startAutoFarm(farmMode) {
+   window.autoFarmMode = farmMode || "nearest";
+   window.autoFarmActive = true;
+   window.autoFarmStats.startTime = Date.now();
+@@ -392,94 +492,93 @@
+   window.autoFarmTargetStartTime = 0;
+   window.autoFarmSkipIds.clear();
+   window.autoFarmSkipAreas = [];
+   window.autoFarmSkipClearTime = Date.now();
+-  state.currentPosition_2 = null;
++  state.position = null;
+   state.counter_2 = 0;
+-  state.lastValue2 = 0;
+-  state.lastTimestamp_2 = 0;
++  state.lastValue = 0;
++  state.lastTickTime = 0;
+   if (farmMode === "patrol") {
+     setupPatrolPoints();
+   }
+   showNotification("Auto farm started (" + window.autoFarmMode + ")");
+-  if (!state.isActive_2) {
+-    state.isActive_2 = true;
++  if (!state.isToggled) {
++    state.isToggled = true;
+     autoFarmLoop();
+   }
+ }
+ let isReady_2 = false;
+-const initGameHooks = () => {
++const initAntiDetection = () => {
+   if (isReady_2) {
+     return;
+   }
+   isReady_2 = true;
+   const cache = {};
+   for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
+     cache[propertyKey] = Reflect[propertyKey];
+   }
+-  const ProxyConstructor = Proxy;
++  const Proxy = Proxy;
+   const lookupGetter = Object.prototype.__lookupGetter__;
+-  const wrapValue = (target, key, value) => {
+-    const wrappedValue = new ProxyConstructor(target[key], value);
+-    stateMap.set(wrappedValue, target[key]);
+-    target[key] = wrappedValue;
++  const wrapValue = (context, key, value) => {
++    const instance = new Proxy(context[key], value);
++    stateCache.set(instance, context[key]);
++    context[key] = instance;
+   };
+   wrapValue(Function.prototype, "toString", {
+-    apply(thisArg, argsKey, context) {
+-      return cache.apply(thisArg, stateMap.get(argsKey) || argsKey, context);
++    apply(thisArg, args, contextArg) {
++      return cache.apply(thisArg, stateCache.get(args) || args, contextArg);
+     },
+   });
+   wrapValue(window, "Proxy", {
+     construct(constructor, constructorArgs) {
+       return cache.construct(constructor, constructorArgs);
+     },
+   });
+-  wrapValue(ProxyConstructor, "revocable", {
+-    apply(targetContext, argsArray, extraArgs) {
+-      return cache.apply(targetContext, argsArray, extraArgs);
++  wrapValue(Proxy, "revocable", {
++    apply(targetFn, callArgs, callThisArg) {
++      return cache.apply(targetFn, callArgs, callThisArg);
+     },
+   });
+-  let lastTimestamp = 0;
++  let lastExecutionTime = 0;
+   wrapValue(Function.prototype, "bind", {
+-    apply(thisContext, argsArray_2, extraParam) {
++    apply(thisContext, args_2, extraArgs) {
+       try {
+         try {
+           if (
+-            lookupGetter.call(extraParam[0], "aboveBgPlatformsContainer") !=
+-            null
++            lookupGetter.call(extraArgs[0], "aboveBgPlatformsContainer") != null
+           ) {
+-            return cache.apply(thisContext, argsArray_2, extraParam);
++            return cache.apply(thisContext, args_2, extraArgs);
+           }
+         } catch {}
+-        if (extraParam[0] && extraParam[0].aboveBgPlatformsContainer != null) {
+-          animalData = extraParam[0];
+-          gameInstance = extraParam[0].game;
++        if (extraArgs[0] && extraArgs[0].aboveBgPlatformsContainer != null) {
++          playerData = extraArgs[0];
++          gameInstance = extraArgs[0].game;
+           window.__cachedEM = null;
+-          const allKeys = getAllPropertyNames(animalData);
++          const allKeys = getAllPropertyNames(playerData);
+           const obfuscatedKeys = allKeys.filter((varName) =>
+             varName.startsWith("_0x"),
+           );
+-          settings.setFlash =
+-            Object.getOwnPropertyNames(animalData.__proto__.__proto__)
+-              .filter((identifier) => identifier.startsWith("_0x"))
++          config.setFlash =
++            Object.getOwnPropertyNames(playerData.__proto__.__proto__)
++              .filter((idName) => idName.startsWith("_0x"))
+               .find(
+-                (functionKey) => animalData[functionKey] instanceof Function,
+-              ) || settings.setFlash;
+-          settings.terrainManager =
++                (methodName) => playerData[methodName] instanceof Function,
++              ) || config.setFlash;
++          config.terrainManager =
+             obfuscatedKeys.find(
+               (shadowKey) =>
+-                typeof animalData[shadowKey]?.shadow !== "undefined",
+-            ) || settings.terrainManager;
+-          settings.entityManager =
++                typeof playerData[shadowKey]?.shadow !== "undefined",
++            ) || config.terrainManager;
++          config.entityManager =
+             obfuscatedKeys.find(
+               (entitiesKey) =>
+-                typeof animalData[entitiesKey]?.entitiesList !== "undefined",
+-            ) || settings.entityManager;
+-          settings.socketManager =
++                typeof playerData[entitiesKey]?.entitiesList !== "undefined",
++            ) || config.entityManager;
++          config.socketManager =
+             getAllPropertyNames(gameInstance).find(
+               (networkKey) =>
+                 typeof gameInstance[networkKey]?.sendBytePacket !== "undefined",
+-            ) || settings.socketManager;
++            ) || config.socketManager;
+           try {
+             appState = document
+               .getElementById("app")
+               ._vnode.appContext.config.globalProperties.$simpleState.states.find(
+@@ -491,14 +590,14 @@
+             clearInterval(intervalId);
+           } catch {}
+           intervalId = setInterval(() => {
+             try {
+-              if (!animalData?.myAnimals?.[0]) {
++              if (!playerData?.myAnimals?.[0]) {
+                 return;
+               }
+-              const firstAnimal = animalData.myAnimals[0];
++              const firstAnimal = playerData.myAnimals[0];
+               if (firstAnimal.fadingTrail) {
+-                wrapWithProxy(
++                wrapPropertyWithProxy(
+                   Object.getPrototypeOf(firstAnimal.fadingTrail),
+                   "enable",
+                   {
+                     apply() {},
+@@ -516,41 +615,43 @@
+               }
+               clearInterval(intervalId);
+             } catch {}
+           }, 200);
+-          if (state.lastTimestamp < Date.now() - 3000) {
++          if (lastExecutionTime < Date.now() - 3000) {
+             showNotification("Client loaded");
+-            state.lastTimestamp = Date.now();
++            lastExecutionTime = Date.now();
+           }
+         }
+       } catch {}
+-      return cache.apply(thisContext, argsArray_2, extraParam);
++      return cache.apply(thisContext, args_2, extraArgs);
+     },
+   });
+ };
+-let isEnabled_2 = false;
+-function initializeApp() {
+-  if (isEnabled_2) {
++let isProcessed = false;
++function initializeApplication() {
++  if (isProcessed) {
+     return;
+   }
+-  isEnabled_2 = true;
++  isProcessed = true;
+   setTimeout(() => {
+     injectStyles();
+     applyTheme(localStorage.getItem("theme") || "grey");
+     createToolsPanel();
+     createVisionPanel();
+     createCombatPanel();
+     createAutomationPanel();
+     createSettingsPanel();
+-    createUpdateHistoryPanel();
+-    initBackground();
++    createUpdatePanel();
++    createMusicPanel();
++    initBackgroundImage();
+     initAdBlocker();
+     initRadarDrag();
++    initNameAutofill();
+     renderEspLoop();
+-    renderOverlay();
+-    isProcessed = true;
+-    updateLockOnTarget();
+-    state.isReady = true;
++    renderLoop();
++    isLoaded = true;
++    updateLockTarget();
++    state.isActive = true;
+     autoDodgeLoop();
+   }, 1000);
+ }
+ document.addEventListener(
+@@ -561,17 +662,17 @@
+     }
+     if (event.repeat) {
+       return;
+     }
+-    if (event.key.toLowerCase() === state.currentKey.toLowerCase()) {
++    if (event.key.toLowerCase() === state.keyQ.toLowerCase()) {
+       event.preventDefault();
+       event.stopPropagation();
+-      moveMouseSide("left");
++      simulatePointerMove("left");
+     }
+-    if (event.key.toLowerCase() === state.currentKey_2.toLowerCase()) {
++    if (event.key.toLowerCase() === state.keyE.toLowerCase()) {
+       event.preventDefault();
+       event.stopPropagation();
+-      moveMouseSide("right");
++      simulatePointerMove("right");
+     }
+   },
+   true,
+ );
+@@ -623,14 +724,14 @@
+     trackPlayer();
+   }
+   if (event_4.key === "F4") {
+     event_4.preventDefault();
+-    clearTracking_2();
++    clearTracking();
+   }
+ });
+ document.addEventListener("keydown", (keyboardEvent) => {
+   if (
+-    keyboardEvent.key === state.pressedKey &&
++    keyboardEvent.key === state.activeKey &&
+     !keyboardEvent.repeat &&
+     !keyboardEvent.target.matches("input,textarea,button,select")
+   ) {
+     keyboardEvent.preventDefault();
+@@ -638,68 +739,92 @@
+   }
+ });
+ window.addEventListener("load", () => {
+   setTimeout(() => {
+-    initGameHooks();
+-    initBackground();
++    initAntiDetection();
++    initBackgroundImage();
+   }, 1000);
++  setInterval(() => {
++    if (window.__ss?.states) {
++      for (const gameInstance of window.__ss.states) {
++        if (gameInstance?.gameScene?.myAnimals?.length > 0) {
++          playerData = gameInstance.gameScene;
++          gameInstance = gameInstance.gameScene.game;
++          window.__cachedEM = null;
++          break;
++        }
++      }
++    }
++  }, 2000);
+ });
+ export const state = {
+-  previousValue: "",
+-  lastTimestamp: 0,
+-  isActive: false,
+-  mainIntervalId: null,
+-  isProcessing: false,
+-  secondaryIntervalId: null,
+-  currentIndex: 0,
+-  currentKey: "q",
+-  currentKey_2: "e",
++  currentTrackId: "",
++  isPlaying_2: false,
++  isMuted: false,
++  updateIntervalId: null,
++  isLooping: false,
++  audioPlayer: null,
++  currentTrackIndex: 0,
++  musicVolume: parseFloat(localStorage.getItem("musicVolume") || "0.5"),
++  isMusicLoopEnabled: localStorage.getItem("musicLoop") !== "false",
++  isMusicShuffleEnabled: localStorage.getItem("musicShuffle") === "true",
++  youtubePlayer: null,
++  isYtApiLoaded: false,
++  isReady: false,
++  audioSourceType: null,
++  animationInterval: null,
++  angleIndex: 0,
++  keyQ: "q",
++  keyE: "e",
+   isEnabled: false,
+   isMinimapSmall: false,
+-  trailInterval: null,
+-  isReady: false,
+-  previousValue_2: 0,
++  entityTrailInterval: null,
++  isActive: false,
++  lastTimestamp: 0,
+   currentPosition: null,
+   counter: 0,
+-  lastValue: 0,
++  previousTimestamp: 0,
+   dataList: [],
+-  lastTimestamp_2: 0,
+-  lastValue_2: 0,
+-  isActive_2: false,
+-  currentPosition_2: null,
++  lastTickTime: 0,
++  lastEventTime: 0,
++  isToggled: false,
++  position: null,
+   counter_2: 0,
+-  lastValue2: 0,
+-  lastValue3: 0,
+-  pressedKey: "Shift",
++  lastValue: 0,
++  previousValue: 0,
++  activeKey: "Shift",
+ };
+ export {
+-  wrapWithProxy,
+-  interceptTextEncoder,
++  wrapPropertyWithProxy,
++  initNetworkInterceptor,
++  isValidEntity,
+   getGameState,
+   getEntityManager,
+   getFirstAnimal,
+   getFirstAnimalPosition,
+   getEntityPosition,
+   calculateDirection,
+   findEntityById,
++  getGameState_2,
++  getViewportScale,
+   startEntityTrail,
+-  clearTracking_2,
+-  clearTracking_3,
++  renderLoop,
+   startAutoFarm,
+-  initGameHooks,
+-  initializeApp,
++  initAntiDetection,
++  initializeApplication,
++  currentTime,
++  musicPlaylist,
+   angles,
+   radius,
+   offsetValue,
+   gameInstance,
+-  animalData,
+-  settings,
+-  isProcessed,
++  playerData,
++  isLoaded,
+   dragState,
+   maxDistance,
+-  maxDelta,
+-  distanceThreshold,
++  deltaThreshold,
++  maxDistance_2,
+   maxFailCount,
+-  timeThreshold,
+-  timeLimit,
+-  randomAngle,
++  timeoutLimit,
++  tickInterval,
++  angle,
+ };
+Index: src/features/adblock.js
+===================================================================
+--- src/features/adblock.js	v1.8
++++ src/features/adblock.js	v1.9
+@@ -1,12 +1,12 @@
+ import { showNotification } from "../ui/interaction.js";
+ import { state } from "../core.js";
+ 
+ function initAdBlocker() {
+-  if (state.isActive) {
++  if (state.isPlaying_2) {
+     return;
+   }
+-  state.isActive = true;
++  state.isPlaying_2 = true;
+   const adSelectors = [
+     "div.ad-block",
+     'a[href*="ad"]',
+     'iframe[src*="ads"], iframe[src*="googlead"]',
+@@ -17,11 +17,11 @@
+     ".sidebar.left > div:not(.sidebar-content)",
+     "div.sidebar.left > div:has(> iframe)",
+     'div.sidebar.left > div:has(> a[href*="doubleclick"])',
+   ];
+-  const hideElementsAndAdjustSidebar = () => {
+-    adSelectors.forEach((selector) => {
+-      document.querySelectorAll(selector).forEach((targetElement) => {
++  const removeAds = () => {
++    adSelectors.forEach((cssSelector) => {
++      document.querySelectorAll(cssSelector).forEach((targetElement) => {
+         targetElement.style.display = "none";
+         targetElement.style.opacity = "0";
+         targetElement.style.pointerEvents = "none";
+         targetElement.style.visibility = "hidden";
+@@ -35,15 +35,15 @@
+       leftSidebar.style.width = "21rem";
+       leftSidebar.style.overflow = "hidden";
+     }
+   };
+-  hideElementsAndAdjustSidebar();
+-  new MutationObserver(hideElementsAndAdjustSidebar).observe(document.body, {
++  removeAds();
++  new MutationObserver(removeAds).observe(document.body, {
+     childList: true,
+     subtree: true,
+     attributes: true,
+   });
+-  setInterval(hideElementsAndAdjustSidebar, 5000);
++  setInterval(removeAds, 5000);
+   showNotification("Ad blocker active");
+ }
+ 
+ export { initAdBlocker };
+Index: src/features/aimbot.js
+===================================================================
+--- src/features/aimbot.js	v1.8
++++ src/features/aimbot.js	v1.9
+@@ -1,32 +1,31 @@
+ import {
+   getFirstAnimalPosition,
+   getEntityPosition,
+   findEntityById,
+-  isProcessed,
++  isLoaded,
++  getGameState_2,
++  currentTime,
++  isValidEntity,
+   getGameState,
+   getEntityManager,
+   maxDistance,
+-  maxDelta,
++  deltaThreshold,
++  angle,
+   state,
+ } from "../core.js";
+ import { showNotification } from "../ui/interaction.js";
+-import { updateLockButtonUI } from "../ui/radar.js";
+-import {
+-  getGameCanvas,
+-  getNearbyEntities,
+-  isPlayer,
+-  calculateDistance,
+-} from "../utils.js";
+-import { simulateClick } from "./movement.js";
++import { updateLockButton } from "../ui/radar.js";
++import { getGameCanvas, calculateDistance } from "../utils.js";
++import { moveAndClickTarget } from "./movement.js";
+ 
+ window.autoDodgeEnabled = false;
+ 
+-function updateLockOnTarget() {
+-  if (!isProcessed) {
++function updateLockTarget() {
++  if (!isLoaded) {
+     return;
+   }
+-  requestAnimationFrame(updateLockOnTarget);
++  requestAnimationFrame(updateLockTarget);
+   if (!window.lockEnabled || !window.lockTargetId) {
+     return;
+   }
+   try {
+@@ -34,61 +33,59 @@
+     if (!targetEntity) {
+       showNotification("Lock target lost");
+       window.lockTargetId = null;
+       window.lockEnabled = false;
+-      updateLockButtonUI();
++      updateLockButton();
+       return;
+     }
+     const targetPos = getEntityPosition(targetEntity);
+-    const playerPos = getFirstAnimalPosition();
+-    if (!targetPos || !playerPos) {
++    const myPos = getFirstAnimalPosition();
++    if (!targetPos || !myPos) {
+       return;
+     }
+-    const canvas = getGameCanvas();
+-    if (!canvas) {
++    const targetElement = getGameCanvas();
++    if (!targetElement) {
+       return;
+     }
+-    const canvasRect = canvas.getBoundingClientRect();
+-    const centerX = canvasRect.left + canvasRect.width / 2;
+-    const centerY = canvasRect.top + canvasRect.height / 2;
+-    const diffX = targetPos.x - playerPos.x;
+-    const diffY = targetPos.y - playerPos.y;
+-    const distance = Math.sqrt(diffX * diffX + diffY * diffY);
++    const rect = targetElement.getBoundingClientRect();
++    const centerX = rect.left + rect.width / 2;
++    const centerY = rect.top + rect.height / 2;
++    const targetDx = targetPos.x - myPos.x;
++    const targetDy = targetPos.y - myPos.y;
++    const targetDistance = Math.sqrt(targetDx * targetDx + targetDy * targetDy);
+     let predictedX = targetPos.x;
+     let predictedY = targetPos.y;
+     if (targetEntity.velocity) {
+       const velX = targetEntity.velocity._x || targetEntity.velocity.x || 0;
+       const velY = targetEntity.velocity._y || targetEntity.velocity.y || 0;
+-      const predictionFactor = Math.min(distance / 800, 0.5);
++      const predictionFactor = Math.min(targetDistance / 800, 0.5);
+       predictedX += velX * predictionFactor;
+       predictedY += velY * predictionFactor;
+     }
+-    const finalDiffX = predictedX - playerPos.x;
+-    const finalDiffY = predictedY - playerPos.y;
+-    const finalDistance = Math.sqrt(
+-      finalDiffX * finalDiffX + finalDiffY * finalDiffY,
+-    );
+-    let smoothingFactor = 1.5;
+-    if (finalDistance > 2000) {
+-      smoothingFactor = 3;
+-    } else if (finalDistance > 1000) {
+-      smoothingFactor = 2;
+-    } else if (finalDistance < 200) {
+-      smoothingFactor = 0.8;
++    const relX = predictedX - myPos.x;
++    const relY = predictedY - myPos.y;
++    const relDistance = Math.sqrt(relX * relX + relY * relY);
++    let scaleMultiplier = 1.5;
++    if (relDistance > 2000) {
++      scaleMultiplier = 3;
++    } else if (relDistance > 1000) {
++      scaleMultiplier = 2;
++    } else if (relDistance < 200) {
++      scaleMultiplier = 0.8;
+     }
+-    const maxOffset = Math.min(canvasRect.width, canvasRect.height) * 0.85;
+-    let offsetX = finalDiffX * smoothingFactor;
+-    let offsetY = finalDiffY * smoothingFactor;
+-    const offsetMagnitude = Math.sqrt(offsetX * offsetX + offsetY * offsetY);
+-    if (offsetMagnitude > maxOffset) {
+-      const scaleFactor = maxOffset / offsetMagnitude;
+-      offsetX *= scaleFactor;
+-      offsetY *= scaleFactor;
++    const maxDimension = Math.min(rect.width, rect.height) * 0.85;
++    let scaledX = relX * scaleMultiplier;
++    let scaledY = relY * scaleMultiplier;
++    const scaledDistance = Math.sqrt(scaledX * scaledX + scaledY * scaledY);
++    if (scaledDistance > maxDimension) {
++      const scaleFactor = maxDimension / scaledDistance;
++      scaledX *= scaleFactor;
++      scaledY *= scaleFactor;
+     }
+-    canvas.dispatchEvent(
++    targetElement.dispatchEvent(
+       new MouseEvent("pointermove", {
+-        clientX: centerX + offsetX,
+-        clientY: centerY + offsetY,
++        clientX: centerX + scaledX,
++        clientY: centerY + scaledY,
+         bubbles: true,
+         view: window,
+       }),
+     );
+@@ -99,9 +96,9 @@
+     window.lockEnabled = false;
+     window.lockTargetId = null;
+     showNotification("Lock released");
+   } else {
+-    const gameState = getNearbyEntities();
++    const gameState = getGameState_2();
+     if (gameState && gameState.players && gameState.players.length > 0) {
+       window.lockEnabled = true;
+       window.lockTargetId = gameState.players[0].id;
+       const targetName =
+@@ -110,64 +107,12 @@
+     } else {
+       showNotification("No players to lock on");
+     }
+   }
+-  updateLockButtonUI();
++  updateLockButton();
+ }
+-function aimAtTarget(targetX, targetY, shouldClick) {
+-  const gameCanvas = getGameCanvas();
+-  if (!gameCanvas) {
+-    return;
+-  }
+-  const playerPos = getFirstAnimalPosition();
+-  if (!playerPos) {
+-    return;
+-  }
+-  const canvasRect = gameCanvas.getBoundingClientRect();
+-  const canvasCenterX = canvasRect.left + canvasRect.width / 2;
+-  const canvasCenterY = canvasRect.top + canvasRect.height / 2;
+-  const diffX = targetX - playerPos.x;
+-  const diffY = targetY - playerPos.y;
+-  const distance = Math.sqrt(diffX * diffX + diffY * diffY);
+-  let smoothingScale = 1;
+-  if (distance > 5000) {
+-    smoothingScale = 3;
+-  } else if (distance > 2000) {
+-    smoothingScale = 2;
+-  } else if (distance > 1000) {
+-    smoothingScale = 1.5;
+-  } else if (distance > 500) {
+-    smoothingScale = 1.2;
+-  } else if (distance < 50) {
+-    smoothingScale = 0.5;
+-  } else if (distance < 150) {
+-    smoothingScale = 0.8;
+-  }
+-  let scaledX = diffX * smoothingScale;
+-  let scaledY = diffY * smoothingScale;
+-  const maxOffset = Math.min(canvasRect.width, canvasRect.height) * 0.85;
+-  const currentOffset = Math.sqrt(scaledX * scaledX + scaledY * scaledY);
+-  if (currentOffset > maxOffset) {
+-    const clampFactor = maxOffset / currentOffset;
+-    scaledX *= clampFactor;
+-    scaledY *= clampFactor;
+-  }
+-  const finalX = canvasCenterX + scaledX;
+-  const finalY = canvasCenterY + scaledY;
+-  gameCanvas.dispatchEvent(
+-    new MouseEvent("pointermove", {
+-      clientX: finalX,
+-      clientY: finalY,
+-      bubbles: true,
+-      view: window,
+-    }),
+-  );
+-  if (shouldClick) {
+-    simulateClick(finalX, finalY);
+-  }
+-}
+ function autoDodgeLoop() {
+-  if (!state.isReady) {
++  if (!state.isActive) {
+     return;
+   }
+   setTimeout(autoDodgeLoop, 80);
+   if (!window.autoDodgeEnabled) {
+@@ -178,19 +123,19 @@
+     if (!playerPos) {
+       return;
+     }
+     const gameState = getGameState();
+-    const entities = getEntityManager(gameState);
++    const entityManager = getEntityManager(gameState);
+     const myAnimal = gameState?.myAnimals?.[0];
+-    if (!entities || !myAnimal) {
++    if (!entityManager || !myAnimal) {
+       return;
+     }
+     let nearbyEntities = [];
+-    (entities.entitiesList || []).forEach((targetEntity) => {
++    (entityManager.entitiesList || []).forEach((targetEntity) => {
+       if (
+         !targetEntity ||
+         targetEntity.id === myAnimal.id ||
+-        !isPlayer(targetEntity)
++        !isValidEntity(targetEntity)
+       ) {
+         return;
+       }
+       const targetX =
+@@ -223,20 +168,20 @@
+       state.counter = 0;
+       state.dataList = [];
+       return;
+     }
+-    const now = Date.now();
++    const currentTime = Date.now();
+     let isDodging = false;
+-    if (now - state.lastValue > 600) {
+-      state.lastValue = now;
++    if (currentTime - state.previousTimestamp > 600) {
++      state.previousTimestamp = currentTime;
+       if (state.currentPosition) {
+-        const moveDist = calculateDistance(
++        const prevDist = calculateDistance(
+           playerPos.x,
+           playerPos.y,
+           state.currentPosition.x,
+           state.currentPosition.y,
+         );
+-        if (moveDist < 20) {
++        if (prevDist < 20) {
+           state.counter++;
+           isDodging = true;
+         } else {
+           state.counter = 0;
+@@ -254,11 +199,11 @@
+       const deltaX = playerPos.x - sourceEntity.x;
+       const deltaY = playerPos.y - sourceEntity.y;
+       const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+       if (distance > 0.01) {
+-        const distanceRatio = (maxDistance - sourceEntity.dist) / maxDistance;
+-        sumX += (deltaX / distance) * distanceRatio;
+-        sumY += (deltaY / distance) * distanceRatio;
++        const distanceFactor = (maxDistance - sourceEntity.dist) / maxDistance;
++        sumX += (deltaX / distance) * distanceFactor;
++        sumY += (deltaY / distance) * distanceFactor;
+       }
+     });
+     let magnitude = Math.sqrt(sumX * sumX + sumY * sumY);
+     if (magnitude < 0.01) {
+@@ -269,40 +214,40 @@
+     sumX /= magnitude;
+     sumY /= magnitude;
+     let angle = Math.atan2(sumY, sumX);
+     if (isDodging && state.counter >= 1) {
+-      const angleConstants = [
++      const anglePresets = [
+         Math.PI / 4,
+         -Math.PI / 4,
+         Math.PI / 2,
+         -Math.PI / 2,
+         (Math.PI * 3) / 4,
+         (-Math.PI * 3) / 4,
+       ];
+-      let currentAngle = angle;
++      let storedAngle = angle;
+       let maxProjection = -Infinity;
+-      for (const angleOffset of angleConstants) {
+-        const rotatedAngle = angle + angleOffset;
++      for (const angleOffset of anglePresets) {
++        const adjustedAngle = angle + angleOffset;
+         if (
+           state.dataList.some(
+-            (angle) => Math.abs(angle - rotatedAngle) < 0.3,
++            (currentAngle) => Math.abs(currentAngle - adjustedAngle) < 0.3,
+           ) &&
+           state.counter < 5
+         ) {
+           continue;
+         }
+-        let projection = 0;
+-        nearbyEntities.forEach((entity) => {
+-          projection -=
+-            Math.cos(rotatedAngle) * (entity.x - playerPos.x) +
+-            Math.sin(rotatedAngle) * (entity.y - playerPos.y);
++        let projectionValue = 0;
++        nearbyEntities.forEach((targetPoint) => {
++          projectionValue -=
++            Math.cos(adjustedAngle) * (targetPoint.x - playerPos.x) +
++            Math.sin(adjustedAngle) * (targetPoint.y - playerPos.y);
+         });
+-        if (projection > maxProjection) {
+-          maxProjection = projection;
+-          currentAngle = rotatedAngle;
++        if (projectionValue > maxProjection) {
++          maxProjection = projectionValue;
++          storedAngle = adjustedAngle;
+         }
+       }
+-      angle = currentAngle;
++      angle = storedAngle;
+       state.dataList.push(angle);
+       if (state.dataList.length > 8) {
+         state.dataList.shift();
+       }
+@@ -311,34 +256,38 @@
+         state.counter = 0;
+         state.dataList = [];
+       }
+     }
+-    const isExceeded = now - state.previousValue_2 > maxDelta;
+-    if (isExceeded) {
+-      state.previousValue_2 = now;
++    const isAboveThreshold = currentTime - state.lastTimestamp > deltaThreshold;
++    if (isAboveThreshold) {
++      state.lastTimestamp = currentTime;
+     }
+-    aimAtTarget(
++    moveAndClickTarget(
+       playerPos.x + Math.cos(angle) * 2000,
+       playerPos.y + Math.sin(angle) * 2000,
+-      isExceeded,
++      isAboveThreshold,
+     );
+   } catch (tempValue) {}
+ }
+ function enableAutoDodge() {
+   window.autoDodgeEnabled = true;
+   state.currentPosition = null;
+   state.counter = 0;
+   state.dataList = [];
+-  if (!state.isReady) {
+-    state.isReady = true;
++  if (!state.isActive) {
++    state.isActive = true;
+     autoDodgeLoop();
+   }
+   showNotification("Auto dodge enabled");
+ }
++function disableAutoDodge() {
++  window.autoDodgeEnabled = false;
++  showNotification("Auto dodge disabled");
++}
+ 
+ export {
+-  updateLockOnTarget,
++  updateLockTarget,
+   toggleLock,
+-  aimAtTarget,
+   autoDodgeLoop,
+   enableAutoDodge,
++  disableAutoDodge,
+ };
+Index: src/features/autofarm.js
+===================================================================
+--- src/features/autofarm.js	v1.8
++++ src/features/autofarm.js	v1.9
+@@ -1,20 +1,22 @@
+-import { calculateDistance, isPlayer, getGameCanvas } from "../utils.js";
++import { calculateDistance, getGameCanvas } from "../utils.js";
+ import { showNotification } from "../ui/interaction.js";
+ import {
++  currentTime,
+   radius,
+-  distanceThreshold,
++  maxDistance_2,
+   maxFailCount,
+-  timeThreshold,
++  timeoutLimit,
++  isValidEntity,
+   getGameState,
+   getEntityManager,
+   getFirstAnimalPosition,
+-  randomAngle,
+-  timeLimit,
++  angle,
++  tickInterval,
+   startAutoFarm,
+   state,
+ } from "../core.js";
+-import { aimAtTarget } from "./aimbot.js";
++import { moveAndClickTarget } from "./movement.js";
+ 
+ window.autoFarmActive = false;
+ window.autoFarmMode = "nearest";
+ window.autoFarmRange = 3000;
+@@ -36,13 +38,14 @@
+ 
+ function handleFarmFailure(x, y) {
+   const currentTime = Date.now();
+   window.autoFarmSkipAreas = window.autoFarmSkipAreas.filter(
+-    (currentTime) => currentTime - currentTime.time < timeThreshold,
++    (timer) => currentTime - timer.time < timeoutLimit,
+   );
+   let existingArea = window.autoFarmSkipAreas.find(
+     (position) =>
+-      calculateDistance(x, y, position.x, position.y) < distanceThreshold,
++      calculateDistance(x, y, state.position.x, state.position.y) <
++      maxDistance_2,
+   );
+   if (existingArea) {
+     existingArea.failCount++;
+     existingArea.time = currentTime;
+@@ -53,9 +56,9 @@
+   } else {
+     window.autoFarmSkipAreas.push({
+       x: x,
+       y: y,
+-      radius: distanceThreshold,
++      radius: maxDistance_2,
+       time: currentTime,
+       failCount: 1,
+       skipped: false,
+     });
+@@ -63,13 +66,14 @@
+ }
+ function isAreaSkipped(x, y) {
+   const currentTime = Date.now();
+   window.autoFarmSkipAreas = window.autoFarmSkipAreas.filter(
+-    (timer) => currentTime - timer.time < timeThreshold,
++    (timerState) => currentTime - timerState.time < timeoutLimit,
+   );
+   return window.autoFarmSkipAreas.some(
+-    (cell) =>
+-      cell.skipped && calculateDistance(x, y, cell.x, cell.y) < cell.radius,
++    (cellState) =>
++      cellState.skipped &&
++      calculateDistance(x, y, cellState.x, cellState.y) < cellState.radius,
+   );
+ }
+ function findClosestFarmableEntity(farmRange) {
+   farmRange = farmRange || window.autoFarmRange;
+@@ -108,26 +112,21 @@
+           : targetEntity.position?.y;
+       if (
+         targetX == null ||
+         targetY == null ||
+-        isPlayer(targetEntity) ||
++        isValidEntity(targetEntity) ||
+         isAreaSkipped(targetX, targetY)
+       ) {
+         return;
+       }
+-      const distanceToTarget = calculateDistance(
+-        playerX,
+-        playerY,
+-        targetX,
+-        targetY,
+-      );
+-      if (distanceToTarget < minDistance && distanceToTarget < farmRange) {
+-        minDistance = distanceToTarget;
++      const distance = calculateDistance(playerX, playerY, targetX, targetY);
++      if (distance < minDistance && distance < farmRange) {
++        minDistance = distance;
+         closestEntity = {
+           id: targetEntity.id,
+           x: targetX,
+           y: targetY,
+-          distance: distanceToTarget,
++          distance: distance,
+           entity: targetEntity,
+         };
+       }
+     });
+@@ -135,30 +134,30 @@
+   } catch (error) {
+     return null;
+   }
+ }
+-function getNearbyFarmTargets(farmRange) {
++function findNearbyFarmableEntities(farmRange) {
+   farmRange = farmRange || window.autoFarmRange;
+   try {
+     const gameState = getGameState();
+-    const entities = getEntityManager(gameState);
+-    const myAnimal = gameState?.myAnimals?.[0];
+-    if (!entities || !myAnimal) {
++    const entityManager = getEntityManager(gameState);
++    const playerAnimal = gameState?.myAnimals?.[0];
++    if (!entityManager || !playerAnimal) {
+       return [];
+     }
+-    const myPosX =
+-      myAnimal.position._x !== undefined
+-        ? myAnimal.position._x
+-        : myAnimal.position.x;
+-    const myPosY =
+-      myAnimal.position._y !== undefined
+-        ? myAnimal.position._y
+-        : myAnimal.position.y;
+-    const targets = [];
+-    (entities.entitiesList || []).forEach((targetEntity) => {
++    const playerX =
++      playerAnimal.position._x !== undefined
++        ? playerAnimal.position._x
++        : playerAnimal.position.x;
++    const playerY =
++      playerAnimal.position._y !== undefined
++        ? playerAnimal.position._y
++        : playerAnimal.position.y;
++    const nearbyEntities = [];
++    (entityManager.entitiesList || []).forEach((targetEntity) => {
+       if (
+         !targetEntity ||
+-        targetEntity.id === myAnimal.id ||
++        targetEntity.id === playerAnimal.id ||
+         window.autoFarmSkipIds.has(targetEntity.id)
+       ) {
+         return;
+       }
+@@ -172,71 +171,73 @@
+           : targetEntity.position?.y;
+       if (
+         targetX == null ||
+         targetY == null ||
+-        isPlayer(targetEntity) ||
++        isValidEntity(targetEntity) ||
+         isAreaSkipped(targetX, targetY)
+       ) {
+         return;
+       }
+       const distanceToTarget = calculateDistance(
+-        myPosX,
+-        myPosY,
++        playerX,
++        playerY,
+         targetX,
+         targetY,
+       );
+       if (distanceToTarget < farmRange) {
+-        targets.push({
++        nearbyEntities.push({
+           id: targetEntity.id,
+           x: targetX,
+           y: targetY,
+           distance: distanceToTarget,
+           entity: targetEntity,
+         });
+       }
+     });
+-    return targets.sort(
++    return nearbyEntities.sort(
+       (entityA, entityB) => entityA.distance - entityB.distance,
+     );
+-  } catch (err) {
++  } catch (error) {
+     return [];
+   }
+ }
+-function findBestFarmSpot(searchRadius, farmRange) {
+-  const targetPoints = getNearbyFarmTargets(farmRange || window.autoFarmRange);
+-  if (!targetPoints.length) {
++function findDensestFoodCluster(rangeThreshold, customRange) {
++  const foodPoints = findNearbyFarmableEntities(
++    customRange || window.autoFarmRange,
++  );
++  if (!foodPoints.length) {
+     return null;
+   }
+-  let bestSpot = null;
+-  let maxPointCount = 0;
+-  targetPoints.forEach((calculateAveragePosition) => {
++  let bestCluster = null;
++  let maxFoodCount = 0;
++  foodPoints.forEach((calculateAveragePosition) => {
+     let count = 0;
+     let sumX = 0;
+     let sumY = 0;
+-    targetPoints.forEach((targetPosition) => {
++    foodPoints.forEach((targetPosition) => {
+       if (
+         calculateDistance(
+           calculateAveragePosition.x,
+           calculateAveragePosition.y,
+           targetPosition.x,
+           targetPosition.y,
+-        ) < (searchRadius || 500)
++        ) < (rangeThreshold || 500)
+       ) {
+         count++;
+         sumX += targetPosition.x;
+         sumY += targetPosition.y;
+       }
+     });
+-    if (count > maxPointCount) {
+-      maxPointCount = count;
+-      bestSpot = {
++    if (count > maxFoodCount) {
++      maxFoodCount = count;
++      bestCluster = {
+         x: sumX / count,
+         y: sumY / count,
+         foodCount: count,
+       };
+     }
+   });
+-  return bestSpot;
++  return bestCluster;
+ }
+ function calculatePlayerAvoidanceVector() {
+   if (!window.autoFarmAvoidPlayers) {
+     return {
+@@ -266,9 +267,9 @@
+     (entities.entitiesList || []).forEach((targetEntity) => {
+       if (
+         !targetEntity ||
+         targetEntity.id === myAnimal.id ||
+-        !isPlayer(targetEntity)
++        !isValidEntity(targetEntity)
+       ) {
+         return;
+       }
+       const targetX =
+@@ -288,17 +289,17 @@
+         targetX,
+         targetY,
+       );
+       if (currentDistance < window.autoFarmAvoidDistance) {
+-        const deltaX = playerPosition.x - targetX;
+-        const deltaY = playerPosition.y - targetY;
+-        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
++        const diffX = playerPosition.x - targetX;
++        const diffY = playerPosition.y - targetY;
++        const distance = Math.sqrt(diffX * diffX + diffY * diffY);
+         const avoidanceFactor =
+           (window.autoFarmAvoidDistance - Math.max(currentDistance, 50)) /
+           window.autoFarmAvoidDistance;
+         if (distance > 0) {
+-          avoidX += (deltaX / distance) * avoidanceFactor * 500;
+-          avoidY += (deltaY / distance) * avoidanceFactor * 500;
++          avoidX += (diffX / distance) * avoidanceFactor * 500;
++          avoidY += (diffY / distance) * avoidanceFactor * 500;
+         }
+       }
+     });
+   } catch (data) {}
+@@ -306,58 +307,56 @@
+     x: avoidX,
+     y: avoidY,
+   };
+ }
+-function simulateEvolveKey() {
++function triggerRandomEvolution() {
+   if (!window.autoFarmEvolve) {
+     return;
+   }
+   const currentTime = Date.now();
+-  if (currentTime - state.lastValue_2 < 5000) {
++  if (currentTime - state.lastEventTime < 5000) {
+     return;
+   }
+-  state.lastValue_2 = currentTime;
+-  const gameCanvas = getGameCanvas();
++  state.lastEventTime = currentTime;
++  const targetElement = getGameCanvas();
+   const randomDigit = String(Math.floor(Math.random() * 9) + 1);
+-  const keyboardEventOptions = {
++  const eventProperties = {
+     key: randomDigit,
+     code: "Digit" + randomDigit,
+     keyCode: randomDigit.charCodeAt(0),
+     which: randomDigit.charCodeAt(0),
+     bubbles: true,
+     cancelable: true,
+   };
+-  [window, document, document.body, gameCanvas].forEach((targetElement) => {
+-    if (!targetElement) {
++  [window, document, document.body, targetElement].forEach((eventTarget) => {
++    if (!eventTarget) {
+       return;
+     }
+     try {
+-      targetElement.dispatchEvent(
+-        new KeyboardEvent("keydown", keyboardEventOptions),
+-      );
++      eventTarget.dispatchEvent(new KeyboardEvent("keydown", eventProperties));
+       setTimeout(
+         () =>
+-          targetElement.dispatchEvent(
+-            new KeyboardEvent("keyup", keyboardEventOptions),
++          eventTarget.dispatchEvent(
++            new KeyboardEvent("keyup", eventProperties),
+           ),
+         50,
+       );
+     } catch (data) {}
+   });
+ }
+ function detectAndHandleStuck(currentPos) {
+   const now = Date.now();
+-  if (now - state.lastValue2 < 1500) {
++  if (now - state.lastValue < 1500) {
+     return false;
+   }
+-  state.lastValue2 = now;
+-  if (state.currentPosition_2) {
++  state.lastValue = now;
++  if (state.position) {
+     if (
+       calculateDistance(
+         currentPos.x,
+         currentPos.y,
+-        state.currentPosition_2.x,
+-        state.currentPosition_2.y,
++        state.position.x,
++        state.position.y,
+       ) < 25
+     ) {
+       state.counter_2++;
+       if (state.counter_2 >= 1 && window.autoFarmCurrentTarget) {
+@@ -374,9 +373,9 @@
+         state.counter_2 = 0;
+         window.autoFarmCurrentTarget = null;
+         window.autoFarmTargetStartTime = 0;
+         const randomAngle = Math.random() * Math.PI * 2;
+-        aimAtTarget(
++        moveAndClickTarget(
+           currentPos.x + Math.cos(randomAngle) * 1500,
+           currentPos.y + Math.sin(randomAngle) * 1500,
+           true,
+         );
+@@ -385,9 +384,9 @@
+     } else {
+       state.counter_2 = 0;
+     }
+   }
+-  state.currentPosition_2 = {
++  state.position = {
+     x: currentPos.x,
+     y: currentPos.y,
+   };
+   return false;
+@@ -408,20 +407,20 @@
+   window.autoFarmPatrolIndex = 0;
+ }
+ function autoFarmLoop() {
+   if (!window.autoFarmActive) {
+-    state.isActive_2 = false;
++    state.isToggled = false;
+     return;
+   }
+-  const now = Date.now();
+-  if (now - window.autoFarmSkipClearTime > 15000) {
++  const currentTime = Date.now();
++  if (currentTime - window.autoFarmSkipClearTime > 15000) {
+     window.autoFarmSkipIds.clear();
+-    window.autoFarmSkipClearTime = now;
++    window.autoFarmSkipClearTime = currentTime;
+   }
+   if (
+     window.autoFarmCurrentTarget &&
+     window.autoFarmTargetStartTime > 0 &&
+-    now - window.autoFarmTargetStartTime > 1000
++    currentTime - window.autoFarmTargetStartTime > 1000
+   ) {
+     handleFarmFailure(
+       window.autoFarmCurrentTarget.x,
+       window.autoFarmCurrentTarget.y,
+@@ -432,40 +431,40 @@
+     setTimeout(autoFarmLoop, 100);
+     return;
+   }
+   try {
+-    const player = getFirstAnimalPosition();
+-    if (!player) {
++    const currentTarget = getFirstAnimalPosition();
++    if (!currentTarget) {
+       window.autoFarmActive = false;
+-      state.isActive_2 = false;
+-      const autoFarmBtnElement = document.getElementById("autoFarmBtn");
+-      if (autoFarmBtnElement) {
+-        autoFarmBtnElement.textContent = "Auto Farm";
+-        autoFarmBtnElement.classList.remove("toggle-on");
++      state.isToggled = false;
++      const autoFarmButton = document.getElementById("autoFarmBtn");
++      if (autoFarmButton) {
++        autoFarmButton.textContent = "Auto Farm";
++        autoFarmButton.classList.remove("toggle-on");
+       }
+       return;
+     }
+     if (Math.random() < 0.015) {
+-      simulateEvolveKey();
++      triggerRandomEvolution();
+     }
+-    if (detectAndHandleStuck(player)) {
++    if (detectAndHandleStuck(currentTarget)) {
+       setTimeout(autoFarmLoop, 100);
+       return;
+     }
+     const playerOffset = calculatePlayerAvoidanceVector();
+     if (
+       (Math.abs(playerOffset.x) > 100 || Math.abs(playerOffset.y) > 100) &&
+       window.autoFarmAvoidPlayers
+     ) {
+-      const canBoost =
+-        window.autoFarmBoost && now - state.lastTimestamp_2 > timeLimit;
+-      if (canBoost) {
+-        state.lastTimestamp_2 = now;
++      const shouldBoost =
++        window.autoFarmBoost && currentTime - state.lastTickTime > tickInterval;
++      if (shouldBoost) {
++        state.lastTickTime = currentTime;
+       }
+-      aimAtTarget(
+-        player.x + playerOffset.x,
+-        player.y + playerOffset.y,
+-        canBoost,
++      moveAndClickTarget(
++        currentTarget.x + playerOffset.x,
++        currentTarget.y + playerOffset.y,
++        shouldBoost,
+       );
+       setTimeout(autoFarmLoop, 60);
+       return;
+     }
+@@ -485,9 +484,9 @@
+           if (window.autoFarmCurrentTarget) {
+             window.autoFarmStats.collected++;
+           }
+           window.autoFarmCurrentTarget = nearestTarget;
+-          window.autoFarmTargetStartTime = now;
++          window.autoFarmTargetStartTime = currentTime;
+           state.counter_2 = 0;
+         }
+         if (nearestTarget.distance < 40) {
+           targetX += (Math.random() - 0.5) * 80;
+@@ -495,49 +494,49 @@
+         }
+       } else {
+         window.autoFarmCurrentTarget = null;
+         window.autoFarmTargetStartTime = 0;
+-        if (now - state.lastValue3 > 2500) {
+-          randomAngle = Math.random() * Math.PI * 2;
+-          state.lastValue3 = now;
++        if (currentTime - state.previousValue > 2500) {
++          angle = Math.random() * Math.PI * 2;
++          state.previousValue = currentTime;
+         }
+-        targetX = player.x + Math.cos(randomAngle) * 1000;
+-        targetY = player.y + Math.sin(randomAngle) * 1000;
++        targetX = currentTarget.x + Math.cos(angle) * 1000;
++        targetY = currentTarget.y + Math.sin(angle) * 1000;
+         minDistance = 1000;
+       }
+     } else if (window.autoFarmMode === "cluster") {
+-      const foodSource = findBestFarmSpot(500, window.autoFarmRange);
+-      if (foodSource && foodSource.foodCount >= 2) {
+-        targetX = foodSource.x + playerOffset.x * 0.3;
+-        targetY = foodSource.y + playerOffset.y * 0.3;
++      const farmTarget = findDensestFoodCluster(500, window.autoFarmRange);
++      if (farmTarget && farmTarget.foodCount >= 2) {
++        targetX = farmTarget.x + playerOffset.x * 0.3;
++        targetY = farmTarget.y + playerOffset.y * 0.3;
+         minDistance = calculateDistance(
+-          player.x,
+-          player.y,
+-          foodSource.x,
+-          foodSource.y,
++          currentTarget.x,
++          currentTarget.y,
++          farmTarget.x,
++          farmTarget.y,
+         );
+       } else {
+-        const currentTarget = findClosestFarmableEntity();
+-        if (currentTarget) {
+-          targetX = currentTarget.x;
+-          targetY = currentTarget.y;
+-          minDistance = currentTarget.distance;
++        const currentTarget_2 = findClosestFarmableEntity();
++        if (currentTarget_2) {
++          targetX = currentTarget_2.x;
++          targetY = currentTarget_2.y;
++          minDistance = currentTarget_2.distance;
+           if (
+             !window.autoFarmCurrentTarget ||
+-            window.autoFarmCurrentTarget.id !== currentTarget.id
++            window.autoFarmCurrentTarget.id !== currentTarget_2.id
+           ) {
+-            window.autoFarmCurrentTarget = currentTarget;
+-            window.autoFarmTargetStartTime = now;
++            window.autoFarmCurrentTarget = currentTarget_2;
++            window.autoFarmTargetStartTime = currentTime;
+           }
+         } else {
+           window.autoFarmCurrentTarget = null;
+           window.autoFarmTargetStartTime = 0;
+-          if (now - state.lastValue3 > 2500) {
+-            randomAngle = Math.random() * Math.PI * 2;
+-            state.lastValue3 = now;
++          if (currentTime - state.previousValue > 2500) {
++            angle = Math.random() * Math.PI * 2;
++            state.previousValue = currentTime;
+           }
+-          targetX = player.x + Math.cos(randomAngle) * 1000;
+-          targetY = player.y + Math.sin(randomAngle) * 1000;
++          targetX = currentTarget.x + Math.cos(angle) * 1000;
++          targetY = currentTarget.y + Math.sin(angle) * 1000;
+           minDistance = 1000;
+         }
+       }
+     } else if (window.autoFarmMode === "patrol") {
+@@ -553,19 +552,19 @@
+           !window.autoFarmCurrentTarget ||
+           window.autoFarmCurrentTarget.id !== selectedTarget.id
+         ) {
+           window.autoFarmCurrentTarget = selectedTarget;
+-          window.autoFarmTargetStartTime = now;
++          window.autoFarmTargetStartTime = currentTime;
+         }
+       } else {
+         window.autoFarmCurrentTarget = null;
+         window.autoFarmTargetStartTime = 0;
+         const currentPatrolPoint =
+           window.autoFarmPatrolPoints[window.autoFarmPatrolIndex];
+         if (currentPatrolPoint) {
+           minDistance = calculateDistance(
+-            player.x,
+-            player.y,
++            currentTarget.x,
++            currentTarget.y,
+             currentPatrolPoint.x,
+             currentPatrolPoint.y,
+           );
+           if (minDistance < 200) {
+@@ -578,25 +577,25 @@
+         }
+       }
+     }
+     if (targetX != null) {
+-      const shouldBoost =
++      const shouldBoost_2 =
+         window.autoFarmBoost &&
+         minDistance > 350 &&
+-        now - state.lastTimestamp_2 > timeLimit;
+-      if (shouldBoost) {
+-        state.lastTimestamp_2 = now;
++        currentTime - state.lastTickTime > tickInterval;
++      if (shouldBoost_2) {
++        state.lastTickTime = currentTime;
+       }
+-      aimAtTarget(targetX, targetY, shouldBoost);
++      moveAndClickTarget(targetX, targetY, shouldBoost_2);
+     }
+   } catch (errorMessage) {
+     console.error("[AutoFarm]", errorMessage);
+   }
+   setTimeout(autoFarmLoop, 60);
+ }
+ function stopAutoFarm() {
+   window.autoFarmActive = false;
+-  state.isActive_2 = false;
++  state.isToggled = false;
+   showNotification(
+     "Farm stopped. ~" +
+       window.autoFarmStats.collected +
+       " food in " +
+@@ -611,20 +610,20 @@
+   if (event_5.key === "F5") {
+     event_5.preventDefault();
+     if (window.autoFarmActive) {
+       stopAutoFarm();
+-      const autoFarmButton = document.getElementById("autoFarmBtn");
+-      if (autoFarmButton) {
+-        autoFarmButton.textContent = "Auto Farm";
+-        autoFarmButton.classList.remove("toggle-on");
++      const autoFarmBtn = document.getElementById("autoFarmBtn");
++      if (autoFarmBtn) {
++        autoFarmBtn.textContent = "Auto Farm";
++        autoFarmBtn.classList.remove("toggle-on");
+       }
+     } else {
+       const farmModeSelect = document.getElementById("farmModeSelect");
+       startAutoFarm(farmModeSelect ? farmModeSelect.value : "nearest");
+-      const autoFarmButton_2 = document.getElementById("autoFarmBtn");
+-      if (autoFarmButton_2) {
+-        autoFarmButton_2.textContent = "Stop Farm";
+-        autoFarmButton_2.classList.add("toggle-on");
++      const autoFarmBtn_2 = document.getElementById("autoFarmBtn");
++      if (autoFarmBtn_2) {
++        autoFarmBtn_2.textContent = "Stop Farm";
++        autoFarmBtn_2.classList.add("toggle-on");
+       }
+     }
+   }
+ });
+@@ -632,12 +631,12 @@
+ export {
+   handleFarmFailure,
+   isAreaSkipped,
+   findClosestFarmableEntity,
+-  getNearbyFarmTargets,
+-  findBestFarmSpot,
++  findNearbyFarmableEntities,
++  findDensestFoodCluster,
+   calculatePlayerAvoidanceVector,
+-  simulateEvolveKey,
++  triggerRandomEvolution,
+   detectAndHandleStuck,
+   setupPatrolPoints,
+   autoFarmLoop,
+   stopAutoFarm,
+Index: src/features/chat.js
+===================================================================
+--- src/features/chat.js	v1.8
++++ src/features/chat.js	v1.9
+@@ -1,23 +1,23 @@
+ import { state } from "../core.js";
+ 
+ function startScheduledTask(taskData, intervalSeconds) {
+-  if (state.mainIntervalId) {
+-    clearInterval(state.mainIntervalId);
++  if (state.updateIntervalId) {
++    clearInterval(state.updateIntervalId);
+   }
+-  state.isProcessing = true;
+-  state.mainIntervalId = setInterval(() => {
+-    typeAndSendMessage(taskData);
++  state.isLooping = true;
++  state.updateIntervalId = setInterval(() => {
++    simulateChatInput(taskData);
+   }, intervalSeconds * 1000);
+ }
+ function stopInterval() {
+-  if (state.mainIntervalId) {
+-    clearInterval(state.mainIntervalId);
+-    state.mainIntervalId = null;
++  if (state.updateIntervalId) {
++    clearInterval(state.updateIntervalId);
++    state.updateIntervalId = null;
+   }
+-  state.isProcessing = false;
++  state.isLooping = false;
+ }
+-function typeAndSendMessage(textToType) {
++function simulateChatInput(textToType) {
+   const chatInput =
+     document.querySelector(".chat-input input") ||
+     document.querySelector('input[placeholder*="chat" i]') ||
+     document.querySelector('input[type="text"]');
+@@ -25,11 +25,11 @@
+     return;
+   }
+   chatInput.focus();
+   chatInput.value = "";
+-  let currentIndex = 0;
+-  const typeTextRecursive = () => {
+-    if (state.currentIndex >= textToType.length) {
++  let charIndex = 0;
++  const typeNextChar = () => {
++    if (charIndex >= textToType.length) {
+       const sendButton =
+         document.querySelector(".chat-input button") ||
+         document.querySelector('button[aria-label*="send" i]');
+       if (sendButton) {
+@@ -51,17 +51,17 @@
+         }, 100);
+       }
+       return;
+     }
+-    chatInput.value += textToType[state.currentIndex];
++    chatInput.value += textToType[charIndex];
+     chatInput.dispatchEvent(
+       new InputEvent("input", {
+         bubbles: true,
+       }),
+     );
+-    state.currentIndex++;
+-    setTimeout(typeTextRecursive, 25);
++    charIndex++;
++    setTimeout(typeNextChar, 25);
+   };
+-  typeTextRecursive();
++  typeNextChar();
+ }
+ 
+-export { startScheduledTask, stopInterval, typeAndSendMessage };
++export { startScheduledTask, stopInterval, simulateChatInput };
+Index: src/features/entitytrail.js
+===================================================================
+--- src/features/entitytrail.js	v1.8
++++ src/features/entitytrail.js	v1.9
+@@ -1,30 +1,30 @@
+ import { showNotification } from "../ui/interaction.js";
+ import { refreshUI } from "../ui/panels.js";
+ import {
+-  getNearbyEntities,
+-  getZoomScale,
+-  getOrCreateOverlayCanvas,
+-} from "../utils.js";
+-import { startEntityTrail, getFirstAnimalPosition, state } from "../core.js";
++  getGameState_2,
++  startEntityTrail,
++  currentTime,
++  state,
++} from "../core.js";
+ 
+-function stopMouseSimulation_2() {
+-  if (state.trailInterval) {
+-    clearInterval(state.trailInterval);
+-    state.trailInterval = null;
++function stopEntityTrail() {
++  if (state.entityTrailInterval) {
++    clearInterval(state.entityTrailInterval);
++    state.entityTrailInterval = null;
+   }
+ }
+ function toggleEntityTrail() {
+   if (window.entityTrailEnabled) {
+     window.entityTrailEnabled = false;
+     window.entityTrailTargetId = null;
+-    stopMouseSimulation_2();
++    stopEntityTrail();
+     window.entityTrailHistory = [];
+     showNotification("Trail stopped");
+     refreshUI();
+     return;
+   }
+-  const nearbyPlayersData = getNearbyEntities();
++  const nearbyPlayersData = getGameState_2();
+   const hasNearbyPlayers =
+     nearbyPlayersData &&
+     nearbyPlayersData.players &&
+     nearbyPlayersData.players.length > 0;
+@@ -41,26 +41,26 @@
+   startEntityTrail();
+   showNotification("Tracing: " + targetPlayerName);
+   refreshUI();
+ }
+-function drawEntityTrail(ctx, canvas, originPos, zoomScale) {
++function drawEntityTrail(ctx, canvas, playerPos, scale) {
+   if (!window.entityTrailEnabled || window.entityTrailHistory.length < 2) {
+     return;
+   }
+-  const halfWidth = canvas.width / 2;
+-  const halfHeight = canvas.height / 2;
++  const centerX = canvas.width / 2;
++  const centerY = canvas.height / 2;
+   const currentTime = Date.now();
+-  const trailDuration = 30000;
++  const trailLifetime = 30000;
+   const { r: red, g: green, b: blue } = window.entityTrailColor;
+   for (let i = 1; i < window.entityTrailHistory.length; i++) {
+     const prevPoint = window.entityTrailHistory[i - 1];
+     const currPoint = window.entityTrailHistory[i];
+-    const age = currentTime - currPoint.time;
+-    const opacity = Math.max(0.05, 1 - age / trailDuration);
+-    const startX = halfWidth + (prevPoint.x - originPos.x) * zoomScale;
+-    const startY = halfHeight + (prevPoint.y - originPos.y) * zoomScale;
+-    const endX = halfWidth + (currPoint.x - originPos.x) * zoomScale;
+-    const endY = halfHeight + (currPoint.y - originPos.y) * zoomScale;
++    const segmentAge = currentTime - currPoint.time;
++    const opacity = Math.max(0.05, 1 - segmentAge / trailLifetime);
++    const startX = centerX + (prevPoint.x - playerPos.x) * scale;
++    const startY = centerY + (prevPoint.y - playerPos.y) * scale;
++    const endX = centerX + (currPoint.x - playerPos.x) * scale;
++    const endY = centerY + (currPoint.y - playerPos.y) * scale;
+     const progress = i / window.entityTrailHistory.length;
+     ctx.beginPath();
+     ctx.moveTo(startX, startY);
+     ctx.lineTo(endX, endY);
+@@ -71,43 +71,31 @@
+   }
+   for (let j = 0; j < window.entityTrailHistory.length; j += 5) {
+     const point = window.entityTrailHistory[j];
+     const pointAge = currentTime - point.time;
+-    const pointOpacity = Math.max(0.1, 1 - pointAge / trailDuration);
+-    const pointX = halfWidth + (point.x - originPos.x) * zoomScale;
+-    const pointY = halfHeight + (point.y - originPos.y) * zoomScale;
++    const pointOpacity = Math.max(0.1, 1 - pointAge / trailLifetime);
++    const pointX = centerX + (point.x - playerPos.x) * scale;
++    const pointY = centerY + (point.y - playerPos.y) * scale;
+     ctx.fillStyle =
+       "rgba(" + red + "," + green + "," + blue + "," + pointOpacity + ")";
+     ctx.beginPath();
+     ctx.arc(pointX, pointY, 2, 0, Math.PI * 2);
+     ctx.fill();
+   }
+   if (window.entityTrailHistory.length > 0) {
+-    const lastTrailPosition =
++    const lastTrailPoint =
+       window.entityTrailHistory[window.entityTrailHistory.length - 1];
+-    const projectedX =
+-      halfWidth + (lastTrailPosition.x - originPos.x) * zoomScale;
+-    const projectedY =
+-      halfHeight + (lastTrailPosition.y - originPos.y) * zoomScale;
++    const screenX = centerX + (lastTrailPoint.x - playerPos.x) * scale;
++    const screenY = centerY + (lastTrailPoint.y - playerPos.y) * scale;
+     ctx.fillStyle = "rgb(" + red + "," + green + "," + blue + ")";
+     ctx.font = "bold 10px monospace";
+     ctx.fillText(
+       "TRAIL (" + window.entityTrailHistory.length + " pts)",
+-      projectedX + 8,
+-      projectedY - 8,
++      screenX + 8,
++      screenY - 8,
+     );
+   }
+ }
+-function renderOverlay() {
+-  const overlayCanvas = getOrCreateOverlayCanvas("ast-overlay", 999997);
+-  const overlayCtx = overlayCanvas.getContext("2d");
+-  overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+-  const entityData = getFirstAnimalPosition();
+-  if (entityData && window.entityTrailEnabled) {
+-    drawEntityTrail(overlayCtx, overlayCanvas, entityData, getZoomScale());
+-  }
+-  requestAnimationFrame(renderOverlay);
+-}
+ window.entityTrailColor = {
+   r: 255,
+   g: 150,
+   b: 0,
+@@ -117,10 +105,5 @@
+ window.entityTrailHistory = [];
+ window.entityTrailMaxLength = 200;
+ window.entityTrailRecordInterval = 100;
+ 
+-export {
+-  stopMouseSimulation_2,
+-  toggleEntityTrail,
+-  drawEntityTrail,
+-  renderOverlay,
+-};
++export { stopEntityTrail, toggleEntityTrail, drawEntityTrail };
+Index: src/features/esp.js
+===================================================================
+--- src/features/esp.js	v1.8
++++ src/features/esp.js	v1.9
+@@ -1,20 +1,18 @@
+ import {
+   gameInstance,
++  isValidEntity,
+   getEntityPosition,
+   calculateDirection,
+   findEntityById,
++  angle,
+   getFirstAnimalPosition,
+-  animalData,
++  getGameState_2,
++  getViewportScale,
++  playerData,
+   state,
+ } from "../core.js";
+-import {
+-  isPlayer,
+-  calculateDistance,
+-  getNearbyEntities,
+-  getZoomScale,
+-  getOrCreateOverlayCanvas,
+-} from "../utils.js";
++import { calculateDistance, getOrCreateCanvas } from "../utils.js";
+ import { drawRadar } from "../ui/radar.js";
+ import { showNotification } from "../ui/interaction.js";
+ 
+ window.espEnabled = false;
+@@ -30,17 +28,17 @@
+ };
+ window.espTrackedEntityId = null;
+ window.espMode = "players";
+ 
+-function drawEsp(ctx, gameState, offsetX, offsetY, scale) {
+-  if (!gameState || gameState.error) {
++function drawEsp(ctx, gameData, offsetX, offsetY, scale) {
++  if (!gameData || gameData.error) {
+     return;
+   }
+-  const myPos = gameState.myPos;
++  const myPos = gameData.myPos;
+   const espMode = window.espMode;
+   const trackedId = window.espTrackedEntityId;
+   let entities =
+-    espMode === "players" ? gameState.players || [] : gameState.food || [];
++    espMode === "players" ? gameData.players || [] : gameData.food || [];
+   let viewportOffsetX = 0;
+   let viewportOffsetY = 0;
+   try {
+     if (gameInstance?.viewport) {
+@@ -49,39 +47,39 @@
+         viewportOffsetX = (viewport.center.x - myPos.x) * scale;
+         viewportOffsetY = (viewport.center.y - myPos.y) * scale;
+       }
+     }
+-  } catch (err) {}
++  } catch (error) {}
+   entities.forEach((entity) => {
+     const deltaX = entity.x - myPos.x;
+     const deltaY = entity.y - myPos.y;
+     const screenX = offsetX + deltaX * scale - viewportOffsetX;
+     const screenY = offsetY + deltaY * scale - viewportOffsetY;
+     const isTracked = trackedId && entity.id === trackedId;
+     const boxSize = 20;
+-    let espColor;
++    let entityColor;
+     if (espMode === "players") {
+-      espColor = isTracked
++      entityColor = isTracked
+         ? window.espColors.tracked
+         : entity.distance < 500
+           ? window.espColors.close
+           : entity.distance < 1500
+             ? window.espColors.medium
+             : entity.distance < 3000
+               ? window.espColors.far
+               : window.espColors.veryFar;
+-      ctx.strokeStyle = espColor;
++      ctx.strokeStyle = entityColor;
+       ctx.lineWidth = isTracked ? 3 : 2;
+       ctx.strokeRect(
+         screenX - boxSize / 2,
+         screenY - boxSize / 2,
+         boxSize,
+         boxSize,
+       );
+-      ctx.fillStyle = espColor;
++      ctx.fillStyle = entityColor;
+       ctx.font = "bold 11px monospace";
+       ctx.fillText(
+-        entity.entity?.name || "ID:" + entity.id,
++        entity.entity?.entityName || entity.entity?.name || "ID:" + entity.id,
+         screenX - boxSize / 2,
+         screenY - boxSize / 2 - 8,
+       );
+       ctx.font = "10px monospace";
+@@ -99,48 +97,48 @@
+       }
+       if (window.lockEnabled && window.lockTargetId === entity.id) {
+         ctx.strokeStyle = "#ff0000";
+         ctx.lineWidth = 2;
+-        const offset = 15;
++        const boxOffset = 15;
+         ctx.beginPath();
+-        ctx.moveTo(screenX - offset, screenY);
+-        ctx.lineTo(screenX + offset, screenY);
+-        ctx.moveTo(screenX, screenY - offset);
+-        ctx.lineTo(screenX, screenY + offset);
++        ctx.moveTo(screenX - boxOffset, screenY);
++        ctx.lineTo(screenX + boxOffset, screenY);
++        ctx.moveTo(screenX, screenY - boxOffset);
++        ctx.lineTo(screenX, screenY + boxOffset);
+         ctx.stroke();
+         ctx.beginPath();
+-        ctx.arc(screenX, screenY, offset, 0, Math.PI * 2);
++        ctx.arc(screenX, screenY, boxOffset, 0, Math.PI * 2);
+         ctx.strokeStyle = "rgba(255,0,0,0.7)";
+         ctx.stroke();
+         ctx.fillStyle = "#ff0000";
+         ctx.font = "bold 10px monospace";
+-        ctx.fillText("LOCKED", screenX + offset + 4, screenY - 4);
++        ctx.fillText("LOCKED", screenX + boxOffset + 4, screenY - 4);
+       }
+       ctx.beginPath();
+       ctx.moveTo(offsetX, offsetY);
+       ctx.lineTo(screenX, screenY);
+-      ctx.strokeStyle = espColor;
++      ctx.strokeStyle = entityColor;
+       ctx.globalAlpha = 0.25;
+       ctx.lineWidth = 1;
+       ctx.stroke();
+       ctx.globalAlpha = 1;
+     } else {
+-      espColor =
++      entityColor =
+         entity.distance < 300
+           ? window.espColors.foodClose
+           : entity.distance < 1000
+             ? window.espColors.foodMedium
+             : window.espColors.foodFar;
+-      ctx.strokeStyle = espColor;
++      ctx.strokeStyle = entityColor;
+       ctx.lineWidth = 1.5;
+       ctx.strokeRect(
+         screenX - boxSize / 2,
+         screenY - boxSize / 2,
+         boxSize,
+         boxSize,
+       );
+       if (entity.distance < 1000) {
+-        ctx.fillStyle = espColor;
++        ctx.fillStyle = entityColor;
+         ctx.font = "9px monospace";
+         ctx.fillText(
+           Math.round(entity.distance).toString(),
+           screenX + boxSize / 2 + 3,
+@@ -149,95 +147,95 @@
+       }
+     }
+   });
+ }
+-function drawTrackedEntity(ctx, canvas, myPos, scale) {
++function drawTrackedEntity(ctx, canvas, playerPos, scale) {
+   if (!window.espTrackedEntityId) {
+     return;
+   }
+   const trackedEntity = findEntityById(window.espTrackedEntityId);
+   if (!trackedEntity) {
+     return;
+   }
+-  if (!isPlayer(trackedEntity)) {
++  if (!isValidEntity(trackedEntity)) {
+     window.espTrackedEntityId = null;
+     return;
+   }
+   const entityPos = getEntityPosition(trackedEntity);
+-  if (!entityPos || !myPos) {
++  if (!entityPos || !playerPos) {
+     return;
+   }
+   const centerX = canvas.width / 2;
+   const centerY = canvas.height / 2;
+-  const deltaX = entityPos.x - myPos.x;
+-  const deltaY = entityPos.y - myPos.y;
+-  const screenX = centerX + deltaX * scale;
+-  const screenY = centerY + deltaY * scale;
++  const diffX = entityPos.x - playerPos.x;
++  const diffY = entityPos.y - playerPos.y;
++  const targetX = centerX + diffX * scale;
++  const targetY = centerY + diffY * scale;
+   const distance = calculateDistance(
+-    myPos.x,
+-    myPos.y,
++    playerPos.x,
++    playerPos.y,
+     entityPos.x,
+     entityPos.y,
+   );
+-  const entityDir = calculateDirection(trackedEntity);
++  const entityData = calculateDirection(trackedEntity);
+   const pulseOpacity = Math.sin(Date.now() / 200) * 0.3 + 0.7;
+-  const markerSize = 40;
++  const boxSize = 40;
+   ctx.beginPath();
+   ctx.moveTo(centerX, centerY);
+-  ctx.lineTo(screenX, screenY);
++  ctx.lineTo(targetX, targetY);
+   ctx.strokeStyle = "rgba(255,0,255,0.6)";
+   ctx.lineWidth = 2;
+   ctx.setLineDash([8, 4]);
+   ctx.stroke();
+   ctx.setLineDash([]);
+   ctx.strokeStyle = "rgba(255,0,255," + pulseOpacity + ")";
+   ctx.lineWidth = 3;
+   ctx.strokeRect(
+-    screenX - markerSize / 2,
+-    screenY - markerSize / 2,
+-    markerSize,
+-    markerSize,
++    targetX - boxSize / 2,
++    targetY - boxSize / 2,
++    boxSize,
++    boxSize,
+   );
+   const arrowLength = 50;
+-  const angle = Math.atan2(entityDir.dirY, entityDir.dirX);
++  const angle = Math.atan2(entityData.dirY, entityData.dirX);
+   ctx.beginPath();
+-  ctx.moveTo(screenX, screenY);
++  ctx.moveTo(targetX, targetY);
+   ctx.lineTo(
+-    screenX + entityDir.dirX * arrowLength,
+-    screenY + entityDir.dirY * arrowLength,
++    targetX + entityData.dirX * arrowLength,
++    targetY + entityData.dirY * arrowLength,
+   );
+   ctx.strokeStyle = "#ff00ff";
+   ctx.lineWidth = 2;
+   ctx.stroke();
+   ctx.beginPath();
+   ctx.moveTo(
+-    screenX + entityDir.dirX * arrowLength,
+-    screenY + entityDir.dirY * arrowLength,
++    targetX + entityData.dirX * arrowLength,
++    targetY + entityData.dirY * arrowLength,
+   );
+   ctx.lineTo(
+-    screenX + entityDir.dirX * arrowLength - Math.cos(angle - 0.4) * 10,
+-    screenY + entityDir.dirY * arrowLength - Math.sin(angle - 0.4) * 10,
++    targetX + entityData.dirX * arrowLength - Math.cos(angle - 0.4) * 10,
++    targetY + entityData.dirY * arrowLength - Math.sin(angle - 0.4) * 10,
+   );
+   ctx.moveTo(
+-    screenX + entityDir.dirX * arrowLength,
+-    screenY + entityDir.dirY * arrowLength,
++    targetX + entityData.dirX * arrowLength,
++    targetY + entityData.dirY * arrowLength,
+   );
+   ctx.lineTo(
+-    screenX + entityDir.dirX * arrowLength - Math.cos(angle + 0.4) * 10,
+-    screenY + entityDir.dirY * arrowLength - Math.sin(angle + 0.4) * 10,
++    targetX + entityData.dirX * arrowLength - Math.cos(angle + 0.4) * 10,
++    targetY + entityData.dirY * arrowLength - Math.sin(angle + 0.4) * 10,
+   );
+   ctx.strokeStyle = "#ff00ff";
+   ctx.lineWidth = 2;
+   ctx.stroke();
+   const rectWidth = 180;
+   const rectHeight = 70;
+   const rectX = Math.min(
+-    screenX + markerSize / 2 + 10,
++    targetX + boxSize / 2 + 10,
+     canvas.width - rectWidth - 5,
+   );
+   const rectY = Math.max(
+     5,
+-    Math.min(screenY - rectHeight / 2, canvas.height - rectHeight - 5),
++    Math.min(targetY - rectHeight / 2, canvas.height - rectHeight - 5),
+   );
+   ctx.fillStyle = "rgba(0,0,0,0.85)";
+   ctx.strokeStyle = "rgba(255,0,255," + pulseOpacity + ")";
+   ctx.lineWidth = 1.5;
+@@ -261,14 +259,14 @@
+   ctx.fillStyle = "#ff00ff";
+   ctx.font = "bold 14px monospace";
+   ctx.fillText(Math.round(distance) + " units", rectX + 8, rectY + 52);
+   if (
+-    screenX < 0 ||
+-    screenX > canvas.width ||
+-    screenY < 0 ||
+-    screenY > canvas.height
++    targetX < 0 ||
++    targetX > canvas.width ||
++    targetY < 0 ||
++    targetY > canvas.height
+   ) {
+-    const angle_2 = Math.atan2(screenY - centerY, screenX - centerX);
++    const angle_2 = Math.atan2(targetY - centerY, targetX - centerX);
+     const posX = centerX + Math.cos(angle_2) * (canvas.width / 2 - 40);
+     const posY = centerY + Math.sin(angle_2) * (canvas.height / 2 - 40);
+     ctx.fillStyle = "rgba(0,0,0,0.85)";
+     ctx.beginPath();
+@@ -298,40 +296,34 @@
+   }
+ }
+ function renderEspLoop() {
+   if (!window.espEnabled) {
+-    const espOverlay = document.getElementById("esp-overlay");
+-    if (espOverlay) {
+-      espOverlay
++    const overlayElement = document.getElementById("esp-overlay");
++    if (overlayElement) {
++      overlayElement
+         .getContext("2d")
+-        .clearRect(0, 0, espOverlay.width, espOverlay.height);
++        .clearRect(0, 0, overlayElement.width, overlayElement.height);
+     }
+     requestAnimationFrame(renderEspLoop);
+     return;
+   }
+-  const espCanvas = getOrCreateOverlayCanvas("esp-overlay", 999998);
+-  const ctx = espCanvas.getContext("2d");
+-  ctx.clearRect(0, 0, espCanvas.width, espCanvas.height);
+-  const crosshairPos = getNearbyEntities();
+-  const playerPos = getFirstAnimalPosition();
+-  const espColor = getZoomScale();
+-  drawEsp(
+-    ctx,
+-    crosshairPos,
+-    espCanvas.width / 2,
+-    espCanvas.height / 2,
+-    espColor,
+-  );
+-  drawTrackedEntity(ctx, espCanvas, playerPos, espColor);
+-  drawRadar(ctx, espCanvas, crosshairPos);
++  const canvas = getOrCreateCanvas("esp-overlay", 999998);
++  const ctx = canvas.getContext("2d");
++  ctx.clearRect(0, 0, canvas.width, canvas.height);
++  const gameData = getGameState_2();
++  const localPlayer = getFirstAnimalPosition();
++  const settings = getViewportScale();
++  drawEsp(ctx, gameData, canvas.width / 2, canvas.height / 2, settings);
++  drawTrackedEntity(ctx, canvas, localPlayer, settings);
++  drawRadar(ctx, canvas, gameData);
+   requestAnimationFrame(renderEspLoop);
+ }
+-function clearTracking() {
++function toggleEsp() {
+   window.espEnabled = !window.espEnabled;
+   showNotification(window.espEnabled ? "ESP enabled" : "ESP disabled");
+ }
+ function trackPlayer() {
+-  const gameData = getNearbyEntities();
++  const gameData = getGameState_2();
+   if (gameData && gameData.players && gameData.players.length > 0) {
+     window.espTrackedEntityId = gameData.players[0].id;
+     showNotification(
+       "Tracking: " +
+@@ -340,21 +332,25 @@
+   } else {
+     showNotification("No players nearby");
+   }
+ }
++function clearTracking() {
++  window.espTrackedEntityId = null;
++  showNotification("Tracking cleared");
++}
+ function toggleMinimapSize() {
+-  if (!animalData || !animalData.minimap) {
++  if (!playerData || !playerData.minimap) {
+     showNotification("Minimap not available");
+     return;
+   }
+   if (state.isMinimapSmall) {
+-    animalData.minimap.scale.set(1);
+-    animalData.minimap.pivot.set(0, 0);
++    playerData.minimap.scale.set(1);
++    playerData.minimap.pivot.set(0, 0);
+     state.isMinimapSmall = false;
+     showNotification("Minimap restored");
+   } else {
+-    animalData.minimap.scale.set(0.5);
+-    animalData.minimap.pivot.set(-70, -45);
++    playerData.minimap.scale.set(0.5);
++    playerData.minimap.pivot.set(-70, -45);
+     state.isMinimapSmall = true;
+     showNotification("Small minimap enabled");
+   }
+ }
+@@ -362,8 +358,9 @@
+ export {
+   drawEsp,
+   drawTrackedEntity,
+   renderEspLoop,
+-  clearTracking,
++  toggleEsp,
+   trackPlayer,
++  clearTracking,
+   toggleMinimapSize,
+ };
+Index: src/features/movement.js
+===================================================================
+--- src/features/movement.js	v1.8
++++ src/features/movement.js	v1.9
+@@ -1,19 +1,25 @@
+ import { getGameCanvas } from "../utils.js";
+ import { showNotification } from "../ui/interaction.js";
+-import { angles, radius, offsetValue, state } from "../core.js";
++import {
++  angles,
++  radius,
++  offsetValue,
++  getFirstAnimalPosition,
++  state,
++} from "../core.js";
+ 
+-function startCircularMovement() {
+-  if (state.secondaryIntervalId) {
++function startMouseSimulation() {
++  if (state.animationInterval) {
+     return;
+   }
+   const canvas = getGameCanvas();
+   if (!canvas) {
+     showNotification("Canvas not found");
+     return;
+   }
+-  state.secondaryIntervalId = setInterval(() => {
+-    const angleDegrees = angles[state.currentIndex];
++  state.animationInterval = setInterval(() => {
++    const angleDegrees = angles[state.angleIndex];
+     const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
+     const offsetX = Math.round(radius * Math.sin(angleRadians));
+     const offsetY = Math.round(radius * Math.cos(angleRadians));
+     canvas.dispatchEvent(
+@@ -22,35 +28,35 @@
+         clientY: window.innerHeight / 2 + offsetY,
+         bubbles: true,
+       }),
+     );
+-    state.currentIndex = (state.currentIndex + 1) % angles.length;
++    state.angleIndex = (state.angleIndex + 1) % angles.length;
+   }, 15);
+ }
+ function stopMouseSimulation() {
+-  if (state.secondaryIntervalId) {
+-    clearInterval(state.secondaryIntervalId);
+-    state.secondaryIntervalId = null;
++  if (state.animationInterval) {
++    clearInterval(state.animationInterval);
++    state.animationInterval = null;
+   }
+ }
+ function toggleMouseSimulation() {
+-  if (state.secondaryIntervalId) {
++  if (state.animationInterval) {
+     stopMouseSimulation();
+   } else {
+-    startCircularMovement();
++    startMouseSimulation();
+   }
+ }
+-function moveMouseSide(side) {
+-  const canvas = getGameCanvas();
+-  if (!canvas) {
++function simulatePointerMove(direction) {
++  const targetElement = getGameCanvas();
++  if (!targetElement) {
+     return;
+   }
+-  const rect = canvas.getBoundingClientRect();
++  const rect = targetElement.getBoundingClientRect();
+   const centerX = rect.left + rect.width / 2;
+   const centerY = rect.top + rect.height / 2;
+   const targetX =
+-    side === "left" ? centerX - offsetValue : centerX + offsetValue;
+-  canvas.dispatchEvent(
++    direction === "left" ? centerX - offsetValue : centerX + offsetValue;
++  targetElement.dispatchEvent(
+     new MouseEvent("pointermove", {
+       clientX: targetX,
+       clientY: centerY,
+       bubbles: true,
+@@ -58,13 +64,13 @@
+     }),
+   );
+ }
+ function simulateClick(clientX, clientY) {
+-  const gameCanvas = getGameCanvas();
+-  if (!gameCanvas) {
++  const targetElement = getGameCanvas();
++  if (!targetElement) {
+     return;
+   }
+-  gameCanvas.dispatchEvent(
++  targetElement.dispatchEvent(
+     new PointerEvent("pointerdown", {
+       clientX: clientX,
+       clientY: clientY,
+       button: 0,
+@@ -73,9 +79,9 @@
+       view: window,
+     }),
+   );
+   setTimeout(() => {
+-    gameCanvas.dispatchEvent(
++    targetElement.dispatchEvent(
+       new PointerEvent("pointerup", {
+         clientX: clientX,
+         clientY: clientY,
+         buttons: 0,
+@@ -84,12 +90,65 @@
+       }),
+     );
+   }, 80);
+ }
++function moveAndClickTarget(targetX, targetY, shouldClick) {
++  const targetElement = getGameCanvas();
++  if (!targetElement) {
++    return;
++  }
++  const playerPos = getFirstAnimalPosition();
++  if (!playerPos) {
++    return;
++  }
++  const rect = targetElement.getBoundingClientRect();
++  const centerX = rect.left + rect.width / 2;
++  const centerY = rect.top + rect.height / 2;
++  const diffX = targetX - playerPos.x;
++  const diffY = targetY - playerPos.y;
++  const distance = Math.sqrt(diffX * diffX + diffY * diffY);
++  let multiplier = 1;
++  if (distance > 5000) {
++    multiplier = 3;
++  } else if (distance > 2000) {
++    multiplier = 2;
++  } else if (distance > 1000) {
++    multiplier = 1.5;
++  } else if (distance > 500) {
++    multiplier = 1.2;
++  } else if (distance < 50) {
++    multiplier = 0.5;
++  } else if (distance < 150) {
++    multiplier = 0.8;
++  }
++  let offsetX = diffX * multiplier;
++  let offsetY = diffY * multiplier;
++  const maxRadius = Math.min(rect.width, rect.height) * 0.85;
++  const currentDist = Math.sqrt(offsetX * offsetX + offsetY * offsetY);
++  if (currentDist > maxRadius) {
++    const scale = maxRadius / currentDist;
++    offsetX *= scale;
++    offsetY *= scale;
++  }
++  const finalX = centerX + offsetX;
++  const finalY = centerY + offsetY;
++  targetElement.dispatchEvent(
++    new MouseEvent("pointermove", {
++      clientX: finalX,
++      clientY: finalY,
++      bubbles: true,
++      view: window,
++    }),
++  );
++  if (shouldClick) {
++    simulateClick(finalX, finalY);
++  }
++}
+ 
+ export {
+-  startCircularMovement,
++  startMouseSimulation,
+   stopMouseSimulation,
+   toggleMouseSimulation,
+-  moveMouseSide,
++  simulatePointerMove,
+   simulateClick,
++  moveAndClickTarget,
+ };
+Index: src/features/xray.js
+===================================================================
+--- src/features/xray.js	v1.8
++++ src/features/xray.js	v1.9
+@@ -1,33 +1,33 @@
+ import { showNotification } from "../ui/interaction.js";
+-import { gameInstance, animalData, state } from "../core.js";
++import { gameInstance, playerData, state } from "../core.js";
+ 
+-const initializeAstraVision = () => {
++const activateAstraVision = () => {
+   if (state.isEnabled) {
+     return;
+   }
+-  if (!animalData) {
+-    setTimeout(initializeAstraVision, 500);
++  if (!playerData) {
++    setTimeout(activateAstraVision, 500);
+     return;
+   }
+   try {
+-    if (animalData.terrainManager && animalData.terrainManager.shadow) {
+-      animalData.terrainManager.shadow.setShadowSize(1000000);
+-      animalData.terrainManager.shadow.setShadowSize = () => {};
++    if (playerData.terrainManager && playerData.terrainManager.shadow) {
++      playerData.terrainManager.shadow.setShadowSize(1000000);
++      playerData.terrainManager.shadow.setShadowSize = () => {};
+     } else {
+-      for (let key1 in animalData) {
+-        if (animalData[key1] && animalData[key1].shadow) {
+-          animalData[key1].shadow.setShadowSize(1000000);
+-          animalData[key1].shadow.setShadowSize = () => {};
++      for (let key1 in playerData) {
++        if (playerData[key1] && playerData[key1].shadow) {
++          playerData[key1].shadow.setShadowSize(1000000);
++          playerData[key1].shadow.setShadowSize = () => {};
+         }
+       }
+     }
+-    if (typeof animalData.setFlash === "function") {
+-      animalData.setFlash = () => {};
++    if (typeof playerData.setFlash === "function") {
++      playerData.setFlash = () => {};
+     } else {
+-      for (let key2 of Object.getOwnPropertyNames(animalData.__proto__)) {
+-        if (key2.startsWith("_0x") && typeof animalData[key2] === "function") {
+-          animalData[key2] = () => {};
++      for (let key2 of Object.getOwnPropertyNames(playerData.__proto__)) {
++        if (key2.startsWith("_0x") && typeof playerData[key2] === "function") {
++          playerData[key2] = () => {};
+         }
+       }
+     }
+     setInterval(() => {
+@@ -46,5 +46,5 @@
+   }
+   state.isEnabled = true;
+ };
+ 
+-export { initializeAstraVision };
++export { activateAstraVision };
+Index: src/ui/audio.js
+===================================================================
+--- src/ui/audio.js	v1.8
++++ src/ui/audio.js	v1.9
+@@ -0,0 +1,361 @@
++import { showNotification } from "./interaction.js";
++import { musicPlaylist, currentTime, state } from "../core.js";
++
++function isYouTubeUrl(url) {
++  return /(?:youtube\.com|youtu\.be)/i.test(url || "");
++}
++function extractYouTubeId(url) {
++  if (!url) {
++    return null;
++  }
++  try {
++    const urlObj = new URL(url);
++    if (urlObj.hostname.includes("youtu.be")) {
++      return urlObj.pathname.slice(1).split("/")[0] || null;
++    }
++    if (urlObj.hostname.includes("youtube.com")) {
++      return (
++        urlObj.searchParams.get("v") ||
++        (urlObj.pathname.startsWith("/embed/")
++          ? urlObj.pathname.split("/embed/")[1]?.split("/")[0]
++          : null) ||
++        (urlObj.pathname.startsWith("/shorts/")
++          ? urlObj.pathname.split("/shorts/")[1]?.split("/")[0]
++          : null)
++      );
++    }
++  } catch (error) {}
++  return null;
++}
++function ensureYouTubeApiReady(callback) {
++  if (state.isYtApiLoaded && window.YT && window.YT.Player) {
++    callback();
++    return;
++  }
++  if (!window._astYtReadyCallbacks) {
++    window._astYtReadyCallbacks = [];
++  }
++  window._astYtReadyCallbacks.push(callback);
++  if (state.isReady) {
++    return;
++  }
++  state.isReady = true;
++  if (!document.getElementById("ast-yt-api")) {
++    const scriptElement = document.createElement("script");
++    scriptElement.id = "ast-yt-api";
++    scriptElement.src = "https://www.youtube.com/iframe_api";
++    document.head.appendChild(scriptElement);
++  }
++  const originalReadyHandler = window.onYouTubeIframeAPIReady;
++  window.onYouTubeIframeAPIReady = function () {
++    state.isYtApiLoaded = true;
++    if (typeof originalReadyHandler === "function") {
++      try {
++        originalReadyHandler();
++      } catch (tempVar1) {}
++    }
++    const readyCallbacks = window._astYtReadyCallbacks || [];
++    while (readyCallbacks.length) {
++      const currentCallback = readyCallbacks.shift();
++      try {
++        currentCallback();
++      } catch (tempVar2) {}
++    }
++  };
++}
++function getYoutubeHostElement() {
++  let hostElement = document.getElementById("ast-youtube-host");
++  if (!hostElement) {
++    hostElement = document.createElement("div");
++    hostElement.id = "ast-youtube-host";
++    hostElement.style.cssText =
++      "position:fixed;left:-99999px;top:-99999px;width:1px;height:1px;opacity:0;pointer-events:none;";
++    document.body.appendChild(hostElement);
++  }
++  return hostElement;
++}
++function playYouTubeVideo(videoId) {
++  ensureYouTubeApiReady(() => {
++    const youtubePlayerId = getYoutubeHostElement();
++    if (
++      state.youtubePlayer &&
++      typeof state.youtubePlayer.loadVideoById === "function"
++    ) {
++      state.youtubePlayer.loadVideoById(videoId);
++      try {
++        state.youtubePlayer.setVolume(Math.round(state.musicVolume * 100));
++      } catch (genericVariable) {}
++      state.audioSourceType = "youtube";
++      updateMusicPanel();
++      return;
++    }
++    state.youtubePlayer = new YT.Player(youtubePlayerId, {
++      width: "1",
++      height: "1",
++      videoId: videoId,
++      playerVars: {
++        autoplay: 1,
++        controls: 0,
++        disablekb: 1,
++        fs: 0,
++        modestbranding: 1,
++        rel: 0,
++      },
++      events: {
++        onReady: (volumeEvent) => {
++          try {
++            volumeEvent.target.setVolume(Math.round(state.musicVolume * 100));
++            volumeEvent.target.playVideo();
++          } catch (unknownVar) {}
++          state.audioSourceType = "youtube";
++          updateMusicPanel();
++        },
++        onStateChange: (ytPlayerEvent) => {
++          if (!window.YT) {
++            return;
++          }
++          if (ytPlayerEvent.data === YT.PlayerState.ENDED) {
++            if (state.isMusicShuffleEnabled) {
++              playTrack(Math.floor(Math.random() * musicPlaylist.length));
++            } else if (state.isMusicLoopEnabled) {
++              playTrack(state.currentTrackIndex + 1);
++            } else {
++              updateMusicPanel();
++            }
++          }
++          if (
++            ytPlayerEvent.data === YT.PlayerState.PLAYING ||
++            ytPlayerEvent.data === YT.PlayerState.PAUSED
++          ) {
++            updateMusicPanel();
++          }
++        },
++      },
++    });
++  });
++}
++function stopAndCleanupPlayer() {
++  if (state.audioPlayer) {
++    try {
++      state.audioPlayer.pause();
++      state.audioPlayer.src = "";
++    } catch (audioError) {}
++    state.audioPlayer = null;
++  }
++  if (state.youtubePlayer) {
++    try {
++      state.youtubePlayer.stopVideo();
++    } catch (youtubeStopError) {}
++  }
++  state.audioSourceType = null;
++}
++function playTrack(trackIndex) {
++  if (!musicPlaylist.length) {
++    showNotification("No tracks added");
++    return;
++  }
++  if (trackIndex < 0) {
++    trackIndex = musicPlaylist.length - 1;
++  }
++  if (trackIndex >= musicPlaylist.length) {
++    trackIndex = 0;
++  }
++  state.currentTrackIndex = trackIndex;
++  const currentTrack = musicPlaylist[state.currentTrackIndex];
++  if (!currentTrack || !currentTrack.url) {
++    return;
++  }
++  stopAndCleanupPlayer();
++  if (isYouTubeUrl(currentTrack.url)) {
++    const youtubeId = extractYouTubeId(currentTrack.url);
++    if (!youtubeId) {
++      showNotification("Invalid YouTube link");
++      return;
++    }
++    playYouTubeVideo(youtubeId);
++    state.audioSourceType = "youtube";
++    updateMusicPanel();
++    return;
++  }
++  state.audioPlayer = new Audio(currentTrack.url);
++  state.audioPlayer.volume = state.musicVolume;
++  state.audioPlayer.loop = false;
++  state.audioSourceType = "audio";
++  state.audioPlayer.play().catch(() => {
++    showNotification("Cannot play audio URL");
++  });
++  state.audioPlayer.onended = () => {
++    if (state.isMusicShuffleEnabled) {
++      playTrack(Math.floor(Math.random() * musicPlaylist.length));
++    } else if (state.isMusicLoopEnabled) {
++      playTrack(state.currentTrackIndex + 1);
++    } else {
++      updateMusicPanel();
++    }
++  };
++  state.audioPlayer.onplay = updateMusicPanel;
++  state.audioPlayer.onpause = updateMusicPanel;
++  updateMusicPanel();
++}
++function pausePlayback() {
++  if (state.audioSourceType === "audio" && state.audioPlayer) {
++    state.audioPlayer.pause();
++  } else if (state.audioSourceType === "youtube" && state.youtubePlayer) {
++    try {
++      state.youtubePlayer.pauseVideo();
++    } catch (youtubePauseError) {}
++  }
++  updateMusicPanel();
++}
++function resumePlayback() {
++  if (state.audioSourceType === "audio" && state.audioPlayer) {
++    state.audioPlayer.play().catch(() => {});
++  } else if (state.audioSourceType === "youtube" && state.youtubePlayer) {
++    try {
++      state.youtubePlayer.playVideo();
++    } catch (youtubePlayError) {}
++  } else if (musicPlaylist.length) {
++    playTrack(state.currentTrackIndex);
++  }
++  updateMusicPanel();
++}
++function stopPlayback() {
++  if (state.audioSourceType === "audio" && state.audioPlayer) {
++    state.audioPlayer.pause();
++    state.audioPlayer.currentTime = 0;
++  } else if (state.audioSourceType === "youtube" && state.youtubePlayer) {
++    try {
++      state.youtubePlayer.stopVideo();
++    } catch (youtubeStopError) {}
++  }
++  state.audioSourceType = null;
++  updateMusicPanel();
++}
++function isPlaying() {
++  if (state.audioSourceType === "audio" && state.audioPlayer) {
++    return !state.audioPlayer.paused;
++  }
++  if (state.audioSourceType === "youtube" && state.youtubePlayer && window.YT) {
++    try {
++      return state.youtubePlayer.getPlayerState() === YT.PlayerState.PLAYING;
++    } catch (error) {}
++  }
++  return false;
++}
++function playNextOrRandom() {
++  if (!musicPlaylist.length) {
++    return;
++  }
++  playTrack(
++    state.isMusicShuffleEnabled
++      ? Math.floor(Math.random() * musicPlaylist.length)
++      : state.currentTrackIndex + 1,
++  );
++}
++function playPrevious() {
++  if (!musicPlaylist.length) {
++    return;
++  }
++  playTrack(state.currentTrackIndex - 1);
++}
++function addTrackToPlaylist(trackUrl, trackName) {
++  if (!trackUrl) {
++    return;
++  }
++  trackName =
++    trackName ||
++    trackUrl.split("/").pop().split("?")[0] ||
++    "Track " + (musicPlaylist.length + 1);
++  musicPlaylist.push({
++    url: trackUrl,
++    name: trackName,
++  });
++  localStorage.setItem("musicPlaylist", JSON.stringify(musicPlaylist));
++  updateMusicPanel();
++  showNotification("Added: " + trackName);
++}
++function removeTrackFromPlaylist(trackIndex) {
++  musicPlaylist.splice(trackIndex, 1);
++  if (state.currentTrackIndex >= musicPlaylist.length) {
++    state.currentTrackIndex = 0;
++  }
++  localStorage.setItem("musicPlaylist", JSON.stringify(musicPlaylist));
++  if (!musicPlaylist.length) {
++    stopPlayback();
++  }
++  updateMusicPanel();
++}
++function updateMusicPanel() {
++  const musicPanel = document.getElementById("music-panel");
++  if (!musicPanel) {
++    return;
++  }
++  const isPlaying = isPlaying();
++  const playBtn = musicPanel.querySelector("#musicPlayBtn");
++  const trackNameDisplay = musicPanel.querySelector("#musicTrackName");
++  const trackListContainer = musicPanel.querySelector("#musicTrackList");
++  const loopBtn = musicPanel.querySelector("#musicLoopBtn");
++  const shuffleBtn = musicPanel.querySelector("#musicShuffleBtn");
++  if (playBtn) {
++    playBtn.textContent = isPlaying ? "Pause" : "Play";
++  }
++  if (loopBtn) {
++    loopBtn.classList.toggle("toggle-on", state.isMusicLoopEnabled);
++  }
++  if (shuffleBtn) {
++    shuffleBtn.classList.toggle("toggle-on", state.isMusicShuffleEnabled);
++  }
++  if (trackNameDisplay) {
++    trackNameDisplay.textContent = musicPlaylist.length
++      ? musicPlaylist[state.currentTrackIndex]?.name ||
++        "Track " + (state.currentTrackIndex + 1)
++      : "No tracks";
++  }
++  if (trackListContainer) {
++    trackListContainer.innerHTML = "";
++    musicPlaylist.forEach((event, targetId) => {
++      const containerDiv = document.createElement("div");
++      containerDiv.style.cssText =
++        "display:flex;gap:4px;margin-bottom:3px;align-items:center;";
++      const isToggledOn =
++        targetId === state.currentTrackIndex &&
++        (state.audioPlayer || state.youtubePlayer);
++      containerDiv.innerHTML =
++        '\n          <button class="ast-btn' +
++        (isToggledOn ? " toggle-on" : "") +
++        '" style="flex:1;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;" title="' +
++        event.name +
++        '">' +
++        event.name.substring(0, 22) +
++        '</button>\n          <button class="ast-btn" style="width:28px;margin:0;text-align:center;padding:6px 4px;color:#f44336;flex-shrink:0;">X</button>';
++      containerDiv.querySelectorAll("button")[0].onclick = () =>
++        playTrack(targetId);
++      containerDiv.querySelectorAll("button")[1].onclick = () =>
++        removeTrackFromPlaylist(targetId);
++      trackListContainer.appendChild(containerDiv);
++    });
++    if (!musicPlaylist.length) {
++      trackListContainer.innerHTML =
++        '<div style="font-size:11px;color:#555;text-align:center;padding:6px 0;">No tracks yet</div>';
++    }
++  }
++}
++
++export {
++  isYouTubeUrl,
++  extractYouTubeId,
++  ensureYouTubeApiReady,
++  getYoutubeHostElement,
++  playYouTubeVideo,
++  stopAndCleanupPlayer,
++  playTrack,
++  pausePlayback,
++  resumePlayback,
++  stopPlayback,
++  isPlaying,
++  playNextOrRandom,
++  playPrevious,
++  addTrackToPlaylist,
++  removeTrackFromPlaylist,
++  updateMusicPanel,
++};
+Index: src/ui/interaction.js
+===================================================================
+--- src/ui/interaction.js	v1.8
++++ src/ui/interaction.js	v1.9
+@@ -1,16 +1,16 @@
+-import { radius, state } from "../core.js";
++import { currentTime, radius, state } from "../core.js";
+ 
+-function typeText(selector, text) {
++function simulateTyping(selector, textToType) {
+   const inputElement = document.querySelector(selector);
+   if (!inputElement) {
+     return false;
+   }
+   inputElement.focus();
+   inputElement.value = "";
+-  let charIndex = 0;
+-  const typeChar = () => {
+-    if (charIndex >= text.length) {
++  let currentIndex = 0;
++  const typeNextChar = () => {
++    if (currentIndex >= textToType.length) {
+       inputElement.dispatchEvent(
+         new Event("change", {
+           bubbles: true,
+         }),
+@@ -21,43 +21,80 @@
+         }),
+       );
+       return;
+     }
+-    inputElement.value += text[charIndex];
++    inputElement.value += textToType[currentIndex];
+     inputElement.dispatchEvent(
+       new InputEvent("input", {
+         bubbles: true,
+       }),
+     );
+-    charIndex++;
+-    setTimeout(typeChar, 25);
++    currentIndex++;
++    setTimeout(typeNextChar, 25);
+   };
+-  typeChar();
++  typeNextChar();
+   return true;
+ }
+ function showNotification(message) {
+   const currentTime = Date.now();
+-  if (
+-    message === state.previousValue &&
+-    currentTime - state.lastTimestamp < 3000
+-  ) {
++  if (message === state.currentTrackId && currentTime - currentTime < 3000) {
+     return;
+   }
+-  state.previousValue = message;
+-  state.lastTimestamp = currentTime;
+-  const notificationDiv = document.createElement("div");
+-  notificationDiv.style.cssText =
++  state.currentTrackId = message;
++  currentTime = currentTime;
++  const notificationElement = document.createElement("div");
++  notificationElement.style.cssText =
+     "\n      position: fixed; top: 16px; right: 16px;\n      background: var(--notif-bg, #282828); color: var(--notif-text, #e0e0e0);\n      padding: 10px 16px; border-radius: 4px;\n      z-index: 10000000; font-size: 13px;\n      opacity: 0; transition: opacity 0.2s ease, transform 0.2s ease;\n      pointer-events: none; font-family: 'Segoe UI', system-ui, sans-serif;\n      border-left: 3px solid var(--notif-border, var(--acc, #888));\n      transform: translateX(20px);\n    ";
+-  notificationDiv.textContent = message;
+-  document.body.appendChild(notificationDiv);
++  notificationElement.textContent = message;
++  document.body.appendChild(notificationElement);
+   requestAnimationFrame(() => {
+-    notificationDiv.style.opacity = "1";
+-    notificationDiv.style.transform = "translateX(0)";
++    notificationElement.style.opacity = "1";
++    notificationElement.style.transform = "translateX(0)";
+   });
+   setTimeout(() => {
+-    notificationDiv.style.opacity = "0";
+-    notificationDiv.style.transform = "translateX(20px)";
+-    setTimeout(() => notificationDiv.remove(), 200);
++    notificationElement.style.opacity = "0";
++    notificationElement.style.transform = "translateX(20px)";
++    setTimeout(() => notificationElement.remove(), 200);
+   }, 2500);
+ }
++function initNameAutofill() {
++  if (state.isMuted) {
++    return;
++  }
++  let storedName = localStorage.getItem("autofill_name") || "";
++  let nameInput =
++    document.querySelector(".name-input input") ||
++    document.querySelector(".play-game .el-input__inner");
++  function applyAutofill() {
++    if (state.isMuted) {
++      return;
++    }
++    state.isMuted = true;
++    nameInput.value = storedName;
++    nameInput.dispatchEvent(
++      new Event("input", {
++        bubbles: true,
++      }),
++    );
++    nameInput.addEventListener("input", () => {
++      if (storedName !== nameInput.value) {
++        storedName = nameInput.value;
++        localStorage.setItem("autofill_name", storedName);
++      }
++    });
++  }
++  if (nameInput == null) {
++    const pollInterval = setInterval(() => {
++      nameInput =
++        document.querySelector(".name-input input") ||
++        document.querySelector(".play-game .el-input__inner");
++      if (nameInput != null) {
++        clearInterval(pollInterval);
++        applyAutofill();
++      }
++    }, 200);
++  } else {
++    applyAutofill();
++  }
++}
+ 
+-export { typeText, showNotification };
++export { simulateTyping, showNotification, initNameAutofill };
+Index: src/ui/panels.js
+===================================================================
+--- src/ui/panels.js	v1.8
++++ src/ui/panels.js	v1.9
+@@ -1,54 +1,75 @@
+-import { showNotification, typeText } from "./interaction.js";
+ import {
++  showNotification,
++  simulateTyping,
++  initNameAutofill,
++} from "./interaction.js";
++import {
+   startScheduledTask,
+   stopInterval,
+-  typeAndSendMessage,
++  simulateChatInput,
+ } from "../features/chat.js";
+ import {
+   radius,
+-  interceptTextEncoder,
+-  clearTracking_2,
+-  initGameHooks,
+-  clearTracking_3,
++  initNetworkInterceptor,
++  playerData,
++  initAntiDetection,
+   startAutoFarm,
+-  settings,
++  musicPlaylist,
+   state,
+ } from "../core.js";
+ import { generateRandomString } from "../utils.js";
+ import { toggleMouseSimulation } from "../features/movement.js";
+-import { initializeAstraVision } from "../features/xray.js";
++import { activateAstraVision } from "../features/xray.js";
+ import {
+-  clearTracking,
++  toggleEsp,
+   trackPlayer,
++  clearTracking,
+   toggleMinimapSize,
+ } from "../features/esp.js";
+-import { toggleLock, enableAutoDodge } from "../features/aimbot.js";
++import {
++  toggleLock,
++  enableAutoDodge,
++  disableAutoDodge,
++} from "../features/aimbot.js";
+ import { setupPatrolPoints, stopAutoFarm } from "../features/autofarm.js";
+-import { applyTheme, initBackground } from "./theme.js";
++import { applyTheme, initBackgroundImage } from "./theme.js";
++import {
++  pausePlayback,
++  resumePlayback,
++  stopPlayback,
++  isPlaying,
++  playNextOrRandom,
++  playPrevious,
++  addTrackToPlaylist,
++  updateMusicPanel,
++} from "./audio.js";
+ 
+ window.lockKey = "t";
+ window.entityTraceKey = "h";
+ 
+ function refreshUI() {}
+-function showHalloweenModal(onUnlockCallback) {
+-  const modalContainer = document.createElement("div");
+-  modalContainer.style.cssText =
++function showHalloweenCodeModal(onUnlockCallback) {
++  const modalOverlay = document.createElement("div");
++  modalOverlay.style.cssText =
+     "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:100001;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.3s ease;";
+-  modalContainer.innerHTML =
++  modalOverlay.innerHTML =
+     '<div style="background:#1a1a1a;padding:32px;border-radius:8px;text-align:center;max-width:400px;width:90%;border:1px solid #333;">\n      <div style="color:#e0e0e0;font-size:18px;font-weight:600;margin-bottom:16px;">Halloween Access Code</div>\n      <input id="hwCodeInput" type="text" placeholder="Enter code..." style="background:#111;border:1px solid #333;color:#e0e0e0;border-radius:4px;padding:10px;font-size:14px;text-align:center;width:100%;box-sizing:border-box;margin-bottom:16px;outline:none;">\n      <div style="display:flex;gap:8px;">\n        <button id="hwCancelBtn" style="flex:1;background:#222;color:#888;border:1px solid #333;border-radius:4px;padding:10px;cursor:pointer;">Cancel</button>\n        <button id="hwSubmitBtn" style="flex:1;background:#ff6600;color:#fff;border:none;border-radius:4px;padding:10px;cursor:pointer;font-weight:600;">Redeem</button>\n      </div></div>';
+-  document.body.appendChild(modalContainer);
++  document.body.appendChild(modalOverlay);
+   setTimeout(() => {
+-    modalContainer.style.opacity = "1";
++    modalOverlay.style.opacity = "1";
+   }, 10);
+-  const codeInput = modalContainer.querySelector("#hwCodeInput");
++  const codeInput = modalOverlay.querySelector("#hwCodeInput");
+   const closeModal = () => {
+-    modalContainer.style.opacity = "0";
+-    setTimeout(() => modalContainer.remove(), 300);
++    modalOverlay.style.opacity = "0";
++    setTimeout(() => modalOverlay.remove(), 300);
+   };
+-  modalContainer.querySelector("#hwSubmitBtn").onclick = () => {
+-    const inputCode = codeInput.value.trim();
+-    if (inputCode === "HappyHalloween9" || inputCode === "TrickOrTreat9") {
++  modalOverlay.querySelector("#hwSubmitBtn").onclick = () => {
++    const enteredPassword = codeInput.value.trim();
++    if (
++      enteredPassword === "HappyHalloween9" ||
++      enteredPassword === "TrickOrTreat9"
++    ) {
+       localStorage.setItem("halloweenUnlocked", "true");
+       showNotification("Halloween theme unlocked");
+       closeModal();
+       onUnlockCallback(true);
+@@ -59,15 +80,15 @@
+       }, 500);
+       showNotification("Invalid code");
+     }
+   };
+-  modalContainer.querySelector("#hwCancelBtn").onclick = () => {
++  modalOverlay.querySelector("#hwCancelBtn").onclick = () => {
+     closeModal();
+     onUnlockCallback(false);
+   };
+   codeInput.addEventListener("keypress", (event) => {
+     if (event.key === "Enter") {
+-      modalContainer.querySelector("#hwSubmitBtn").click();
++      modalOverlay.querySelector("#hwSubmitBtn").click();
+     }
+   });
+   codeInput.focus();
+ }
+@@ -91,19 +112,19 @@
+     hasMoved = false;
+     offsetX = event.clientX - element.getBoundingClientRect().left;
+     offsetY = event.clientY - element.getBoundingClientRect().top;
+     element.style.transition = "none";
+-    const handleMouseMove = (event) => {
++    const handleMouseMove = (mouseEvent) => {
+       if (
+         !hasMoved &&
+-        (Math.abs(event.clientX - event.clientX) > 5 ||
+-          Math.abs(event.clientY - event.clientY) > 5)
++        (Math.abs(mouseEvent.clientX - event.clientX) > 5 ||
++          Math.abs(mouseEvent.clientY - event.clientY) > 5)
+       ) {
+         hasMoved = true;
+       }
+       if (isDragging) {
+-        element.style.left = event.clientX - offsetX + "px";
+-        element.style.top = event.clientY - offsetY + "px";
++        element.style.left = mouseEvent.clientX - offsetX + "px";
++        element.style.top = mouseEvent.clientY - offsetY + "px";
+         element.style.bottom = "auto";
+         element.style.right = "auto";
+       }
+     };
+@@ -127,107 +148,136 @@
+   toolsPanel.id = "deep-tools-panel";
+   toolsPanel.className = "ast-panel";
+   toolsPanel.style.cssText = "bottom:20px;right:20px;width:230px;";
+   toolsPanel.innerHTML =
+-    '\n      <div class="ast-header"><span class="ast-header-title">Astraphobia Client</span><button class="ast-header-min" id="mainMin">−</button></div>\n      <div class="ast-body" id="mainBody">\n        <span class="ast-section-label">Chat</span>\n        <textarea class="ast-textarea" id="chatMsg" placeholder="Message..." rows="2"></textarea>\n        <button class="ast-btn" id="sendBtn">Send Chat</button>\n        <div class="ast-row" style="margin-top:4px;">\n          <input class="ast-input" type="number" id="delayInput" min="1" max="300" value="10" style="width:50px;text-align:center;">\n          <span style="font-size:11px;color:#888;">sec</span>\n          <button class="ast-btn" id="autoChatBtn" style="flex:1;margin-bottom:0;">Auto Chat</button>\n        </div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Tools</span>\n        <button class="ast-btn" id="patchBtn">Special Characters</button>\n        <button class="ast-btn" id="spoofBtn">Spoof Username</button>\n        <button class="ast-btn" id="spinBtn">Auto Spin</button>\n        <div class="ast-key-row"><span>Spin key</span><input class="ast-key-capture" id="spinKeyInput" type="text" placeholder="..." readonly></div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Turn Controls</span>\n        <div class="ast-key-row">\n          <span>Turn Left</span>\n          <input class="ast-key-capture" id="turnLeftKeyInput" type="text" value="Q" readonly>\n        </div>\n        <div class="ast-key-row">\n          <span>Turn Right</span>\n          <input class="ast-key-capture" id="turnRightKeyInput" type="text" value="E" readonly>\n        </div>\n        <div class="ast-credits">Made by Astraphobia</div>\n      </div>';
++    '\n      <div class="ast-header"><span class="ast-header-title">Astraphobia Client</span><button class="ast-header-min" id="mainMin">−</button></div>\n      <div class="ast-body" id="mainBody">\n                    <span class="ast-section-label">Autofill Name</span>\n        <div class="ast-row" style="margin-bottom:6px;">\n          <input class="ast-input" type="text" id="savedNameDisplay" placeholder="Enter name..." style="flex:1;">\n          <button class="ast-btn" id="setNameBtn" style="width:40px;padding:6px 5px;margin:0;flex-shrink:0;text-align:center;">Set</button>\n          <button class="ast-btn" id="clearNameBtn" style="width:30px;padding:6px 5px;margin:0;flex-shrink:0;text-align:center;">✕</button>\n        </div>\n        <span class="ast-section-label">Chat</span>\n        <textarea class="ast-textarea" id="chatMsg" placeholder="Message..." rows="2"></textarea>\n        <button class="ast-btn" id="sendBtn">Send Chat</button>\n        <div class="ast-row" style="margin-top:4px;">\n          <input class="ast-input" type="number" id="delayInput" min="1" max="300" value="10" style="width:50px;text-align:center;">\n          <span style="font-size:11px;color:#888;">sec</span>\n          <button class="ast-btn" id="autoChatBtn" style="flex:1;margin-bottom:0;">Auto Chat</button>\n        </div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Tools</span>\n        <button class="ast-btn" id="patchBtn">Special Characters</button>\n        <button class="ast-btn" id="spoofBtn">Spoof Username</button>\n        <button class="ast-btn" id="spinBtn">Auto Spin</button>\n        <div class="ast-key-row"><span>Spin key</span><input class="ast-key-capture" id="spinKeyInput" type="text" placeholder="..." readonly></div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Turn Controls</span>\n        <div class="ast-key-row">\n          <span>Turn Left</span>\n          <input class="ast-key-capture" id="turnLeftKeyInput" type="text" value="Q" readonly>\n        </div>\n        <div class="ast-key-row">\n          <span>Turn Right</span>\n          <input class="ast-key-capture" id="turnRightKeyInput" type="text" value="E" readonly>\n        </div>\n        <div class="ast-credits">Made by Astraphobia</div>\n      </div>';
+   document.body.appendChild(toolsPanel);
+   const mainBody = toolsPanel.querySelector("#mainBody");
+-  let isHidden = false;
+-  toolsPanel.querySelector("#mainMin").onclick = (toggleEvent) => {
+-    toggleEvent.stopPropagation();
+-    isHidden = !isHidden;
+-    mainBody.style.display = isHidden ? "none" : "block";
+-    toolsPanel.querySelector("#mainMin").textContent = isHidden ? "+" : "−";
++  let isMenuVisible = false;
++  toolsPanel.querySelector("#mainMin").onclick = (event) => {
++    event.stopPropagation();
++    isMenuVisible = !isMenuVisible;
++    mainBody.style.display = isMenuVisible ? "none" : "block";
++    toolsPanel.querySelector("#mainMin").textContent = isMenuVisible
++      ? "+"
++      : "−";
+   };
+   toolsPanel.querySelector("#sendBtn").onclick = () => {
+     const chatMessage = toolsPanel.querySelector("#chatMsg").value;
+     if (chatMessage) {
+-      typeAndSendMessage(chatMessage);
++      simulateChatInput(chatMessage);
+     }
+   };
+   const autoChatBtn = toolsPanel.querySelector("#autoChatBtn");
+   autoChatBtn.onclick = () => {
+-    const chatInputContent = toolsPanel.querySelector("#chatMsg").value;
+-    const messageDelay =
++    const messageText = toolsPanel.querySelector("#chatMsg").value;
++    const delayValue =
+       parseInt(toolsPanel.querySelector("#delayInput").value) || 10;
+-    if (!chatInputContent) {
++    if (!messageText) {
+       showNotification("Enter a message first");
+       return;
+     }
+-    if (state.isProcessing) {
++    if (state.isLooping) {
+       stopInterval();
+       autoChatBtn.textContent = "Auto Chat";
+       autoChatBtn.classList.remove("toggle-on");
+     } else {
+-      startScheduledTask(chatInputContent, messageDelay);
++      startScheduledTask(messageText, delayValue);
+       autoChatBtn.textContent = "Stop Chat";
+       autoChatBtn.classList.add("toggle-on");
+     }
+   };
+   const patchBtn = toolsPanel.querySelector("#patchBtn");
+   patchBtn.onclick = () => {
+-    interceptTextEncoder();
++    initNetworkInterceptor();
+     patchBtn.textContent = "Special Chars Active";
+     patchBtn.disabled = true;
+     patchBtn.classList.add("toggle-on");
+   };
+   toolsPanel.querySelector("#spoofBtn").onclick = () => {
+-    const randomIdentifier = generateRandomString(8);
+-    if (typeText(".play-game .el-input__inner", randomIdentifier)) {
++    const randomString = generateRandomString(8);
++    if (simulateTyping(".play-game .el-input__inner", randomString)) {
+       showNotification("Name spoofed");
+-    } else if (typeText(".new-tribe .el-input__inner", randomIdentifier)) {
++    } else if (simulateTyping(".new-tribe .el-input__inner", randomString)) {
+       showNotification("Tribe name spoofed");
+     } else {
+       showNotification("No name input found");
+     }
+   };
+   const spinBtn = toolsPanel.querySelector("#spinBtn");
+   spinBtn.onclick = () => {
+     toggleMouseSimulation();
+-    spinBtn.textContent = state.secondaryIntervalId ? "Stop Spin" : "Auto Spin";
+-    spinBtn.classList.toggle("toggle-on", !!state.secondaryIntervalId);
++    spinBtn.textContent = state.animationInterval ? "Stop Spin" : "Auto Spin";
++    spinBtn.classList.toggle("toggle-on", !!state.animationInterval);
+   };
+   const spinKeyInput = toolsPanel.querySelector("#spinKeyInput");
+-  let lastKey = null;
+-  spinKeyInput.addEventListener("keydown", (keyboardEvent) => {
+-    keyboardEvent.preventDefault();
+-    lastKey = keyboardEvent.code || keyboardEvent.key;
+-    spinKeyInput.value = lastKey.replace("Key", "").toUpperCase();
++  let lastPressedKey = null;
++  spinKeyInput.addEventListener("keydown", (keydownEvent) => {
++    keydownEvent.preventDefault();
++    lastPressedKey = keydownEvent.code || keydownEvent.key;
++    spinKeyInput.value = lastPressedKey.replace("Key", "").toUpperCase();
+   });
+-  document.addEventListener("keydown", (shortcutEvent) => {
++  document.addEventListener("keydown", (keyupEvent) => {
+     if (
+-      lastKey &&
+-      shortcutEvent.code === lastKey &&
+-      !shortcutEvent.target.matches("input,textarea,button,select")
++      lastPressedKey &&
++      keyupEvent.code === lastPressedKey &&
++      !keyupEvent.target.matches("input,textarea,button,select")
+     ) {
+-      shortcutEvent.preventDefault();
++      keyupEvent.preventDefault();
+       toggleMouseSimulation();
+-      spinBtn.textContent = state.secondaryIntervalId
+-        ? "Stop Spin"
+-        : "Auto Spin";
+-      spinBtn.classList.toggle("toggle-on", !!state.secondaryIntervalId);
++      spinBtn.textContent = state.animationInterval ? "Stop Spin" : "Auto Spin";
++      spinBtn.classList.toggle("toggle-on", !!state.animationInterval);
+     }
+   });
+   const turnLeftKeyInput = toolsPanel.querySelector("#turnLeftKeyInput");
+   const turnRightKeyInput = toolsPanel.querySelector("#turnRightKeyInput");
+-  turnLeftKeyInput.value = state.currentKey.toUpperCase();
+-  turnRightKeyInput.value = state.currentKey_2.toUpperCase();
+-  turnLeftKeyInput.addEventListener("keydown", (contextMenuEvent) => {
+-    contextMenuEvent.preventDefault();
+-    contextMenuEvent.stopPropagation();
+-    state.currentKey = contextMenuEvent.key;
++  turnLeftKeyInput.value = state.keyQ.toUpperCase();
++  turnRightKeyInput.value = state.keyE.toUpperCase();
++  turnLeftKeyInput.addEventListener("keydown", (clickEvent) => {
++    clickEvent.preventDefault();
++    clickEvent.stopPropagation();
++    state.keyQ = clickEvent.key;
+     turnLeftKeyInput.value =
+-      contextMenuEvent.key.length === 1
+-        ? contextMenuEvent.key.toUpperCase()
+-        : contextMenuEvent.key;
++      clickEvent.key.length === 1
++        ? clickEvent.key.toUpperCase()
++        : clickEvent.key;
+   });
+-  turnRightKeyInput.addEventListener("keydown", (dragEvent) => {
+-    dragEvent.preventDefault();
+-    dragEvent.stopPropagation();
+-    state.currentKey_2 = dragEvent.key;
++  turnRightKeyInput.addEventListener("keydown", (contextEvent) => {
++    contextEvent.preventDefault();
++    contextEvent.stopPropagation();
++    state.keyE = contextEvent.key;
+     turnRightKeyInput.value =
+-      dragEvent.key.length === 1 ? dragEvent.key.toUpperCase() : dragEvent.key;
++      contextEvent.key.length === 1
++        ? contextEvent.key.toUpperCase()
++        : contextEvent.key;
+   });
++  const savedNameDisplay = toolsPanel.querySelector("#savedNameDisplay");
++  const setNameBtn = toolsPanel.querySelector("#setNameBtn");
++  const clearNameBtn = toolsPanel.querySelector("#clearNameBtn");
++  if (savedNameDisplay) {
++    savedNameDisplay.value = localStorage.getItem("autofill_name") || "";
++  }
++  if (setNameBtn) {
++    setNameBtn.onclick = () => {
++      const autofillName = savedNameDisplay.value.trim();
++      if (autofillName) {
++        localStorage.setItem("autofill_name", autofillName);
++        state.isMuted = false;
++        initNameAutofill();
++        showNotification("Name saved: " + autofillName);
++      }
++    };
++  }
++  if (clearNameBtn) {
++    clearNameBtn.onclick = () => {
++      localStorage.removeItem("autofill_name");
++      state.isMuted = false;
++      if (savedNameDisplay) {
++        savedNameDisplay.value = "";
++      }
++      showNotification("Autofill cleared");
++    };
++  }
+   makeDraggable(toolsPanel);
+   return toolsPanel;
+ }
+ function createVisionPanel() {
+@@ -237,57 +287,75 @@
+   visionPanel.style.cssText = "top:20px;right:20px;width:230px;";
+   visionPanel.innerHTML =
+     '\n      <div class="ast-header"><span class="ast-header-title">Astraphobia Client</span><button class="ast-header-min" id="visionMin">−</button></div>\n      <div class="ast-body" id="visionBody">\n        <span class="ast-section-label">Vision</span>\n        <button class="ast-btn patched" id="thresherBtn" disabled>Thresher Boost (Patched)</button>\n        <button class="ast-btn" id="astraVisionBtn">Astra-Vision</button>\n        <button class="ast-btn" id="smallMinimapBtn">Small Minimap</button>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">ESP</span>\n        <button class="ast-btn" id="espBtn">ESP</button>\n        <select class="ast-select" id="espModeSelect"><option value="players">Players</option><option value="food">Food</option></select>\n        <button class="ast-btn" id="trackNearestBtn">Track Nearest (F3)</button>\n        <button class="ast-btn" id="untrackBtn">Untrack (F4)</button>\n        <div class="ast-sep"></div>\n        <button class="ast-btn" id="espColorsToggleBtn" style="display:flex;align-items:center;justify-content:space-between;">\n          <span style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-sec,#888);">ESP Colors</span>\n          <span id="espColorsArrow" style="color:var(--text-sec,#888);font-size:12px;">▼</span>\n        </button>\n        <div id="espColorsSection" style="display:none;">\n          <div class="ast-key-row"><span>Close (&lt;500)</span><input type="color" id="espColorClose" value="#ff0000" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Medium (&lt;1500)</span><input type="color" id="espColorMedium" value="#ffff00" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Far (&lt;3000)</span><input type="color" id="espColorFar" value="#00ffff" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Very Far</span><input type="color" id="espColorVeryFar" value="#00ff00" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Tracked</span><input type="color" id="espColorTracked" value="#ff00ff" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Food Close</span><input type="color" id="espColorFoodClose" value="#00ff00" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Food Medium</span><input type="color" id="espColorFoodMedium" value="#88ff88" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Food Far</span><input type="color" id="espColorFoodFar" value="#44cc44" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n        </div>\n      </div>';
+   document.body.appendChild(visionPanel);
+-  const visionBodyElement = visionPanel.querySelector("#visionBody");
++  const visionBody = visionPanel.querySelector("#visionBody");
+   let isVisionHidden = false;
+   visionPanel.querySelector("#visionMin").onclick = (toggleEvent) => {
+     toggleEvent.stopPropagation();
+     isVisionHidden = !isVisionHidden;
+-    visionBodyElement.style.display = isVisionHidden ? "none" : "block";
++    visionBody.style.display = isVisionHidden ? "none" : "block";
+     visionPanel.querySelector("#visionMin").textContent = isVisionHidden
+       ? "+"
+       : "−";
+   };
+-  visionPanel.querySelector("#thresherBtn").onclick = (boostEvent) => {
+-    boostEvent.preventDefault();
++  visionPanel.querySelector("#thresherBtn").onclick = (preventEvent) => {
++    preventEvent.preventDefault();
+     showNotification("Thresher boost has been patched");
+   };
+   const astraVisionBtn = visionPanel.querySelector("#astraVisionBtn");
+   astraVisionBtn.onclick = () => {
+     if (state.isEnabled) {
+       showNotification("Already active");
+       return;
+     }
+-    initGameHooks();
+-    initializeAstraVision();
++    initAntiDetection();
++    if (!playerData) {
++      showNotification("Loading... click again in 2s");
++      setTimeout(() => {
++        activateAstraVision();
++        astraVisionBtn.textContent = "Astra-Vision ✓";
++        astraVisionBtn.classList.add("toggle-on");
++        astraVisionBtn.disabled = true;
++      }, 2000);
++      return;
++    }
++    activateAstraVision();
+     astraVisionBtn.textContent = "Astra-Vision ✓";
+     astraVisionBtn.classList.add("toggle-on");
+     astraVisionBtn.disabled = true;
+   };
+   const smallMinimapBtn = visionPanel.querySelector("#smallMinimapBtn");
+   smallMinimapBtn.onclick = () => {
+-    initGameHooks();
++    initAntiDetection();
++    if (!playerData) {
++      showNotification("Not in game yet");
++      return;
++    }
++    if (!playerData.minimap) {
++      showNotification("Minimap not available");
++      return;
++    }
+     toggleMinimapSize();
+     smallMinimapBtn.textContent = state.isMinimapSmall
+       ? "Minimap: Small"
+       : "Small Minimap";
+     smallMinimapBtn.classList.toggle("toggle-on", state.isMinimapSmall);
+   };
+   const espBtn = visionPanel.querySelector("#espBtn");
+   espBtn.onclick = () => {
+-    clearTracking();
++    toggleEsp();
+     espBtn.textContent = window.espEnabled ? "ESP ✓" : "ESP";
+     espBtn.classList.toggle("toggle-on", window.espEnabled);
+   };
+   const espModeSelect = visionPanel.querySelector("#espModeSelect");
+   espModeSelect.value = window.espMode || "players";
+-  espModeSelect.onchange = (espModeEvent) => {
+-    window.espMode = espModeEvent.target.value;
+-    showNotification("ESP: " + espModeEvent.target.value);
++  espModeSelect.onchange = (changeEvent) => {
++    window.espMode = changeEvent.target.value;
++    showNotification("ESP: " + changeEvent.target.value);
+   };
+   visionPanel.querySelector("#trackNearestBtn").onclick = () => trackPlayer();
+-  visionPanel.querySelector("#untrackBtn").onclick = () => clearTracking_2();
++  visionPanel.querySelector("#untrackBtn").onclick = () => clearTracking();
+   const espColorsToggleBtn = visionPanel.querySelector("#espColorsToggleBtn");
+   const espColorsSection = visionPanel.querySelector("#espColorsSection");
+   const espColorsArrow = visionPanel.querySelector("#espColorsArrow");
+   let isEspColorsVisible = false;
+@@ -295,9 +363,9 @@
+     isEspColorsVisible = !isEspColorsVisible;
+     espColorsSection.style.display = isEspColorsVisible ? "block" : "none";
+     espColorsArrow.textContent = isEspColorsVisible ? "▲" : "▼";
+   };
+-  const espColorSettings = {
++  const espColorConfig = {
+     espColorClose: "close",
+     espColorMedium: "medium",
+     espColorFar: "far",
+     espColorVeryFar: "veryFar",
+@@ -305,12 +373,12 @@
+     espColorFoodClose: "foodClose",
+     espColorFoodMedium: "foodMedium",
+     espColorFoodFar: "foodFar",
+   };
+-  Object.entries(espColorSettings).forEach(([elementId, colorKey]) => {
+-    const targetElement = visionPanel.querySelector("#" + elementId);
+-    if (targetElement) {
+-      targetElement.addEventListener("input", (event) => {
++  Object.entries(espColorConfig).forEach(([elementId, colorKey]) => {
++    const element = visionPanel.querySelector("#" + elementId);
++    if (element) {
++      element.addEventListener("input", (event) => {
+         window.espColors[colorKey] = event.target.value;
+       });
+     }
+   });
+@@ -325,14 +393,14 @@
+   combatPanel.innerHTML =
+     '\n      <div class="ast-header"><span class="ast-header-title">Astraphobia Client</span><button class="ast-header-min" id="combatMin">−</button></div>\n      <div class="ast-body" id="combatBody">\n        <span class="ast-section-label">Combat</span>\n        <button class="ast-btn" id="lockBtn">Lock Nearest</button>\n        <div class="ast-key-row"><span>Lock Key</span><input class="ast-key-capture" id="lockKeyInput" type="text" value="T" readonly></div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Tracking</span>\n        <div class="ast-key-row" style="margin-top:4px;">\n          <span>Trail Color</span>\n          <input type="color" id="trailColorPicker" value="#ff9600" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;background:var(--bg2,#242424);cursor:pointer;padding:0;">\n        </div>\n        <div class="ast-key-row"><span>Trace Key (re-targets)</span><input class="ast-key-capture" id="traceKeyInput" type="text" value="H" readonly></div>\n      </div>';
+   document.body.appendChild(combatPanel);
+   const combatBody = combatPanel.querySelector("#combatBody");
+-  let isCombatMinimized = false;
++  let isCombatPanelMinimized = false;
+   combatPanel.querySelector("#combatMin").onclick = (toggleEvent) => {
+     toggleEvent.stopPropagation();
+-    isCombatMinimized = !isCombatMinimized;
+-    combatBody.style.display = isCombatMinimized ? "none" : "block";
+-    combatPanel.querySelector("#combatMin").textContent = isCombatMinimized
++    isCombatPanelMinimized = !isCombatPanelMinimized;
++    combatBody.style.display = isCombatPanelMinimized ? "none" : "block";
++    combatPanel.querySelector("#combatMin").textContent = isCombatPanelMinimized
+       ? "+"
+       : "−";
+   };
+   const lockButton = combatPanel.querySelector("#lockBtn");
+@@ -346,10 +414,10 @@
+     lockKeyInput.value =
+       lockEvent.key.length === 1 ? lockEvent.key.toUpperCase() : lockEvent.key;
+   });
+   const trailColorPicker = combatPanel.querySelector("#trailColorPicker");
+-  trailColorPicker.addEventListener("input", (colorChangeEvent) => {
+-    const colorValue = colorChangeEvent.target.value;
++  trailColorPicker.addEventListener("input", (colorEvent) => {
++    const colorValue = colorEvent.target.value;
+     window.entityTrailColor = {
+       r: parseInt(colorValue.slice(1, 3), 16),
+       g: parseInt(colorValue.slice(3, 5), 16),
+       b: parseInt(colorValue.slice(5, 7), 16),
+@@ -377,21 +445,22 @@
+   automationPanel.innerHTML =
+     '\n      <div class="ast-header"><span class="ast-header-title">Astraphobia Client</span><button class="ast-header-min" id="autoMin">−</button></div>\n      <div class="ast-body" id="autoBody">\n        <span class="ast-section-label">Automation</span>\n        <button class="ast-btn" id="autoDodgeBtn">Auto Dodge</button>\n        <button class="ast-btn" id="autoFarmBtn">Auto Farm (F5)</button>\n        <select class="ast-select" id="farmModeSelect" style="margin-top:4px;">\n          <option value="nearest">Nearest Food</option>\n          <option value="cluster">Food Clusters</option>\n          <option value="patrol">Patrol Route</option>\n        </select>\n        <div class="ast-toggle-row"><span>Boost</span><div class="ast-switch"><input type="checkbox" id="farmBoostToggle" checked><span class="slider"></span></div></div>\n        <div class="ast-toggle-row"><span>Auto Evolve</span><div class="ast-switch"><input type="checkbox" id="farmEvolveToggle" checked><span class="slider"></span></div></div>\n        <div class="ast-toggle-row"><span>Avoid Players</span><div class="ast-switch"><input type="checkbox" id="farmAvoidToggle" checked><span class="slider"></span></div></div>\n      </div>';
+   document.body.appendChild(automationPanel);
+   const automationBody = automationPanel.querySelector("#autoBody");
+-  let isAutoMinimized = false;
++  let isAutomationPanelMinimized = false;
+   automationPanel.querySelector("#autoMin").onclick = (menuToggleEvent) => {
+     menuToggleEvent.stopPropagation();
+-    isAutoMinimized = !isAutoMinimized;
+-    automationBody.style.display = isAutoMinimized ? "none" : "block";
+-    automationPanel.querySelector("#autoMin").textContent = isAutoMinimized
+-      ? "+"
+-      : "−";
++    isAutomationPanelMinimized = !isAutomationPanelMinimized;
++    automationBody.style.display = isAutomationPanelMinimized
++      ? "none"
++      : "block";
++    automationPanel.querySelector("#autoMin").textContent =
++      isAutomationPanelMinimized ? "+" : "−";
+   };
+   const autoDodgeButton = automationPanel.querySelector("#autoDodgeBtn");
+   autoDodgeButton.onclick = () => {
+     if (window.autoDodgeEnabled) {
+-      clearTracking_3();
++      disableAutoDodge();
+       autoDodgeButton.textContent = "Auto Dodge";
+       autoDodgeButton.classList.remove("toggle-on");
+     } else {
+       enableAutoDodge();
+@@ -428,28 +497,28 @@
+   farmBoostToggle.checked = window.autoFarmBoost;
+   farmEvolveToggle.checked = window.autoFarmEvolve;
+   farmAvoidToggle.checked = window.autoFarmAvoidPlayers;
+   const farmBoostLabel = farmBoostToggle.nextElementSibling;
+-  farmBoostLabel.addEventListener("click", (farmOptionEvent1) => {
+-    farmOptionEvent1.stopPropagation();
++  farmBoostLabel.addEventListener("click", (autoFarmToggleEvent) => {
++    autoFarmToggleEvent.stopPropagation();
+     farmBoostToggle.checked = !farmBoostToggle.checked;
+     window.autoFarmBoost = farmBoostToggle.checked;
+     showNotification(
+       farmBoostToggle.checked ? "Farm boost ON" : "Farm boost OFF",
+     );
+   });
+   const farmEvolveLabel = farmEvolveToggle.nextElementSibling;
+-  farmEvolveLabel.addEventListener("click", (farmOptionEvent2) => {
+-    farmOptionEvent2.stopPropagation();
++  farmEvolveLabel.addEventListener("click", (settingToggleEvent) => {
++    settingToggleEvent.stopPropagation();
+     farmEvolveToggle.checked = !farmEvolveToggle.checked;
+     window.autoFarmEvolve = farmEvolveToggle.checked;
+     showNotification(
+       farmEvolveToggle.checked ? "Auto evolve ON" : "Auto evolve OFF",
+     );
+   });
+   const farmAvoidLabel = farmAvoidToggle.nextElementSibling;
+-  farmAvoidLabel.addEventListener("click", (farmOptionEvent3) => {
+-    farmOptionEvent3.stopPropagation();
++  farmAvoidLabel.addEventListener("click", (optionToggleEvent) => {
++    optionToggleEvent.stopPropagation();
+     farmAvoidToggle.checked = !farmAvoidToggle.checked;
+     window.autoFarmAvoidPlayers = farmAvoidToggle.checked;
+     showNotification(
+       farmAvoidToggle.checked ? "Avoid players ON" : "Avoid players OFF",
+@@ -466,26 +535,24 @@
+   settingsPanel.innerHTML =
+     '\n      <div class="ast-header"><span class="ast-header-title">Settings</span><button class="ast-header-min" id="settingsMin">−</button></div>\n      <div class="ast-body" id="settingsBody">\n        <div class="ast-key-row"><span>Toggle UI</span><input class="ast-key-capture" id="toggleKeyInput" type="text" value="SHIFT" readonly></div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Background</span>\n        <div class="ast-row"><input class="ast-input" type="text" id="bgUrl" placeholder="Image URL..." style="flex:1;"><button class="ast-btn" id="applyBg" style="width:auto;padding:6px 10px;margin:0;">Set</button></div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Theme</span>\n        <select class="ast-select" id="themeSelect">\n          <option value="grey">Grey</option><option value="blue">Blue</option><option value="red">Red</option>\n          <option value="green">Green</option><option value="pink">Pink</option><option value="starwars">Star Wars</option>\n          <option value="kfc">KFC</option><option value="halloween">Halloween 🔒</option>\n        </select>\n        <div class="ast-sep"></div>\n        <button class="ast-btn" id="customThemeToggleBtn" style="display:flex;align-items:center;justify-content:space-between;">\n          <span style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-sec,#888);">Create Theme</span>\n          <span id="customThemeArrow" style="color:var(--text-sec,#888);font-size:12px;">▼</span>\n        </button>\n        <div id="customThemeSection" style="display:none;padding-top:4px;">\n          <input class="ast-input" type="text" id="customThemeName" placeholder="Theme name..." style="width:100%;box-sizing:border-box;margin-bottom:4px;">\n<div class="ast-key-row"><span>Accent</span><input type="color" id="ctAcc" value="#888888" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n<div class="ast-key-row"><span>Background</span><input type="color" id="ctBg" value="#1a1a1a" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n<div class="ast-key-row"><span>Panel</span><input type="color" id="ctPanel" value="#242424" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n<button class="ast-btn" id="saveCustomTheme" style="margin-top:4px;">Save Theme</button>\n        </div>\n        <div class="ast-sep"></div>\n        <button class="ast-btn" id="myThemesToggleBtn" style="display:flex;align-items:center;justify-content:space-between;">\n          <span style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-sec,#888);">My Themes</span>\n          <span id="myThemesArrow" style="color:var(--text-sec,#888);font-size:12px;">▼</span>\n        </button>\n        <div id="myThemesSection" style="display:none;padding-top:4px;">\n          <div id="customThemeList"></div>\n          <div id="noThemesMsg" style="font-size:11px;color:#555;text-align:center;padding:8px 0;">No custom themes yet</div>\n        </div>\n      </div>';
+   document.body.appendChild(settingsPanel);
+   const settingsBody = settingsPanel.querySelector("#settingsBody");
+-  let isSettingsHidden = false;
+-  settingsPanel.querySelector("#settingsMin").onclick = (event) => {
+-    event.stopPropagation();
+-    isSettingsHidden = !isSettingsHidden;
+-    settingsBody.style.display = isSettingsHidden ? "none" : "block";
+-    settingsPanel.querySelector("#settingsMin").textContent = isSettingsHidden
++  let isSettingsExpanded = false;
++  settingsPanel.querySelector("#settingsMin").onclick = (toggleEvent) => {
++    toggleEvent.stopPropagation();
++    isSettingsExpanded = !isSettingsExpanded;
++    settingsBody.style.display = isSettingsExpanded ? "none" : "block";
++    settingsPanel.querySelector("#settingsMin").textContent = isSettingsExpanded
+       ? "+"
+       : "−";
+   };
+   const toggleKeyInput = settingsPanel.querySelector("#toggleKeyInput");
+-  toggleKeyInput.value = state.pressedKey.toUpperCase();
+-  toggleKeyInput.addEventListener("keydown", (keyboardEvent) => {
+-    keyboardEvent.preventDefault();
+-    state.pressedKey = keyboardEvent.key;
++  toggleKeyInput.value = state.activeKey.toUpperCase();
++  toggleKeyInput.addEventListener("keydown", (keyEvent) => {
++    keyEvent.preventDefault();
++    state.activeKey = keyEvent.key;
+     toggleKeyInput.value =
+-      keyboardEvent.key.length === 1
+-        ? keyboardEvent.key.toUpperCase()
+-        : keyboardEvent.key;
++      keyEvent.key.length === 1 ? keyEvent.key.toUpperCase() : keyEvent.key;
+   });
+   const bgUrlInput = settingsPanel.querySelector("#bgUrl");
+   bgUrlInput.value = localStorage.getItem("bgUrl") || "";
+   settingsPanel.querySelector("#applyBg").onclick = () => {
+@@ -494,12 +561,12 @@
+       showNotification("Enter a URL");
+       return;
+     }
+     localStorage.setItem("bgUrl", backgroundUrl);
+-    initBackground();
++    initBackgroundImage();
+     showNotification("Background applied");
+   };
+-  const themeSelect = settingsPanel.querySelector("#themeSelect");
++  const themeSelectElement = settingsPanel.querySelector("#themeSelect");
+   const currentTheme = localStorage.getItem("theme") || "grey";
+   const customThemes = JSON.parse(localStorage.getItem("customThemes") || "{}");
+   const presetThemes = [
+     "grey",
+@@ -510,17 +577,17 @@
+     "starwars",
+     "kfc",
+     "halloween",
+   ];
+-  themeSelect.value =
++  themeSelectElement.value =
+     presetThemes.includes(currentTheme) || customThemes[currentTheme]
+       ? currentTheme
+       : "grey";
+-  themeSelect.onchange = (themeChangeEvent) => {
++  themeSelectElement.onchange = (themeChangeEvent) => {
+     const selectedTheme = themeChangeEvent.target.value;
+     if (selectedTheme === "halloween") {
+-      showHalloweenModal((isHalloween) => {
+-        if (isHalloween) {
++      showHalloweenCodeModal((isHalloweenTheme) => {
++        if (isHalloweenTheme) {
+           applyTheme("halloween");
+         } else {
+           themeChangeEvent.target.value =
+             localStorage.getItem("theme") || "grey";
+@@ -531,60 +598,61 @@
+       showNotification("Theme: " + selectedTheme);
+     }
+   };
+   const renderCustomThemes = () => {
+-    const customThemeList = settingsPanel.querySelector("#customThemeList");
+-    const noThemesMessage = settingsPanel.querySelector("#noThemesMsg");
+-    const customThemes = JSON.parse(
++    const customThemeListElement =
++      settingsPanel.querySelector("#customThemeList");
++    const noThemesMsgElement = settingsPanel.querySelector("#noThemesMsg");
++    const customThemesData = JSON.parse(
+       localStorage.getItem("customThemes") || "{}",
+     );
+-    const customThemeKeys = Object.keys(customThemes);
+-    customThemeList.innerHTML = "";
+-    noThemesMessage.style.display =
++    const customThemeKeys = Object.keys(customThemesData);
++    customThemeListElement.innerHTML = "";
++    noThemesMsgElement.style.display =
+       customThemeKeys.length === 0 ? "block" : "none";
+-    customThemeKeys.forEach((selectedTheme) => {
+-      const themeElement = document.createElement("div");
+-      themeElement.style.cssText = "display:flex;gap:4px;margin-bottom:3px;";
+-      const isThemeActive = localStorage.getItem("theme") === selectedTheme;
+-      themeElement.innerHTML =
++    customThemeKeys.forEach((themeName) => {
++      const themeDiv = document.createElement("div");
++      themeDiv.style.cssText = "display:flex;gap:4px;margin-bottom:3px;";
++      const isThemeActive = localStorage.getItem("theme") === themeName;
++      themeDiv.innerHTML =
+         '\n          <button class="ast-btn' +
+         (isThemeActive ? " toggle-on" : "") +
+         '" style="flex:1;margin:0;">' +
+-        selectedTheme +
++        themeName +
+         '</button>\n          <button class="ast-btn" style="width:32px;margin:0;text-align:center;color:#f44336;">✕</button>';
+-      themeElement.querySelectorAll("button")[0].onclick = () => {
+-        applyTheme(selectedTheme);
+-        showNotification("Theme: " + selectedTheme);
++      themeDiv.querySelectorAll("button")[0].onclick = () => {
++        applyTheme(themeName);
++        showNotification("Theme: " + themeName);
+         renderCustomThemes();
+       };
+-      themeElement.querySelectorAll("button")[1].onclick = () => {
++      themeDiv.querySelectorAll("button")[1].onclick = () => {
+         const customThemes = JSON.parse(
+           localStorage.getItem("customThemes") || "{}",
+         );
+-        delete customThemes[selectedTheme];
++        delete customThemes[themeName];
+         localStorage.setItem("customThemes", JSON.stringify(customThemes));
+-        if (localStorage.getItem("theme") === selectedTheme) {
++        if (localStorage.getItem("theme") === themeName) {
+           applyTheme("grey");
+-          themeSelect.value = "grey";
++          themeSelectElement.value = "grey";
+           showNotification("Theme reset to Grey");
+         } else {
+-          showNotification("Deleted: " + selectedTheme);
++          showNotification("Deleted: " + themeName);
+         }
+         renderCustomThemes();
+       };
+-      customThemeList.appendChild(themeElement);
++      customThemeListElement.appendChild(themeDiv);
+     });
+   };
+   renderCustomThemes();
+   settingsPanel.querySelector("#saveCustomTheme").onclick = () => {
+-    const customThemeName = settingsPanel
++    const inputThemeName = settingsPanel
+       .querySelector("#customThemeName")
+       .value.trim();
+-    if (!customThemeName) {
++    if (!inputThemeName) {
+       showNotification("Enter a theme name");
+       return;
+     }
+-    const availableThemes = [
++    const presetThemes = [
+       "grey",
+       "blue",
+       "red",
+       "green",
+@@ -592,34 +660,34 @@
+       "starwars",
+       "kfc",
+       "halloween",
+     ];
+-    if (availableThemes.includes(customThemeName.toLowerCase())) {
++    if (presetThemes.includes(inputThemeName.toLowerCase())) {
+       showNotification("Cannot use built-in theme name");
+       return;
+     }
+-    const accountValue = settingsPanel.querySelector("#ctAcc").value;
++    const accentColor = settingsPanel.querySelector("#ctAcc").value;
+     const themeBgColor = settingsPanel.querySelector("#ctBg").value;
+     const themePanelColor = settingsPanel.querySelector("#ctPanel").value;
+-    const red = parseInt(accountValue.slice(1, 3), 16);
+-    const green = parseInt(accountValue.slice(3, 5), 16);
+-    const blue = parseInt(accountValue.slice(5, 7), 16);
++    const red = parseInt(accentColor.slice(1, 3), 16);
++    const green = parseInt(accentColor.slice(3, 5), 16);
++    const blue = parseInt(accentColor.slice(5, 7), 16);
+     const adjustColor = (hexColor) => {
+-      const redComponent = parseInt(hexColor.slice(1, 3), 16) + 10;
+-      const greenComponent = parseInt(hexColor.slice(3, 5), 16) + 10;
+-      const blueComponent = parseInt(hexColor.slice(5, 7), 16) + 10;
++      const redChannel = parseInt(hexColor.slice(1, 3), 16) + 10;
++      const greenChannel = parseInt(hexColor.slice(3, 5), 16) + 10;
++      const blueChannel = parseInt(hexColor.slice(5, 7), 16) + 10;
+       return (
+         "#" +
+-        [redComponent, greenComponent, blueComponent]
++        [redChannel, greenChannel, blueChannel]
+           .map((colorValue) =>
+             Math.min(255, colorValue).toString(16).padStart(2, "0"),
+           )
+           .join("")
+       );
+     };
+     const themeSettings = {
+-      acc: accountValue,
+-      accH: adjustColor(accountValue),
++      acc: accentColor,
++      accH: adjustColor(accentColor),
+       accRGB: red + "," + green + "," + blue,
+       text: "#e0e0e0",
+       textSec: "#888",
+       bg1: themeBgColor,
+@@ -627,52 +695,135 @@
+       bg3: adjustColor(themePanelColor),
+       border: "#333",
+       hover: adjustColor(themePanelColor),
+     };
+-    const customThemes_2 = JSON.parse(
++    const customThemes = JSON.parse(
+       localStorage.getItem("customThemes") || "{}",
+     );
+-    customThemes_2[customThemeName] = themeSettings;
+-    localStorage.setItem("customThemes", JSON.stringify(customThemes_2));
+-    applyTheme(customThemeName);
++    customThemes[inputThemeName] = themeSettings;
++    localStorage.setItem("customThemes", JSON.stringify(customThemes));
++    applyTheme(inputThemeName);
+     settingsPanel.querySelector("#customThemeName").value = "";
+     renderCustomThemes();
+-    showNotification("Theme saved: " + customThemeName);
++    showNotification("Theme saved: " + inputThemeName);
+   };
+   const customThemeToggleBtn = settingsPanel.querySelector(
+     "#customThemeToggleBtn",
+   );
+   const customThemeSection = settingsPanel.querySelector("#customThemeSection");
+   const customThemeArrow = settingsPanel.querySelector("#customThemeArrow");
+-  let isCustomThemeVisible = false;
++  let isMyThemesExpanded = false;
+   customThemeToggleBtn.onclick = () => {
+-    isCustomThemeVisible = !isCustomThemeVisible;
+-    customThemeSection.style.display = isCustomThemeVisible ? "block" : "none";
+-    customThemeArrow.textContent = isCustomThemeVisible ? "▲" : "▼";
++    isMyThemesExpanded = !isMyThemesExpanded;
++    customThemeSection.style.display = isMyThemesExpanded ? "block" : "none";
++    customThemeArrow.textContent = isMyThemesExpanded ? "▲" : "▼";
+   };
+   const myThemesToggleBtn = settingsPanel.querySelector("#myThemesToggleBtn");
+-  const myThemesSection = settingsPanel.querySelector("#myThemesSection");
+-  const myThemesArrow = settingsPanel.querySelector("#myThemesArrow");
+-  let isThemesSectionVisible = false;
++  const themesSection = settingsPanel.querySelector("#myThemesSection");
++  const themesArrow = settingsPanel.querySelector("#myThemesArrow");
++  let isThemesExpanded = false;
+   myThemesToggleBtn.onclick = () => {
+-    isThemesSectionVisible = !isThemesSectionVisible;
+-    myThemesSection.style.display = isThemesSectionVisible ? "block" : "none";
+-    myThemesArrow.textContent = isThemesSectionVisible ? "▲" : "▼";
+-    if (isThemesSectionVisible) {
++    isThemesExpanded = !isThemesExpanded;
++    themesSection.style.display = isThemesExpanded ? "block" : "none";
++    themesArrow.textContent = isThemesExpanded ? "▲" : "▼";
++    if (isThemesExpanded) {
+       renderCustomThemes();
+     }
+   };
+   makeDraggable(settingsPanel);
+   return settingsPanel;
+ }
+-function createUpdateHistoryPanel() {
++function createMusicPanel() {
++  const musicPanel = document.createElement("div");
++  musicPanel.id = "music-panel";
++  musicPanel.className = "ast-panel";
++  musicPanel.style.cssText = "bottom:20px;left:510px;width:240px;";
++  musicPanel.innerHTML =
++    '\n      <div class="ast-header"><span class="ast-header-title">Music Player</span><button class="ast-header-min" id="musicMin">−</button></div>\n      <div class="ast-body" id="musicBody">\n        <div id="musicTrackName" style="font-size:11px;color:var(--acc,#888);text-align:center;padding:4px 2px 8px 2px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">No tracks</div>\n\n        <div style="display:flex;gap:4px;justify-content:center;margin-bottom:8px;flex-wrap:wrap;">\n          <button class="ast-btn" id="musicPrevBtn" style="width:48px;margin:0;text-align:center;padding:6px 4px;">Prev</button>\n          <button class="ast-btn" id="musicPlayBtn" style="width:48px;margin:0;text-align:center;padding:6px 4px;">Play</button>\n          <button class="ast-btn" id="musicStopBtn" style="width:48px;margin:0;text-align:center;padding:6px 4px;">Stop</button>\n          <button class="ast-btn" id="musicNextBtn" style="width:48px;margin:0;text-align:center;padding:6px 4px;">Next</button>\n        </div>\n\n        <div style="display:flex;gap:4px;justify-content:center;margin-bottom:8px;">\n          <button class="ast-btn" id="musicLoopBtn" style="width:70px;margin:0;text-align:center;padding:6px 4px;">Loop</button>\n          <button class="ast-btn" id="musicShuffleBtn" style="width:70px;margin:0;text-align:center;padding:6px 4px;">Shuffle</button>\n        </div>\n\n        <div class="ast-key-row" style="margin-bottom:6px;">\n          <span>Volume</span>\n          <input type="range" id="musicVolume" min="0" max="1" step="0.05" value="0.5" style="width:120px;accent-color:var(--acc,#888);">\n        </div>\n\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Add Track</span>\n        <input class="ast-input" type="text" id="musicUrlInput" placeholder="Audio or YouTube URL..." style="width:100%;box-sizing:border-box;margin-bottom:4px;">\n        <input class="ast-input" type="text" id="musicNameInput" placeholder="Track name (optional)" style="width:100%;box-sizing:border-box;margin-bottom:4px;">\n        <button class="ast-btn" id="musicAddBtn">Add Track</button>\n\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Playlist</span>\n        <div id="musicTrackList" style="max-height:150px;overflow-y:auto;"></div>\n      </div>';
++  document.body.appendChild(musicPanel);
++  const musicBody = musicPanel.querySelector("#musicBody");
++  let isMusicHidden = false;
++  musicPanel.querySelector("#musicMin").onclick = (event) => {
++    event.stopPropagation();
++    isMusicHidden = !isMusicHidden;
++    musicBody.style.display = isMusicHidden ? "none" : "block";
++    musicPanel.querySelector("#musicMin").textContent = isMusicHidden
++      ? "+"
++      : "−";
++  };
++  musicPanel.querySelector("#musicPrevBtn").onclick = () => playPrevious();
++  musicPanel.querySelector("#musicStopBtn").onclick = () => stopPlayback();
++  musicPanel.querySelector("#musicNextBtn").onclick = () => playNextOrRandom();
++  const musicPlayButton = musicPanel.querySelector("#musicPlayBtn");
++  musicPlayButton.onclick = () => {
++    if (!musicPlaylist.length) {
++      showNotification("Add a track first");
++      return;
++    }
++    if (isPlaying()) {
++      pausePlayback();
++    } else {
++      resumePlayback();
++    }
++  };
++  const musicLoopButton = musicPanel.querySelector("#musicLoopBtn");
++  musicLoopButton.classList.toggle("toggle-on", state.isMusicLoopEnabled);
++  musicLoopButton.onclick = () => {
++    state.isMusicLoopEnabled = !state.isMusicLoopEnabled;
++    localStorage.setItem("musicLoop", state.isMusicLoopEnabled);
++    musicLoopButton.classList.toggle("toggle-on", state.isMusicLoopEnabled);
++    showNotification(state.isMusicLoopEnabled ? "Loop ON" : "Loop OFF");
++  };
++  const musicShuffleButton = musicPanel.querySelector("#musicShuffleBtn");
++  musicShuffleButton.classList.toggle("toggle-on", state.isMusicShuffleEnabled);
++  musicShuffleButton.onclick = () => {
++    state.isMusicShuffleEnabled = !state.isMusicShuffleEnabled;
++    localStorage.setItem("musicShuffle", state.isMusicShuffleEnabled);
++    musicShuffleButton.classList.toggle(
++      "toggle-on",
++      state.isMusicShuffleEnabled,
++    );
++    showNotification(
++      state.isMusicShuffleEnabled ? "Shuffle ON" : "Shuffle OFF",
++    );
++  };
++  const musicVolumeControl = musicPanel.querySelector("#musicVolume");
++  musicVolumeControl.value = state.musicVolume;
++  musicVolumeControl.oninput = (volumeEvent) => {
++    state.musicVolume = parseFloat(volumeEvent.target.value);
++    localStorage.setItem("musicVolume", state.musicVolume);
++    if (state.audioPlayer) {
++      state.audioPlayer.volume = state.musicVolume;
++    }
++    if (state.youtubePlayer) {
++      try {
++        state.youtubePlayer.setVolume(Math.round(state.musicVolume * 100));
++      } catch (unusedVariable) {}
++    }
++  };
++  musicPanel.querySelector("#musicAddBtn").onclick = () => {
++    const musicUrl = musicPanel.querySelector("#musicUrlInput").value.trim();
++    const musicName = musicPanel.querySelector("#musicNameInput").value.trim();
++    if (!musicUrl) {
++      showNotification("Enter a URL");
++      return;
++    }
++    musicPanel.querySelector("#musicUrlInput").value = "";
++    musicPanel.querySelector("#musicNameInput").value = "";
++    addTrackToPlaylist(musicUrl, musicName);
++  };
++  updateMusicPanel();
++  makeDraggable(musicPanel);
++  return musicPanel;
++}
++function createUpdatePanel() {
+   const updatePanel = document.createElement("div");
+   updatePanel.id = "update-history";
+   updatePanel.className = "ast-panel";
+   updatePanel.style.cssText =
+     "bottom:20px;left:20px;width:230px;max-height:280px;";
+   updatePanel.innerHTML =
+-    '\n      <div class="ast-header"><span class="ast-header-title">Updates</span><button class="ast-header-min" id="updateMin">−</button></div>\n      <div class="ast-body" id="updateBody" style="overflow-y:auto;max-height:220px;">\n        <ul class="ast-update-list">\n         <li><strong>v1.8</strong> — Fixed Astra-Vision (Shadows not being Removed), added Custom Themes Feature, fixed enable/disable for sliders, fixed ESP not working properly/gltiched.</li>\n          <li><strong>v1.7</strong> — New Features and Organization.</li>\n        </ul>\n      </div>';
++    '\n      <div class="ast-header"><span class="ast-header-title">Updates</span><button class="ast-header-min" id="updateMin">−</button></div>\n      <div class="ast-body" id="updateBody" style="overflow-y:auto;max-height:220px;">\n        <ul class="ast-update-list">\n        <li><strong>v1.9</strong> — Fixed ESP not fully working, added music player, and added auto-name (saves locally).</li>\n         <li><strong>v1.8</strong> — Fixed Astra-Vision (Shadows not being Removed), added Custom Themes Feature, fixed enable/disable for sliders, fixed ESP not working properly/gltiched.</li>\n          <li><strong>v1.7</strong> — New Features and Organization.</li>\n        </ul>\n      </div>';
+   document.body.appendChild(updatePanel);
+   const updateBody = updatePanel.querySelector("#updateBody");
+   let isMinimized = false;
+   updatePanel.querySelector("#updateMin").onclick = (event) => {
+@@ -693,30 +844,32 @@
+     "combat-panel",
+     "automation-panel",
+     "update-history",
+     "settings-panel",
++    "music-panel",
+   ];
+-  const mainPanel = document.getElementById("deep-tools-panel");
+-  if (!mainPanel) {
++  const deepToolsPanel = document.getElementById("deep-tools-panel");
++  if (!deepToolsPanel) {
+     return;
+   }
+-  const isMainPanelVisible = mainPanel.style.display !== "none";
++  const isVisible = deepToolsPanel.style.display !== "none";
+   panelIds.forEach((elementId) => {
+     const targetElement = document.getElementById(elementId);
+     if (targetElement) {
+-      targetElement.style.display = isMainPanelVisible ? "none" : "block";
++      targetElement.style.display = isVisible ? "none" : "block";
+     }
+   });
+ }
+ 
+ export {
+   refreshUI,
+-  showHalloweenModal,
++  showHalloweenCodeModal,
+   makeDraggable,
+   createToolsPanel,
+   createVisionPanel,
+   createCombatPanel,
+   createAutomationPanel,
+   createSettingsPanel,
+-  createUpdateHistoryPanel,
++  createMusicPanel,
++  createUpdatePanel,
+   togglePanelsVisibility,
+ };
+Index: src/ui/radar.js
+===================================================================
+--- src/ui/radar.js	v1.8
++++ src/ui/radar.js	v1.9
+@@ -1,6 +1,5 @@
+ import {
+-  radius,
+   getEntityPosition,
+   findEntityById,
+   dragState,
+   state,
+@@ -8,9 +7,9 @@
+ 
+ window.lockEnabled = false;
+ window.lockTargetId = null;
+ 
+-function updateLockButtonUI() {
++function updateLockButton() {
+   const lockButton = document.getElementById("lockBtn");
+   if (lockButton) {
+     lockButton.textContent =
+       window.lockEnabled && window.lockTargetId ? "Unlock" : "Lock Nearest";
+@@ -19,20 +18,20 @@
+       !!window.lockEnabled && !!window.lockTargetId,
+     );
+   }
+ }
+-function drawRadar(ctx, canvas, gameState) {
+-  if (!gameState || gameState.error) {
++function drawRadar(ctx, canvas, gameData) {
++  if (!gameData || gameData.error) {
+     return;
+   }
+   const radarSize = 150;
+   if (dragState.x === null) {
+     dragState.x = canvas.width - radarSize - 20;
+   }
+   const radarX = dragState.x;
+   const radarY = dragState.y;
+-  const worldSize = 5000;
+-  const radarScale = radarSize / (worldSize * 2);
++  const worldScale = 5000;
++  const pixelPerUnit = radarSize / (worldScale * 2);
+   window._radarBounds = {
+     x: radarX,
+     y: radarY,
+     w: radarSize,
+@@ -52,143 +51,140 @@
+   ctx.lineTo(radarX + radarSize / 2, radarY + radarSize);
+   ctx.moveTo(radarX, radarY + radarSize / 2);
+   ctx.lineTo(radarX + radarSize, radarY + radarSize / 2);
+   ctx.stroke();
+-  for (
+-    let circleRadiusFactor = 0.25;
+-    circleRadiusFactor <= 1;
+-    circleRadiusFactor += 0.25
+-  ) {
++  for (let circleStep = 0.25; circleStep <= 1; circleStep += 0.25) {
+     ctx.beginPath();
+     ctx.arc(
+       radarX + radarSize / 2,
+       radarY + radarSize / 2,
+-      (radarSize / 2) * circleRadiusFactor,
++      (radarSize / 2) * circleStep,
+       0,
+       Math.PI * 2,
+     );
+-    ctx.strokeStyle = "rgba(60,60,60," + (0.2 + circleRadiusFactor * 0.1) + ")";
++    ctx.strokeStyle = "rgba(60,60,60," + (0.2 + circleStep * 0.1) + ")";
+     ctx.stroke();
+   }
+   ctx.fillStyle = "#1db954";
+   ctx.beginPath();
+   ctx.arc(radarX + radarSize / 2, radarY + radarSize / 2, 4, 0, Math.PI * 2);
+   ctx.fill();
+-  const radarEntities =
+-    window.espMode === "players"
+-      ? gameState.players || []
+-      : gameState.food || [];
+-  radarEntities.forEach((target) => {
+-    const diffX = target.x - gameState.myPos.x;
+-    const diffY = target.y - gameState.myPos.y;
+-    let screenX = Math.max(
++  const entities =
++    window.espMode === "players" ? gameData.players || [] : gameData.food || [];
++  entities.forEach((targetEntity) => {
++    const diffX = targetEntity.x - gameData.myPos.x;
++    const diffY = targetEntity.y - gameData.myPos.y;
++    let circleX = Math.max(
+       radarX + 2,
+       Math.min(
+         radarX + radarSize - 2,
+-        radarX + radarSize / 2 + diffX * radarScale,
++        radarX + radarSize / 2 + diffX * pixelPerUnit,
+       ),
+     );
+-    let screenY = Math.max(
++    let circleY = Math.max(
+       radarY + 2,
+       Math.min(
+         radarY + radarSize - 2,
+-        radarY + radarSize / 2 + diffY * radarScale,
++        radarY + radarSize / 2 + diffY * pixelPerUnit,
+       ),
+     );
+     let espColor;
+-    let radius;
++    let circleRadius;
+     if (window.espMode === "players") {
+       espColor =
+-        target.distance < 500
++        targetEntity.distance < 500
+           ? window.espColors.close
+-          : target.distance < 1500
++          : targetEntity.distance < 1500
+             ? window.espColors.medium
+-            : target.distance < 3000
++            : targetEntity.distance < 3000
+               ? window.espColors.far
+               : "#888";
+-      radius = 3;
++      circleRadius = 3;
+     } else {
+       espColor = window.espColors.foodClose;
+-      radius = 1.5;
++      circleRadius = 1.5;
+     }
+-    if (window.espTrackedEntityId && target.id === window.espTrackedEntityId) {
++    if (
++      window.espTrackedEntityId &&
++      targetEntity.id === window.espTrackedEntityId
++    ) {
+       espColor = window.espColors.tracked;
+-      radius = 4;
++      circleRadius = 4;
+     }
+-    if (window.lockTargetId && target.id === window.lockTargetId) {
++    if (window.lockTargetId && targetEntity.id === window.lockTargetId) {
+       espColor = "#ff0000";
+-      radius = 4;
++      circleRadius = 4;
+     }
+     ctx.fillStyle = espColor;
+     ctx.beginPath();
+-    ctx.arc(screenX, screenY, radius, 0, Math.PI * 2);
++    ctx.arc(circleX, circleY, circleRadius, 0, Math.PI * 2);
+     ctx.fill();
+   });
+   if (window.entityTrailEnabled && window.entityTrailTargetId) {
+-    const targetId = findEntityById(window.entityTrailTargetId);
+-    if (targetId) {
+-      const targetEntity = getEntityPosition(targetId);
+-      if (targetEntity) {
+-        const offsetX = targetEntity.x - gameState.myPos.x;
+-        const offsetY = targetEntity.y - gameState.myPos.y;
++    const targetEntityId = findEntityById(window.entityTrailTargetId);
++    if (targetEntityId) {
++      const targetEntityPos = getEntityPosition(targetEntityId);
++      if (targetEntityPos) {
++        const deltaX = targetEntityPos.x - gameData.myPos.x;
++        const deltaY = targetEntityPos.y - gameData.myPos.y;
+         const renderX = Math.max(
+           radarX + 2,
+           Math.min(
+             radarX + radarSize - 2,
+-            radarX + radarSize / 2 + offsetX * radarScale,
++            radarX + radarSize / 2 + deltaX * pixelPerUnit,
+           ),
+         );
+         const renderY = Math.max(
+           radarY + 2,
+           Math.min(
+             radarY + radarSize - 2,
+-            radarY + radarSize / 2 + offsetY * radarScale,
++            radarY + radarSize / 2 + deltaY * pixelPerUnit,
+           ),
+         );
+-        const alpha = Math.sin(Date.now() / 200) * 0.3 + 0.7;
++        const opacity = Math.sin(Date.now() / 200) * 0.3 + 0.7;
+         const { r: red, g: green, b: blue } = window.entityTrailColor;
+-        const rgbString = red + "," + green + "," + blue;
+-        ctx.strokeStyle = "rgba(" + rgbString + "," + alpha + ")";
++        const rgbValue = red + "," + green + "," + blue;
++        ctx.strokeStyle = "rgba(" + rgbValue + "," + opacity + ")";
+         ctx.lineWidth = 2;
+         ctx.beginPath();
+         ctx.arc(renderX, renderY, 7, 0, Math.PI * 2);
+         ctx.stroke();
+-        ctx.strokeStyle = "rgba(" + rgbString + "," + alpha * 0.5 + ")";
++        ctx.strokeStyle = "rgba(" + rgbValue + "," + opacity * 0.5 + ")";
+         ctx.lineWidth = 4;
+         ctx.beginPath();
+         ctx.arc(renderX, renderY, 10, 0, Math.PI * 2);
+         ctx.stroke();
+-        ctx.fillStyle = "rgb(" + rgbString + ")";
++        ctx.fillStyle = "rgb(" + rgbValue + ")";
+         ctx.beginPath();
+         ctx.arc(renderX, renderY, 3, 0, Math.PI * 2);
+         ctx.fill();
+         if (window.entityTrailHistory.length > 1) {
+-          ctx.strokeStyle = "rgba(" + rgbString + ",0.3)";
++          ctx.strokeStyle = "rgba(" + rgbValue + ",0.3)";
+           ctx.lineWidth = 1;
+           ctx.beginPath();
+-          window.entityTrailHistory.forEach((entity, index) => {
+-            const drawX = Math.max(
++          window.entityTrailHistory.forEach((entity, entityIndex) => {
++            const lineX = Math.max(
+               radarX + 2,
+               Math.min(
+                 radarX + radarSize - 2,
+                 radarX +
+                   radarSize / 2 +
+-                  (entity.x - gameState.myPos.x) * radarScale,
++                  (entity.x - gameData.myPos.x) * pixelPerUnit,
+               ),
+             );
+-            const drawY = Math.max(
++            const lineY = Math.max(
+               radarY + 2,
+               Math.min(
+                 radarY + radarSize - 2,
+                 radarY +
+                   radarSize / 2 +
+-                  (entity.y - gameState.myPos.y) * radarScale,
++                  (entity.y - gameData.myPos.y) * pixelPerUnit,
+               ),
+             );
+-            if (index === 0) {
+-              ctx.moveTo(drawX, drawY);
++            if (entityIndex === 0) {
++              ctx.moveTo(lineX, lineY);
+             } else {
+-              ctx.lineTo(drawX, drawY);
++              ctx.lineTo(lineX, lineY);
+             }
+           });
+           ctx.stroke();
+         }
+@@ -202,9 +198,9 @@
+   ctx.fillStyle = "#888";
+   ctx.font = "10px monospace";
+   ctx.fillText("RADAR", radarX + 5, radarY + radarSize + 14);
+   ctx.fillText(
+-    (window.espMode === "players" ? "P:" : "F:") + radarEntities.length,
++    (window.espMode === "players" ? "P:" : "F:") + entities.length,
+     radarX + radarSize - 50,
+     radarY + radarSize + 14,
+   );
+ }
+@@ -214,24 +210,24 @@
+   }
+   window._radarDragInit = true;
+   document.addEventListener(
+     "mousedown",
+-    (renderRadar) => {
++    (updateRadar) => {
+       const radarBounds = window._radarBounds;
+       if (!radarBounds || !window.espEnabled) {
+         return;
+       }
+       if (
+-        renderRadar.clientX >= radarBounds.x &&
+-        renderRadar.clientX <= radarBounds.x + radarBounds.w &&
+-        renderRadar.clientY >= radarBounds.y &&
+-        renderRadar.clientY <= radarBounds.y + radarBounds.h
++        updateRadar.clientX >= radarBounds.x &&
++        updateRadar.clientX <= radarBounds.x + radarBounds.w &&
++        updateRadar.clientY >= radarBounds.y &&
++        updateRadar.clientY <= radarBounds.y + radarBounds.h
+       ) {
+         dragState.dragging = true;
+-        dragState.offsetX = renderRadar.clientX - radarBounds.x;
+-        dragState.offsetY = renderRadar.clientY - radarBounds.y;
+-        renderRadar.preventDefault();
+-        renderRadar.stopPropagation();
++        dragState.offsetX = updateRadar.clientX - radarBounds.x;
++        dragState.offsetY = updateRadar.clientY - radarBounds.y;
++        updateRadar.preventDefault();
++        updateRadar.stopPropagation();
+       }
+     },
+     true,
+   );
+@@ -258,5 +254,5 @@
+     true,
+   );
+ }
+ 
+-export { updateLockButtonUI, drawRadar, initRadarDrag };
++export { updateLockButton, drawRadar, initRadarDrag };
+Index: src/ui/theme.js
+===================================================================
+--- src/ui/theme.js	v1.8
++++ src/ui/theme.js	v1.9
+@@ -2,9 +2,9 @@
+ 
+ function applyTheme(themeName) {
+   const rootElement = document.documentElement;
+   const savedThemes = JSON.parse(localStorage.getItem("customThemes") || "{}");
+-  const defaultThemes = {
++  const themeDefinitions = {
+     grey: {
+       acc: "#888888",
+       accH: "#aaaaaa",
+       accRGB: "136,136,136",
+@@ -101,10 +101,10 @@
+       hover: "#2e2e2e",
+     },
+     ...savedThemes,
+   };
+-  const selectedTheme = defaultThemes[themeName] ? themeName : "grey";
+-  const themeValue = defaultThemes[selectedTheme];
++  const currentTheme = themeDefinitions[themeName] ? themeName : "grey";
++  const themeValue = themeDefinitions[currentTheme];
+   Object.entries({
+     "--acc": themeValue.acc,
+     "--acc-h": themeValue.accH,
+     "--acc-rgb": themeValue.accRGB,
+@@ -117,29 +117,29 @@
+     "--hvr": themeValue.hover,
+   }).forEach(([styleProperty, styleValue]) =>
+     rootElement.style.setProperty(styleProperty, styleValue),
+   );
+-  localStorage.setItem("theme", selectedTheme);
++  localStorage.setItem("theme", currentTheme);
+ }
+-function initBackground() {
+-  const backgroundUrl = localStorage.getItem("bgUrl") || "";
+-  if (!backgroundUrl) {
++function initBackgroundImage() {
++  const bgUrl = localStorage.getItem("bgUrl") || "";
++  if (!bgUrl) {
+     return;
+   }
+   const setBackgroundImage = () => {
+     const homeBackground = document.querySelector(".home-bg");
+     if (homeBackground) {
+       homeBackground.style.setProperty(
+         "background-image",
+-        'url("' + backgroundUrl + '")',
++        'url("' + bgUrl + '")',
+         "important",
+       );
+     }
+   };
+   if (!document.querySelector(".home-bg")) {
+-    const bgCheckInterval = setInterval(() => {
++    const checkInterval = setInterval(() => {
+       if (document.querySelector(".home-bg")) {
+-        clearInterval(bgCheckInterval);
++        clearInterval(checkInterval);
+         setBackgroundImage();
+       }
+     }, 100);
+   } else {
+@@ -152,5 +152,5 @@
+     "\n      .ast-panel{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg1,#1a1a1a);color:var(--text,#e0e0e0);border-radius:6px;position:fixed;z-index:99999;user-select:none;cursor:move;font-size:13px;min-width:220px;overflow:hidden;}\n      .ast-header{background:var(--header-bg,var(--bg2,#242424));padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--bdr,#333);}\n      .ast-header-title{font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--header-title,var(--acc,#888));}\n      .ast-header-min{background:none;border:none;color:var(--text-sec,#888);font-size:16px;cursor:pointer;padding:0 4px;line-height:1;}\n      .ast-header-min:hover{color:var(--text,#e0e0e0);}\n      .ast-body{padding:8px 12px 12px 12px;}\n      .ast-section-label{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--section-label,var(--text-sec,#888));padding:8px 0 4px 2px;display:block;}\n      .ast-btn{display:block;width:100%;background:var(--btn-bg,var(--bg2,#242424));color:var(--btn-text,var(--text,#e0e0e0));border:none;border-radius:4px;padding:8px 10px;font-size:12px;font-weight:500;cursor:pointer;text-align:left;transition:background .12s;margin-bottom:3px;font-family:inherit;position:relative;}\n      .ast-btn:hover:not(:disabled){background:var(--btn-hover,var(--hvr,#2e2e2e));}\n      .ast-btn:disabled{opacity:.35;cursor:not-allowed;}\n      .ast-btn.toggle-on{color:var(--acc,#888);}\n      .ast-btn.toggle-on::before{content:'';position:absolute;left:0;top:4px;bottom:4px;width:2px;background:var(--acc,#888);border-radius:1px;}\n      .ast-btn.patched{opacity:.25;text-decoration:line-through;cursor:not-allowed;}\n      .ast-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:5px 2px;font-size:12px;}\n      .ast-toggle-row label{color:var(--text,#e0e0e0);cursor:pointer;}\n      .ast-switch{position:relative;width:32px;height:18px;flex-shrink:0;}\n      .ast-switch input{opacity:0;width:0;height:0;position:absolute;}\n      .ast-switch .slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:var(--switch-bg,#333);border-radius:9px;transition:background .2s;}\n      .ast-switch .slider::before{content:'';position:absolute;height:14px;width:14px;left:2px;bottom:2px;background:var(--switch-knob,#888);border-radius:50%;transition:transform .2s,background .2s;}\n      .ast-switch input:checked+.slider{background:var(--switch-active-bg,rgba(var(--acc-rgb,136,136,136),.3));}\n      .ast-switch input:checked+.slider::before{transform:translateX(14px);background:var(--acc,#888);}\n      .ast-select{width:100%;background:var(--input-bg,var(--bg2,#242424));color:var(--input-text,var(--text,#e0e0e0));border:1px solid var(--input-border,var(--bdr,#333));border-radius:4px;padding:6px 8px;font-size:12px;cursor:pointer;outline:none;font-family:inherit;margin-bottom:3px;appearance:none;}\n      .ast-select:focus{border-color:var(--acc,#888);}\n      .ast-input{background:var(--input-bg,var(--bg2,#242424));color:var(--input-text,var(--text,#e0e0e0));border:1px solid var(--input-border,var(--bdr,#333));border-radius:4px;padding:6px 8px;font-size:12px;outline:none;font-family:inherit;}\n      .ast-input:focus{border-color:var(--acc,#888);}\n      .ast-input::placeholder{color:var(--placeholder,#555);}\n      .ast-textarea{background:var(--input-bg,var(--bg2,#242424));color:var(--input-text,var(--text,#e0e0e0));border:1px solid var(--input-border,var(--bdr,#333));border-radius:4px;padding:8px;font-size:12px;outline:none;font-family:inherit;resize:none;width:100%;box-sizing:border-box;}\n      .ast-textarea:focus{border-color:var(--acc,#888);}\n      .ast-textarea::placeholder{color:var(--placeholder,#555);}\n      .ast-key-row{display:flex;align-items:center;justify-content:space-between;padding:4px 2px;font-size:12px;margin-bottom:3px;}\n      .ast-key-row span{color:var(--text,#e0e0e0);}\n      .ast-key-capture{background:var(--key-bg,var(--bg2,#242424));border:1px solid var(--input-border,var(--bdr,#333));color:var(--key-text,var(--acc,#888));border-radius:4px;padding:4px 10px;font-size:11px;text-align:center;min-width:50px;cursor:pointer;outline:none;font-family:'Consolas',monospace;font-weight:600;}\n      .ast-key-capture:focus{border-color:var(--acc,#888);}\n      .ast-row{display:flex;align-items:center;gap:6px;margin-bottom:4px;}\n      .ast-row .ast-input{flex:1;}\n      .ast-credits{padding-top:8px;font-size:10px;color:var(--muted,#555);line-height:1.5;text-align:center;}\n      .ast-sep{height:1px;background:var(--bdr,#333);margin:6px 0;}\n      .ast-update-list{margin:0;padding-left:16px;font-size:11px;color:var(--list-text,var(--text-sec,#888));line-height:1.6;}\n      .ast-update-list li{margin-bottom:4px;}\n      div.sidebar.left>div.ad-block{opacity:0!important;pointer-events:none!important;display:none!important;}\n      div.sidebar.left>a{display:none!important;}\n      div.sidebar.left{max-width:30vw;width:21rem;bottom:0!important;}\n    ";
+   document.head.appendChild(styleElement);
+ }
+ 
+-export { applyTheme, initBackground, injectStyles };
++export { applyTheme, initBackgroundImage, injectStyles };
+Index: src/utils.js
+===================================================================
+--- src/utils.js	v1.8
++++ src/utils.js	v1.9
+@@ -1,13 +1,5 @@
+-import {
+-  getGameState,
+-  getEntityManager,
+-  getFirstAnimal,
+-  getFirstAnimalPosition,
+-  getEntityPosition,
+-  gameInstance,
+-  state,
+-} from "./core.js";
++import { state } from "./core.js";
+ 
+ function generateRandomString(length) {
+   let resultString = "";
+   for (let i = 0; i < length; i++) {
+@@ -28,176 +20,44 @@
+     ...Object.getOwnPropertyNames(Object.getPrototypeOf(targetObject)),
+     ...Object.getOwnPropertyNames(targetObject),
+   ];
+ };
+-function isPlayer(entity) {
+-  if (!entity) {
+-    return false;
+-  }
+-  if (entity.visibleFishLevel != null && entity.visibleFishLevel > 0) {
+-    return true;
+-  }
+-  if (entity.fishLevel != null && entity.fishLevel > 0) {
+-    return true;
+-  }
+-  if (entity.level != null && entity.level > 0) {
+-    return true;
+-  }
+-  if (entity.score != null && entity.score > 0) {
+-    return true;
+-  }
+-  if (entity.xp != null && entity.xp > 0) {
+-    return true;
+-  }
+-  if (entity.playerRoomId != null) {
+-    return true;
+-  }
+-  if (entity.name != null && entity.name.length > 0) {
+-    return true;
+-  }
+-  if (entity.boosts != null || entity.boostCount != null) {
+-    return true;
+-  }
+-  if (entity.health != null && entity.health > 0) {
+-    return true;
+-  }
+-  if (entity.maxHealth != null && entity.maxHealth > 0) {
+-    return true;
+-  }
+-  return false;
+-}
+ function calculateDistance(x1, y1, x2, y2) {
+   return Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+ }
+-function getNearbyEntities() {
+-  try {
+-    const rawState = getGameState();
+-    const gameState = getEntityManager(rawState);
+-    const myPlayer = getFirstAnimal();
+-    const myPosition = getFirstAnimalPosition();
+-    if (!gameState || !myPlayer || !myPosition) {
+-      return null;
+-    }
+-    const entityData = {
+-      myId: myPlayer.id,
+-      myPos: myPosition,
+-      entities: [],
+-      players: [],
+-      food: [],
+-    };
+-    const entitiesList = gameState.entitiesList || [];
+-    for (let i = 0; i < entitiesList.length; i++) {
+-      const entity = entitiesList[i];
+-      if (!entity || entity.id === myPlayer.id) {
+-        continue;
+-      }
+-      if (
+-        myPlayer.playerRoomId &&
+-        entity.playerRoomId === myPlayer.playerRoomId
+-      ) {
+-        continue;
+-      }
+-      const pos = getEntityPosition(entity);
+-      if (!pos || pos.x == null || pos.y == null) {
+-        continue;
+-      }
+-      const dx = pos.x - myPosition.x;
+-      const dy = pos.y - myPosition.y;
+-      const distance = Math.sqrt(dx * dx + dy * dy);
+-      const entityInfo = {
+-        id: entity.id,
+-        x: pos.x,
+-        y: pos.y,
+-        distance: distance,
+-        angle: Math.atan2(dy, dx),
+-        entity: entity,
+-      };
+-      entityData.entities.push(entityInfo);
+-      if (isPlayer(entity)) {
+-        entityData.players.push(entityInfo);
+-      } else {
+-        entityData.food.push(entityInfo);
+-      }
+-    }
+-    entityData.players.sort((itemA, itemB) => itemA.distance - itemB.distance);
+-    entityData.food.sort((itemC, itemD) => itemC.distance - itemD.distance);
+-    return entityData;
+-  } catch (error) {
+-    return {
+-      error: error.message,
+-    };
+-  }
+-}
+-function getZoomScale() {
+-  try {
+-    if (gameInstance?.viewport?.scale?.x && gameInstance.viewport.scale.x > 0) {
+-      return gameInstance.viewport.scale.x;
+-    }
+-    const camera = getGameState();
+-    if (camera?.camera?.zoom && camera.camera.zoom > 0) {
+-      return camera.camera.zoom;
+-    }
+-    if (
+-      camera?.camera?.currentZoomLevel &&
+-      camera.camera.currentZoomLevel > 0
+-    ) {
+-      return camera.camera.currentZoomLevel;
+-    }
+-    if (gameInstance?.viewport) {
+-      const viewport = gameInstance.viewport;
+-      if (
+-        viewport.worldWidth &&
+-        viewport.screenWidth &&
+-        viewport.worldWidth > 0
+-      ) {
+-        return viewport.screenWidth / viewport.worldWidth;
+-      }
+-      if (viewport.scaled) {
+-        return viewport.scaled;
+-      }
+-    }
+-  } catch (error) {}
+-  return 0.15;
+-}
+-function getOrCreateOverlayCanvas(canvasId, zIndex) {
+-  let overlayCanvas = document.getElementById(canvasId);
+-  if (!overlayCanvas) {
+-    overlayCanvas = document.createElement("canvas");
+-    overlayCanvas.id = canvasId;
+-    overlayCanvas.style.cssText =
++function getOrCreateCanvas(canvasId, zIndex) {
++  let canvas = document.getElementById(canvasId);
++  if (!canvas) {
++    canvas = document.createElement("canvas");
++    canvas.id = canvasId;
++    canvas.style.cssText =
+       "position:fixed;top:0;left:0;pointer-events:none;z-index:" + zIndex + ";";
+-    document.body.appendChild(overlayCanvas);
++    document.body.appendChild(canvas);
+   }
+-  const gameCanvas = getGameCanvas();
+-  if (gameCanvas) {
+-    const gameCanvasRect = gameCanvas.getBoundingClientRect();
+-    if (
+-      overlayCanvas.width !== gameCanvasRect.width ||
+-      overlayCanvas.height !== gameCanvasRect.height
+-    ) {
+-      overlayCanvas.width = gameCanvasRect.width;
+-      overlayCanvas.height = gameCanvasRect.height;
++  const targetElement = getGameCanvas();
++  if (targetElement) {
++    const rect = targetElement.getBoundingClientRect();
++    if (canvas.width !== rect.width || canvas.height !== rect.height) {
++      canvas.width = rect.width;
++      canvas.height = rect.height;
+     }
+-    overlayCanvas.style.left = gameCanvasRect.left + "px";
+-    overlayCanvas.style.top = gameCanvasRect.top + "px";
+-    overlayCanvas.style.width = gameCanvasRect.width + "px";
+-    overlayCanvas.style.height = gameCanvasRect.height + "px";
++    canvas.style.left = rect.left + "px";
++    canvas.style.top = rect.top + "px";
++    canvas.style.width = rect.width + "px";
++    canvas.style.height = rect.height + "px";
+   } else if (
+-    overlayCanvas.width !== window.innerWidth ||
+-    overlayCanvas.height !== window.innerHeight
++    canvas.width !== window.innerWidth ||
++    canvas.height !== window.innerHeight
+   ) {
+-    overlayCanvas.width = window.innerWidth;
+-    overlayCanvas.height = window.innerHeight;
++    canvas.width = window.innerWidth;
++    canvas.height = window.innerHeight;
+   }
+-  return overlayCanvas;
++  return canvas;
+ }
+ 
+ export {
+   generateRandomString,
+   getGameCanvas,
+   getAllPropertyNames,
+-  isPlayer,
+   calculateDistance,
+-  getNearbyEntities,
+-  getZoomScale,
+-  getOrCreateOverlayCanvas,
++  getOrCreateCanvas,
+ };

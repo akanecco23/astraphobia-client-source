@@ -13,6 +13,7 @@ const BASE_DELAY_MS = 1000;
 export class LLMClient {
   enabled: boolean;
   model: string;
+  models: string[];
   maxTokens: number;
   temperature: number;
   concurrency: number;
@@ -21,7 +22,11 @@ export class LLMClient {
 
   constructor(config: ResolvedLLMConfig) {
     this.enabled = config.enabled;
-    this.model = config.model ?? "gemma-4-31b-it";
+    this.models = (config.model ?? "gemma-4-31b-it")
+      .split(",")
+      .map((m) => m.trim())
+      .filter(Boolean);
+    this.model = this.models[0] ?? "gemma-4-31b-it";
     this.maxTokens = parseInt(String(config.max_tokens ?? "16000"), 10);
     this.temperature = config.temperature ?? 0.1;
     this.concurrency = config.concurrency ?? 4;
@@ -60,14 +65,46 @@ export class LLMClient {
       };
     },
     attempt = 0,
+    modelIndex = 0,
   ): Promise<string> {
     const ai = this.getClient();
+    const currentModel = this.models[modelIndex] ?? this.model;
     try {
-      const response = await ai.models.generateContent(params);
+      const response = (await Promise.race([
+        ai.models.generateContent({
+          ...params,
+          model: currentModel,
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error("LLM request timeout after 60s")),
+            60000,
+          ),
+        ),
+      ])) as Awaited<ReturnType<typeof ai.models.generateContent>>;
       return response.text ?? "";
     } catch (e: unknown) {
-      const err = e as { status?: number; message?: string };
+      const err = e as {
+        status?: number;
+        message?: string;
+        name?: string;
+        cause?: unknown;
+        response?: { text?: string; status?: number };
+      };
       const status = err?.status;
+      const errorDetails = JSON.stringify(
+        {
+          name: err?.name,
+          message: err?.message,
+          status: err?.status,
+          cause: err?.cause,
+          response: err?.response,
+          model: currentModel,
+          promptLength: params.contents.length,
+        },
+        null,
+        2,
+      );
       if (
         (status === 429 || status === 503 || status === 504) &&
         attempt < MAX_RETRIES &&
@@ -78,21 +115,32 @@ export class LLMClient {
           BASE_DELAY_MS * Math.pow(2, attempt) * (0.75 + Math.random() * 0.5);
         log(
           "warn",
-          `Rate limited/overloaded (${status}), rotating key, retrying in ${Math.round(delay)}ms (attempt ${attempt + 1}/${MAX_RETRIES})`,
+          `Rate limited/overloaded (${status}), rotating key, retrying in ${Math.round(delay)}ms (attempt ${attempt + 1}/${MAX_RETRIES})\nDetails: ${errorDetails}`,
         );
         await new Promise((r) => setTimeout(r, delay));
-        return this.generateWithBackoff(params, attempt + 1);
+        return this.generateWithBackoff(params, attempt + 1, modelIndex);
       }
       if (attempt < MAX_RETRIES) {
         const delay =
           BASE_DELAY_MS * Math.pow(2, attempt) * (0.75 + Math.random() * 0.5);
         log(
           "warn",
-          `API error, retrying in ${Math.round(delay)}ms (attempt ${attempt + 1}/${MAX_RETRIES}): ${err?.message ?? String(e)}`,
+          `API error, retrying in ${Math.round(delay)}ms (attempt ${attempt + 1}/${MAX_RETRIES}): ${err?.message ?? String(e)}\nDetails: ${errorDetails}`,
         );
         await new Promise((r) => setTimeout(r, delay));
-        return this.generateWithBackoff(params, attempt + 1);
+        return this.generateWithBackoff(params, attempt + 1, modelIndex);
       }
+      if (modelIndex < this.models.length - 1) {
+        log(
+          "warn",
+          `Model ${currentModel} failed after ${MAX_RETRIES} attempts, falling back to ${this.models[modelIndex + 1]}`,
+        );
+        return this.generateWithBackoff(params, 0, modelIndex + 1);
+      }
+      log(
+        "error",
+        `LLM request failed after ${MAX_RETRIES} attempts. Details: ${errorDetails}`,
+      );
       throw e;
     }
   }

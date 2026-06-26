@@ -131,8 +131,8 @@ function createUpdateHistoryPanel() {
   const minHistElement = historyPanel.querySelector("#minHist");
   const historyContentElement = historyPanel.querySelector("#historyContent");
   let isHistoryHidden = false;
-  minHistElement.onclick = (arg_6d48) => {
-    arg_6d48.stopPropagation();
+  minHistElement.onclick = (toggleEvent) => {
+    toggleEvent.stopPropagation();
     isHistoryHidden = !isHistoryHidden;
     historyContentElement.style.display = isHistoryHidden ? "none" : "block";
     historyPanel.style.height = isHistoryHidden ? "60px" : "auto";
@@ -142,20 +142,20 @@ function createUpdateHistoryPanel() {
   let offsetY;
   let isDragging = false;
   let isResizing = false;
-  historyPanel.addEventListener("mousedown", (arg_129f) => {
+  historyPanel.addEventListener("mousedown", (clickEvent) => {
     if (
-      ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(arg_129f.target.tagName)
+      ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(clickEvent.target.tagName)
     ) {
       return;
     }
     isDragging = true;
     isResizing = false;
-    offsetX = arg_129f.clientX - historyPanel.getBoundingClientRect().left;
-    offsetY = arg_129f.clientY - historyPanel.getBoundingClientRect().top;
+    offsetX = clickEvent.clientX - historyPanel.getBoundingClientRect().left;
+    offsetY = clickEvent.clientY - historyPanel.getBoundingClientRect().top;
     historyPanel.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
-      const deltaX = mouseEvent.clientX - arg_129f.clientX;
-      const deltaY = mouseEvent.clientY - arg_129f.clientY;
+      const deltaX = mouseEvent.clientX - clickEvent.clientX;
+      const deltaY = mouseEvent.clientY - clickEvent.clientY;
       if (!isResizing && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
         isResizing = true;
       }
@@ -175,9 +175,9 @@ function createUpdateHistoryPanel() {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   });
-  historyPanel.addEventListener("click", (arg_222a) => {
+  historyPanel.addEventListener("click", (interceptEvent) => {
     if (isResizing) {
-      arg_222a.stopImmediatePropagation();
+      interceptEvent.stopImmediatePropagation();
     }
   });
   return historyPanel;

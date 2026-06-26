@@ -132,24 +132,24 @@ function createToolsPanel() {
   document.body.appendChild(toolsPanel);
   const mainBody = toolsPanel.querySelector("#mainBody");
   let isHidden = false;
-  toolsPanel.querySelector("#mainMin").onclick = (arg_ebd1) => {
-    arg_ebd1.stopPropagation();
+  toolsPanel.querySelector("#mainMin").onclick = (toggleEvent) => {
+    toggleEvent.stopPropagation();
     isHidden = !isHidden;
     mainBody.style.display = isHidden ? "none" : "block";
     toolsPanel.querySelector("#mainMin").textContent = isHidden ? "+" : "−";
   };
   toolsPanel.querySelector("#sendBtn").onclick = () => {
-    const var_c5cf = toolsPanel.querySelector("#chatMsg").value;
-    if (var_c5cf) {
-      typeAndSendMessage(var_c5cf);
+    const chatMessage = toolsPanel.querySelector("#chatMsg").value;
+    if (chatMessage) {
+      typeAndSendMessage(chatMessage);
     }
   };
   const autoChatBtn = toolsPanel.querySelector("#autoChatBtn");
   autoChatBtn.onclick = () => {
-    const var_58c3 = toolsPanel.querySelector("#chatMsg").value;
-    const var_2f90 =
+    const chatInputContent = toolsPanel.querySelector("#chatMsg").value;
+    const messageDelay =
       parseInt(toolsPanel.querySelector("#delayInput").value) || 10;
-    if (!var_58c3) {
+    if (!chatInputContent) {
       showNotification("Enter a message first");
       return;
     }
@@ -158,7 +158,7 @@ function createToolsPanel() {
       autoChatBtn.textContent = "Auto Chat";
       autoChatBtn.classList.remove("toggle-on");
     } else {
-      startScheduledTask(var_58c3, var_2f90);
+      startScheduledTask(chatInputContent, messageDelay);
       autoChatBtn.textContent = "Stop Chat";
       autoChatBtn.classList.add("toggle-on");
     }
@@ -171,10 +171,10 @@ function createToolsPanel() {
     patchBtn.classList.add("toggle-on");
   };
   toolsPanel.querySelector("#spoofBtn").onclick = () => {
-    const var_fdc7 = generateRandomString(8);
-    if (typeText(".play-game .el-input__inner", var_fdc7)) {
+    const randomIdentifier = generateRandomString(8);
+    if (typeText(".play-game .el-input__inner", randomIdentifier)) {
       showNotification("Name spoofed");
-    } else if (typeText(".new-tribe .el-input__inner", var_fdc7)) {
+    } else if (typeText(".new-tribe .el-input__inner", randomIdentifier)) {
       showNotification("Tribe name spoofed");
     } else {
       showNotification("No name input found");
@@ -188,18 +188,18 @@ function createToolsPanel() {
   };
   const spinKeyInput = toolsPanel.querySelector("#spinKeyInput");
   let lastKey = null;
-  spinKeyInput.addEventListener("keydown", (arg_ac29) => {
-    arg_ac29.preventDefault();
-    lastKey = arg_ac29.code || arg_ac29.key;
+  spinKeyInput.addEventListener("keydown", (keyboardEvent) => {
+    keyboardEvent.preventDefault();
+    lastKey = keyboardEvent.code || keyboardEvent.key;
     spinKeyInput.value = lastKey.replace("Key", "").toUpperCase();
   });
-  document.addEventListener("keydown", (arg_3e00) => {
+  document.addEventListener("keydown", (shortcutEvent) => {
     if (
       lastKey &&
-      arg_3e00.code === lastKey &&
-      !arg_3e00.target.matches("input,textarea,button,select")
+      shortcutEvent.code === lastKey &&
+      !shortcutEvent.target.matches("input,textarea,button,select")
     ) {
-      arg_3e00.preventDefault();
+      shortcutEvent.preventDefault();
       toggleMouseSimulation();
       spinBtn.textContent = state.secondaryIntervalId
         ? "Stop Spin"
@@ -211,19 +211,21 @@ function createToolsPanel() {
   const turnRightKeyInput = toolsPanel.querySelector("#turnRightKeyInput");
   turnLeftKeyInput.value = state.currentKey.toUpperCase();
   turnRightKeyInput.value = state.currentKey_2.toUpperCase();
-  turnLeftKeyInput.addEventListener("keydown", (arg_de7) => {
-    arg_de7.preventDefault();
-    arg_de7.stopPropagation();
-    state.currentKey = arg_de7.key;
+  turnLeftKeyInput.addEventListener("keydown", (contextMenuEvent) => {
+    contextMenuEvent.preventDefault();
+    contextMenuEvent.stopPropagation();
+    state.currentKey = contextMenuEvent.key;
     turnLeftKeyInput.value =
-      arg_de7.key.length === 1 ? arg_de7.key.toUpperCase() : arg_de7.key;
+      contextMenuEvent.key.length === 1
+        ? contextMenuEvent.key.toUpperCase()
+        : contextMenuEvent.key;
   });
-  turnRightKeyInput.addEventListener("keydown", (arg_1244) => {
-    arg_1244.preventDefault();
-    arg_1244.stopPropagation();
-    state.currentKey_2 = arg_1244.key;
+  turnRightKeyInput.addEventListener("keydown", (dragEvent) => {
+    dragEvent.preventDefault();
+    dragEvent.stopPropagation();
+    state.currentKey_2 = dragEvent.key;
     turnRightKeyInput.value =
-      arg_1244.key.length === 1 ? arg_1244.key.toUpperCase() : arg_1244.key;
+      dragEvent.key.length === 1 ? dragEvent.key.toUpperCase() : dragEvent.key;
   });
   makeDraggable(toolsPanel);
   return toolsPanel;
