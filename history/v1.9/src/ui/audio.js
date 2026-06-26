@@ -1,5 +1,5 @@
-import { showNotification } from "./interaction.js";
 import { musicPlaylist, currentTime, state } from "../core.js";
+import { showNotification } from "./interaction.js";
 
 function isYouTubeUrl(url) {
   return /(?:youtube\.com|youtu\.be)/i.test(url || "");

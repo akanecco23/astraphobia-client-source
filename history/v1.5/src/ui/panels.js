@@ -1,10 +1,3 @@
-import { showNotification, simulateTyping } from "./interaction.js";
-import { handleAnimalAction } from "../features/autofarm.js";
-import {
-  startScheduledTask,
-  stopInterval,
-  autoChat,
-} from "../features/chat.js";
 import {
   radius,
   gameInstance,
@@ -16,8 +9,15 @@ import {
   disableGameRestrictions,
   coreSharedState,
 } from "../core.js";
-import { generateRandomString } from "../utils.js";
+import {
+  startScheduledTask,
+  stopInterval,
+  autoChat,
+} from "../features/chat.js";
+import { showNotification, simulateTyping } from "./interaction.js";
 import { toggleMouseSimulation } from "../features/movement.js";
+import { handleAnimalAction } from "../features/autofarm.js";
+import { generateRandomString } from "../utils.js";
 import { toggleMinimapScale } from "./radar.js";
 import { applyThemeColors } from "./theme.js";
 

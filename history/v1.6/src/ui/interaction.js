@@ -1,5 +1,5 @@
-import { getMyAnimal } from "../utils.js";
 import { radius, game, coreSharedState } from "../core.js";
+import { getMyAnimal } from "../utils.js";
 
 function typeText(selector, text) {
   const inputElement = document.querySelector(selector);

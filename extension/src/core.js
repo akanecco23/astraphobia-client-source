@@ -1,6 +1,3 @@
-import { showToast } from "./ui/interaction.js";
-import { getAllPropertyNames } from "./utils.js";
-import { handleAnimalAction } from "./features/autofarm.js";
 import {
   createUpdateHistoryPanel,
   createToolsPanel,
@@ -8,7 +5,10 @@ import {
   initSettingsPanel,
   togglePanels,
 } from "./ui/panels.js";
+import { handleAnimalAction } from "./features/autofarm.js";
 import { initAdBlocker } from "./features/adblock.js";
+import { getAllPropertyNames } from "./utils.js";
+import { showToast } from "./ui/interaction.js";
 
 const privateStateMap = new WeakMap();
 function wrapWithProxy(targetObject, propertyKey, proxyHandler) {

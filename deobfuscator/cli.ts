@@ -358,6 +358,9 @@ async function processVersion(
 
   copyExtras(repoPath, srcDir);
 
+  const prettierConfig =
+    (await prettier.resolveConfig(resolve(getRoot(), ".prettierrc"))) ?? {};
+
   // Format generated extension files with Prettier
   const formatFiles = async (dir: string) => {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -368,6 +371,7 @@ async function processVersion(
         try {
           const raw = readFileSync(fullPath, "utf-8");
           const formatted = await prettier.format(raw, {
+            ...prettierConfig,
             filepath: fullPath,
           });
           writeFileSync(fullPath, formatted, "utf-8");
@@ -381,6 +385,26 @@ async function processVersion(
     }
   };
   await formatFiles(srcDir);
+
+  // Also format mapping.json and transforms.json
+  for (const jsonPath of [mappingPath, transformsPath]) {
+    if (existsSync(jsonPath)) {
+      try {
+        const raw = readFileSync(jsonPath, "utf-8");
+        const formatted = await prettier.format(raw, {
+          ...prettierConfig,
+          filepath: jsonPath,
+        });
+        writeFileSync(jsonPath, formatted, "utf-8");
+      } catch (e) {
+        log(
+          "warn",
+          `  Prettier failed for ${jsonPath}: ${(e as Error).message}`,
+        );
+      }
+    }
+  }
+
   log("info", "  Formatted with Prettier");
 
   log(

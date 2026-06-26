@@ -1,5 +1,5 @@
-import { showNotification } from "./interaction.js";
 import { radius, coreSharedState } from "../core.js";
+import { showNotification } from "./interaction.js";
 
 function applyCustomBackground() {
   const backgroundUrl = localStorage.getItem("bgUrl") || "";

@@ -1,5 +1,5 @@
-import { getEntityById } from "../utils.js";
 import { getEntityPosition, dragState, state } from "../core.js";
+import { getEntityById } from "../utils.js";
 
 window.lockEnabled = false;
 window.lockTargetId = null;

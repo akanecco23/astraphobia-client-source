@@ -1,9 +1,4 @@
 import {
-  simulateTyping,
-  autoTypeChat,
-  showNotification,
-} from "./interaction.js";
-import {
   radius,
   initNetworkHook,
   isInitialized,
@@ -12,9 +7,14 @@ import {
   applyGameHacks,
   coreSharedState,
 } from "../core.js";
-import { generateRandomString } from "../utils.js";
-import { toggleMouseSimulation } from "../features/movement.js";
+import {
+  simulateTyping,
+  autoTypeChat,
+  showNotification,
+} from "./interaction.js";
 import { startScheduledTask, stopInterval } from "../features/chat.js";
+import { toggleMouseSimulation } from "../features/movement.js";
+import { generateRandomString } from "../utils.js";
 
 function createUpdateHistoryPanel() {
   const historyStyle = document.createElement("style");

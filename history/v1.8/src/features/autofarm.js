@@ -1,5 +1,3 @@
-import { calculateDistance, isPlayer, getGameCanvas } from "../utils.js";
-import { showNotification } from "../ui/interaction.js";
 import {
   radius,
   distanceThreshold,
@@ -13,6 +11,8 @@ import {
   startAutoFarm,
   state,
 } from "../core.js";
+import { calculateDistance, isPlayer, getGameCanvas } from "../utils.js";
+import { showNotification } from "../ui/interaction.js";
 import { aimAtTarget } from "./aimbot.js";
 
 window.autoFarmActive = false;

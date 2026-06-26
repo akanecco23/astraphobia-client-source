@@ -9,14 +9,14 @@ import {
   maxDelta,
   state,
 } from "../core.js";
-import { showNotification } from "../ui/interaction.js";
-import { updateLockButtonUI } from "../ui/radar.js";
 import {
   getGameCanvas,
   getNearbyEntities,
   isPlayer,
   calculateDistance,
 } from "../utils.js";
+import { showNotification } from "../ui/interaction.js";
+import { updateLockButtonUI } from "../ui/radar.js";
 import { simulateClick } from "./movement.js";
 
 window.autoDodgeEnabled = false;

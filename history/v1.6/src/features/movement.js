@@ -1,5 +1,3 @@
-import { getGameCanvas } from "../utils.js";
-import { showToast } from "../ui/interaction.js";
 import {
   angleSteps,
   radius,
@@ -7,6 +5,8 @@ import {
   getFirstAnimalPosition,
   coreSharedState,
 } from "../core.js";
+import { showToast } from "../ui/interaction.js";
+import { getGameCanvas } from "../utils.js";
 
 function startCircularMovement() {
   if (coreSharedState.animationInterval) {

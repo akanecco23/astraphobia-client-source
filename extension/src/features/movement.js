@@ -1,6 +1,6 @@
-import { getGameCanvas } from "../utils.js";
-import { showToast } from "../ui/interaction.js";
 import { angleSteps, orbitRadius, coreSharedState } from "../core.js";
+import { showToast } from "../ui/interaction.js";
+import { getGameCanvas } from "../utils.js";
 
 function startCircularMouseMovement() {
   if (coreSharedState.rotationInterval) {

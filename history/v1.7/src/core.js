@@ -1,13 +1,3 @@
-import { showNotification } from "./ui/interaction.js";
-import {
-  getEntityById,
-  calculateDistance,
-  getNearbyEntities,
-  proxyProperty,
-  getAllPropertyNames,
-} from "./utils.js";
-import { setupPatrolPoints, autoFarmLoop } from "./features/autofarm.js";
-import { setTheme, initHomeBackground, injectStyles } from "./ui/theme.js";
 import {
   createToolsPanel,
   createVisionPanel,
@@ -17,19 +7,29 @@ import {
   createUpdatePanel,
   togglePanelsVisibility,
 } from "./ui/panels.js";
-import { initAdBlocker } from "./features/adblock.js";
-import { initRadarDragging } from "./ui/radar.js";
-import { renderEspOverlay, trackPlayer } from "./features/esp.js";
 import {
-  renderOverlayLoop,
-  toggleEntityTrail,
-} from "./features/entitytrail.js";
+  getEntityById,
+  calculateDistance,
+  getNearbyEntities,
+  proxyProperty,
+  getAllPropertyNames,
+} from "./utils.js";
 import {
   updateLockOnTarget,
   autoDodgeLoop,
   toggleLock,
 } from "./features/aimbot.js";
+import {
+  renderOverlayLoop,
+  toggleEntityTrail,
+} from "./features/entitytrail.js";
+import { setTheme, initHomeBackground, injectStyles } from "./ui/theme.js";
+import { setupPatrolPoints, autoFarmLoop } from "./features/autofarm.js";
+import { renderEspOverlay, trackPlayer } from "./features/esp.js";
 import { moveMouseToSide } from "./features/movement.js";
+import { showNotification } from "./ui/interaction.js";
+import { initAdBlocker } from "./features/adblock.js";
+import { initRadarDragging } from "./ui/radar.js";
 let stateMap = new WeakMap();
 let isActive = false;
 function hookTextEncoder() {

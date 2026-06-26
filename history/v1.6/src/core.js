@@ -1,10 +1,3 @@
-import { showToast, restoreUIInteractivity } from "./ui/interaction.js";
-import { calculateDistance, getAllPropertyNames } from "./utils.js";
-import {
-  generatePatrolPoints,
-  startAutoFarmLoop,
-} from "./features/autofarm.js";
-import { applyTheme, initBackground, injectStyles } from "./ui/theme.js";
 import {
   createToolsPanel,
   createPlusPanel,
@@ -12,11 +5,18 @@ import {
   createUpdateHistoryPanel,
   toggleUiVisibility,
 } from "./ui/panels.js";
-import { initAdBlocker } from "./features/adblock.js";
-import { initRadarDrag } from "./ui/radar.js";
+import {
+  generatePatrolPoints,
+  startAutoFarmLoop,
+} from "./features/autofarm.js";
+import { applyTheme, initBackground, injectStyles } from "./ui/theme.js";
+import { showToast, restoreUIInteractivity } from "./ui/interaction.js";
+import { calculateDistance, getAllPropertyNames } from "./utils.js";
 import { renderEspLoop, trackPlayer } from "./features/esp.js";
-import { autoDodgeLoop } from "./features/aimbot.js";
 import { moveMouseToSide } from "./features/movement.js";
+import { initAdBlocker } from "./features/adblock.js";
+import { autoDodgeLoop } from "./features/aimbot.js";
+import { initRadarDrag } from "./ui/radar.js";
 const privateMap = new WeakMap();
 function wrapWithProxy(targetObject, propertyKey, handler) {
   const originalValue = targetObject[propertyKey];

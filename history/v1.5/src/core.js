@@ -1,8 +1,8 @@
-import { showNotification } from "./ui/interaction.js";
-import { getAllPropertyNames } from "./utils.js";
 import { initControlOverlay, togglePanels } from "./ui/panels.js";
+import { showNotification } from "./ui/interaction.js";
 import { initAdBlocker } from "./features/adblock.js";
 import { applyHomeBackground } from "./ui/theme.js";
+import { getAllPropertyNames } from "./utils.js";
 
 const stateMap = new WeakMap();
 function wrapPropertyWithProxy(targetObject, propertyKey, proxyHandler) {

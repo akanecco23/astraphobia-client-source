@@ -1,5 +1,3 @@
-import { showNotification } from "./ui/interaction.js";
-import { getAllPropertyNames } from "./utils.js";
 import {
   initControlOverlay,
   createUpdateHistoryPanel,
@@ -8,8 +6,10 @@ import {
   injectSettingsStyles,
   togglePanels,
 } from "./ui/panels.js";
-import { initBackgroundImage } from "./ui/theme.js";
+import { showNotification } from "./ui/interaction.js";
 import { initAdBlocker } from "./features/adblock.js";
+import { initBackgroundImage } from "./ui/theme.js";
+import { getAllPropertyNames } from "./utils.js";
 
 const stateMap = new WeakMap();
 function wrapWithProxy(targetObject, propertyKey, proxyHandler) {

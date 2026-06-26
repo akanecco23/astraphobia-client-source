@@ -2,88 +2,7 @@ Index: content.js
 ===================================================================
 --- content.js	v1.7
 +++ content.js	v1.8
-@@ -1,112 +1,110 @@
- import { typeText, showNotification } from "./src/ui/interaction.js";
- import {
-   updateLockButtonUI,
-   drawRadar,
--  initRadarDragging,
-+  initRadarDrag,
- } from "./src/ui/radar.js";
- import {
-   startCircularMovement,
-   stopMouseSimulation,
-   toggleMouseSimulation,
--  moveMouseToSide,
-+  moveMouseSide,
-   simulateClick,
- } from "./src/features/movement.js";
- import {
-   updateLockOnTarget,
-   toggleLock,
--  movePointerToTarget,
-+  aimAtTarget,
-   autoDodgeLoop,
-   enableAutoDodge,
- } from "./src/features/aimbot.js";
- import {
-   handleFarmFailure,
-   isAreaSkipped,
-   findClosestFarmableEntity,
--  getNearbyFarmables,
--  findBestFoodCluster,
-+  getNearbyFarmTargets,
-+  findBestFarmSpot,
-   calculatePlayerAvoidanceVector,
-   simulateEvolveKey,
-   detectAndHandleStuck,
-   setupPatrolPoints,
-   autoFarmLoop,
-   stopAutoFarm,
- } from "./src/features/autofarm.js";
--import { setTheme, initHomeBackground, injectStyles } from "./src/ui/theme.js";
-+import { applyTheme, initBackground, injectStyles } from "./src/ui/theme.js";
- import {
-   startScheduledTask,
-   stopInterval,
--  simulateChatInput,
-+  typeAndSendMessage,
- } from "./src/features/chat.js";
--import { initializeViewportHacks } from "./src/features/xray.js";
-+import { initializeAstraVision } from "./src/features/xray.js";
- import {
--  drawEspEntities,
--  drawTrackedEntityIndicator,
--  renderEspOverlay,
-+  drawEsp,
-+  drawTrackedEntity,
-+  renderEspLoop,
-   clearTracking,
-   trackPlayer,
-   toggleMinimapSize,
- } from "./src/features/esp.js";
- import {
-   refreshUI,
--  showHalloweenCodeModal,
-+  showHalloweenModal,
-   makeDraggable,
-   createToolsPanel,
-   createVisionPanel,
-   createCombatPanel,
-   createAutomationPanel,
-   createSettingsPanel,
--  createUpdatePanel,
-+  createUpdateHistoryPanel,
-   togglePanelsVisibility,
- } from "./src/ui/panels.js";
- import { initAdBlocker } from "./src/features/adblock.js";
- import {
-   stopMouseSimulation_2,
-   toggleEntityTrail,
-   drawEntityTrail,
--  renderOverlayLoop,
-+  renderOverlay,
- } from "./src/features/entitytrail.js";
+@@ -1,42 +1,43 @@
  import {
 -  hookTextEncoder,
 +  wrapWithProxy,
@@ -126,6 +45,35 @@ Index: content.js
    state,
  } from "./src/core.js";
  import {
+   handleFarmFailure,
+   isAreaSkipped,
+   findClosestFarmableEntity,
+-  getNearbyFarmables,
+-  findBestFoodCluster,
++  getNearbyFarmTargets,
++  findBestFarmSpot,
+   calculatePlayerAvoidanceVector,
+   simulateEvolveKey,
+   detectAndHandleStuck,
+   setupPatrolPoints,
+@@ -44,69 +45,66 @@
+   stopAutoFarm,
+ } from "./src/features/autofarm.js";
+ import {
+   refreshUI,
+-  showHalloweenCodeModal,
++  showHalloweenModal,
+   makeDraggable,
+   createToolsPanel,
+   createVisionPanel,
+   createCombatPanel,
+   createAutomationPanel,
+   createSettingsPanel,
+-  createUpdatePanel,
++  createUpdateHistoryPanel,
+   togglePanelsVisibility,
+ } from "./src/ui/panels.js";
+ import {
    generateRandomString,
 -  proxyProperty,
    getGameCanvas,
@@ -139,6 +87,68 @@ Index: content.js
 +  getZoomScale,
    getOrCreateOverlayCanvas,
  } from "./src/utils.js";
+ import {
+-  drawEspEntities,
+-  drawTrackedEntityIndicator,
+-  renderEspOverlay,
+-  clearTracking,
+-  trackPlayer,
+-  toggleMinimapSize,
+-} from "./src/features/esp.js";
+-import {
+   startCircularMovement,
+   stopMouseSimulation,
+   toggleMouseSimulation,
+-  moveMouseToSide,
++  moveMouseSide,
+   simulateClick,
+ } from "./src/features/movement.js";
+ import {
+-  updateLockOnTarget,
+-  toggleLock,
+-  movePointerToTarget,
+-  autoDodgeLoop,
+-  enableAutoDodge,
+-} from "./src/features/aimbot.js";
++  drawEsp,
++  drawTrackedEntity,
++  renderEspLoop,
++  clearTracking,
++  trackPlayer,
++  toggleMinimapSize,
++} from "./src/features/esp.js";
+ import {
+   stopMouseSimulation_2,
+   toggleEntityTrail,
+   drawEntityTrail,
+-  renderOverlayLoop,
++  renderOverlay,
+ } from "./src/features/entitytrail.js";
+ import {
++  updateLockOnTarget,
++  toggleLock,
++  aimAtTarget,
++  autoDodgeLoop,
++  enableAutoDodge,
++} from "./src/features/aimbot.js";
++import {
+   startScheduledTask,
+   stopInterval,
+-  simulateChatInput,
++  typeAndSendMessage,
+ } from "./src/features/chat.js";
+ import {
+   updateLockButtonUI,
+   drawRadar,
+-  initRadarDragging,
++  initRadarDrag,
+ } from "./src/ui/radar.js";
+-import { setTheme, initHomeBackground, injectStyles } from "./src/ui/theme.js";
++import { applyTheme, initBackground, injectStyles } from "./src/ui/theme.js";
+ import { typeText, showNotification } from "./src/ui/interaction.js";
+-import { initializeViewportHacks } from "./src/features/xray.js";
++import { initializeAstraVision } from "./src/features/xray.js";
+ import { initAdBlocker } from "./src/features/adblock.js";
 Index: manifest.json
 ===================================================================
 --- manifest.json	v1.7
@@ -159,20 +169,7 @@ Index: src/core.js
 ===================================================================
 --- src/core.js	v1.7
 +++ src/core.js	v1.8
-@@ -1,50 +1,51 @@
- import { showNotification } from "./ui/interaction.js";
- import {
--  getEntityById,
-   calculateDistance,
-   getNearbyEntities,
--  proxyProperty,
-   getAllPropertyNames,
- } from "./utils.js";
- import { setupPatrolPoints, autoFarmLoop } from "./features/autofarm.js";
--import { setTheme, initHomeBackground, injectStyles } from "./ui/theme.js";
-+import { applyTheme, initBackground, injectStyles } from "./ui/theme.js";
- import {
-   createToolsPanel,
+@@ -3,48 +3,49 @@
    createVisionPanel,
    createCombatPanel,
    createAutomationPanel,
@@ -181,27 +178,38 @@ Index: src/core.js
 +  createUpdateHistoryPanel,
    togglePanelsVisibility,
  } from "./ui/panels.js";
- import { initAdBlocker } from "./features/adblock.js";
--import { initRadarDragging } from "./ui/radar.js";
--import { renderEspOverlay, trackPlayer } from "./features/esp.js";
-+import { initRadarDrag } from "./ui/radar.js";
-+import { renderEspLoop, trackPlayer } from "./features/esp.js";
-+import { renderOverlay, toggleEntityTrail } from "./features/entitytrail.js";
  import {
--  renderOverlayLoop,
--  toggleEntityTrail,
--} from "./features/entitytrail.js";
--import {
+-  getEntityById,
+   calculateDistance,
+   getNearbyEntities,
+-  proxyProperty,
+   getAllPropertyNames,
+ } from "./utils.js";
+ import {
    updateLockOnTarget,
    autoDodgeLoop,
    toggleLock,
  } from "./features/aimbot.js";
+-import {
+-  renderOverlayLoop,
+-  toggleEntityTrail,
+-} from "./features/entitytrail.js";
+-import { setTheme, initHomeBackground, injectStyles } from "./ui/theme.js";
++import { renderOverlay, toggleEntityTrail } from "./features/entitytrail.js";
+ import { setupPatrolPoints, autoFarmLoop } from "./features/autofarm.js";
+-import { renderEspOverlay, trackPlayer } from "./features/esp.js";
 -import { moveMouseToSide } from "./features/movement.js";
++import { applyTheme, initBackground, injectStyles } from "./ui/theme.js";
++import { renderEspLoop, trackPlayer } from "./features/esp.js";
++import { moveMouseSide } from "./features/movement.js";
+ import { showNotification } from "./ui/interaction.js";
+ import { initAdBlocker } from "./features/adblock.js";
+-import { initRadarDragging } from "./ui/radar.js";
 -let stateMap = new WeakMap();
 -let isActive = false;
 -function hookTextEncoder() {
 -  if (isActive) {
-+import { moveMouseSide } from "./features/movement.js";
++import { initRadarDrag } from "./ui/radar.js";
 +const stateMap = new WeakMap();
 +function wrapWithProxy(targetObject, propertyKey, proxyHandler) {
 +  const originalValue = targetObject[propertyKey];
@@ -848,17 +856,8 @@ Index: src/features/aimbot.js
 ===================================================================
 --- src/features/aimbot.js	v1.7
 +++ src/features/aimbot.js	v1.8
-@@ -1,37 +1,37 @@
+@@ -1,17 +1,17 @@
  import {
--  getGameCanvas,
--  getEntityById,
--  getNearbyEntities,
--  isPlayer,
--  calculateDistance,
--} from "../utils.js";
--import { showNotification } from "../ui/interaction.js";
--import { updateLockButtonUI } from "../ui/radar.js";
--import {
    getFirstAnimalPosition,
    getEntityPosition,
 -  isEnabled,
@@ -870,15 +869,14 @@ Index: src/features/aimbot.js
    maxDelta,
    state,
  } from "../core.js";
-+import { showNotification } from "../ui/interaction.js";
-+import { updateLockButtonUI } from "../ui/radar.js";
-+import {
-+  getGameCanvas,
-+  getNearbyEntities,
-+  isPlayer,
-+  calculateDistance,
-+} from "../utils.js";
- import { simulateClick } from "./movement.js";
+ import {
+   getGameCanvas,
+-  getEntityById,
+   getNearbyEntities,
+   isPlayer,
+   calculateDistance,
+ } from "../utils.js";
+@@ -21,17 +21,17 @@
  
  window.autoDodgeEnabled = false;
  
@@ -1274,8 +1272,6 @@ Index: src/features/autofarm.js
 --- src/features/autofarm.js	v1.7
 +++ src/features/autofarm.js	v1.8
 @@ -1,20 +1,20 @@
- import { calculateDistance, isPlayer, getGameCanvas } from "../utils.js";
- import { showNotification } from "../ui/interaction.js";
  import {
    radius,
 -  proximityThreshold,
@@ -1292,6 +1288,8 @@ Index: src/features/autofarm.js
    startAutoFarm,
    state,
  } from "../core.js";
+ import { calculateDistance, isPlayer, getGameCanvas } from "../utils.js";
+ import { showNotification } from "../ui/interaction.js";
 -import { movePointerToTarget } from "./aimbot.js";
 +import { aimAtTarget } from "./aimbot.js";
  
@@ -1938,9 +1936,7 @@ Index: src/features/entitytrail.js
 ===================================================================
 --- src/features/entitytrail.js	v1.7
 +++ src/features/entitytrail.js	v1.8
-@@ -1,9 +1,9 @@
- import { showNotification } from "../ui/interaction.js";
- import { refreshUI } from "../ui/panels.js";
+@@ -1,7 +1,7 @@
  import {
    getNearbyEntities,
 -  getZoomLevel,
@@ -1948,7 +1944,7 @@ Index: src/features/entitytrail.js
    getOrCreateOverlayCanvas,
  } from "../utils.js";
  import { startEntityTrail, getFirstAnimalPosition, state } from "../core.js";
- 
+ import { showNotification } from "../ui/interaction.js";
 @@ -41,73 +41,72 @@
    startEntityTrail();
    showNotification("Tracing: " + targetPlayerName);
@@ -2093,8 +2089,8 @@ Index: src/features/esp.js
 +  getZoomScale,
 +  getOrCreateOverlayCanvas,
 +} from "../utils.js";
- import { drawRadar } from "../ui/radar.js";
  import { showNotification } from "../ui/interaction.js";
+ import { drawRadar } from "../ui/radar.js";
  
  window.espEnabled = false;
 @@ -29,44 +30,55 @@
@@ -2406,10 +2402,10 @@ Index: src/features/movement.js
 --- src/features/movement.js	v1.7
 +++ src/features/movement.js	v1.8
 @@ -1,19 +1,19 @@
- import { getGameCanvas } from "../utils.js";
- import { showNotification } from "../ui/interaction.js";
 -import { angleDegrees, radius, offsetValue, state } from "../core.js";
 +import { angles, radius, offsetValue, state } from "../core.js";
+ import { showNotification } from "../ui/interaction.js";
+ import { getGameCanvas } from "../utils.js";
  
  function startCircularMovement() {
 -  if (state.animationIntervalId) {
@@ -2514,8 +2510,8 @@ Index: src/features/xray.js
 +++ src/features/xray.js	v1.8
 @@ -1,38 +1,50 @@
 -import { gameInstance, animalData, settings, state } from "../core.js";
-+import { showNotification } from "../ui/interaction.js";
 +import { gameInstance, animalData, state } from "../core.js";
++import { showNotification } from "../ui/interaction.js";
  
 -const initializeViewportHacks = () => {
 -  if (state.isProcessed) {
@@ -2638,14 +2634,7 @@ Index: src/ui/panels.js
 ===================================================================
 --- src/ui/panels.js	v1.7
 +++ src/ui/panels.js	v1.8
-@@ -1,53 +1,52 @@
- import { showNotification, typeText } from "./interaction.js";
- import {
-   startScheduledTask,
-   stopInterval,
--  simulateChatInput,
-+  typeAndSendMessage,
- } from "../features/chat.js";
+@@ -1,19 +1,18 @@
  import {
    radius,
 -  hookTextEncoder,
@@ -2659,19 +2648,26 @@ Index: src/ui/panels.js
    settings,
    state,
  } from "../core.js";
- import { generateRandomString } from "../utils.js";
- import { toggleMouseSimulation } from "../features/movement.js";
--import { initializeViewportHacks } from "../features/xray.js";
-+import { initializeAstraVision } from "../features/xray.js";
+ import {
+   startScheduledTask,
+   stopInterval,
+-  simulateChatInput,
++  typeAndSendMessage,
+ } from "../features/chat.js";
  import {
    clearTracking,
    trackPlayer,
-   toggleMinimapSize,
+@@ -21,33 +20,33 @@
  } from "../features/esp.js";
- import { toggleLock, enableAutoDodge } from "../features/aimbot.js";
  import { setupPatrolPoints, stopAutoFarm } from "../features/autofarm.js";
+ import { toggleLock, enableAutoDodge } from "../features/aimbot.js";
+ import { toggleMouseSimulation } from "../features/movement.js";
+-import { initializeViewportHacks } from "../features/xray.js";
+ import { showNotification, typeText } from "./interaction.js";
 -import { setTheme, initHomeBackground } from "./theme.js";
++import { initializeAstraVision } from "../features/xray.js";
 +import { applyTheme, initBackground } from "./theme.js";
+ import { generateRandomString } from "../utils.js";
  
  window.lockKey = "t";
  window.entityTraceKey = "h";
@@ -3393,8 +3389,8 @@ Index: src/ui/radar.js
 --- src/ui/radar.js	v1.7
 +++ src/ui/radar.js	v1.8
 @@ -1,6 +1,11 @@
--import { getEntityById } from "../utils.js";
 -import { getEntityPosition, dragState, state } from "../core.js";
+-import { getEntityById } from "../utils.js";
 +import {
 +  radius,
 +  getEntityPosition,

@@ -1,6 +1,3 @@
-import { showNotification } from "./ui/interaction.js";
-import { getAllPropertyNames } from "./utils.js";
-import { handleAnimalAction } from "./features/autofarm.js";
 import {
   createUpdateHistoryPanel,
   createDeepToolsPanel,
@@ -8,7 +5,10 @@ import {
   togglePanels,
 } from "./ui/panels.js";
 import { applyCustomBackground, createSettingsStyles } from "./ui/theme.js";
+import { handleAnimalAction } from "./features/autofarm.js";
+import { showNotification } from "./ui/interaction.js";
 import { initAdBlocker } from "./features/adblock.js";
+import { getAllPropertyNames } from "./utils.js";
 
 const stateMap = new WeakMap();
 function wrapWithProxy(targetObject, propertyKey, proxyHandler) {

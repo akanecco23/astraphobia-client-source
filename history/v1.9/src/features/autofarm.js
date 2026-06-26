@@ -1,5 +1,3 @@
-import { calculateDistance, getGameCanvas } from "../utils.js";
-import { showNotification } from "../ui/interaction.js";
 import {
   currentTime,
   radius,
@@ -15,6 +13,8 @@ import {
   startAutoFarm,
   state,
 } from "../core.js";
+import { calculateDistance, getGameCanvas } from "../utils.js";
+import { showNotification } from "../ui/interaction.js";
 import { moveAndClickTarget } from "./movement.js";
 
 window.autoFarmActive = false;

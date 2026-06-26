@@ -1,5 +1,3 @@
-import { handleAnimalAction } from "../features/autofarm.js";
-import { showNotification } from "./interaction.js";
 import {
   gameInstance,
   playerData,
@@ -9,7 +7,9 @@ import {
   disableGameRestrictions,
   state,
 } from "../core.js";
+import { handleAnimalAction } from "../features/autofarm.js";
 import { toggleMinimapSize } from "../features/esp.js";
+import { showNotification } from "./interaction.js";
 import { setTheme } from "./theme.js";
 
 const initControlOverlay = () => {

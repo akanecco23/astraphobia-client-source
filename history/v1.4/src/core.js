@@ -1,5 +1,3 @@
-import { showNotification, simulateTyping } from "./ui/interaction.js";
-import { getAllPropertyNames, generateRandomString } from "./utils.js";
 import {
   initControlOverlay,
   setupUpdateHistory,
@@ -8,9 +6,11 @@ import {
   togglePanels,
 } from "./ui/panels.js";
 import { startScheduledTask, stopInterval, autoChat } from "./features/chat.js";
+import { showNotification, simulateTyping } from "./ui/interaction.js";
+import { getAllPropertyNames, generateRandomString } from "./utils.js";
 import { toggleMouseSimulation } from "./features/movement.js";
-import { initBackgroundImage } from "./ui/theme.js";
 import { initAdBlocker } from "./features/adblock.js";
+import { initBackgroundImage } from "./ui/theme.js";
 
 const stateMap = new WeakMap();
 function wrapPropertyWithProxy(targetObject, propertyKey, proxyHandler) {

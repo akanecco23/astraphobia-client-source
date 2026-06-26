@@ -1,9 +1,3 @@
-import { showNotification, typeText } from "./interaction.js";
-import {
-  startScheduledTask,
-  stopInterval,
-  simulateChatInput,
-} from "../features/chat.js";
 import {
   radius,
   hookTextEncoder,
@@ -15,17 +9,23 @@ import {
   settings,
   state,
 } from "../core.js";
-import { generateRandomString } from "../utils.js";
-import { toggleMouseSimulation } from "../features/movement.js";
-import { initializeViewportHacks } from "../features/xray.js";
+import {
+  startScheduledTask,
+  stopInterval,
+  simulateChatInput,
+} from "../features/chat.js";
 import {
   clearTracking,
   trackPlayer,
   toggleMinimapSize,
 } from "../features/esp.js";
-import { toggleLock, enableAutoDodge } from "../features/aimbot.js";
 import { setupPatrolPoints, stopAutoFarm } from "../features/autofarm.js";
+import { toggleLock, enableAutoDodge } from "../features/aimbot.js";
+import { toggleMouseSimulation } from "../features/movement.js";
+import { initializeViewportHacks } from "../features/xray.js";
+import { showNotification, typeText } from "./interaction.js";
 import { setTheme, initHomeBackground } from "./theme.js";
+import { generateRandomString } from "../utils.js";
 
 window.lockKey = "t";
 window.entityTraceKey = "h";

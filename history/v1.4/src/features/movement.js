@@ -1,6 +1,6 @@
-import { getGameCanvas } from "../utils.js";
-import { showNotification } from "../ui/interaction.js";
 import { rotationAngles, orbitRadius, state } from "../core.js";
+import { showNotification } from "../ui/interaction.js";
+import { getGameCanvas } from "../utils.js";
 
 function startAntiAfkMouseMovement() {
   if (state.animationIntervalId) {

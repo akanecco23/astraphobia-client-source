@@ -1,12 +1,3 @@
-import { showNotification, initNameAutofill } from "./ui/interaction.js";
-import {
-  calculateDistance,
-  getOrCreateCanvas,
-  getAllPropertyNames,
-} from "./utils.js";
-import { drawEntityTrail, toggleEntityTrail } from "./features/entitytrail.js";
-import { setupPatrolPoints, autoFarmLoop } from "./features/autofarm.js";
-import { applyTheme, initBackgroundImage, injectStyles } from "./ui/theme.js";
 import {
   createToolsPanel,
   createVisionPanel,
@@ -17,15 +8,24 @@ import {
   createUpdatePanel,
   togglePanelsVisibility,
 } from "./ui/panels.js";
-import { initAdBlocker } from "./features/adblock.js";
-import { initRadarDrag } from "./ui/radar.js";
-import { renderEspLoop, trackPlayer, clearTracking } from "./features/esp.js";
+import {
+  calculateDistance,
+  getOrCreateCanvas,
+  getAllPropertyNames,
+} from "./utils.js";
 import {
   updateLockTarget,
   autoDodgeLoop,
   toggleLock,
 } from "./features/aimbot.js";
+import { drawEntityTrail, toggleEntityTrail } from "./features/entitytrail.js";
+import { renderEspLoop, trackPlayer, clearTracking } from "./features/esp.js";
+import { applyTheme, initBackgroundImage, injectStyles } from "./ui/theme.js";
+import { setupPatrolPoints, autoFarmLoop } from "./features/autofarm.js";
+import { showNotification, initNameAutofill } from "./ui/interaction.js";
 import { simulatePointerMove } from "./features/movement.js";
+import { initAdBlocker } from "./features/adblock.js";
+import { initRadarDrag } from "./ui/radar.js";
 const stateCache = new WeakMap();
 function wrapPropertyWithProxy(targetObject, propertyName, proxyHandler) {
   const originalValue = targetObject[propertyName];

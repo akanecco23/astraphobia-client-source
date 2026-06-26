@@ -2,35 +2,7 @@ Index: content.js
 ===================================================================
 --- content.js	v1.2
 +++ content.js	v1.3
-@@ -3,40 +3,42 @@
-   getGameCanvas,
-   getAllPropertyNames,
- } from "./src/utils.js";
- import { handleAnimalAction } from "./src/features/autofarm.js";
-+import {
-+  startScheduledTask,
-+  stopInterval,
-+  autoChat,
-+} from "./src/features/chat.js";
- import { startAntiAfk } from "./src/features/antidetection.js";
- import {
-   stopMouseSimulation,
-   toggleMouseSimulation,
- } from "./src/features/movement.js";
--import { startScheduledTask, stopInterval } from "./src/features/chat.js";
-+import { toggleMinimapSize } from "./src/features/esp.js";
- import {
-+  initControlOverlay,
-   createUpdateHistoryPanel,
-   createDeepToolsPanel,
--  createPlusPanel,
-+  injectPlusPanelStyles,
-+  injectSettingsStyles,
-   togglePanels,
- } from "./src/ui/panels.js";
--import { applyCustomBackground, createSettingsStyles } from "./src/ui/theme.js";
-+import { initBackgroundImage } from "./src/ui/theme.js";
- import { initAdBlocker } from "./src/features/adblock.js";
+@@ -1,42 +1,44 @@
  import {
    wrapWithProxy,
 -  initNetworkHook,
@@ -55,12 +27,42 @@ Index: content.js
 +  securitySettings,
    coreSharedState,
  } from "./src/core.js";
--import {
+ import {
++  initControlOverlay,
+   createUpdateHistoryPanel,
+   createDeepToolsPanel,
+-  createPlusPanel,
++  injectPlusPanelStyles,
++  injectSettingsStyles,
+   togglePanels,
+ } from "./src/ui/panels.js";
+ import {
+   generateRandomString,
+   getGameCanvas,
+   getAllPropertyNames,
+ } from "./src/utils.js";
+ import {
 -  simulateTyping,
 -  autoTypeChat,
 -  showNotification,
 -} from "./src/ui/interaction.js";
+-import {
+   stopMouseSimulation,
+   toggleMouseSimulation,
+ } from "./src/features/movement.js";
+-import { applyCustomBackground, createSettingsStyles } from "./src/ui/theme.js";
+-import { startScheduledTask, stopInterval } from "./src/features/chat.js";
++import {
++  startScheduledTask,
++  stopInterval,
++  autoChat,
++} from "./src/features/chat.js";
 +import { simulateTyping, showNotification } from "./src/ui/interaction.js";
+ import { handleAnimalAction } from "./src/features/autofarm.js";
+ import { startAntiAfk } from "./src/features/antidetection.js";
+ import { initAdBlocker } from "./src/features/adblock.js";
++import { toggleMinimapSize } from "./src/features/esp.js";
++import { initBackgroundImage } from "./src/ui/theme.js";
 Index: manifest.json
 ===================================================================
 --- manifest.json	v1.2
@@ -80,9 +82,6 @@ Index: src/core.js
 --- src/core.js	v1.2
 +++ src/core.js	v1.3
 @@ -1,37 +1,38 @@
- import { showNotification } from "./ui/interaction.js";
- import { getAllPropertyNames } from "./utils.js";
--import { handleAnimalAction } from "./features/autofarm.js";
  import {
 +  initControlOverlay,
    createUpdateHistoryPanel,
@@ -93,8 +92,11 @@ Index: src/core.js
    togglePanels,
  } from "./ui/panels.js";
 -import { applyCustomBackground, createSettingsStyles } from "./ui/theme.js";
-+import { initBackgroundImage } from "./ui/theme.js";
+-import { handleAnimalAction } from "./features/autofarm.js";
+ import { showNotification } from "./ui/interaction.js";
  import { initAdBlocker } from "./features/adblock.js";
++import { initBackgroundImage } from "./ui/theme.js";
+ import { getAllPropertyNames } from "./utils.js";
  
  const stateMap = new WeakMap();
  function wrapWithProxy(targetObject, propertyKey, proxyHandler) {
@@ -1026,16 +1028,6 @@ Index: src/ui/panels.js
 --- src/ui/panels.js	v1.2
 +++ src/ui/panels.js	v1.3
 @@ -1,58 +1,162 @@
-+import { handleAnimalAction } from "../features/autofarm.js";
- import {
--  simulateTyping,
--  autoTypeChat,
--  showNotification,
--} from "./interaction.js";
-+  startScheduledTask,
-+  stopInterval,
-+  autoChat,
-+} from "../features/chat.js";
  import {
 +  game,
 +  player,
@@ -1052,11 +1044,21 @@ Index: src/ui/panels.js
 +  disableGameRestrictions,
    coreSharedState,
  } from "../core.js";
- import { generateRandomString } from "../utils.js";
+ import {
+-  simulateTyping,
+-  autoTypeChat,
+-  showNotification,
+-} from "./interaction.js";
+-import { startScheduledTask, stopInterval } from "../features/chat.js";
++  startScheduledTask,
++  stopInterval,
++  autoChat,
++} from "../features/chat.js";
 +import { simulateTyping, showNotification } from "./interaction.js";
  import { toggleMouseSimulation } from "../features/movement.js";
--import { startScheduledTask, stopInterval } from "../features/chat.js";
++import { handleAnimalAction } from "../features/autofarm.js";
 +import { toggleMinimapSize } from "../features/esp.js";
+ import { generateRandomString } from "../utils.js";
  
 +const initControlOverlay = () => {
 +  if (coreSharedState.isInitialized_2) {
@@ -1750,8 +1752,8 @@ Index: src/ui/theme.js
 --- src/ui/theme.js	v1.2
 +++ src/ui/theme.js	v1.3
 @@ -1,8 +1,5 @@
--import { showNotification } from "./interaction.js";
 -import { radius, coreSharedState } from "../core.js";
+-import { showNotification } from "./interaction.js";
 -
 -function applyCustomBackground() {
 +function initBackgroundImage() {

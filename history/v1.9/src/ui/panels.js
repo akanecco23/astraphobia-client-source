@@ -1,39 +1,4 @@
 import {
-  showNotification,
-  simulateTyping,
-  initNameAutofill,
-} from "./interaction.js";
-import {
-  startScheduledTask,
-  stopInterval,
-  simulateChatInput,
-} from "../features/chat.js";
-import {
-  radius,
-  initNetworkInterceptor,
-  playerData,
-  initAntiDetection,
-  startAutoFarm,
-  musicPlaylist,
-  state,
-} from "../core.js";
-import { generateRandomString } from "../utils.js";
-import { toggleMouseSimulation } from "../features/movement.js";
-import { activateAstraVision } from "../features/xray.js";
-import {
-  toggleEsp,
-  trackPlayer,
-  clearTracking,
-  toggleMinimapSize,
-} from "../features/esp.js";
-import {
-  toggleLock,
-  enableAutoDodge,
-  disableAutoDodge,
-} from "../features/aimbot.js";
-import { setupPatrolPoints, stopAutoFarm } from "../features/autofarm.js";
-import { applyTheme, initBackgroundImage } from "./theme.js";
-import {
   pausePlayback,
   resumePlayback,
   stopPlayback,
@@ -43,6 +8,41 @@ import {
   addTrackToPlaylist,
   updateMusicPanel,
 } from "./audio.js";
+import {
+  radius,
+  initNetworkInterceptor,
+  playerData,
+  initAntiDetection,
+  startAutoFarm,
+  musicPlaylist,
+  state,
+} from "../core.js";
+import {
+  toggleEsp,
+  trackPlayer,
+  clearTracking,
+  toggleMinimapSize,
+} from "../features/esp.js";
+import {
+  startScheduledTask,
+  stopInterval,
+  simulateChatInput,
+} from "../features/chat.js";
+import {
+  toggleLock,
+  enableAutoDodge,
+  disableAutoDodge,
+} from "../features/aimbot.js";
+import {
+  showNotification,
+  simulateTyping,
+  initNameAutofill,
+} from "./interaction.js";
+import { setupPatrolPoints, stopAutoFarm } from "../features/autofarm.js";
+import { toggleMouseSimulation } from "../features/movement.js";
+import { applyTheme, initBackgroundImage } from "./theme.js";
+import { activateAstraVision } from "../features/xray.js";
+import { generateRandomString } from "../utils.js";
 
 window.lockKey = "t";
 window.entityTraceKey = "h";

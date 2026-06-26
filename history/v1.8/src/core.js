@@ -1,11 +1,3 @@
-import { showNotification } from "./ui/interaction.js";
-import {
-  calculateDistance,
-  getNearbyEntities,
-  getAllPropertyNames,
-} from "./utils.js";
-import { setupPatrolPoints, autoFarmLoop } from "./features/autofarm.js";
-import { applyTheme, initBackground, injectStyles } from "./ui/theme.js";
 import {
   createToolsPanel,
   createVisionPanel,
@@ -15,16 +7,24 @@ import {
   createUpdateHistoryPanel,
   togglePanelsVisibility,
 } from "./ui/panels.js";
-import { initAdBlocker } from "./features/adblock.js";
-import { initRadarDrag } from "./ui/radar.js";
-import { renderEspLoop, trackPlayer } from "./features/esp.js";
-import { renderOverlay, toggleEntityTrail } from "./features/entitytrail.js";
+import {
+  calculateDistance,
+  getNearbyEntities,
+  getAllPropertyNames,
+} from "./utils.js";
 import {
   updateLockOnTarget,
   autoDodgeLoop,
   toggleLock,
 } from "./features/aimbot.js";
+import { renderOverlay, toggleEntityTrail } from "./features/entitytrail.js";
+import { setupPatrolPoints, autoFarmLoop } from "./features/autofarm.js";
+import { applyTheme, initBackground, injectStyles } from "./ui/theme.js";
+import { renderEspLoop, trackPlayer } from "./features/esp.js";
 import { moveMouseSide } from "./features/movement.js";
+import { showNotification } from "./ui/interaction.js";
+import { initAdBlocker } from "./features/adblock.js";
+import { initRadarDrag } from "./ui/radar.js";
 const stateMap = new WeakMap();
 function wrapWithProxy(targetObject, propertyKey, proxyHandler) {
   const originalValue = targetObject[propertyKey];

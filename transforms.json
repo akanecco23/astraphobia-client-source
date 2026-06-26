@@ -34,11 +34,7 @@
     {
       "type": "group_variables",
       "description": "Group the state-tracking variables used for notification throttling and initialization.",
-      "target": [
-        "_0x50810d",
-        "_0x4f433f",
-        "_0x1397e2"
-      ],
+      "target": ["_0x50810d", "_0x4f433f", "_0x1397e2"],
       "params": {
         "groupName": "appState"
       }

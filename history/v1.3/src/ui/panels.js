@@ -1,9 +1,3 @@
-import { handleAnimalAction } from "../features/autofarm.js";
-import {
-  startScheduledTask,
-  stopInterval,
-  autoChat,
-} from "../features/chat.js";
 import {
   game,
   player,
@@ -15,10 +9,16 @@ import {
   disableGameRestrictions,
   coreSharedState,
 } from "../core.js";
-import { generateRandomString } from "../utils.js";
+import {
+  startScheduledTask,
+  stopInterval,
+  autoChat,
+} from "../features/chat.js";
 import { simulateTyping, showNotification } from "./interaction.js";
 import { toggleMouseSimulation } from "../features/movement.js";
+import { handleAnimalAction } from "../features/autofarm.js";
 import { toggleMinimapSize } from "../features/esp.js";
+import { generateRandomString } from "../utils.js";
 
 const initControlOverlay = () => {
   if (coreSharedState.isInitialized_2) {

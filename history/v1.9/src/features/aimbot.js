@@ -13,10 +13,10 @@ import {
   angle,
   state,
 } from "../core.js";
-import { showNotification } from "../ui/interaction.js";
-import { updateLockButton } from "../ui/radar.js";
 import { getGameCanvas, calculateDistance } from "../utils.js";
+import { showNotification } from "../ui/interaction.js";
 import { moveAndClickTarget } from "./movement.js";
+import { updateLockButton } from "../ui/radar.js";
 
 window.autoDodgeEnabled = false;
 

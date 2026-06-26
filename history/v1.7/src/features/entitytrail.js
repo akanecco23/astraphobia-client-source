@@ -1,11 +1,11 @@
-import { showNotification } from "../ui/interaction.js";
-import { refreshUI } from "../ui/panels.js";
 import {
   getNearbyEntities,
   getZoomLevel,
   getOrCreateOverlayCanvas,
 } from "../utils.js";
 import { startEntityTrail, getFirstAnimalPosition, state } from "../core.js";
+import { showNotification } from "../ui/interaction.js";
+import { refreshUI } from "../ui/panels.js";
 
 function stopMouseSimulation_2() {
   if (state.trailInterval) {

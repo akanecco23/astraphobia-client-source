@@ -2,44 +2,7 @@ Index: content.js
 ===================================================================
 --- content.js	v1.3
 +++ content.js	v1.4
-@@ -2,43 +2,43 @@
-   generateRandomString,
-   getGameCanvas,
-   getAllPropertyNames,
- } from "./src/utils.js";
-+import { simulateTyping, showNotification } from "./src/ui/interaction.js";
- import { handleAnimalAction } from "./src/features/autofarm.js";
-+import { toggleMinimapSize } from "./src/features/esp.js";
-+import { initBackgroundImage, setTheme } from "./src/ui/theme.js";
- import {
-+  initControlOverlay,
-+  setupUpdateHistory,
-+  injectPlusPanelStyles,
-+  injectSettingsStyles,
-+  togglePanels,
-+} from "./src/ui/panels.js";
-+import {
-   startScheduledTask,
-   stopInterval,
-   autoChat,
- } from "./src/features/chat.js";
--import { startAntiAfk } from "./src/features/antidetection.js";
- import {
-+  startAntiAfkMouseMovement,
-   stopMouseSimulation,
-   toggleMouseSimulation,
- } from "./src/features/movement.js";
--import { toggleMinimapSize } from "./src/features/esp.js";
--import {
--  initControlOverlay,
--  createUpdateHistoryPanel,
--  createDeepToolsPanel,
--  injectPlusPanelStyles,
--  injectSettingsStyles,
--  togglePanels,
--} from "./src/ui/panels.js";
--import { initBackgroundImage } from "./src/ui/theme.js";
- import { initAdBlocker } from "./src/features/adblock.js";
+@@ -1,44 +1,44 @@
  import {
 -  wrapWithProxy,
 -  hookTextEncoder,
@@ -66,7 +29,41 @@ Index: content.js
 -  coreSharedState,
 +  state,
  } from "./src/core.js";
--import { simulateTyping, showNotification } from "./src/ui/interaction.js";
+ import {
+   initControlOverlay,
+-  createUpdateHistoryPanel,
+-  createDeepToolsPanel,
++  setupUpdateHistory,
+   injectPlusPanelStyles,
+   injectSettingsStyles,
+   togglePanels,
+ } from "./src/ui/panels.js";
+ import {
++  startAntiAfkMouseMovement,
++  stopMouseSimulation,
++  toggleMouseSimulation,
++} from "./src/features/movement.js";
++import {
+   generateRandomString,
+   getGameCanvas,
+   getAllPropertyNames,
+ } from "./src/utils.js";
+ import {
+-  stopMouseSimulation,
+-  toggleMouseSimulation,
+-} from "./src/features/movement.js";
+-import {
+   startScheduledTask,
+   stopInterval,
+   autoChat,
+ } from "./src/features/chat.js";
+ import { simulateTyping, showNotification } from "./src/ui/interaction.js";
++import { initBackgroundImage, setTheme } from "./src/ui/theme.js";
+ import { handleAnimalAction } from "./src/features/autofarm.js";
+-import { startAntiAfk } from "./src/features/antidetection.js";
+ import { initAdBlocker } from "./src/features/adblock.js";
+ import { toggleMinimapSize } from "./src/features/esp.js";
+-import { initBackgroundImage } from "./src/ui/theme.js";
 Index: manifest.json
 ===================================================================
 --- manifest.json	v1.3
@@ -86,10 +83,6 @@ Index: src/core.js
 --- src/core.js	v1.3
 +++ src/core.js	v1.4
 @@ -1,27 +1,28 @@
--import { showNotification } from "./ui/interaction.js";
--import { getAllPropertyNames } from "./utils.js";
-+import { showNotification, simulateTyping } from "./ui/interaction.js";
-+import { getAllPropertyNames, generateRandomString } from "./utils.js";
  import {
    initControlOverlay,
 -  createUpdateHistoryPanel,
@@ -99,10 +92,14 @@ Index: src/core.js
    injectSettingsStyles,
    togglePanels,
  } from "./ui/panels.js";
+-import { showNotification } from "./ui/interaction.js";
 +import { startScheduledTask, stopInterval, autoChat } from "./features/chat.js";
++import { showNotification, simulateTyping } from "./ui/interaction.js";
++import { getAllPropertyNames, generateRandomString } from "./utils.js";
 +import { toggleMouseSimulation } from "./features/movement.js";
- import { initBackgroundImage } from "./ui/theme.js";
  import { initAdBlocker } from "./features/adblock.js";
+ import { initBackgroundImage } from "./ui/theme.js";
+-import { getAllPropertyNames } from "./utils.js";
  
  const stateMap = new WeakMap();
 -function wrapWithProxy(targetObject, propertyKey, proxyHandler) {
@@ -861,9 +858,9 @@ Index: src/features/antidetection.js
 --- src/features/antidetection.js	v1.3
 +++ src/features/antidetection.js	v1.4
 @@ -1,31 +0,0 @@
--import { getGameCanvas } from "../utils.js";
--import { showNotification } from "../ui/interaction.js";
 -import { angles, radius, coreSharedState } from "../core.js";
+-import { showNotification } from "../ui/interaction.js";
+-import { getGameCanvas } from "../utils.js";
 -
 -function startAntiAfk() {
 -  if (coreSharedState.animationInterval) {
@@ -1027,9 +1024,9 @@ Index: src/features/movement.js
 @@ -1,18 +1,47 @@
 -import { startAntiAfk } from "./antidetection.js";
 -import { coreSharedState } from "../core.js";
-+import { getGameCanvas } from "../utils.js";
-+import { showNotification } from "../ui/interaction.js";
 +import { rotationAngles, orbitRadius, state } from "../core.js";
++import { showNotification } from "../ui/interaction.js";
++import { getGameCanvas } from "../utils.js";
  
 +function startAntiAfkMouseMovement() {
 +  if (state.animationIntervalId) {
@@ -1151,14 +1148,7 @@ Index: src/ui/panels.js
 --- src/ui/panels.js	v1.3
 +++ src/ui/panels.js	v1.4
 @@ -1,28 +1,20 @@
- import { handleAnimalAction } from "../features/autofarm.js";
-+import { showNotification } from "./interaction.js";
  import {
--  startScheduledTask,
--  stopInterval,
--  autoChat,
--} from "../features/chat.js";
--import {
 -  game,
 -  player,
 +  gameInstance,
@@ -1174,10 +1164,17 @@ Index: src/ui/panels.js
 -  coreSharedState,
 +  state,
  } from "../core.js";
--import { generateRandomString } from "../utils.js";
+-import {
+-  startScheduledTask,
+-  stopInterval,
+-  autoChat,
+-} from "../features/chat.js";
 -import { simulateTyping, showNotification } from "./interaction.js";
 -import { toggleMouseSimulation } from "../features/movement.js";
+ import { handleAnimalAction } from "../features/autofarm.js";
  import { toggleMinimapSize } from "../features/esp.js";
+-import { generateRandomString } from "../utils.js";
++import { showNotification } from "./interaction.js";
 +import { setTheme } from "./theme.js";
  
  const initControlOverlay = () => {

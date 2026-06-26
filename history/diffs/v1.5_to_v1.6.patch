@@ -4,85 +4,6 @@ Index: content.js
 +++ content.js	v1.6
 @@ -1,48 +1,97 @@
  import {
--  generateRandomString,
--  getGameCanvas,
--  getAllPropertyNames,
--} from "./src/utils.js";
--import { handleAnimalAction } from "./src/features/autofarm.js";
-+  typeText,
-+  showToast,
-+  restoreUIInteractivity,
-+} from "./src/ui/interaction.js";
- import {
--  startScheduledTask,
--  stopInterval,
--  autoChat,
--} from "./src/features/chat.js";
--import { startAntiAfk } from "./src/features/antidetection.js";
--import {
-+  startCircularMovement,
-   stopMouseSimulation,
-   toggleMouseSimulation,
-+  moveMouseToSide,
-+  simulateClick,
-+  simulateMoveAndClick,
- } from "./src/features/movement.js";
--import { toggleMinimapScale } from "./src/ui/radar.js";
--import { initAdBlocker } from "./src/features/adblock.js";
- import {
--  applyHomeBackground,
--  applyThemeColors,
--  setBlueTheme,
--} from "./src/ui/theme.js";
-+  isAreaSkipped,
-+  handleFarmFailure,
-+  findClosestFarmable,
-+  getFarmableEntities,
-+  findOptimalFarmPosition,
-+  getNearbyAvoidEntities,
-+  calculateAvoidanceVector,
-+  simulateEvolveKeyPress,
-+  checkAntiStuck,
-+  generatePatrolPoints,
-+  autoFarmUpdate,
-+  startAutoFarmLoop,
-+  stopAutoFarm,
-+} from "./src/features/autofarm.js";
-+import { applyTheme, initBackground, injectStyles } from "./src/ui/theme.js";
- import {
--  createHalloweenModal,
--  initControlOverlay,
--  createUpdateHistoryStyles,
--  injectDeepToolsStyles,
--  injectPlusPanelStyles,
--  injectSettingsPanelStyles,
--  togglePanels,
-+  startScheduledTask,
-+  stopInterval,
-+  simulateChatInput,
-+} from "./src/features/chat.js";
-+import { drawRadar, initRadarDrag } from "./src/ui/radar.js";
-+import {
-+  createEspOverlay,
-+  drawEsp,
-+  drawTrackedEntity,
-+  renderEspLoop,
-+  clearTracking,
-+  trackPlayer,
-+  toggleMinimapSize,
-+} from "./src/features/esp.js";
-+import { autoDodgeLoop, enableAutoDodge } from "./src/features/aimbot.js";
-+import {
-+  showHalloweenModal,
-+  makeDraggable,
-+  createToolsPanel,
-+  createPlusPanel,
-+  createSettingsPanel,
-+  createUpdateHistoryPanel,
-+  toggleUiVisibility,
- } from "./src/ui/panels.js";
-+import { initAdBlocker } from "./src/features/adblock.js";
- import {
 -  wrapPropertyWithProxy,
 -  initInterceptor,
 -  encryptPacketData,
@@ -123,17 +44,91 @@ Index: content.js
 +  angle,
    coreSharedState,
  } from "./src/core.js";
--import { simulateTyping, showNotification } from "./src/ui/interaction.js";
+ import {
+-  createHalloweenModal,
+-  initControlOverlay,
+-  createUpdateHistoryStyles,
+-  injectDeepToolsStyles,
+-  injectPlusPanelStyles,
+-  injectSettingsPanelStyles,
+-  togglePanels,
++  isAreaSkipped,
++  handleFarmFailure,
++  findClosestFarmable,
++  getFarmableEntities,
++  findOptimalFarmPosition,
++  getNearbyAvoidEntities,
++  calculateAvoidanceVector,
++  simulateEvolveKeyPress,
++  checkAntiStuck,
++  generatePatrolPoints,
++  autoFarmUpdate,
++  startAutoFarmLoop,
++  stopAutoFarm,
++} from "./src/features/autofarm.js";
 +import {
-+  generateRandomString,
-+  getGameCanvas,
-+  getAllPropertyNames,
++  showHalloweenModal,
++  makeDraggable,
++  createToolsPanel,
++  createPlusPanel,
++  createSettingsPanel,
++  createUpdateHistoryPanel,
++  toggleUiVisibility,
+ } from "./src/ui/panels.js";
+ import {
++  startCircularMovement,
++  stopMouseSimulation,
++  toggleMouseSimulation,
++  moveMouseToSide,
++  simulateClick,
++  simulateMoveAndClick,
++} from "./src/features/movement.js";
++import {
+   generateRandomString,
+   getGameCanvas,
+   getAllPropertyNames,
 +  isPlayer,
 +  getMyAnimal,
 +  calculateDistance,
 +  getNearbyEntities,
 +  getZoomLevel,
-+} from "./src/utils.js";
+ } from "./src/utils.js";
+ import {
+-  stopMouseSimulation,
+-  toggleMouseSimulation,
+-} from "./src/features/movement.js";
++  createEspOverlay,
++  drawEsp,
++  drawTrackedEntity,
++  renderEspLoop,
++  clearTracking,
++  trackPlayer,
++  toggleMinimapSize,
++} from "./src/features/esp.js";
+ import {
+-  applyHomeBackground,
+-  applyThemeColors,
+-  setBlueTheme,
+-} from "./src/ui/theme.js";
+-import {
+   startScheduledTask,
+   stopInterval,
+-  autoChat,
++  simulateChatInput,
+ } from "./src/features/chat.js";
+-import { simulateTyping, showNotification } from "./src/ui/interaction.js";
+-import { handleAnimalAction } from "./src/features/autofarm.js";
+-import { startAntiAfk } from "./src/features/antidetection.js";
++import {
++  typeText,
++  showToast,
++  restoreUIInteractivity,
++} from "./src/ui/interaction.js";
++import { applyTheme, initBackground, injectStyles } from "./src/ui/theme.js";
++import { autoDodgeLoop, enableAutoDodge } from "./src/features/aimbot.js";
++import { drawRadar, initRadarDrag } from "./src/ui/radar.js";
+ import { initAdBlocker } from "./src/features/adblock.js";
+-import { toggleMinimapScale } from "./src/ui/radar.js";
 Index: manifest.json
 ===================================================================
 --- manifest.json	v1.5
@@ -155,16 +150,8 @@ Index: src/core.js
 --- src/core.js	v1.5
 +++ src/core.js	v1.6
 @@ -1,31 +1,43 @@
--import { showNotification } from "./ui/interaction.js";
--import { getAllPropertyNames } from "./utils.js";
 -import { initControlOverlay, togglePanels } from "./ui/panels.js";
-+import { showToast, restoreUIInteractivity } from "./ui/interaction.js";
-+import { calculateDistance, getAllPropertyNames } from "./utils.js";
-+import {
-+  generatePatrolPoints,
-+  startAutoFarmLoop,
-+} from "./features/autofarm.js";
-+import { applyTheme, initBackground, injectStyles } from "./ui/theme.js";
+-import { showNotification } from "./ui/interaction.js";
 +import {
 +  createToolsPanel,
 +  createPlusPanel,
@@ -172,15 +159,23 @@ Index: src/core.js
 +  createUpdateHistoryPanel,
 +  toggleUiVisibility,
 +} from "./ui/panels.js";
++import {
++  generatePatrolPoints,
++  startAutoFarmLoop,
++} from "./features/autofarm.js";
++import { applyTheme, initBackground, injectStyles } from "./ui/theme.js";
++import { showToast, restoreUIInteractivity } from "./ui/interaction.js";
++import { calculateDistance, getAllPropertyNames } from "./utils.js";
++import { renderEspLoop, trackPlayer } from "./features/esp.js";
++import { moveMouseToSide } from "./features/movement.js";
  import { initAdBlocker } from "./features/adblock.js";
 -import { applyHomeBackground } from "./ui/theme.js";
+-import { getAllPropertyNames } from "./utils.js";
 -
 -const stateMap = new WeakMap();
 -function wrapPropertyWithProxy(targetObject, propertyKey, proxyHandler) {
-+import { initRadarDrag } from "./ui/radar.js";
-+import { renderEspLoop, trackPlayer } from "./features/esp.js";
 +import { autoDodgeLoop } from "./features/aimbot.js";
-+import { moveMouseToSide } from "./features/movement.js";
++import { initRadarDrag } from "./ui/radar.js";
 +const privateMap = new WeakMap();
 +function wrapWithProxy(targetObject, propertyKey, handler) {
    const originalValue = targetObject[propertyKey];
@@ -1247,9 +1242,9 @@ Index: src/features/antidetection.js
 --- src/features/antidetection.js	v1.5
 +++ src/features/antidetection.js	v1.6
 @@ -1,31 +0,0 @@
--import { getGameCanvas } from "../utils.js";
--import { showNotification } from "../ui/interaction.js";
 -import { angleSteps, radius, coreSharedState } from "../core.js";
+-import { showNotification } from "../ui/interaction.js";
+-import { getGameCanvas } from "../utils.js";
 -
 -function startAntiAfk() {
 -  if (coreSharedState.rotationInterval) {
@@ -1283,8 +1278,6 @@ Index: src/features/autofarm.js
 --- src/features/autofarm.js	v1.5
 +++ src/features/autofarm.js	v1.6
 @@ -1,33 +1,645 @@
-+import { calculateDistance, isPlayer, getGameCanvas } from "../utils.js";
-+import { showToast } from "../ui/interaction.js";
  import {
 -  playerData,
 -  securityConfigs,
@@ -1302,7 +1295,9 @@ Index: src/features/autofarm.js
 +  initAutoFarm,
    coreSharedState,
  } from "../core.js";
++import { calculateDistance, isPlayer, getGameCanvas } from "../utils.js";
 +import { simulateMoveAndClick } from "./movement.js";
++import { showToast } from "../ui/interaction.js";
  
 -const handleAnimalAction = (currentValue) => {
 -  const id1 = 1;
@@ -2024,13 +2019,6 @@ Index: src/features/esp.js
 +++ src/features/esp.js	v1.6
 @@ -0,0 +1,366 @@
 +import {
-+  getGameCanvas,
-+  isPlayer,
-+  calculateDistance,
-+  getNearbyEntities,
-+  getZoomLevel,
-+} from "../utils.js";
-+import {
 +  getEntityPosition,
 +  calculateDirection,
 +  findEntityById,
@@ -2038,8 +2026,15 @@ Index: src/features/esp.js
 +  getFirstAnimalPosition,
 +  coreSharedState,
 +} from "../core.js";
-+import { drawRadar } from "../ui/radar.js";
++import {
++  getGameCanvas,
++  isPlayer,
++  calculateDistance,
++  getNearbyEntities,
++  getZoomLevel,
++} from "../utils.js";
 +import { showToast } from "../ui/interaction.js";
++import { drawRadar } from "../ui/radar.js";
 +
 +window.espEnabled = false;
 +window.espTrackedEntityId = null;
@@ -2396,8 +2391,6 @@ Index: src/features/movement.js
 @@ -1,18 +1,155 @@
 -import { startAntiAfk } from "./antidetection.js";
 -import { coreSharedState } from "../core.js";
-+import { getGameCanvas } from "../utils.js";
-+import { showToast } from "../ui/interaction.js";
 +import {
 +  angleSteps,
 +  radius,
@@ -2405,6 +2398,8 @@ Index: src/features/movement.js
 +  getFirstAnimalPosition,
 +  coreSharedState,
 +} from "../core.js";
++import { showToast } from "../ui/interaction.js";
++import { getGameCanvas } from "../utils.js";
  
 +function startCircularMovement() {
 +  if (coreSharedState.animationInterval) {
@@ -2563,8 +2558,8 @@ Index: src/ui/interaction.js
 +++ src/ui/interaction.js	v1.6
 @@ -1,16 +1,17 @@
 -import { radius, coreSharedState } from "../core.js";
-+import { getMyAnimal } from "../utils.js";
 +import { radius, game, coreSharedState } from "../core.js";
++import { getMyAnimal } from "../utils.js";
  
 -function simulateTyping(inputSelector, textToType) {
 -  const inputElement = document.querySelector(inputSelector);
@@ -2737,15 +2732,6 @@ Index: src/ui/panels.js
 --- src/ui/panels.js	v1.5
 +++ src/ui/panels.js	v1.6
 @@ -1,687 +1,466 @@
--import { showNotification, simulateTyping } from "./interaction.js";
--import { handleAnimalAction } from "../features/autofarm.js";
-+import { showToast, typeText } from "./interaction.js";
- import {
-   startScheduledTask,
-   stopInterval,
--  autoChat,
-+  simulateChatInput,
- } from "../features/chat.js";
  import {
    radius,
 -  gameInstance,
@@ -2765,18 +2751,27 @@ Index: src/ui/panels.js
 +  initializeViewportSettings,
    coreSharedState,
  } from "../core.js";
- import { generateRandomString } from "../utils.js";
- import { toggleMouseSimulation } from "../features/movement.js";
--import { toggleMinimapScale } from "./radar.js";
--import { applyThemeColors } from "./theme.js";
+ import {
+   startScheduledTask,
+   stopInterval,
+-  autoChat,
++  simulateChatInput,
+ } from "../features/chat.js";
+-import { showNotification, simulateTyping } from "./interaction.js";
 +import {
 +  clearTracking,
 +  trackPlayer,
 +  toggleMinimapSize,
 +} from "../features/esp.js";
-+import { enableAutoDodge } from "../features/aimbot.js";
 +import { generatePatrolPoints, stopAutoFarm } from "../features/autofarm.js";
+ import { toggleMouseSimulation } from "../features/movement.js";
+-import { handleAnimalAction } from "../features/autofarm.js";
++import { enableAutoDodge } from "../features/aimbot.js";
 +import { applyTheme, initBackground } from "./theme.js";
++import { showToast, typeText } from "./interaction.js";
+ import { generateRandomString } from "../utils.js";
+-import { toggleMinimapScale } from "./radar.js";
+-import { applyThemeColors } from "./theme.js";
  
 -function createHalloweenModal(modalConfig) {
 +function showHalloweenModal(config) {
@@ -3786,8 +3781,8 @@ Index: src/ui/radar.js
 --- src/ui/radar.js	v1.5
 +++ src/ui/radar.js	v1.6
 @@ -1,22 +1,158 @@
--import { showNotification } from "./interaction.js";
 -import { playerData, coreSharedState } from "../core.js";
+-import { showNotification } from "./interaction.js";
 +import { dragState, coreSharedState } from "../core.js";
  
 -function toggleMinimapScale() {

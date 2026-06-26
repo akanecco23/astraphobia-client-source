@@ -1,7 +1,7 @@
 {
   "_meta": {
     "version": "1.1",
-    "lastUpdated": "2026-06-26T02:41:03.244Z",
+    "lastUpdated": "2026-06-26T02:56:47.419Z",
     "description": "Edit name/module fields to customize. Params/locals are ordered by position."
   },
   "functions": {
@@ -9,27 +9,15 @@
       "name": "generateRandomString",
       "module": "utils",
       "fingerprintHash": "1::1::0::0::0::1::0::1::6::::Math|String::Math.floor|Math.random|String.fromCodePoint|for",
-      "params": [
-        "length"
-      ],
-      "locals": [
-        "resultString",
-        "i",
-        "randomCodePoint"
-      ]
+      "params": ["length"],
+      "locals": ["resultString", "i", "randomCodePoint"]
     },
     "global::_0x83775b": {
       "name": "simulateTyping",
       "module": "ui_interaction",
       "fingerprintHash": "2::0::1::0::1::0::0::3::15::\"::document::Event|InputEvent|_0x2b5144.dispatchEvent|_0x2b5144.focus|document.querySelector|if|setTimeout",
-      "params": [
-        "selector",
-        "textToType"
-      ],
-      "locals": [
-        "inputElement",
-        "currentIndex"
-      ]
+      "params": ["selector", "textToType"],
+      "locals": ["inputElement", "currentIndex"]
     },
     "global/_0x83775b::_0x1d9877": {
       "name": "typeNextChar",
@@ -42,36 +30,22 @@
       "name": "wrapPropertyWithProxy",
       "module": "core",
       "fingerprintHash": "3::0::0::0::0::0::0::0::4::::::Proxy|_0xe897ef.set",
-      "params": [
-        "targetObject",
-        "propertyName",
-        "proxyHandler"
-      ],
-      "locals": [
-        "originalValue",
-        "proxyValue"
-      ]
+      "params": ["targetObject", "propertyName", "proxyHandler"],
+      "locals": ["originalValue", "proxyValue"]
     },
     "global::_0x54177c": {
       "name": "showNotification",
       "module": "ui_interaction",
       "fingerprintHash": "1::0::1::0::1::0::0::1::30::\"|'::Date|document::Date.now|_0x404279.remove|document.body.appendChild|document.createElement|if|requestAnimationFrame|setTimeout|translateX|var",
-      "params": [
-        "message"
-      ],
-      "locals": [
-        "currentTime",
-        "notificationElement"
-      ]
+      "params": ["message"],
+      "locals": ["currentTime", "notificationElement"]
     },
     "global::_0x29f143": {
       "name": "initAdBlocker",
       "module": "features_adblock",
       "fingerprintHash": "0::0::1::0::1::0::0::1::20::\"::div|document|sidebar::MutationObserver|_0x1137dc.remove|_0x1137dc.removeAttribute|_0x844fbe.forEach|document.querySelector|document.querySelectorAll|forEach|has|if|not",
       "params": [],
-      "locals": [
-        "adSelectors"
-      ]
+      "locals": ["adSelectors"]
     },
     "global/_0x29f143::_0x293d62": {
       "name": "removeAds",
@@ -85,11 +59,7 @@
       "module": "ui_interaction",
       "fingerprintHash": "0::0::1::0::1::0::0::2::15::\"::document|localStorage::Event|_0x25d52f.addEventListener|_0x25d52f.dispatchEvent|clearInterval|document.querySelector|if|localStorage.getItem|localStorage.setItem|setInterval",
       "params": [],
-      "locals": [
-        "storedName",
-        "nameInput",
-        "pollInterval"
-      ]
+      "locals": ["storedName", "nameInput", "pollInterval"]
     },
     "global/_0x471b3f::_0x211fc9": {
       "name": "applyAutofill",
@@ -102,61 +72,42 @@
       "name": "startScheduledTask",
       "module": "features_chat",
       "fingerprintHash": "2::0::1::0::0::0::0::0::4::::::clearInterval|if|setInterval",
-      "params": [
-        "taskData",
-        "intervalSeconds"
-      ],
+      "params": ["taskData", "intervalSeconds"],
       "locals": []
     },
     "global::_0x36210f": {
       "name": "isYouTubeUrl",
       "module": "ui_audio",
       "fingerprintHash": "1::0::0::0::0::0::0::1::1::::i::i.test",
-      "params": [
-        "url"
-      ],
+      "params": ["url"],
       "locals": []
     },
     "global::_0x1a70da": {
       "name": "extractYouTubeId",
       "module": "ui_audio",
       "fingerprintHash": "1::0::1::1::0::0::0::4::5::\"::youtu|youtube::URL|_0x28f992.hostname.includes|_0x28f992.pathname.slice|_0x28f992.pathname.split|_0x28f992.pathname.startsWith|_0x28f992.searchParams.get|catch|if|split",
-      "params": [
-        "url",
-        "error"
-      ],
-      "locals": [
-        "urlObj"
-      ]
+      "params": ["url", "error"],
+      "locals": ["urlObj"]
     },
     "global::_0x26a9e5": {
       "name": "ensureYouTubeApiReady",
       "module": "ui_audio",
       "fingerprintHash": "1::1::1::1::1::0::0::2::17::\"::document|window|www::_0x42b605.shift|catch|document.createElement|document.getElementById|document.head.appendChild|function|if|while|window._astYtReadyCallbacks.push",
-      "params": [
-        "callback"
-      ],
-      "locals": [
-        "scriptElement",
-        "originalReadyHandler"
-      ]
+      "params": ["callback"],
+      "locals": ["scriptElement", "originalReadyHandler"]
     },
     "global::_0x3b469d": {
       "name": "getYoutubeHostElement",
       "module": "ui_audio",
       "fingerprintHash": "0::0::1::0::1::0::0::1::13::\"::document::document.body.appendChild|document.createElement|document.getElementById|if",
       "params": [],
-      "locals": [
-        "hostElement"
-      ]
+      "locals": ["hostElement"]
     },
     "global::_0x4887e1": {
       "name": "playYouTubeVideo",
       "module": "ui_audio",
       "fingerprintHash": "1::0::1::1::1::1::0::2::17::\"::Math|YT|window::Math.floor|Math.random|Math.round|YT.Player|_0x378f93.target.playVideo|_0x378f93.target.setVolume|_0x50c77b.loadVideoById|_0x50c77b.setVolume|catch|if",
-      "params": [
-        "videoId"
-      ],
+      "params": ["videoId"],
       "locals": []
     },
     "global::_0x5e3bc3": {
@@ -170,13 +121,8 @@
       "name": "simulateChatInput",
       "module": "features_chat",
       "fingerprintHash": "1::0::1::0::1::0::0::2::19::\"::document::Event|InputEvent|_0x21f5b6.click|_0x5a73db.blur|_0x5a73db.dispatchEvent|_0x5a73db.focus|document.querySelector|if|setTimeout",
-      "params": [
-        "textToType"
-      ],
-      "locals": [
-        "chatInput",
-        "charIndex"
-      ]
+      "params": ["textToType"],
+      "locals": ["chatInput", "charIndex"]
     },
     "global/_0x346d7e::_0x406740": {
       "name": "typeNextChar",
@@ -190,27 +136,20 @@
       "module": "core",
       "fingerprintHash": "0::1::1::1::1::0::0::17::35::\"::Number|Reflect|String|TextEncoder|document::Number.parseInt|String.fromCharCode|String.fromCodePoint|_0xb56f05.replace|for|function|if|switch|u|x",
       "params": [],
-      "locals": [
-        "actionIdMap",
-        "originalEncode"
-      ]
+      "locals": ["actionIdMap", "originalEncode"]
     },
     "global/_0x4bc606::_0xb30fa8": {
       "name": "unescapeString",
       "module": "",
       "fingerprintHash": "1::0::1::0::0::0::0::15::16::\"::Number|String::Number.parseInt|String.fromCharCode|String.fromCodePoint|_0xb56f05.replace|if|switch|u|x",
-      "params": [
-        "inputString"
-      ],
+      "params": ["inputString"],
       "locals": []
     },
     "global::_0x20b078": {
       "name": "isPlaying",
       "module": "ui_audio",
       "fingerprintHash": "0::0::1::1::1::0::0::3::3::\"::YT|window::_0x50c77b.getPlayerState|catch|if",
-      "params": [
-        "error"
-      ],
+      "params": ["error"],
       "locals": []
     },
     "global::_0x47bca1": {
@@ -231,35 +170,22 @@
       "name": "addTrackToPlaylist",
       "module": "ui_audio",
       "fingerprintHash": "2::0::1::0::1::0::1::1::6::\"::JSON|localStorage::JSON.stringify|_0x11e6e3.push|_0x52b448.split|if|localStorage.setItem|pop|split",
-      "params": [
-        "trackUrl",
-        "trackName"
-      ],
+      "params": ["trackUrl", "trackName"],
       "locals": []
     },
     "global::_0x327097": {
       "name": "removeTrackFromPlaylist",
       "module": "ui_audio",
       "fingerprintHash": "1::0::1::0::1::0::1::0::5::\"::JSON|localStorage::JSON.stringify|_0x11e6e3.splice|if|localStorage.setItem",
-      "params": [
-        "trackIndex"
-      ],
+      "params": ["trackIndex"],
       "locals": []
     },
     "global::_0x2c31c3": {
       "name": "simulatePointerMove",
       "module": "features_movement",
       "fingerprintHash": "1::0::1::0::1::0::0::1::7::\"::::MouseEvent|_0x1c3963.dispatchEvent|_0x1c3963.getBoundingClientRect|if",
-      "params": [
-        "direction"
-      ],
-      "locals": [
-        "targetElement",
-        "rect",
-        "centerX",
-        "centerY",
-        "targetX"
-      ]
+      "params": ["direction"],
+      "locals": ["targetElement", "rect", "centerX", "centerY", "targetX"]
     },
     "global::_0x22fcd1": {
       "name": "getAllPropertyNames",
@@ -272,84 +198,56 @@
       "name": "isValidEntity",
       "module": "core",
       "fingerprintHash": "1::0::1::0::0::0::0::6::6::::::if",
-      "params": [
-        "entity"
-      ],
+      "params": ["entity"],
       "locals": []
     },
     "global::_0xee4f7d": {
       "name": "getGameState",
       "module": "core",
       "fingerprintHash": "0::1::1::1::1::0::0::6::9::::Object|window::Object.keys|catch|for|if",
-      "params": [
-        "error"
-      ],
-      "locals": [
-        "states",
-        "i",
-        "managerKey"
-      ]
+      "params": ["error"],
+      "locals": ["states", "i", "managerKey"]
     },
     "global::_0x195d07": {
       "name": "getEntityManager",
       "module": "core",
       "fingerprintHash": "1::1::1::0::1::0::0::5::10::\"::Array|Object|window::Array.isArray|Object.keys|for|if",
-      "params": [
-        "gameState"
-      ],
-      "locals": [
-        "entityManager",
-        "key",
-        "potentialManager"
-      ]
+      "params": ["gameState"],
+      "locals": ["entityManager", "key", "potentialManager"]
     },
     "global::_0x3cfb48": {
       "name": "stopAndCleanupPlayer",
       "module": "ui_audio",
       "fingerprintHash": "0::0::1::1::0::0::0::0::5::::::_0x50c77b.stopVideo|_0xe024e2.pause|catch|if",
-      "params": [
-        "audioError",
-        "youtubeStopError"
-      ],
+      "params": ["audioError", "youtubeStopError"],
       "locals": []
     },
     "global::_0x5d9dc6": {
       "name": "playTrack",
       "module": "ui_audio",
       "fingerprintHash": "1::0::1::0::0::1::0::4::28::\"::Math::Audio|Math.floor|Math.random|_0xe024e2.play|catch|if",
-      "params": [
-        "trackIndex"
-      ],
-      "locals": [
-        "currentTrack",
-        "youtubeId"
-      ]
+      "params": ["trackIndex"],
+      "locals": ["currentTrack", "youtubeId"]
     },
     "global::_0x42d42f": {
       "name": "pausePlayback",
       "module": "ui_audio",
       "fingerprintHash": "0::0::1::1::0::0::0::0::3::\"::::_0x50c77b.pauseVideo|_0xe024e2.pause|catch|if",
-      "params": [
-        "youtubePauseError"
-      ],
+      "params": ["youtubePauseError"],
       "locals": []
     },
     "global::_0x273e45": {
       "name": "resumePlayback",
       "module": "ui_audio",
       "fingerprintHash": "0::0::1::1::0::0::0::0::4::\"::::_0x50c77b.playVideo|_0xe024e2.play|catch|if",
-      "params": [
-        "youtubePlayError"
-      ],
+      "params": ["youtubePlayError"],
       "locals": []
     },
     "global::_0x43201a": {
       "name": "stopPlayback",
       "module": "ui_audio",
       "fingerprintHash": "0::0::1::1::0::0::0::0::5::\"::::_0x50c77b.stopVideo|_0xe024e2.pause|catch|if",
-      "params": [
-        "youtubeStopError"
-      ],
+      "params": ["youtubeStopError"],
       "locals": []
     },
     "global::_0xe3adcc": {
@@ -379,9 +277,7 @@
       "module": "features_movement",
       "fingerprintHash": "0::0::1::0::1::1::0::2::11::\"::Math|window::Math.cos|Math.round|Math.sin|MouseEvent|_0x137b43.dispatchEvent|if|setInterval",
       "params": [],
-      "locals": [
-        "canvas"
-      ]
+      "locals": ["canvas"]
     },
     "global::_0x303c8f": {
       "name": "stopMouseSimulation",
@@ -402,9 +298,7 @@
       "module": "ui_radar",
       "fingerprintHash": "0::0::1::0::1::0::0::0::3::\"::document|window::_0x15c29f.classList.toggle|document.getElementById|if",
       "params": [],
-      "locals": [
-        "lockButton"
-      ]
+      "locals": ["lockButton"]
     },
     "global::_0x557bee": {
       "name": "startEntityTrail",
@@ -443,83 +337,49 @@
       "name": "getFirstAnimal",
       "module": "core",
       "fingerprintHash": "0::0::1::1::0::0::0::5::6::::::catch|if",
-      "params": [
-        "error"
-      ],
-      "locals": [
-        "userData"
-      ]
+      "params": ["error"],
+      "locals": ["userData"]
     },
     "global::_0x200c10": {
       "name": "getFirstAnimalPosition",
       "module": "core",
       "fingerprintHash": "0::0::1::1::0::0::0::3::5::::::catch|if",
-      "params": [
-        "error"
-      ],
-      "locals": [
-        "animal",
-        "position"
-      ]
+      "params": ["error"],
+      "locals": ["animal", "position"]
     },
     "global::_0x3e379f": {
       "name": "getEntityPosition",
       "module": "core",
       "fingerprintHash": "1::0::1::0::0::0::0::2::2::::::if",
-      "params": [
-        "entity"
-      ],
+      "params": ["entity"],
       "locals": []
     },
     "global::_0x175295": {
       "name": "calculateDirection",
       "module": "core",
       "fingerprintHash": "1::0::1::0::0::1::0::2::14::::Math::Math.abs|Math.cos|Math.sin|Math.sqrt|if",
-      "params": [
-        "entity"
-      ],
-      "locals": [
-        "dirX",
-        "dirY",
-        "angle",
-        "magnitude"
-      ]
+      "params": ["entity"],
+      "locals": ["dirX", "dirY", "angle", "magnitude"]
     },
     "global::_0x3396f0": {
       "name": "findEntityById",
       "module": "core",
       "fingerprintHash": "1::1::1::1::0::0::0::4::12::::Array|Object::Array.isArray|Object.keys|_0x3f8ff4.entitiesList.find|_0x448d35.find|catch|for|if",
-      "params": [
-        "entityId",
-        "error"
-      ],
-      "locals": [
-        "userData",
-        "gameState",
-        "entity",
-        "roomId",
-        "animals"
-      ]
+      "params": ["entityId", "error"],
+      "locals": ["userData", "gameState", "entity", "roomId", "animals"]
     },
     "global::_0xe9b4e3": {
       "name": "calculateDistance",
       "module": "utils",
       "fingerprintHash": "4::0::0::0::0::1::0::1::1::::Math::Math.sqrt",
-      "params": [
-        "x1",
-        "y1",
-        "x2",
-        "y2"
-      ],
+      "params": ["x1", "y1", "x2", "y2"],
       "locals": []
     },
     "global::_0x4c6311": {
       "name": "getGameState_2",
       "module": "core",
       "fingerprintHash": "0::1::1::1::0::1::0::3::25::::Math::Math.atan2|Math.sqrt|_0x466baf.entities.push|_0x466baf.food.push|_0x466baf.food.sort|_0x466baf.players.push|_0x466baf.players.sort|catch|for|if",
-      "params": [
-        "error"
-      ],
+      "params": ["error"],
       "locals": [
         "stateData",
         "parsedState",
@@ -540,12 +400,8 @@
       "name": "getViewportScale",
       "module": "core",
       "fingerprintHash": "0::0::1::1::1::0::0::2::3::::game|scale|window::catch|find|if",
-      "params": [
-        "error"
-      ],
-      "locals": [
-        "foundState"
-      ]
+      "params": ["error"],
+      "locals": ["foundState"]
     },
     "global::_0x4810b1": {
       "name": "updateLockTarget",
@@ -583,10 +439,7 @@
       "module": "features_aimbot",
       "fingerprintHash": "0::0::1::0::1::0::0::0::10::\"::window::if",
       "params": [],
-      "locals": [
-        "gameState",
-        "targetName"
-      ]
+      "locals": ["gameState", "targetName"]
     },
     "global::_0x445932": {
       "name": "clearTracking",
@@ -599,23 +452,14 @@
       "name": "simulateClick",
       "module": "features_movement",
       "fingerprintHash": "2::0::1::0::1::0::0::1::5::\"::::PointerEvent|_0x27cb9c.dispatchEvent|if|setTimeout",
-      "params": [
-        "clientX",
-        "clientY"
-      ],
-      "locals": [
-        "targetElement"
-      ]
+      "params": ["clientX", "clientY"],
+      "locals": ["targetElement"]
     },
     "global::_0x594e7a": {
       "name": "moveAndClickTarget",
       "module": "features_movement",
       "fingerprintHash": "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x28bcfa.dispatchEvent|_0x28bcfa.getBoundingClientRect|if",
-      "params": [
-        "targetX",
-        "targetY",
-        "shouldClick"
-      ],
+      "params": ["targetX", "targetY", "shouldClick"],
       "locals": [
         "targetElement",
         "playerPos",
@@ -664,11 +508,7 @@
       "name": "drawRadar",
       "module": "ui_radar",
       "fingerprintHash": "3::1::1::0::1::1::0::1::93::\"::Date|Math|window::_0x3782c7.arc|_0x3782c7.beginPath|_0x3782c7.fill|_0x3782c7.lineTo|_0x3782c7.moveTo|_0x3782c7.roundRect|_0x3782c7.stroke|for|if|rgba",
-      "params": [
-        "ctx",
-        "canvas",
-        "gameData"
-      ],
+      "params": ["ctx", "canvas", "gameData"],
       "locals": [
         "radarSize",
         "radarX",
@@ -712,20 +552,13 @@
       "module": "features_esp",
       "fingerprintHash": "0::0::1::0::1::0::0::0::4::\"::window::if",
       "params": [],
-      "locals": [
-        "gameData"
-      ]
+      "locals": ["gameData"]
     },
     "global::_0x1766f6": {
       "name": "drawEntityTrail",
       "module": "features_entitytrail",
       "fingerprintHash": "4::1::1::0::1::1::0::1::40::\"::Date|Math|window::Date.now|Math.max|_0x1e55fc.arc|_0x1e55fc.beginPath|_0x1e55fc.lineTo|_0x1e55fc.moveTo|_0x1e55fc.stroke|for|if|rgba",
-      "params": [
-        "ctx",
-        "canvas",
-        "playerPos",
-        "scale"
-      ],
+      "params": ["ctx", "canvas", "playerPos", "scale"],
       "locals": [
         "centerX",
         "centerY",
@@ -756,39 +589,21 @@
       "name": "getOrCreateCanvas",
       "module": "utils",
       "fingerprintHash": "2::0::1::0::1::0::0::1::21::\"::document|window::_0x4eba8a.getBoundingClientRect|document.body.appendChild|document.createElement|document.getElementById|if",
-      "params": [
-        "canvasId",
-        "zIndex"
-      ],
-      "locals": [
-        "canvas",
-        "targetElement",
-        "rect"
-      ]
+      "params": ["canvasId", "zIndex"],
+      "locals": ["canvas", "targetElement", "rect"]
     },
     "global::_0x383947": {
       "name": "renderLoop",
       "module": "core",
       "fingerprintHash": "0::0::1::0::1::0::0::0::6::\"::window::_0x145be3.clearRect|_0x49b741.getContext|if|requestAnimationFrame",
       "params": [],
-      "locals": [
-        "canvas",
-        "ctx",
-        "playerPos"
-      ]
+      "locals": ["canvas", "ctx", "playerPos"]
     },
     "global::_0x1442bf": {
       "name": "drawEsp",
       "module": "features_esp",
       "fingerprintHash": "5::0::1::1::1::1::0::1::59::\"::Math|window::Math.round|_0x2e69dc.forEach|_0x302f38.beginPath|_0x302f38.fillText|_0x302f38.lineTo|_0x302f38.moveTo|_0x302f38.strokeRect|catch|if|toString",
-      "params": [
-        "ctx",
-        "gameData",
-        "offsetX",
-        "offsetY",
-        "scale",
-        "error"
-      ],
+      "params": ["ctx", "gameData", "offsetX", "offsetY", "scale", "error"],
       "locals": [
         "myPos",
         "espMode",
@@ -803,12 +618,7 @@
       "name": "drawTrackedEntity",
       "module": "features_esp",
       "fingerprintHash": "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x5c0c6c.beginPath|_0x5c0c6c.lineTo|_0x5c0c6c.moveTo|_0x5c0c6c.setLineDash|_0x5c0c6c.stroke|_0x5c0c6c.strokeRect|if|rgba",
-      "params": [
-        "ctx",
-        "canvas",
-        "playerPos",
-        "scale"
-      ],
+      "params": ["ctx", "canvas", "playerPos", "scale"],
       "locals": [
         "trackedEntity",
         "entityPos",
@@ -830,15 +640,8 @@
       "name": "findDensestFoodCluster",
       "module": "features_autofarm",
       "fingerprintHash": "2::0::1::0::1::0::0::2::15::::window::_0xfe1141.forEach|if",
-      "params": [
-        "rangeThreshold",
-        "customRange"
-      ],
-      "locals": [
-        "foodPoints",
-        "bestCluster",
-        "maxFoodCount"
-      ]
+      "params": ["rangeThreshold", "customRange"],
+      "locals": ["foodPoints", "bestCluster", "maxFoodCount"]
     },
     "global::_0x194f14": {
       "name": "calculatePlayerAvoidanceVector",
@@ -870,24 +673,15 @@
       "name": "detectAndHandleStuck",
       "module": "features_autofarm",
       "fingerprintHash": "1::0::1::0::1::1::0::3::18::::Date|Math|window::Date.now|Math.cos|Math.random|Math.sin|if|window.autoFarmSkipIds.add",
-      "params": [
-        "currentPos"
-      ],
-      "locals": [
-        "now",
-        "randomAngle"
-      ]
+      "params": ["currentPos"],
+      "locals": ["now", "randomAngle"]
     },
     "global::_0x4da1b2": {
       "name": "setupPatrolPoints",
       "module": "features_autofarm",
       "fingerprintHash": "0::1::1::0::1::1::0::1::8::::Math|window::Math.cos|Math.sin|for|if|window.autoFarmPatrolPoints.push",
       "params": [],
-      "locals": [
-        "centerPos",
-        "i",
-        "angle"
-      ]
+      "locals": ["centerPos", "i", "angle"]
     },
     "global::_0x128623": {
       "name": "disableAutoDodge",
@@ -900,35 +694,21 @@
       "name": "handleFarmFailure",
       "module": "features_autofarm",
       "fingerprintHash": "2::0::1::0::1::0::0::0::8::\"::Date|window::Date.now|if|window.autoFarmSkipAreas.filter|window.autoFarmSkipAreas.find|window.autoFarmSkipAreas.push",
-      "params": [
-        "x",
-        "y"
-      ],
-      "locals": [
-        "currentTime",
-        "existingArea"
-      ]
+      "params": ["x", "y"],
+      "locals": ["currentTime", "existingArea"]
     },
     "global::_0x4f831f": {
       "name": "isAreaSkipped",
       "module": "features_autofarm",
       "fingerprintHash": "2::0::0::0::1::0::0::1::3::::Date|window::Date.now|window.autoFarmSkipAreas.filter|window.autoFarmSkipAreas.some",
-      "params": [
-        "x",
-        "y"
-      ],
-      "locals": [
-        "currentTime"
-      ]
+      "params": ["x", "y"],
+      "locals": ["currentTime"]
     },
     "global::_0x3be0ee": {
       "name": "findClosestFarmableEntity",
       "module": "features_autofarm",
       "fingerprintHash": "1::0::1::1::1::0::0::5::19::::window::catch|forEach|if|window.autoFarmSkipIds.has",
-      "params": [
-        "farmRange",
-        "error"
-      ],
+      "params": ["farmRange", "error"],
       "locals": [
         "gameState",
         "entityManager",
@@ -943,10 +723,7 @@
       "name": "findNearbyFarmableEntities",
       "module": "features_autofarm",
       "fingerprintHash": "1::0::1::1::1::0::0::5::17::::window::_0x4af3d3.push|_0x4af3d3.sort|catch|forEach|if|window.autoFarmSkipIds.has",
-      "params": [
-        "farmRange",
-        "error"
-      ],
+      "params": ["farmRange", "error"],
       "locals": [
         "gameState",
         "entityManager",
@@ -977,9 +754,7 @@
       "name": "startAutoFarm",
       "module": "core",
       "fingerprintHash": "1::0::1::0::1::0::0::0::17::\"::Date|window::Date.now|if|started|window.autoFarmSkipIds.clear",
-      "params": [
-        "farmMode"
-      ],
+      "params": ["farmMode"],
       "locals": []
     },
     "global::_0x3b7612": {
@@ -1021,24 +796,15 @@
       "name": "applyTheme",
       "module": "ui_theme",
       "fingerprintHash": "1::0::0::0::1::0::1::0::7::\"::JSON|Object|document|localStorage::JSON.parse|Object.entries|_0x25a23a.style.setProperty|forEach|localStorage.getItem|localStorage.setItem",
-      "params": [
-        "themeName"
-      ],
-      "locals": [
-        "rootElement",
-        "savedThemes",
-        "themeDefinitions"
-      ]
+      "params": ["themeName"],
+      "locals": ["rootElement", "savedThemes", "themeDefinitions"]
     },
     "global::_0x5a24a6": {
       "name": "initBackgroundImage",
       "module": "ui_theme",
       "fingerprintHash": "0::0::1::0::1::0::0::1::9::\"::document|localStorage::_0x30a6b6.style.setProperty|clearInterval|document.querySelector|if|localStorage.getItem|setInterval|url",
       "params": [],
-      "locals": [
-        "bgUrl",
-        "checkInterval"
-      ]
+      "locals": ["bgUrl", "checkInterval"]
     },
     "global/_0x5a24a6::_0x188444": {
       "name": "setBackgroundImage",
@@ -1065,13 +831,8 @@
       "name": "showHalloweenCodeModal",
       "module": "ui_panels",
       "fingerprintHash": "1::0::1::0::1::0::0::0::77::\"::document|localStorage::_0x2e2371.querySelector|_0x2e2371.remove|_0x2e65d6.addEventListener|_0x2e65d6.value.trim|document.body.appendChild|document.createElement|if|localStorage.setItem|rgba|setTimeout",
-      "params": [
-        "onUnlockCallback"
-      ],
-      "locals": [
-        "modalOverlay",
-        "codeInput"
-      ]
+      "params": ["onUnlockCallback"],
+      "locals": ["modalOverlay", "codeInput"]
     },
     "global/_0x2b8801::_0x3ac585": {
       "name": "closeModal",
@@ -1084,29 +845,15 @@
       "name": "makeDraggable",
       "module": "ui_panels",
       "fingerprintHash": "1::0::1::0::1::1::0::2::27::\"::Math|document::Math.abs|_0x4adb17.target.closest|_0x6c6667.stopImmediatePropagation|_0x9990bf.addEventListener|_0x9990bf.getBoundingClientRect|document.addEventListener|document.removeEventListener|if|includes",
-      "params": [
-        "element"
-      ],
-      "locals": [
-        "offsetX",
-        "offsetY",
-        "isDragging",
-        "hasMoved"
-      ]
+      "params": ["element"],
+      "locals": ["offsetX", "offsetY", "isDragging", "hasMoved"]
     },
     "global::_0x1dc426": {
       "name": "createSettingsPanel",
       "module": "ui_panels",
       "fingerprintHash": "0::0::1::0::1::1::1::5::181::\"::JSON|Math|Object|document|localStorage|value::_0x11a0fb.toUpperCase|_0x2b4702.addEventListener|_0x3d0447.key.toUpperCase|_0x3d0447.preventDefault|_0xb7a9bf.querySelector|_0xcea1ec.stopPropagation|document.body.appendChild|document.createElement|localStorage.getItem|var",
       "params": [],
-      "locals": [
-        "settingsPanel",
-        null,
-        null,
-        null,
-        null,
-        "themeSelectElement"
-      ]
+      "locals": ["settingsPanel", null, null, null, null, "themeSelectElement"]
     },
     "global/_0x1dc426::_0x19be6a": {
       "name": "renderCustomThemes",
@@ -1127,47 +874,35 @@
       "module": "ui_panels",
       "fingerprintHash": "0::0::1::1::1::1::0::3::109::\"::Math|document|localStorage|value::_0x22d34b.classList.toggle|_0x241959.classList.toggle|_0x33d517.querySelector|_0x37e43e.stopPropagation|document.body.appendChild|document.createElement|if|localStorage.setItem|name|var",
       "params": [],
-      "locals": [
-        "musicPanel"
-      ]
+      "locals": ["musicPanel"]
     },
     "global::_0x1b192d": {
       "name": "createUpdatePanel",
       "module": "ui_panels",
       "fingerprintHash": "0::0::0::0::1::0::0::1::21::\"::document::Vision|_0x1269e1.querySelector|_0x5a9e9e.stopPropagation|document.body.appendChild|document.createElement|name",
       "params": [],
-      "locals": [
-        "updatePanel",
-        "updateBody",
-        "isMinimized"
-      ]
+      "locals": ["updatePanel", "updateBody", "isMinimized"]
     },
     "global::_0x1dec9d": {
       "name": "injectStyles",
       "module": "ui_theme",
       "fingerprintHash": "0::0::0::0::1::0::0::0::189::\"|'::btn|div|document::document.createElement|document.head.appendChild|not|rgba|translateX|var",
       "params": [],
-      "locals": [
-        "styleElement"
-      ]
+      "locals": ["styleElement"]
     },
     "global::_0x2e4ab1": {
       "name": "createToolsPanel",
       "module": "ui_panels",
       "fingerprintHash": "0::0::1::0::1::0::0::2::108::\"::document|localStorage::_0x18a535.classList.toggle|_0x1c20a8.stopPropagation|_0x265cc1.classList.add|_0x58c365.querySelector|_0xd74c84.classList.add|_0xd74c84.classList.remove|document.body.appendChild|document.createElement|if|parseInt",
       "params": [],
-      "locals": [
-        "toolsPanel"
-      ]
+      "locals": ["toolsPanel"]
     },
     "global::_0x26c9bd": {
       "name": "createVisionPanel",
       "module": "ui_panels",
       "fingerprintHash": "0::0::1::0::1::0::0::5::142::\"::Object|document|window::Boost|Close|Far|Medium|Nearest|Untrack|_0x330383.querySelector|document.body.appendChild|document.createElement|var",
       "params": [],
-      "locals": [
-        "visionPanel"
-      ]
+      "locals": ["visionPanel"]
     },
     "global::_0x304642": {
       "name": "createCombatPanel",
@@ -1199,11 +934,7 @@
       "module": "ui_panels",
       "fingerprintHash": "0::0::1::0::1::0::0::1::7::\"::document::_0x32f352.forEach|document.getElementById|if",
       "params": [],
-      "locals": [
-        "panelIds",
-        "deepToolsPanel",
-        "isVisible"
-      ]
+      "locals": ["panelIds", "deepToolsPanel", "isVisible"]
     },
     "global::_0x8379a5": {
       "name": "initializeApplication",
@@ -1216,23 +947,14 @@
       "name": "generateRandomString",
       "module": "utils",
       "fingerprintHash": "1::1::0::0::0::1::0::1::6::::Math|String::Math.floor|Math.random|String.fromCodePoint|for",
-      "params": [
-        "length"
-      ],
-      "locals": [
-        "resultString",
-        "i",
-        "randomCodePoint"
-      ]
+      "params": ["length"],
+      "locals": ["resultString", "i", "randomCodePoint"]
     },
     "global::_0x5a4aaf": {
       "name": "startScheduledTask",
       "module": "features_chat",
       "fingerprintHash": "2::0::1::0::0::0::0::0::4::::::clearInterval|if|setInterval",
-      "params": [
-        "taskData",
-        "intervalSeconds"
-      ],
+      "params": ["taskData", "intervalSeconds"],
       "locals": []
     },
     "global::_0x1082d4": {
@@ -1274,84 +996,49 @@
       "name": "getGameState",
       "module": "core",
       "fingerprintHash": "0::1::1::1::1::0::0::6::9::::Object|window::Object.keys|catch|for|if",
-      "params": [
-        "error"
-      ],
-      "locals": [
-        "states",
-        "i",
-        "managerKey"
-      ]
+      "params": ["error"],
+      "locals": ["states", "i", "managerKey"]
     },
     "global::_0x31b3bc": {
       "name": "getEntityManager",
       "module": "core",
       "fingerprintHash": "1::1::1::0::1::0::0::5::10::\"::Array|Object|window::Array.isArray|Object.keys|for|if",
-      "params": [
-        "gameState"
-      ],
-      "locals": [
-        "entityManager",
-        "key",
-        "potentialManager"
-      ]
+      "params": ["gameState"],
+      "locals": ["entityManager", "key", "potentialManager"]
     },
     "global::_0x3e0871": {
       "name": "getFirstAnimal",
       "module": "core",
       "fingerprintHash": "0::0::1::1::0::0::0::5::6::::::catch|if",
-      "params": [
-        "error"
-      ],
-      "locals": [
-        "userData"
-      ]
+      "params": ["error"],
+      "locals": ["userData"]
     },
     "global::_0x2776a3": {
       "name": "getFirstAnimalPosition",
       "module": "core",
       "fingerprintHash": "0::0::1::1::0::0::0::3::5::::::catch|if",
-      "params": [
-        "error"
-      ],
-      "locals": [
-        "animal",
-        "position"
-      ]
+      "params": ["error"],
+      "locals": ["animal", "position"]
     },
     "global::_0x40096f": {
       "name": "getEntityPosition",
       "module": "core",
       "fingerprintHash": "1::0::1::0::0::0::0::2::2::::::if",
-      "params": [
-        "entity"
-      ],
+      "params": ["entity"],
       "locals": []
     },
     "global::_0x2e33e8": {
       "name": "calculateDirection",
       "module": "core",
       "fingerprintHash": "1::0::1::0::0::1::0::2::14::::Math::Math.abs|Math.cos|Math.sin|Math.sqrt|if",
-      "params": [
-        "entity"
-      ],
-      "locals": [
-        "dirX",
-        "dirY",
-        "angle",
-        "magnitude"
-      ]
+      "params": ["entity"],
+      "locals": ["dirX", "dirY", "angle", "magnitude"]
     },
     "global::_0x292a02": {
       "name": "calculateDistance",
       "module": "utils",
       "fingerprintHash": "4::0::0::0::0::1::0::1::1::::Math::Math.sqrt",
-      "params": [
-        "x1",
-        "y1",
-        "x2",
-        "y2"
-      ],
+      "params": ["x1", "y1", "x2", "y2"],
       "locals": []
     },
     "global::_0x1822d6": {
@@ -1359,10 +1046,7 @@
       "module": "features_aimbot",
       "fingerprintHash": "0::0::1::0::1::0::0::0::10::\"::window::if",
       "params": [],
-      "locals": [
-        "gameState",
-        "targetName"
-      ]
+      "locals": ["gameState", "targetName"]
     },
     "global::_0x29dc7d": {
       "name": "startEntityTrail",
@@ -1409,9 +1093,7 @@
       "module": "features_esp",
       "fingerprintHash": "0::0::1::0::1::0::0::0::4::\"::window::if",
       "params": [],
-      "locals": [
-        "gameData"
-      ]
+      "locals": ["gameData"]
     },
     "global::_0x164a84": {
       "name": "clearTracking",
@@ -1438,35 +1120,21 @@
       "name": "handleFarmFailure",
       "module": "features_autofarm",
       "fingerprintHash": "2::0::1::0::1::0::0::0::8::\"::Date|window::Date.now|if|window.autoFarmSkipAreas.filter|window.autoFarmSkipAreas.find|window.autoFarmSkipAreas.push",
-      "params": [
-        "x",
-        "y"
-      ],
-      "locals": [
-        "currentTime",
-        "existingArea"
-      ]
+      "params": ["x", "y"],
+      "locals": ["currentTime", "existingArea"]
     },
     "global::_0x396c73": {
       "name": "isAreaSkipped",
       "module": "features_autofarm",
       "fingerprintHash": "2::0::0::0::1::0::0::1::3::::Date|window::Date.now|window.autoFarmSkipAreas.filter|window.autoFarmSkipAreas.some",
-      "params": [
-        "x",
-        "y"
-      ],
-      "locals": [
-        "currentTime"
-      ]
+      "params": ["x", "y"],
+      "locals": ["currentTime"]
     },
     "global::_0x59cc07": {
       "name": "findClosestFarmableEntity",
       "module": "features_autofarm",
       "fingerprintHash": "1::0::1::1::1::0::0::5::19::::window::catch|forEach|if|window.autoFarmSkipIds.has",
-      "params": [
-        "farmRange",
-        "error"
-      ],
+      "params": ["farmRange", "error"],
       "locals": [
         "gameState",
         "entityManager",
@@ -1495,32 +1163,21 @@
       "name": "detectAndHandleStuck",
       "module": "features_autofarm",
       "fingerprintHash": "1::0::1::0::1::1::0::3::18::::Date|Math|window::Date.now|Math.cos|Math.random|Math.sin|if|window.autoFarmSkipIds.add",
-      "params": [
-        "currentPos"
-      ],
-      "locals": [
-        "now",
-        "randomAngle"
-      ]
+      "params": ["currentPos"],
+      "locals": ["now", "randomAngle"]
     },
     "global::_0x5070b0": {
       "name": "setupPatrolPoints",
       "module": "features_autofarm",
       "fingerprintHash": "0::1::1::0::1::1::0::1::8::::Math|window::Math.cos|Math.sin|for|if|window.autoFarmPatrolPoints.push",
       "params": [],
-      "locals": [
-        "centerPos",
-        "i",
-        "angle"
-      ]
+      "locals": ["centerPos", "i", "angle"]
     },
     "global::_0x1a9e3e": {
       "name": "startAutoFarm",
       "module": "core",
       "fingerprintHash": "1::0::1::0::1::0::0::0::17::\"::Date|window::Date.now|if|started|window.autoFarmSkipIds.clear",
-      "params": [
-        "farmMode"
-      ],
+      "params": ["farmMode"],
       "locals": []
     },
     "global::_0x14650d": {
@@ -1549,9 +1206,7 @@
       "module": "ui_theme",
       "fingerprintHash": "0::0::0::0::1::0::0::0::189::\"|'::btn|div|document::document.createElement|document.head.appendChild|not|rgba|translateX|var",
       "params": [],
-      "locals": [
-        "styleElement"
-      ]
+      "locals": ["styleElement"]
     },
     "global/_0x693eaf::_0x5b2d50": {
       "name": "hideElementsAndAdjustSidebar",
@@ -1564,13 +1219,8 @@
       "name": "typeAndSendMessage",
       "module": "features_chat",
       "fingerprintHash": "1::0::1::0::1::0::0::2::19::\"::document::Event|InputEvent|_0x1dc239.click|_0xcfcb19.blur|_0xcfcb19.dispatchEvent|_0xcfcb19.focus|document.querySelector|if|setTimeout",
-      "params": [
-        "textToType"
-      ],
-      "locals": [
-        "chatInput",
-        "currentIndex"
-      ]
+      "params": ["textToType"],
+      "locals": ["chatInput", "currentIndex"]
     },
     "global/_0x4fc556::_0x281813": {
       "name": "typeTextRecursive",
@@ -1584,32 +1234,21 @@
       "module": "core",
       "fingerprintHash": "0::1::1::1::1::0::0::17::35::\"::Number|Reflect|String|TextEncoder|document::Number.parseInt|String.fromCharCode|String.fromCodePoint|_0x288a9e.replace|for|function|if|switch|u|x",
       "params": [],
-      "locals": [
-        "actionCodes",
-        "originalEncode"
-      ]
+      "locals": ["actionCodes", "originalEncode"]
     },
     "global/_0x20a7c7::_0x105b4c": {
       "name": "unescapeString",
       "module": "",
       "fingerprintHash": "1::0::1::0::0::0::0::15::16::\"::Number|String::Number.parseInt|String.fromCharCode|String.fromCodePoint|_0x288a9e.replace|if|switch|u|x",
-      "params": [
-        "inputString"
-      ],
+      "params": ["inputString"],
       "locals": []
     },
     "global::_0x480e9f": {
       "name": "typeText",
       "module": "ui_interaction",
       "fingerprintHash": "2::0::1::0::1::0::0::3::15::\"::document::Event|InputEvent|_0x508399.dispatchEvent|_0x508399.focus|document.querySelector|if|setTimeout",
-      "params": [
-        "selector",
-        "text"
-      ],
-      "locals": [
-        "inputElement",
-        "charIndex"
-      ]
+      "params": ["selector", "text"],
+      "locals": ["inputElement", "charIndex"]
     },
     "global/_0x480e9f::_0x4f66da": {
       "name": "typeChar",
@@ -1622,78 +1261,49 @@
       "name": "wrapWithProxy",
       "module": "core",
       "fingerprintHash": "3::0::0::0::0::0::0::0::4::::::Proxy|_0x48cb40.set",
-      "params": [
-        "targetObject",
-        "propertyKey",
-        "proxyHandler"
-      ],
-      "locals": [
-        "originalValue",
-        "proxyValue"
-      ]
+      "params": ["targetObject", "propertyKey", "proxyHandler"],
+      "locals": ["originalValue", "proxyValue"]
     },
     "global::_0x20b6b1": {
       "name": "showNotification",
       "module": "ui_interaction",
       "fingerprintHash": "1::0::1::0::1::0::0::1::30::\"|'::Date|document::Date.now|_0x4877c9.remove|document.body.appendChild|document.createElement|if|requestAnimationFrame|setTimeout|translateX|var",
-      "params": [
-        "message"
-      ],
-      "locals": [
-        "currentTime",
-        "notificationDiv"
-      ]
+      "params": ["message"],
+      "locals": ["currentTime", "notificationDiv"]
     },
     "global::_0x693eaf": {
       "name": "initAdBlocker",
       "module": "features_adblock",
       "fingerprintHash": "0::0::1::0::1::0::0::1::20::\"::div|document|sidebar::MutationObserver|_0x43cead.remove|_0x43cead.removeAttribute|_0xcbe302.forEach|document.querySelector|document.querySelectorAll|forEach|has|if|not",
       "params": [],
-      "locals": [
-        "adSelectors"
-      ]
+      "locals": ["adSelectors"]
     },
     "global::_0x224c87": {
       "name": "startCircularMovement",
       "module": "features_movement",
       "fingerprintHash": "0::0::1::0::1::1::0::2::11::\"::Math|window::Math.cos|Math.round|Math.sin|MouseEvent|_0x2622f7.dispatchEvent|if|setInterval",
       "params": [],
-      "locals": [
-        "canvas"
-      ]
+      "locals": ["canvas"]
     },
     "global::_0x10a5f7": {
       "name": "moveMouseSide",
       "module": "features_movement",
       "fingerprintHash": "1::0::1::0::1::0::0::1::7::\"::::MouseEvent|_0x568734.dispatchEvent|_0x568734.getBoundingClientRect|if",
-      "params": [
-        "side"
-      ],
-      "locals": [
-        "canvas",
-        "rect",
-        "centerX",
-        "centerY",
-        "targetX"
-      ]
+      "params": ["side"],
+      "locals": ["canvas", "rect", "centerX", "centerY", "targetX"]
     },
     "global::_0x19e352": {
       "name": "isPlayer",
       "module": "utils",
       "fingerprintHash": "1::0::1::0::0::0::0::12::12::::::if",
-      "params": [
-        "entity"
-      ],
+      "params": ["entity"],
       "locals": []
     },
     "global::_0x41a7cc": {
       "name": "findEntityById",
       "module": "core",
       "fingerprintHash": "1::1::1::1::0::0::0::4::12::::Array|Object::Array.isArray|Object.keys|_0x3e734f.entitiesList.find|_0xe8cccd.find|catch|for|if",
-      "params": [
-        "entityId",
-        "error"
-      ],
+      "params": ["entityId", "error"],
       "locals": [
         "rawState",
         "gameState",
@@ -1706,9 +1316,7 @@
       "name": "getNearbyEntities",
       "module": "utils",
       "fingerprintHash": "0::1::1::1::0::1::0::3::25::::Math::Math.atan2|Math.sqrt|_0x4fb9ba.entities.push|_0x4fb9ba.food.push|_0x4fb9ba.food.sort|_0x4fb9ba.players.push|_0x4fb9ba.players.sort|catch|for|if",
-      "params": [
-        "error"
-      ],
+      "params": ["error"],
       "locals": [
         "rawState",
         "gameState",
@@ -1729,13 +1337,8 @@
       "name": "getZoomScale",
       "module": "utils",
       "fingerprintHash": "0::0::1::1::0::0::0::6::8::::scale::catch|if",
-      "params": [
-        "error"
-      ],
-      "locals": [
-        "camera",
-        "viewport"
-      ]
+      "params": ["error"],
+      "locals": ["camera", "viewport"]
     },
     "global::_0x3cdefd": {
       "name": "updateLockOnTarget",
@@ -1773,20 +1376,13 @@
       "module": "ui_radar",
       "fingerprintHash": "0::0::1::0::1::0::0::0::3::\"::document|window::_0xd83f15.classList.toggle|document.getElementById|if",
       "params": [],
-      "locals": [
-        "lockButton"
-      ]
+      "locals": ["lockButton"]
     },
     "global::_0x27a748": {
       "name": "drawEntityTrail",
       "module": "features_entitytrail",
       "fingerprintHash": "4::1::1::0::1::1::0::1::40::\"::Date|Math|window::Date.now|Math.max|_0x4c2bb6.arc|_0x4c2bb6.beginPath|_0x4c2bb6.lineTo|_0x4c2bb6.moveTo|_0x4c2bb6.stroke|for|if|rgba",
-      "params": [
-        "ctx",
-        "canvas",
-        "originPos",
-        "zoomScale"
-      ],
+      "params": ["ctx", "canvas", "originPos", "zoomScale"],
       "locals": [
         "halfWidth",
         "halfHeight",
@@ -1817,39 +1413,21 @@
       "name": "getOrCreateOverlayCanvas",
       "module": "utils",
       "fingerprintHash": "2::0::1::0::1::0::0::1::21::\"::document|window::_0xed1444.getBoundingClientRect|document.body.appendChild|document.createElement|document.getElementById|if",
-      "params": [
-        "canvasId",
-        "zIndex"
-      ],
-      "locals": [
-        "overlayCanvas",
-        "gameCanvas",
-        "gameCanvasRect"
-      ]
+      "params": ["canvasId", "zIndex"],
+      "locals": ["overlayCanvas", "gameCanvas", "gameCanvasRect"]
     },
     "global::_0x3625c8": {
       "name": "renderOverlay",
       "module": "features_entitytrail",
       "fingerprintHash": "0::0::1::0::1::0::0::0::6::\"::window::_0x3843df.getContext|_0x5df13c.clearRect|if|requestAnimationFrame",
       "params": [],
-      "locals": [
-        "overlayCanvas",
-        "overlayCtx",
-        "entityData"
-      ]
+      "locals": ["overlayCanvas", "overlayCtx", "entityData"]
     },
     "global::_0x208a89": {
       "name": "drawEsp",
       "module": "features_esp",
       "fingerprintHash": "5::0::1::1::1::1::0::1::59::\"::Math|window::Math.round|_0x20fed8.forEach|_0x5568b2.beginPath|_0x5568b2.fillText|_0x5568b2.lineTo|_0x5568b2.moveTo|_0x5568b2.strokeRect|catch|if|toString",
-      "params": [
-        "ctx",
-        "gameState",
-        "offsetX",
-        "offsetY",
-        "scale",
-        "err"
-      ],
+      "params": ["ctx", "gameState", "offsetX", "offsetY", "scale", "err"],
       "locals": [
         "myPos",
         "espMode",
@@ -1864,12 +1442,7 @@
       "name": "drawTrackedEntity",
       "module": "features_esp",
       "fingerprintHash": "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x3ef87f.beginPath|_0x3ef87f.lineTo|_0x3ef87f.moveTo|_0x3ef87f.setLineDash|_0x3ef87f.stroke|_0x3ef87f.strokeRect|if|rgba",
-      "params": [
-        "ctx",
-        "canvas",
-        "myPos",
-        "scale"
-      ],
+      "params": ["ctx", "canvas", "myPos", "scale"],
       "locals": [
         "trackedEntity",
         "entityPos",
@@ -1891,11 +1464,7 @@
       "name": "drawRadar",
       "module": "ui_radar",
       "fingerprintHash": "3::1::1::0::1::1::0::1::93::\"::Date|Math|window::_0x215655.arc|_0x215655.beginPath|_0x215655.fill|_0x215655.lineTo|_0x215655.moveTo|_0x215655.roundRect|_0x215655.stroke|for|if|rgba",
-      "params": [
-        "ctx",
-        "canvas",
-        "gameState"
-      ],
+      "params": ["ctx", "canvas", "gameState"],
       "locals": [
         "radarSize",
         "radarX",
@@ -1917,24 +1486,15 @@
       "name": "applyTheme",
       "module": "ui_theme",
       "fingerprintHash": "1::0::0::0::1::0::1::0::7::\"::JSON|Object|document|localStorage::JSON.parse|Object.entries|_0x34e1be.style.setProperty|forEach|localStorage.getItem|localStorage.setItem",
-      "params": [
-        "themeName"
-      ],
-      "locals": [
-        "rootElement",
-        "savedThemes",
-        "defaultThemes"
-      ]
+      "params": ["themeName"],
+      "locals": ["rootElement", "savedThemes", "defaultThemes"]
     },
     "global::_0x18b063": {
       "name": "initBackground",
       "module": "ui_theme",
       "fingerprintHash": "0::0::1::0::1::0::0::1::9::\"::document|localStorage::_0xc9a45.style.setProperty|clearInterval|document.querySelector|if|localStorage.getItem|setInterval|url",
       "params": [],
-      "locals": [
-        "backgroundUrl",
-        "bgCheckInterval"
-      ]
+      "locals": ["backgroundUrl", "bgCheckInterval"]
     },
     "global/_0x18b063::_0x5218ba": {
       "name": "setBackgroundImage",
@@ -1948,32 +1508,21 @@
       "module": "ui_panels",
       "fingerprintHash": "0::0::1::0::1::0::0::2::81::\"::document::_0x1d8d60.classList.add|_0x1d8d60.classList.remove|_0x3fd524.classList.toggle|_0x43d6fc.querySelector|_0x457d30.stopPropagation|_0x52002a.classList.add|document.body.appendChild|document.createElement|if|parseInt",
       "params": [],
-      "locals": [
-        "toolsPanel"
-      ]
+      "locals": ["toolsPanel"]
     },
     "global::_0x3256f2": {
       "name": "createVisionPanel",
       "module": "ui_panels",
       "fingerprintHash": "0::0::1::0::1::0::0::2::131::\"::Object|document|window::Boost|Close|Far|Medium|Nearest|Untrack|_0x5dbad5.querySelector|document.body.appendChild|document.createElement|var",
       "params": [],
-      "locals": [
-        "visionPanel"
-      ]
+      "locals": ["visionPanel"]
     },
     "global::_0x3b60f2": {
       "name": "findBestFarmSpot",
       "module": "features_autofarm",
       "fingerprintHash": "2::0::1::0::1::0::0::2::15::::window::_0x459d52.forEach|if",
-      "params": [
-        "searchRadius",
-        "farmRange"
-      ],
-      "locals": [
-        "targetPoints",
-        "bestSpot",
-        "maxPointCount"
-      ]
+      "params": ["searchRadius", "farmRange"],
+      "locals": ["targetPoints", "bestSpot", "maxPointCount"]
     },
     "global::_0x350f03": {
       "name": "simulateEvolveKey",
@@ -2036,23 +1585,14 @@
       "name": "simulateClick",
       "module": "features_movement",
       "fingerprintHash": "2::0::1::0::1::0::0::1::5::\"::::PointerEvent|_0x194043.dispatchEvent|if|setTimeout",
-      "params": [
-        "clientX",
-        "clientY"
-      ],
-      "locals": [
-        "gameCanvas"
-      ]
+      "params": ["clientX", "clientY"],
+      "locals": ["gameCanvas"]
     },
     "global::_0x5ad6ce": {
       "name": "aimAtTarget",
       "module": "features_aimbot",
       "fingerprintHash": "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x5a949d.dispatchEvent|_0x5a949d.getBoundingClientRect|if",
-      "params": [
-        "targetX",
-        "targetY",
-        "shouldClick"
-      ],
+      "params": ["targetX", "targetY", "shouldClick"],
       "locals": [
         "gameCanvas",
         "playerPos",
@@ -2094,10 +1634,7 @@
       "name": "getNearbyFarmTargets",
       "module": "features_autofarm",
       "fingerprintHash": "1::0::1::1::1::0::0::5::17::::window::_0x2ef160.push|_0x2ef160.sort|catch|forEach|if|window.autoFarmSkipIds.has",
-      "params": [
-        "farmRange",
-        "err"
-      ],
+      "params": ["farmRange", "err"],
       "locals": [
         "gameState",
         "entities",
@@ -2125,13 +1662,8 @@
       "name": "showHalloweenModal",
       "module": "ui_panels",
       "fingerprintHash": "1::0::1::0::1::0::0::0::77::\"::document|localStorage::_0x3e7440.querySelector|_0x3e7440.remove|_0x4ed99a.addEventListener|_0x4ed99a.value.trim|document.body.appendChild|document.createElement|if|localStorage.setItem|rgba|setTimeout",
-      "params": [
-        "onUnlockCallback"
-      ],
-      "locals": [
-        "modalContainer",
-        "codeInput"
-      ]
+      "params": ["onUnlockCallback"],
+      "locals": ["modalContainer", "codeInput"]
     },
     "global/_0xa5273::_0x52b123": {
       "name": "closeModal",
@@ -2144,37 +1676,22 @@
       "name": "makeDraggable",
       "module": "ui_panels",
       "fingerprintHash": "1::0::1::0::1::1::0::2::27::\"::Math|document::Math.abs|_0x52094e.addEventListener|_0x52094e.getBoundingClientRect|_0x53096b.target.closest|_0x5d210f.stopImmediatePropagation|document.addEventListener|document.removeEventListener|if|includes",
-      "params": [
-        "element"
-      ],
-      "locals": [
-        "offsetX",
-        "offsetY",
-        "isDragging",
-        "hasMoved"
-      ]
+      "params": ["element"],
+      "locals": ["offsetX", "offsetY", "isDragging", "hasMoved"]
     },
     "global::_0x32ffe9": {
       "name": "createUpdateHistoryPanel",
       "module": "ui_panels",
       "fingerprintHash": "0::0::0::0::1::0::0::1::21::\"::document::Vision|_0x13b56c.querySelector|_0xda88fa.stopPropagation|document.body.appendChild|document.createElement",
       "params": [],
-      "locals": [
-        "updatePanel",
-        "updateBody",
-        "isMinimized"
-      ]
+      "locals": ["updatePanel", "updateBody", "isMinimized"]
     },
     "global::_0x20ff79": {
       "name": "togglePanelsVisibility",
       "module": "ui_panels",
       "fingerprintHash": "0::0::1::0::1::0::0::1::7::\"::document::_0x43ad66.forEach|document.getElementById|if",
       "params": [],
-      "locals": [
-        "panelIds",
-        "mainPanel",
-        "isMainPanelVisible"
-      ]
+      "locals": ["panelIds", "mainPanel", "isMainPanelVisible"]
     },
     "global::_0x4c8ba9": {
       "name": "initializeApp",
@@ -2213,14 +1730,7 @@
       "module": "ui_panels",
       "fingerprintHash": "0::0::1::0::1::1::1::5::181::\"::JSON|Math|Object|document|localStorage|value::_0x253c89.stopPropagation|_0x28cc12.addEventListener|_0x32f16a.key.toUpperCase|_0x32f16a.preventDefault|_0x398a04.toUpperCase|_0x3f60a6.querySelector|document.body.appendChild|document.createElement|localStorage.getItem|var",
       "params": [],
-      "locals": [
-        "settingsPanel",
-        null,
-        null,
-        null,
-        null,
-        "themeSelect"
-      ]
+      "locals": ["settingsPanel", null, null, null, null, "themeSelect"]
     },
     "global/_0x3dbd47::_0x23dfe9": {
       "name": "renderCustomThemes",
@@ -2240,23 +1750,14 @@
       "name": "generateRandomString",
       "module": "utils",
       "fingerprintHash": "1::1::0::0::0::1::0::1::6::::Math|String::Math.floor|Math.random|String.fromCodePoint|for",
-      "params": [
-        "length"
-      ],
-      "locals": [
-        "resultString",
-        "i",
-        "randomCodePoint"
-      ]
+      "params": ["length"],
+      "locals": ["resultString", "i", "randomCodePoint"]
     },
     "global::_0x447019": {
       "name": "startScheduledTask",
       "module": "features_chat",
       "fingerprintHash": "2::0::1::0::0::0::0::0::4::::::clearInterval|if|setInterval",
-      "params": [
-        "taskData",
-        "intervalSeconds"
-      ],
+      "params": ["taskData", "intervalSeconds"],
       "locals": []
     },
     "global::_0x1433b2": {
@@ -2298,82 +1799,49 @@
       "name": "isPlayer",
       "module": "utils",
       "fingerprintHash": "1::0::1::0::0::0::0::12::12::::::if",
-      "params": [
-        "entity"
-      ],
+      "params": ["entity"],
       "locals": []
     },
     "global::_0x2f69b5": {
       "name": "getGameState",
       "module": "core",
       "fingerprintHash": "0::1::1::1::1::0::0::6::9::::Object|window::Object.keys|catch|for|if",
-      "params": [
-        "error"
-      ],
-      "locals": [
-        "states",
-        "i",
-        "managerKey"
-      ]
+      "params": ["error"],
+      "locals": ["states", "i", "managerKey"]
     },
     "global::_0x202684": {
       "name": "getEntityManager",
       "module": "core",
       "fingerprintHash": "1::1::1::0::1::0::0::5::10::\"::Array|Object|window::Array.isArray|Object.keys|for|if",
-      "params": [
-        "gameState"
-      ],
-      "locals": [
-        "entityManager",
-        "key",
-        "potentialManager"
-      ]
+      "params": ["gameState"],
+      "locals": ["entityManager", "key", "potentialManager"]
     },
     "global::_0x12c167": {
       "name": "getFirstAnimalPosition",
       "module": "core",
       "fingerprintHash": "0::0::1::1::0::0::0::3::5::::::catch|if",
-      "params": [
-        "error"
-      ],
-      "locals": [
-        "animal",
-        "position"
-      ]
+      "params": ["error"],
+      "locals": ["animal", "position"]
     },
     "global::_0x3ffd5e": {
       "name": "getEntityPosition",
       "module": "core",
       "fingerprintHash": "1::0::1::0::0::0::0::2::2::::::if",
-      "params": [
-        "entity"
-      ],
+      "params": ["entity"],
       "locals": []
     },
     "global::_0x3d5de3": {
       "name": "calculateDirection",
       "module": "core",
       "fingerprintHash": "1::0::1::0::0::1::0::2::14::::Math::Math.abs|Math.cos|Math.sin|Math.sqrt|if",
-      "params": [
-        "entity"
-      ],
-      "locals": [
-        "dirX",
-        "dirY",
-        "angle",
-        "magnitude"
-      ]
+      "params": ["entity"],
+      "locals": ["dirX", "dirY", "angle", "magnitude"]
     },
     "global::_0x249bba": {
       "name": "calculateDistance",
       "module": "utils",
       "fingerprintHash": "4::0::0::0::0::1::0::1::1::::Math::Math.sqrt",
-      "params": [
-        "x1",
-        "y1",
-        "x2",
-        "y2"
-      ],
+      "params": ["x1", "y1", "x2", "y2"],
       "locals": []
     },
     "global::_0x5f2c5a": {
@@ -2381,10 +1849,7 @@
       "module": "features_aimbot",
       "fingerprintHash": "0::0::1::0::1::0::0::0::10::\"::window::if",
       "params": [],
-      "locals": [
-        "gameState",
-        "targetName"
-      ]
+      "locals": ["gameState", "targetName"]
     },
     "global::_0x39e405": {
       "name": "startEntityTrail",
@@ -2431,9 +1896,7 @@
       "module": "features_esp",
       "fingerprintHash": "0::0::1::0::1::0::0::0::4::\"::window::if",
       "params": [],
-      "locals": [
-        "gameData"
-      ]
+      "locals": ["gameData"]
     },
     "global::_0x73ec0b": {
       "name": "clearTracking",
@@ -2460,35 +1923,21 @@
       "name": "handleFarmFailure",
       "module": "features_autofarm",
       "fingerprintHash": "2::0::1::0::1::0::0::0::8::\"::Date|window::Date.now|if|window.autoFarmSkipAreas.filter|window.autoFarmSkipAreas.find|window.autoFarmSkipAreas.push",
-      "params": [
-        "x",
-        "y"
-      ],
-      "locals": [
-        "currentTime",
-        "existingArea"
-      ]
+      "params": ["x", "y"],
+      "locals": ["currentTime", "existingArea"]
     },
     "global::_0x4947cd": {
       "name": "isAreaSkipped",
       "module": "features_autofarm",
       "fingerprintHash": "2::0::0::0::1::0::0::1::3::::Date|window::Date.now|window.autoFarmSkipAreas.filter|window.autoFarmSkipAreas.some",
-      "params": [
-        "x",
-        "y"
-      ],
-      "locals": [
-        "currentTime"
-      ]
+      "params": ["x", "y"],
+      "locals": ["currentTime"]
     },
     "global::_0x445db7": {
       "name": "findClosestFarmableEntity",
       "module": "features_autofarm",
       "fingerprintHash": "1::0::1::1::1::0::0::5::19::::window::catch|forEach|if|window.autoFarmSkipIds.has",
-      "params": [
-        "farmRange",
-        "error"
-      ],
+      "params": ["farmRange", "error"],
       "locals": [
         "gameState",
         "entityManager",
@@ -2517,32 +1966,21 @@
       "name": "detectAndHandleStuck",
       "module": "features_autofarm",
       "fingerprintHash": "1::0::1::0::1::1::0::3::18::::Date|Math|window::Date.now|Math.cos|Math.random|Math.sin|if|window.autoFarmSkipIds.add",
-      "params": [
-        "currentPos"
-      ],
-      "locals": [
-        "now",
-        "randomAngle"
-      ]
+      "params": ["currentPos"],
+      "locals": ["now", "randomAngle"]
     },
     "global::_0x10b496": {
       "name": "setupPatrolPoints",
       "module": "features_autofarm",
       "fingerprintHash": "0::1::1::0::1::1::0::1::8::::Math|window::Math.cos|Math.sin|for|if|window.autoFarmPatrolPoints.push",
       "params": [],
-      "locals": [
-        "centerPos",
-        "i",
-        "angle"
-      ]
+      "locals": ["centerPos", "i", "angle"]
     },
     "global::_0x4a375a": {
       "name": "startAutoFarm",
       "module": "core",
       "fingerprintHash": "1::0::1::0::1::0::0::0::17::\"::Date|window::Date.now|if|started|window.autoFarmSkipIds.clear",
-      "params": [
-        "farmMode"
-      ],
+      "params": ["farmMode"],
       "locals": []
     },
     "global::_0x1f36f5": {
@@ -2571,9 +2009,7 @@
       "module": "ui_theme",
       "fingerprintHash": "0::0::0::0::1::0::0::0::189::\"|'::btn|div|document::document.createElement|document.head.appendChild|not|rgba|translateX|var",
       "params": [],
-      "locals": [
-        "styleElement"
-      ]
+      "locals": ["styleElement"]
     },
     "global::_0x19e0ed": {
       "name": "initializeApp",
@@ -2586,14 +2022,8 @@
       "name": "typeText",
       "module": "ui_interaction",
       "fingerprintHash": "2::0::1::0::1::0::0::3::15::\"::document::Event|InputEvent|_0x5ba86b.dispatchEvent|_0x5ba86b.focus|document.querySelector|if|setTimeout",
-      "params": [
-        "selector",
-        "text"
-      ],
-      "locals": [
-        "inputElement",
-        "charIndex"
-      ]
+      "params": ["selector", "text"],
+      "locals": ["inputElement", "charIndex"]
     },
     "global/_0x2d7180::_0x371956": {
       "name": "typeChar",
@@ -2606,36 +2036,22 @@
       "name": "proxyProperty",
       "module": "utils",
       "fingerprintHash": "3::0::0::0::0::0::0::0::4::::::Proxy|_0x39aaa6.set",
-      "params": [
-        "targetObject",
-        "propertyKey",
-        "handler"
-      ],
-      "locals": [
-        "originalValue",
-        "proxyValue"
-      ]
+      "params": ["targetObject", "propertyKey", "handler"],
+      "locals": ["originalValue", "proxyValue"]
     },
     "global::_0x36f8aa": {
       "name": "showNotification",
       "module": "ui_interaction",
       "fingerprintHash": "1::0::1::0::1::0::0::1::30::\"|'::Date|document::Date.now|_0x4d3a37.remove|document.body.appendChild|document.createElement|if|requestAnimationFrame|setTimeout|translateX|var",
-      "params": [
-        "message"
-      ],
-      "locals": [
-        "currentTime",
-        "notificationElement"
-      ]
+      "params": ["message"],
+      "locals": ["currentTime", "notificationElement"]
     },
     "global::_0x2e39b9": {
       "name": "initAdBlocker",
       "module": "features_adblock",
       "fingerprintHash": "0::0::1::0::1::0::0::1::20::\"::div|document|sidebar::MutationObserver|_0x332bc.remove|_0x332bc.removeAttribute|_0xd4a6db.forEach|document.querySelector|document.querySelectorAll|forEach|has|if|not",
       "params": [],
-      "locals": [
-        "adSelectors"
-      ]
+      "locals": ["adSelectors"]
     },
     "global/_0x2e39b9::_0x5ea004": {
       "name": "cleanupUI",
@@ -2648,13 +2064,8 @@
       "name": "simulateChatInput",
       "module": "features_chat",
       "fingerprintHash": "1::0::1::0::1::0::0::2::19::\"::document::Event|InputEvent|_0x1536b2.click|_0x285119.blur|_0x285119.dispatchEvent|_0x285119.focus|document.querySelector|if|setTimeout",
-      "params": [
-        "textToType"
-      ],
-      "locals": [
-        "chatInput",
-        "charIndex"
-      ]
+      "params": ["textToType"],
+      "locals": ["chatInput", "charIndex"]
     },
     "global/_0x585351::_0x2c9906": {
       "name": "typeText",
@@ -2668,18 +2079,13 @@
       "module": "core",
       "fingerprintHash": "0::1::1::1::1::0::0::17::35::\"::Number|Reflect|String|TextEncoder|document::Number.parseInt|String.fromCharCode|String.fromCodePoint|_0xb3d27.replace|for|function|if|switch|u|x",
       "params": [],
-      "locals": [
-        "actionIds",
-        "originalEncode"
-      ]
+      "locals": ["actionIds", "originalEncode"]
     },
     "global/_0x579b61::_0x22a12f": {
       "name": "unescapeString",
       "module": "",
       "fingerprintHash": "1::0::1::0::0::0::0::15::16::\"::Number|String::Number.parseInt|String.fromCharCode|String.fromCodePoint|_0xb3d27.replace|if|switch|u|x",
-      "params": [
-        "inputString"
-      ],
+      "params": ["inputString"],
       "locals": []
     },
     "global::_0x43b0da": {
@@ -2687,57 +2093,34 @@
       "module": "features_movement",
       "fingerprintHash": "0::0::1::0::1::1::0::2::11::\"::Math|window::Math.cos|Math.round|Math.sin|MouseEvent|_0x2d35ba.dispatchEvent|if|setInterval",
       "params": [],
-      "locals": [
-        "canvas"
-      ]
+      "locals": ["canvas"]
     },
     "global::_0x236f6f": {
       "name": "moveMouseToSide",
       "module": "features_movement",
       "fingerprintHash": "1::0::1::0::1::0::0::1::7::\"::::MouseEvent|_0x45cb95.dispatchEvent|_0x45cb95.getBoundingClientRect|if",
-      "params": [
-        "direction"
-      ],
-      "locals": [
-        "canvas",
-        "rect",
-        "centerX",
-        "centerY",
-        "targetX"
-      ]
+      "params": ["direction"],
+      "locals": ["canvas", "rect", "centerX", "centerY", "targetX"]
     },
     "global::_0x27bb0b": {
       "name": "getMyAnimal",
       "module": "utils",
       "fingerprintHash": "0::0::0::1::0::0::0::2::2::::::catch",
-      "params": [
-        "error"
-      ],
+      "params": ["error"],
       "locals": []
     },
     "global::_0x4ab7bd": {
       "name": "getEntityById",
       "module": "utils",
       "fingerprintHash": "1::1::1::1::0::0::0::4::12::::Array|Object::Array.isArray|Object.keys|_0x2cef4a.find|_0x40bdef.entitiesList.find|catch|for|if",
-      "params": [
-        "entityId",
-        "error"
-      ],
-      "locals": [
-        "gameState",
-        "parsedState",
-        "entity",
-        "roomId",
-        "roomAnimals"
-      ]
+      "params": ["entityId", "error"],
+      "locals": ["gameState", "parsedState", "entity", "roomId", "roomAnimals"]
     },
     "global::_0x151307": {
       "name": "getNearbyEntities",
       "module": "utils",
       "fingerprintHash": "0::0::1::1::0::1::0::5::25::::Math::Math.atan2|Math.sqrt|_0x1ef5e1.entities.push|_0x1ef5e1.entities.sort|_0x1ef5e1.food.push|_0x1ef5e1.food.sort|_0x1ef5e1.players.push|_0x1ef5e1.players.sort|_0xc091af.forEach|if",
-      "params": [
-        "error"
-      ],
+      "params": ["error"],
       "locals": [
         "gameState",
         "parsedState",
@@ -2752,13 +2135,8 @@
       "name": "getZoomLevel",
       "module": "utils",
       "fingerprintHash": "0::0::1::1::0::0::0::1::5::::scale::catch|if",
-      "params": [
-        "error"
-      ],
-      "locals": [
-        "zoomLevel",
-        "cameraState"
-      ]
+      "params": ["error"],
+      "locals": ["zoomLevel", "cameraState"]
     },
     "global::_0x4d9f52": {
       "name": "updateLockOnTarget",
@@ -2796,20 +2174,13 @@
       "module": "ui_radar",
       "fingerprintHash": "0::0::1::0::1::0::0::0::3::\"::document|window::_0x3cb356.classList.toggle|document.getElementById|if",
       "params": [],
-      "locals": [
-        "lockButton"
-      ]
+      "locals": ["lockButton"]
     },
     "global::_0x4f83da": {
       "name": "drawEntityTrail",
       "module": "features_entitytrail",
       "fingerprintHash": "4::1::1::0::1::1::0::1::40::\"::Date|Math|window::Date.now|Math.max|_0x26b34a.arc|_0x26b34a.beginPath|_0x26b34a.lineTo|_0x26b34a.moveTo|_0x26b34a.stroke|for|if|rgba",
-      "params": [
-        "ctx",
-        "canvas",
-        "playerPos",
-        "zoomScale"
-      ],
+      "params": ["ctx", "canvas", "playerPos", "zoomScale"],
       "locals": [
         "centerX",
         "centerY",
@@ -2840,56 +2211,28 @@
       "name": "getOrCreateOverlayCanvas",
       "module": "utils",
       "fingerprintHash": "2::0::1::0::1::0::0::1::21::\"::document|window::_0x196108.getBoundingClientRect|document.body.appendChild|document.createElement|document.getElementById|if",
-      "params": [
-        "canvasId",
-        "zIndex"
-      ],
-      "locals": [
-        "overlayCanvas",
-        "gameCanvas",
-        "gameCanvasRect"
-      ]
+      "params": ["canvasId", "zIndex"],
+      "locals": ["overlayCanvas", "gameCanvas", "gameCanvasRect"]
     },
     "global::_0x44415a": {
       "name": "renderOverlayLoop",
       "module": "features_entitytrail",
       "fingerprintHash": "0::0::1::0::1::0::0::0::7::\"::window::_0x3f1afd.clearRect|_0x536adf.getContext|if|requestAnimationFrame",
       "params": [],
-      "locals": [
-        "overlayCanvas",
-        "ctx",
-        "trailData",
-        "trailSettings"
-      ]
+      "locals": ["overlayCanvas", "ctx", "trailData", "trailSettings"]
     },
     "global::_0x35e85a": {
       "name": "drawEspEntities",
       "module": "features_esp",
       "fingerprintHash": "5::0::1::0::1::1::0::1::54::\"::Math|window::Math.round|_0x528fee.forEach|_0x8d349b.beginPath|_0x8d349b.fillText|_0x8d349b.lineTo|_0x8d349b.moveTo|_0x8d349b.stroke|_0x8d349b.strokeRect|if|toString",
-      "params": [
-        "ctx",
-        "gameState",
-        "offsetX",
-        "offsetY",
-        "scale"
-      ],
-      "locals": [
-        "myPos",
-        "espMode",
-        "trackedEntityId",
-        "entities"
-      ]
+      "params": ["ctx", "gameState", "offsetX", "offsetY", "scale"],
+      "locals": ["myPos", "espMode", "trackedEntityId", "entities"]
     },
     "global::_0x15bd93": {
       "name": "drawTrackedEntityIndicator",
       "module": "features_esp",
       "fingerprintHash": "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x116ceb.beginPath|_0x116ceb.lineTo|_0x116ceb.moveTo|_0x116ceb.setLineDash|_0x116ceb.stroke|_0x116ceb.strokeRect|if|rgba",
-      "params": [
-        "ctx",
-        "canvas",
-        "myPos",
-        "scale"
-      ],
+      "params": ["ctx", "canvas", "myPos", "scale"],
       "locals": [
         "trackedEntity",
         "entityPos",
@@ -2911,11 +2254,7 @@
       "name": "drawRadar",
       "module": "ui_radar",
       "fingerprintHash": "3::1::1::0::1::1::0::1::93::\"::Date|Math|window::_0x1438be.arc|_0x1438be.beginPath|_0x1438be.fill|_0x1438be.lineTo|_0x1438be.moveTo|_0x1438be.roundRect|_0x1438be.stroke|for|if|rgba",
-      "params": [
-        "ctx",
-        "canvas",
-        "gameState"
-      ],
+      "params": ["ctx", "canvas", "gameState"],
       "locals": [
         "radarSize",
         "radarX",
@@ -2937,23 +2276,15 @@
       "name": "setTheme",
       "module": "ui_theme",
       "fingerprintHash": "1::0::0::0::1::0::0::0::5::\"::Object|document|localStorage::Object.entries|_0x46b1a4.style.setProperty|forEach|localStorage.setItem",
-      "params": [
-        "themeName"
-      ],
-      "locals": [
-        "rootElement",
-        "themeColors"
-      ]
+      "params": ["themeName"],
+      "locals": ["rootElement", "themeColors"]
     },
     "global::_0x1edfd6": {
       "name": "initHomeBackground",
       "module": "ui_theme",
       "fingerprintHash": "0::0::1::0::1::0::0::1::9::\"::document|localStorage::_0x19c8d1.style.setProperty|clearInterval|document.querySelector|if|localStorage.getItem|setInterval|url",
       "params": [],
-      "locals": [
-        "backgroundUrl",
-        "bgCheckInterval"
-      ]
+      "locals": ["backgroundUrl", "bgCheckInterval"]
     },
     "global/_0x1edfd6::_0xbbf018": {
       "name": "applyBackground",
@@ -2967,18 +2298,14 @@
       "module": "ui_panels",
       "fingerprintHash": "0::0::1::0::1::0::0::2::81::\"::document::_0x1de93a.classList.add|_0x20c7bf.querySelector|_0x24d516.classList.toggle|_0x3b75e6.stopPropagation|_0x3d0064.classList.add|_0x3d0064.classList.remove|document.body.appendChild|document.createElement|if|parseInt",
       "params": [],
-      "locals": [
-        "toolsPanel"
-      ]
+      "locals": ["toolsPanel"]
     },
     "global::_0xf2c7e9": {
       "name": "createVisionPanel",
       "module": "ui_panels",
       "fingerprintHash": "0::0::1::0::1::0::0::2::131::\"::Object|document|window::Boost|Close|Far|Medium|Nearest|Untrack|_0xf4c4e5.querySelector|document.body.appendChild|document.createElement|var",
       "params": [],
-      "locals": [
-        "visionPanel"
-      ]
+      "locals": ["visionPanel"]
     },
     "global/anon::_0x3df04a": {
       "name": "wrapProperty",
@@ -2998,13 +2325,8 @@
       "name": "showHalloweenCodeModal",
       "module": "ui_panels",
       "fingerprintHash": "1::0::1::0::1::0::0::0::77::\"::document|localStorage::_0x3b1cf3.querySelector|_0x3b1cf3.remove|_0x5cb9ad.addEventListener|_0x5cb9ad.value.trim|document.body.appendChild|document.createElement|if|localStorage.setItem|rgba|setTimeout",
-      "params": [
-        "onUnlockCallback"
-      ],
-      "locals": [
-        "modalOverlay",
-        "codeInput"
-      ]
+      "params": ["onUnlockCallback"],
+      "locals": ["modalOverlay", "codeInput"]
     },
     "global/_0xfc5265::_0x150805": {
       "name": "closeModal",
@@ -3017,15 +2339,8 @@
       "name": "makeDraggable",
       "module": "ui_panels",
       "fingerprintHash": "1::0::1::0::1::1::0::2::27::\"::Math|document::Math.abs|_0x45470a.stopImmediatePropagation|_0x5e95c5.addEventListener|_0x5e95c5.getBoundingClientRect|_0x913b73.target.closest|document.addEventListener|document.removeEventListener|if|includes",
-      "params": [
-        "element"
-      ],
-      "locals": [
-        "offsetX",
-        "offsetY",
-        "isDragging",
-        "hasMoved"
-      ]
+      "params": ["element"],
+      "locals": ["offsetX", "offsetY", "isDragging", "hasMoved"]
     },
     "global::_0x390b64": {
       "name": "renderEspOverlay",
@@ -3045,23 +2360,14 @@
       "name": "simulateClick",
       "module": "features_movement",
       "fingerprintHash": "2::0::1::0::1::0::0::1::5::\"::::PointerEvent|_0x15b4fc.dispatchEvent|if|setTimeout",
-      "params": [
-        "clientX",
-        "clientY"
-      ],
-      "locals": [
-        "targetElement"
-      ]
+      "params": ["clientX", "clientY"],
+      "locals": ["targetElement"]
     },
     "global::_0x4caf1c": {
       "name": "movePointerToTarget",
       "module": "features_aimbot",
       "fingerprintHash": "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x65171f.dispatchEvent|_0x65171f.getBoundingClientRect|if",
-      "params": [
-        "targetX",
-        "targetY",
-        "shouldClick"
-      ],
+      "params": ["targetX", "targetY", "shouldClick"],
       "locals": [
         "canvas",
         "localPlayer",
@@ -3103,10 +2409,7 @@
       "name": "getNearbyFarmables",
       "module": "features_autofarm",
       "fingerprintHash": "1::0::1::1::1::0::0::5::17::::window::_0x3cb5f8.push|_0x3cb5f8.sort|catch|forEach|if|window.autoFarmSkipIds.has",
-      "params": [
-        "farmRange",
-        "error"
-      ],
+      "params": ["farmRange", "error"],
       "locals": [
         "gameState",
         "worldData",
@@ -3120,27 +2423,15 @@
       "name": "findBestFoodCluster",
       "module": "features_autofarm",
       "fingerprintHash": "2::0::1::0::1::0::0::2::15::::window::_0x5d4775.forEach|if",
-      "params": [
-        "clusterRadius",
-        "foodPoints"
-      ],
-      "locals": [
-        "points",
-        "bestCluster",
-        "maxCount"
-      ]
+      "params": ["clusterRadius", "foodPoints"],
+      "locals": ["points", "bestCluster", "maxCount"]
     },
     "global::_0xd5a459": {
       "name": "simulateEvolveKey",
       "module": "features_autofarm",
       "fingerprintHash": "0::0::1::1::1::1::0::3::11::\"::Date|Math|document|window::Date.now|KeyboardEvent|Math.floor|Math.random|String|_0x3d053b.dispatchEvent|_0x40c258.charCodeAt|forEach|if|setTimeout",
       "params": [],
-      "locals": [
-        "now",
-        "gameCanvas",
-        "randomDigit",
-        "eventInit"
-      ]
+      "locals": ["now", "gameCanvas", "randomDigit", "eventInit"]
     },
     "global::_0x1df8a8": {
       "name": "autoFarmLoop",
@@ -3191,11 +2482,7 @@
       "module": "ui_panels",
       "fingerprintHash": "0::0::1::0::1::0::0::1::50::\"::document|window::Farm|_0x1a996a.stopPropagation|_0x20a022.classList.add|_0x20a022.classList.remove|_0x312eff.querySelector|_0x344867.classList.add|_0x344867.classList.remove|document.body.appendChild|document.createElement|if",
       "params": [],
-      "locals": [
-        "automationPanel",
-        "automationBody",
-        "isAutomationMinimized"
-      ]
+      "locals": ["automationPanel", "automationBody", "isAutomationMinimized"]
     },
     "global::_0x586122": {
       "name": "createSettingsPanel",
@@ -3214,44 +2501,27 @@
       "module": "ui_panels",
       "fingerprintHash": "0::0::0::0::1::0::0::1::21::\"::document::_0x4b80de.stopPropagation|_0x5f2222.querySelector|document.body.appendChild|document.createElement",
       "params": [],
-      "locals": [
-        "updatePanel",
-        "updateBody",
-        "isUpdateMinimized"
-      ]
+      "locals": ["updatePanel", "updateBody", "isUpdateMinimized"]
     },
     "global::_0x555290": {
       "name": "togglePanelsVisibility",
       "module": "ui_panels",
       "fingerprintHash": "0::0::1::0::1::0::0::1::7::\"::document::_0xc4ec51.forEach|document.getElementById|if",
       "params": [],
-      "locals": [
-        "panelIds",
-        "deepToolsPanel",
-        "isVisible"
-      ]
+      "locals": ["panelIds", "deepToolsPanel", "isVisible"]
     },
     "global::_0x55da9a": {
       "name": "generateRandomString",
       "module": "utils",
       "fingerprintHash": "1::1::0::0::0::1::0::1::6::::Math|String::Math.floor|Math.random|String.fromCodePoint|for",
-      "params": [
-        "length"
-      ],
-      "locals": [
-        "resultString",
-        "i",
-        "randomCodePoint"
-      ]
+      "params": ["length"],
+      "locals": ["resultString", "i", "randomCodePoint"]
     },
     "global::_0x254f2d": {
       "name": "startScheduledTask",
       "module": "features_chat",
       "fingerprintHash": "2::0::1::0::0::0::0::0::4::::::clearInterval|if|setInterval",
-      "params": [
-        "taskData",
-        "intervalSeconds"
-      ],
+      "params": ["taskData", "intervalSeconds"],
       "locals": []
     },
     "global::_0x4bb391": {
@@ -3293,104 +2563,64 @@
       "name": "isPlayer",
       "module": "utils",
       "fingerprintHash": "1::0::1::0::0::0::0::12::12::::::if",
-      "params": [
-        "entity"
-      ],
+      "params": ["entity"],
       "locals": []
     },
     "global::_0x4b3486": {
       "name": "getGameState",
       "module": "core",
       "fingerprintHash": "0::1::1::1::1::0::0::6::9::::Object|window::Object.keys|catch|for|if",
-      "params": [
-        "error"
-      ],
-      "locals": [
-        "states",
-        "i",
-        "managerKey"
-      ]
+      "params": ["error"],
+      "locals": ["states", "i", "managerKey"]
     },
     "global::_0x22f420": {
       "name": "getEntityManager",
       "module": "core",
       "fingerprintHash": "1::1::1::0::1::0::0::5::10::\"::Array|Object|window::Array.isArray|Object.keys|for|if",
-      "params": [
-        "gameState"
-      ],
-      "locals": [
-        "entityManager",
-        "key",
-        "potentialManager"
-      ]
+      "params": ["gameState"],
+      "locals": ["entityManager", "key", "potentialManager"]
     },
     "global::_0x58904d": {
       "name": "getFirstAnimalPosition",
       "module": "core",
       "fingerprintHash": "0::0::1::1::0::0::0::3::5::::::catch|if",
-      "params": [
-        "error"
-      ],
-      "locals": [
-        "animal",
-        "position"
-      ]
+      "params": ["error"],
+      "locals": ["animal", "position"]
     },
     "global::_0x35cf49": {
       "name": "getMyAnimal",
       "module": "utils",
       "fingerprintHash": "0::0::0::1::0::0::0::2::2::::::catch",
-      "params": [
-        "error"
-      ],
+      "params": ["error"],
       "locals": []
     },
     "global::_0x1e6ffc": {
       "name": "getEntityPosition",
       "module": "core",
       "fingerprintHash": "1::0::1::0::0::0::0::2::2::::::if",
-      "params": [
-        "entity"
-      ],
+      "params": ["entity"],
       "locals": []
     },
     "global::_0x5d9e41": {
       "name": "calculateDirection",
       "module": "core",
       "fingerprintHash": "1::0::1::0::0::1::0::2::14::::Math::Math.abs|Math.cos|Math.sin|Math.sqrt|if",
-      "params": [
-        "entity"
-      ],
-      "locals": [
-        "dirX",
-        "dirY",
-        "angle",
-        "magnitude"
-      ]
+      "params": ["entity"],
+      "locals": ["dirX", "dirY", "angle", "magnitude"]
     },
     "global::_0x4da9ef": {
       "name": "calculateDistance",
       "module": "utils",
       "fingerprintHash": "4::0::0::0::0::1::0::1::1::::Math::Math.sqrt",
-      "params": [
-        "x1",
-        "y1",
-        "x2",
-        "y2"
-      ],
+      "params": ["x1", "y1", "x2", "y2"],
       "locals": []
     },
     "global::_0x261d39": {
       "name": "getZoomLevel",
       "module": "utils",
       "fingerprintHash": "0::0::1::1::0::0::0::1::5::::scale::catch|if",
-      "params": [
-        "error"
-      ],
-      "locals": [
-        "zoomLevel",
-        "cameraState"
-      ]
+      "params": ["error"],
+      "locals": ["zoomLevel", "cameraState"]
     },
     "global::_0x5564e9": {
       "name": "clearTracking",
@@ -3404,9 +2634,7 @@
       "module": "features_esp",
       "fingerprintHash": "0::0::1::0::1::0::0::0::4::\"::window::if",
       "params": [],
-      "locals": [
-        "gameData"
-      ]
+      "locals": ["gameData"]
     },
     "global::_0x3ecb74": {
       "name": "clearTracking",
@@ -3426,38 +2654,22 @@
       "name": "isAreaSkipped",
       "module": "features_autofarm",
       "fingerprintHash": "2::0::0::0::1::0::0::1::3::::Date|window::Date.now|window.autoFarmSkipAreas.filter|window.autoFarmSkipAreas.some",
-      "params": [
-        "x",
-        "y"
-      ],
-      "locals": [
-        "currentTime"
-      ]
+      "params": ["x", "y"],
+      "locals": ["currentTime"]
     },
     "global::_0x4047a": {
       "name": "handleFarmFailure",
       "module": "features_autofarm",
       "fingerprintHash": "2::0::1::0::1::0::0::0::8::\"::Date|window::Date.now|if|window.autoFarmSkipAreas.filter|window.autoFarmSkipAreas.find|window.autoFarmSkipAreas.push",
-      "params": [
-        "x",
-        "y"
-      ],
-      "locals": [
-        "currentTime",
-        "existingArea"
-      ]
+      "params": ["x", "y"],
+      "locals": ["currentTime", "existingArea"]
     },
     "global::_0x3d8653": {
       "name": "isAreaSkipped",
       "module": "features_autofarm",
       "fingerprintHash": "2::0::0::0::1::0::0::1::3::::Date|window::Date.now|window.autoFarmSkipAreas.filter|window.autoFarmSkipAreas.some",
-      "params": [
-        "x",
-        "y"
-      ],
-      "locals": [
-        "currentTime"
-      ]
+      "params": ["x", "y"],
+      "locals": ["currentTime"]
     },
     "global/_0xf17195/anon::_0x548dfb": {
       "name": "handleMouseMove",
@@ -3484,13 +2696,8 @@
       "name": "simulateChatInput",
       "module": "features_chat",
       "fingerprintHash": "1::0::1::0::1::0::0::2::19::\"::document::Event|InputEvent|_0x1cd0c1.blur|_0x1cd0c1.dispatchEvent|_0x1cd0c1.focus|_0x675330.click|document.querySelector|if|setTimeout",
-      "params": [
-        "textToType"
-      ],
-      "locals": [
-        "chatInput",
-        "charIndex"
-      ]
+      "params": ["textToType"],
+      "locals": ["chatInput", "charIndex"]
     },
     "global/_0x1f430a::_0x5dfaf7": {
       "name": "typeTextRecursively",
@@ -3504,32 +2711,21 @@
       "module": "core",
       "fingerprintHash": "0::1::1::1::1::0::0::17::35::\"::Number|Reflect|String|TextEncoder|document::Number.parseInt|String.fromCharCode|String.fromCodePoint|_0x11f515.replace|for|function|if|switch|u|x",
       "params": [],
-      "locals": [
-        "actionMap",
-        "originalEncode"
-      ]
+      "locals": ["actionMap", "originalEncode"]
     },
     "global/_0x306e74::_0x30ded4": {
       "name": "unescapeString",
       "module": "",
       "fingerprintHash": "1::0::1::0::0::0::0::15::16::\"::Number|String::Number.parseInt|String.fromCharCode|String.fromCodePoint|_0x11f515.replace|if|switch|u|x",
-      "params": [
-        "inputString"
-      ],
+      "params": ["inputString"],
       "locals": []
     },
     "global::_0x456c11": {
       "name": "typeText",
       "module": "ui_interaction",
       "fingerprintHash": "2::0::1::0::1::0::0::3::15::\"::document::Event|InputEvent|_0x17069a.dispatchEvent|_0x17069a.focus|document.querySelector|if|setTimeout",
-      "params": [
-        "selector",
-        "text"
-      ],
-      "locals": [
-        "inputElement",
-        "currentIndex"
-      ]
+      "params": ["selector", "text"],
+      "locals": ["inputElement", "currentIndex"]
     },
     "global/_0x456c11::_0x2811cc": {
       "name": "typeChar",
@@ -3542,84 +2738,49 @@
       "name": "wrapWithProxy",
       "module": "core",
       "fingerprintHash": "3::0::0::0::0::0::0::0::4::::::Proxy|_0x11293b.set",
-      "params": [
-        "targetObject",
-        "propertyKey",
-        "handler"
-      ],
-      "locals": [
-        "originalValue",
-        "proxyValue"
-      ]
+      "params": ["targetObject", "propertyKey", "handler"],
+      "locals": ["originalValue", "proxyValue"]
     },
     "global::_0x120d49": {
       "name": "showToast",
       "module": "ui_interaction",
       "fingerprintHash": "1::0::1::0::1::0::0::1::30::\"|'::Date|document::Date.now|_0x2c7cc4.remove|document.body.appendChild|document.createElement|if|requestAnimationFrame|setTimeout|translateX|var",
-      "params": [
-        "message"
-      ],
-      "locals": [
-        "currentTime",
-        "toastElement"
-      ]
+      "params": ["message"],
+      "locals": ["currentTime", "toastElement"]
     },
     "global::_0x404f50": {
       "name": "initAdBlocker",
       "module": "features_adblock",
       "fingerprintHash": "0::0::1::0::1::0::0::1::20::\"::div|document|sidebar::MutationObserver|_0x24f37d.remove|_0x24f37d.removeAttribute|_0x2b328a.forEach|document.querySelector|document.querySelectorAll|forEach|has|if|not",
       "params": [],
-      "locals": [
-        "adSelectors"
-      ]
+      "locals": ["adSelectors"]
     },
     "global::_0x2438e3": {
       "name": "startCircularMovement",
       "module": "features_movement",
       "fingerprintHash": "0::0::1::0::1::1::0::2::11::\"::Math|window::Math.cos|Math.round|Math.sin|MouseEvent|_0x510bb5.dispatchEvent|if|setInterval",
       "params": [],
-      "locals": [
-        "canvas"
-      ]
+      "locals": ["canvas"]
     },
     "global::_0x464dae": {
       "name": "moveMouseToSide",
       "module": "features_movement",
       "fingerprintHash": "1::0::1::0::1::0::0::1::7::\"::::MouseEvent|_0x3e6347.dispatchEvent|_0x3e6347.getBoundingClientRect|if",
-      "params": [
-        "side"
-      ],
-      "locals": [
-        "canvas",
-        "rect",
-        "centerX",
-        "centerY",
-        "targetX"
-      ]
+      "params": ["side"],
+      "locals": ["canvas", "rect", "centerX", "centerY", "targetX"]
     },
     "global::_0x28eda2": {
       "name": "findEntityById",
       "module": "core",
       "fingerprintHash": "1::1::1::1::0::0::0::4::12::::Array|Object::Array.isArray|Object.keys|_0x24ec17.entitiesList.find|_0x387019.find|catch|for|if",
-      "params": [
-        "entityId",
-        "error"
-      ],
-      "locals": [
-        "rawState",
-        "parsedState",
-        "entity",
-        "roomId",
-        "animals"
-      ]
+      "params": ["entityId", "error"],
+      "locals": ["rawState", "parsedState", "entity", "roomId", "animals"]
     },
     "global::_0x52275e": {
       "name": "getNearbyEntities",
       "module": "utils",
       "fingerprintHash": "0::0::1::1::0::1::0::5::25::::Math::Math.atan2|Math.sqrt|_0x2b7d16.forEach|_0x411cd0.entities.push|_0x411cd0.entities.sort|_0x411cd0.food.push|_0x411cd0.food.sort|_0x411cd0.players.push|_0x411cd0.players.sort|if",
-      "params": [
-        "error"
-      ],
+      "params": ["error"],
       "locals": [
         "rawState",
         "parsedState",
@@ -3635,33 +2796,20 @@
       "module": "features_esp",
       "fingerprintHash": "0::0::1::0::1::0::0::1::21::\"::document|window::_0x3da57f.getBoundingClientRect|document.body.appendChild|document.createElement|document.getElementById|if",
       "params": [],
-      "locals": [
-        "overlayCanvas",
-        "canvas",
-        "rect"
-      ]
+      "locals": ["overlayCanvas", "canvas", "rect"]
     },
     "global::_0x1019fb": {
       "name": "simulateClick",
       "module": "features_movement",
       "fingerprintHash": "2::0::1::0::1::0::0::1::5::\"::::PointerEvent|_0x287729.dispatchEvent|if|setTimeout",
-      "params": [
-        "clientX",
-        "clientY"
-      ],
-      "locals": [
-        "targetElement"
-      ]
+      "params": ["clientX", "clientY"],
+      "locals": ["targetElement"]
     },
     "global::_0x39840a": {
       "name": "simulateMoveAndClick",
       "module": "features_movement",
       "fingerprintHash": "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x21d797.dispatchEvent|_0x21d797.getBoundingClientRect|if",
-      "params": [
-        "targetX",
-        "targetY",
-        "shouldClick"
-      ],
+      "params": ["targetX", "targetY", "shouldClick"],
       "locals": [
         "targetElement",
         "playerPosition",
@@ -3725,10 +2873,7 @@
       "name": "findClosestFarmable",
       "module": "features_autofarm",
       "fingerprintHash": "1::0::1::1::1::0::0::8::23::::window::_0x52a671.forEach|catch|if|window.autoFarmSkipIds.has",
-      "params": [
-        "farmRange",
-        "error"
-      ],
+      "params": ["farmRange", "error"],
       "locals": [
         "gameState",
         "worldData",
@@ -3744,10 +2889,7 @@
       "name": "getFarmableEntities",
       "module": "features_autofarm",
       "fingerprintHash": "1::0::1::1::1::0::0::8::22::::window::_0x4086f8.forEach|_0x561801.push|_0x561801.sort|catch|if|window.autoFarmSkipIds.has",
-      "params": [
-        "farmRange",
-        "error"
-      ],
+      "params": ["farmRange", "error"],
       "locals": [
         "gameState",
         "worldData",
@@ -3762,24 +2904,14 @@
       "name": "findOptimalFarmPosition",
       "module": "features_autofarm",
       "fingerprintHash": "2::0::1::0::1::0::0::2::17::::window::_0x228c62.forEach|if",
-      "params": [
-        "clusterRadius",
-        "farmRange"
-      ],
-      "locals": [
-        "farmables",
-        "bestPosition",
-        "maxCount"
-      ]
+      "params": ["clusterRadius", "farmRange"],
+      "locals": ["farmables", "bestPosition", "maxCount"]
     },
     "global::_0x28477c": {
       "name": "getNearbyAvoidEntities",
       "module": "features_autofarm",
       "fingerprintHash": "1::0::1::1::1::0::0::6::20::::window::_0x16d644.push|_0x16d644.sort|_0x3a213d.forEach|catch|if",
-      "params": [
-        "avoidDistance",
-        "error"
-      ],
+      "params": ["avoidDistance", "error"],
       "locals": [
         "gameState",
         "worldData",
@@ -3795,12 +2927,7 @@
       "module": "features_autofarm",
       "fingerprintHash": "0::0::1::0::1::1::0::4::16::::Math|window::Math.max|Math.sqrt|_0x55a121.forEach|if",
       "params": [],
-      "locals": [
-        "localPlayer",
-        "nearbyPlayers",
-        "avoidX",
-        "avoidY"
-      ]
+      "locals": ["localPlayer", "nearbyPlayers", "avoidX", "avoidY"]
     },
     "global::_0x37ad07": {
       "name": "simulateEvolveKeyPress",
@@ -3819,29 +2946,15 @@
       "name": "checkAntiStuck",
       "module": "features_autofarm",
       "fingerprintHash": "1::0::1::0::1::1::0::3::21::::Date|Math|window::Date.now|Math.cos|Math.random|Math.sin|if|window.autoFarmSkipIds.add",
-      "params": [
-        "currentPos"
-      ],
-      "locals": [
-        "now",
-        "dist",
-        "randomAngle",
-        "escapeX",
-        "escapeY"
-      ]
+      "params": ["currentPos"],
+      "locals": ["now", "dist", "randomAngle", "escapeX", "escapeY"]
     },
     "global::_0x341716": {
       "name": "generatePatrolPoints",
       "module": "features_autofarm",
       "fingerprintHash": "0::1::1::0::1::1::0::1::10::::Math|window::Math.cos|Math.sin|for|if|window.autoFarmPatrolPoints.push",
       "params": [],
-      "locals": [
-        "localPlayer",
-        "patrolRadius",
-        "pointCount",
-        "i",
-        "angle"
-      ]
+      "locals": ["localPlayer", "patrolRadius", "pointCount", "i", "angle"]
     },
     "global::_0x422019": {
       "name": "autoFarmUpdate",
@@ -3867,30 +2980,14 @@
       "name": "drawEsp",
       "module": "features_esp",
       "fingerprintHash": "5::0::1::0::1::1::0::1::39::\"::Math|window::Math.round|_0x18cf95.forEach|_0x5e3901.beginPath|_0x5e3901.fillText|_0x5e3901.lineTo|_0x5e3901.moveTo|_0x5e3901.stroke|_0x5e3901.strokeRect|if|toString",
-      "params": [
-        "ctx",
-        "gameState",
-        "offsetX",
-        "offsetY",
-        "scale"
-      ],
-      "locals": [
-        "myPos",
-        "espMode",
-        "trackedEntityId",
-        "entities"
-      ]
+      "params": ["ctx", "gameState", "offsetX", "offsetY", "scale"],
+      "locals": ["myPos", "espMode", "trackedEntityId", "entities"]
     },
     "global::_0x61df3a": {
       "name": "drawTrackedEntity",
       "module": "features_esp",
       "fingerprintHash": "4::0::1::0::1::1::0::4::96::\"::Date|Math|window::Date.now|Math.sin|_0x14f1c2.beginPath|_0x14f1c2.lineTo|_0x14f1c2.moveTo|_0x14f1c2.setLineDash|_0x14f1c2.stroke|_0x14f1c2.strokeRect|if|rgba",
-      "params": [
-        "ctx",
-        "canvas",
-        "myPos",
-        "scale"
-      ],
+      "params": ["ctx", "canvas", "myPos", "scale"],
       "locals": [
         "trackedEntity",
         "entityPos",
@@ -3911,11 +3008,7 @@
       "name": "drawRadar",
       "module": "ui_radar",
       "fingerprintHash": "3::1::1::0::1::1::0::1::63::\"::Math|window::_0x5512fa.arc|_0x5512fa.beginPath|_0x5512fa.fill|_0x5512fa.lineTo|_0x5512fa.moveTo|_0x5512fa.roundRect|_0x5512fa.stroke|for|if|rgba",
-      "params": [
-        "ctx",
-        "canvas",
-        "gameState"
-      ],
+      "params": ["ctx", "canvas", "gameState"],
       "locals": [
         "radarSize",
         "radarX",
@@ -3955,23 +3048,15 @@
       "name": "applyTheme",
       "module": "ui_theme",
       "fingerprintHash": "1::0::0::0::1::0::0::0::14::\"::document|localStorage::_0x2a5a53.style.setProperty|localStorage.setItem",
-      "params": [
-        "themeName"
-      ],
-      "locals": [
-        "rootElement",
-        "themeColors"
-      ]
+      "params": ["themeName"],
+      "locals": ["rootElement", "themeColors"]
     },
     "global::_0x41b398": {
       "name": "initBackground",
       "module": "ui_theme",
       "fingerprintHash": "0::0::1::0::1::0::0::1::9::\"::document|localStorage::_0x70dfef.style.setProperty|clearInterval|document.querySelector|if|localStorage.getItem|setInterval|url",
       "params": [],
-      "locals": [
-        "bgUrl",
-        "bgCheckInterval"
-      ]
+      "locals": ["bgUrl", "bgCheckInterval"]
     },
     "global/_0x41b398::_0x5293df": {
       "name": "setBackgroundImage",
@@ -3985,18 +3070,14 @@
       "module": "ui_theme",
       "fingerprintHash": "0::0::0::0::1::0::0::0::197::\"|'::btn|div|document::document.createElement|document.head.appendChild|not|rgba|translateX|var",
       "params": [],
-      "locals": [
-        "styleElement"
-      ]
+      "locals": ["styleElement"]
     },
     "global::_0x2bda7e": {
       "name": "createToolsPanel",
       "module": "ui_panels",
       "fingerprintHash": "0::0::1::0::1::0::0::2::85::\"::document::_0x1ec0a9.querySelector|_0x2f7aa3.classList.add|_0x4d79d1.classList.add|_0x5defdb.classList.add|_0x5defdb.classList.remove|_0x9a5d6b.stopPropagation|document.body.appendChild|document.createElement|if|parseInt",
       "params": [],
-      "locals": [
-        "panelElement"
-      ]
+      "locals": ["panelElement"]
     },
     "global/anon::_0x108f26": {
       "name": "wrapValue",
@@ -4016,13 +3097,8 @@
       "name": "showHalloweenModal",
       "module": "ui_panels",
       "fingerprintHash": "1::0::1::0::1::0::0::0::88::\"|'::document|localStorage::_0x11d9e8.querySelector|_0x11d9e8.remove|_0x25743c.addEventListener|_0x25743c.value.trim|document.body.appendChild|document.createElement|if|localStorage.setItem|rgba|setTimeout",
-      "params": [
-        "config"
-      ],
-      "locals": [
-        "modalContainer",
-        "codeInput"
-      ]
+      "params": ["config"],
+      "locals": ["modalContainer", "codeInput"]
     },
     "global/_0x4508d6::_0x282b0a": {
       "name": "closeModal",
@@ -4035,15 +3111,8 @@
       "name": "makeDraggable",
       "module": "ui_panels",
       "fingerprintHash": "1::0::1::0::1::1::0::2::27::\"::Math|document::Math.abs|_0x10c129.target.closest|_0x367e5d.stopImmediatePropagation|_0xc74399.addEventListener|_0xc74399.getBoundingClientRect|document.addEventListener|document.removeEventListener|if|includes",
-      "params": [
-        "element"
-      ],
-      "locals": [
-        "offsetX",
-        "offsetY",
-        "isDragging",
-        "hasMoved"
-      ]
+      "params": ["element"],
+      "locals": ["offsetX", "offsetY", "isDragging", "hasMoved"]
     },
     "global::_0x143f3d": {
       "name": "startAutoFarmLoop",
@@ -4056,9 +3125,7 @@
       "name": "initAutoFarm",
       "module": "core",
       "fingerprintHash": "1::0::1::0::1::0::0::0::16::\"::Date|window::Date.now|if|started|window.autoFarmSkipIds.clear",
-      "params": [
-        "farmMode"
-      ],
+      "params": ["farmMode"],
       "locals": []
     },
     "global::_0x590a8a": {
@@ -4066,9 +3133,7 @@
       "module": "features_autofarm",
       "fingerprintHash": "0::0::0::0::1::0::0::0::4::\"::Date|window::Date.now|toFixed",
       "params": [],
-      "locals": [
-        "elapsedTime"
-      ]
+      "locals": ["elapsedTime"]
     },
     "global::_0x1e7244": {
       "name": "toggleMinimapSize",
@@ -4089,43 +3154,28 @@
       "module": "ui_panels",
       "fingerprintHash": "0::0::1::0::1::0::0::2::80::\"::document|window::Boost|Farm|Nearest|Untrack|_0x398861.querySelector|_0x700032.preventDefault|_0xa57fd8.stopPropagation|document.body.appendChild|document.createElement|if",
       "params": [],
-      "locals": [
-        "plusPanel"
-      ]
+      "locals": ["plusPanel"]
     },
     "global::_0x3a0399": {
       "name": "createSettingsPanel",
       "module": "ui_panels",
       "fingerprintHash": "0::0::1::0::1::0::0::2::47::\"::document|localStorage::_0x102547.toUpperCase|_0x397c54.querySelector|_0x3c128c.addEventListener|_0x3dd3e0.value.trim|_0x3f86d2.key.toUpperCase|_0x3f86d2.preventDefault|_0x505538.stopPropagation|document.body.appendChild|document.createElement|localStorage.getItem",
       "params": [],
-      "locals": [
-        "settingsPanel",
-        "settingsBody",
-        "isSettingsMinimized"
-      ]
+      "locals": ["settingsPanel", "settingsBody", "isSettingsMinimized"]
     },
     "global::_0x252fc5": {
       "name": "createUpdateHistoryPanel",
       "module": "ui_panels",
       "fingerprintHash": "0::0::0::0::1::0::0::1::21::\"::document::_0x4bbfe2.querySelector|_0x74272a.stopPropagation|document.body.appendChild|document.createElement|keybinds",
       "params": [],
-      "locals": [
-        "updatePanel",
-        "updateBody",
-        "isUpdateMinimized"
-      ]
+      "locals": ["updatePanel", "updateBody", "isUpdateMinimized"]
     },
     "global::_0xff5890": {
       "name": "toggleUiVisibility",
       "module": "ui_panels",
       "fingerprintHash": "0::0::1::0::1::0::0::1::8::\"::document::_0x2620c8.forEach|document.getElementById|if",
       "params": [],
-      "locals": [
-        "panelIds",
-        "mainPanel",
-        "isVisible",
-        "newDisplayState"
-      ]
+      "locals": ["panelIds", "mainPanel", "isVisible", "newDisplayState"]
     },
     "global::_0x2a93b4": {
       "name": "initializeClient",
@@ -4138,23 +3188,14 @@
       "name": "generateRandomString",
       "module": "utils",
       "fingerprintHash": "1::1::0::0::0::1::0::1::6::::Math|String::Math.floor|Math.random|String.fromCodePoint|for",
-      "params": [
-        "length"
-      ],
-      "locals": [
-        "resultString",
-        "i",
-        "randomCodePoint"
-      ]
+      "params": ["length"],
+      "locals": ["resultString", "i", "randomCodePoint"]
     },
     "global::_0x547e99": {
       "name": "startScheduledTask",
       "module": "features_chat",
       "fingerprintHash": "2::0::1::0::0::0::0::0::4::::::clearInterval|if|setInterval",
-      "params": [
-        "taskData",
-        "intervalSeconds"
-      ],
+      "params": ["taskData", "intervalSeconds"],
       "locals": []
     },
     "global::_0x1a8179": {
@@ -4252,24 +3293,15 @@
       "name": "showNotification",
       "module": "ui_interaction",
       "fingerprintHash": "1::0::0::0::1::0::0::0::25::\"::document::_0x592a40.remove|blur|document.body.appendChild|document.createElement|setTimeout|translateY|var",
-      "params": [
-        "message"
-      ],
-      "locals": [
-        "notificationElement"
-      ]
+      "params": ["message"],
+      "locals": ["notificationElement"]
     },
     "global::_0x288e63": {
       "name": "autoChat",
       "module": "features_chat",
       "fingerprintHash": "1::0::1::0::1::0::0::2::20::\"::console|document::Event|InputEvent|_0x35c3ee.click|_0x3a265f.blur|_0x3a265f.dispatchEvent|_0x3a265f.focus|console.warn|document.querySelector|if|setTimeout",
-      "params": [
-        "messageText"
-      ],
-      "locals": [
-        "chatInput",
-        "charIndex"
-      ]
+      "params": ["messageText"],
+      "locals": ["chatInput", "charIndex"]
     },
     "global/_0x288e63::_0x147b7a": {
       "name": "typeCharacter",
@@ -4282,21 +3314,14 @@
       "name": "initInterceptor",
       "module": "core",
       "fingerprintHash": "1::1::1::1::1::0::0::17::39::\"::Number|Reflect|String|TextEncoder|document::Number.parseInt|String.fromCharCode|String.fromCodePoint|_0x5cf452.replace|for|function|if|switch|u|x",
-      "params": [
-        "config"
-      ],
-      "locals": [
-        "actionMap",
-        "originalEncode"
-      ]
+      "params": ["config"],
+      "locals": ["actionMap", "originalEncode"]
     },
     "global/_0x38d8c9::_0x378844": {
       "name": "unescapeString",
       "module": "",
       "fingerprintHash": "1::0::1::0::0::0::0::15::16::\"::Number|String::Number.parseInt|String.fromCharCode|String.fromCodePoint|_0x5cf452.replace|if|switch|u|x",
-      "params": [
-        "inputString"
-      ],
+      "params": ["inputString"],
       "locals": []
     },
     "global::_0x249b84": {
@@ -4304,22 +3329,14 @@
       "module": "features_antidetection",
       "fingerprintHash": "0::0::1::0::1::1::0::2::11::\"::Math|window::Math.cos|Math.round|Math.sin|MouseEvent|_0x354437.dispatchEvent|if|setInterval",
       "params": [],
-      "locals": [
-        "gameCanvas"
-      ]
+      "locals": ["gameCanvas"]
     },
     "global::_0x1c3a11": {
       "name": "simulateTyping",
       "module": "ui_interaction",
       "fingerprintHash": "2::0::1::0::1::0::0::3::16::\"::document::Event|InputEvent|_0x3abdc7.dispatchEvent|_0x3abdc7.focus|document.querySelector|if|setTimeout",
-      "params": [
-        "inputSelector",
-        "textToType"
-      ],
-      "locals": [
-        "inputElement",
-        "charIndex"
-      ]
+      "params": ["inputSelector", "textToType"],
+      "locals": ["inputElement", "charIndex"]
     },
     "global/_0x1c3a11::_0x30988a": {
       "name": "typeCharacter",
@@ -4332,25 +3349,15 @@
       "name": "wrapPropertyWithProxy",
       "module": "core",
       "fingerprintHash": "3::0::0::0::0::0::0::0::4::::::Proxy|_0x5b0a1d.set",
-      "params": [
-        "targetObject",
-        "propertyKey",
-        "proxyHandler"
-      ],
-      "locals": [
-        "originalValue",
-        "proxyInstance"
-      ]
+      "params": ["targetObject", "propertyKey", "proxyHandler"],
+      "locals": ["originalValue", "proxyInstance"]
     },
     "global::_0x5c40dd": {
       "name": "initAdBlocker",
       "module": "features_adblock",
       "fingerprintHash": "0::0::1::0::1::0::0::0::20::\"::div|document|sidebar::MutationObserver|_0x21e3fd.forEach|_0x5d3cd9.remove|_0x5d3cd9.removeAttribute|document.querySelector|document.querySelectorAll|forEach|has|if|not",
       "params": [],
-      "locals": [
-        "adSelectors",
-        "observer"
-      ]
+      "locals": ["adSelectors", "observer"]
     },
     "global/_0x5c40dd::_0x58b763": {
       "name": "removeAds",
@@ -4363,13 +3370,8 @@
       "name": "createHalloweenModal",
       "module": "ui_panels",
       "fingerprintHash": "1::0::1::0::1::0::0::0::108::\"::document|localStorage::document.body.appendChild|document.createElement|document.head.appendChild|gradient|rgba|rotate|scale|setTimeout|translateX|translateY",
-      "params": [
-        "modalConfig"
-      ],
-      "locals": [
-        "modalContainer",
-        "styleElement"
-      ]
+      "params": ["modalConfig"],
+      "locals": ["modalContainer", "styleElement"]
     },
     "global/_0x350f1f::_0x348ec6": {
       "name": "removeHalloweenModal",
@@ -4418,10 +3420,7 @@
       "module": "",
       "fingerprintHash": "0::0::1::1::1::0::0::0::12::\"::div|document::_0x4fb521.preventDefault|_0xec52cf.insertBefore|addEventListener|document.createElement|document.getElementById|document.querySelector|if|remove",
       "params": [],
-      "locals": [
-        "overlayDiv",
-        "gameContainer"
-      ]
+      "locals": ["overlayDiv", "gameContainer"]
     },
     "global::_0x525a0d": {
       "name": "createUpdateHistoryStyles",
@@ -4503,11 +3502,7 @@
       "module": "ui_theme",
       "fingerprintHash": "0::0::1::0::1::0::0::1::11::\"::document|localStorage::_0x2029ea.style.setProperty|clearInterval|document.querySelector|if|localStorage.getItem|setInterval|url",
       "params": [],
-      "locals": [
-        "storedBgUrl",
-        "homeBgElement",
-        "bgCheckInterval"
-      ]
+      "locals": ["storedBgUrl", "homeBgElement", "bgCheckInterval"]
     },
     "global::_0x279e97": {
       "name": "togglePanels",
@@ -4541,13 +3536,8 @@
       "name": "applyThemeColors",
       "module": "ui_theme",
       "fingerprintHash": "1::1::1::0::1::0::0::0::20::\"::Object|document|localStorage::Object.entries|_0x37dbff.forEach|_0x4d5937.className.replace|_0xf5bca0.style.setProperty|document.getElementById|document.querySelectorAll|forEach|if|localStorage.setItem|rgba",
-      "params": [
-        "themeName"
-      ],
-      "locals": [
-        "rootElement",
-        "themeConfig"
-      ]
+      "params": ["themeName"],
+      "locals": ["rootElement", "themeConfig"]
     },
     "global::_0x479bc4": {
       "name": "injectSettingsPanelStyles",
@@ -4586,23 +3576,14 @@
       "name": "generateRandomString",
       "module": "utils",
       "fingerprintHash": "1::1::0::0::0::1::0::1::6::::Math|String::Math.floor|Math.random|String.fromCodePoint|for",
-      "params": [
-        "length"
-      ],
-      "locals": [
-        "resultString",
-        "i",
-        "randomCodePoint"
-      ]
+      "params": ["length"],
+      "locals": ["resultString", "i", "randomCodePoint"]
     },
     "global::_0x2580cd": {
       "name": "startScheduledTask",
       "module": "features_chat",
       "fingerprintHash": "2::0::1::0::0::0::0::0::4::::::clearInterval|if|setInterval",
-      "params": [
-        "taskData",
-        "intervalSeconds"
-      ],
+      "params": ["taskData", "intervalSeconds"],
       "locals": []
     },
     "global::_0x2b3911": {
@@ -4742,14 +3723,8 @@
       "name": "simulateTyping",
       "module": "ui_interaction",
       "fingerprintHash": "2::0::1::0::1::0::0::3::16::\"::document::Event|InputEvent|_0x2322c7.dispatchEvent|_0x2322c7.focus|document.querySelector|if|setTimeout",
-      "params": [
-        "selector",
-        "text"
-      ],
-      "locals": [
-        "element",
-        "currentIndex"
-      ]
+      "params": ["selector", "text"],
+      "locals": ["element", "currentIndex"]
     },
     "global/_0x4caabc::_0x21ba3d": {
       "name": "typeText",
@@ -4762,25 +3737,15 @@
       "name": "wrapPropertyWithProxy",
       "module": "core",
       "fingerprintHash": "3::0::0::0::0::0::0::0::4::::::Proxy|_0x5a5b77.set",
-      "params": [
-        "targetObject",
-        "propertyKey",
-        "proxyHandler"
-      ],
-      "locals": [
-        "originalValue",
-        "proxyValue"
-      ]
+      "params": ["targetObject", "propertyKey", "proxyHandler"],
+      "locals": ["originalValue", "proxyValue"]
     },
     "global::_0x2aa5b8": {
       "name": "initAdBlocker",
       "module": "features_adblock",
       "fingerprintHash": "0::0::1::0::1::0::0::0::20::\"::div|document|sidebar::MutationObserver|_0x249f36.forEach|_0x5cf842.remove|_0x5cf842.removeAttribute|document.querySelector|document.querySelectorAll|forEach|has|if|not",
       "params": [],
-      "locals": [
-        "adSelectors",
-        "mutationObserver"
-      ]
+      "locals": ["adSelectors", "mutationObserver"]
     },
     "global/_0x2aa5b8::_0x17abe8": {
       "name": "removeAds",
@@ -4801,49 +3766,35 @@
       "module": "",
       "fingerprintHash": "0::0::1::1::1::0::0::0::12::\"::div|document::_0x211674.preventDefault|_0x2c71c0.insertBefore|addEventListener|document.createElement|document.getElementById|document.querySelector|if|remove",
       "params": [],
-      "locals": [
-        "overlayDiv",
-        "gameDiv"
-      ]
+      "locals": ["overlayDiv", "gameDiv"]
     },
     "global::_0x911c18": {
       "name": "setupUpdateHistory",
       "module": "ui_panels",
       "fingerprintHash": "0::0::1::0::1::1::0::2::93::\"|'::Math|button|document::Selection|_0x4197e4.querySelector|blur|document.body.appendChild|document.createElement|document.head.appendChild|feature|rgba|translateY|var",
       "params": [],
-      "locals": [
-        "historyStyle",
-        "historyPanel"
-      ]
+      "locals": ["historyStyle", "historyPanel"]
     },
     "global::_0x533fc4": {
       "name": "setupToolsPanel",
       "module": "core",
       "fingerprintHash": "0::0::1::0::1::1::0::3::213::\"|'::Math|classList|div|document::Characters|Name|blur|document.createElement|document.head.appendChild|gradient|not|rgba|translateY|var",
       "params": [],
-      "locals": [
-        "toolsStyle"
-      ]
+      "locals": ["toolsStyle"]
     },
     "global::_0x4a2da8": {
       "name": "injectPlusPanelStyles",
       "module": "ui_panels",
       "fingerprintHash": "0::0::1::0::1::1::0::4::145::\"|'::Math|classList|document::Boost|Vision|blur|document.createElement|document.head.appendChild|gradient|not|rgba|translateY|var",
       "params": [],
-      "locals": [
-        "styleElement"
-      ]
+      "locals": ["styleElement"]
     },
     "global::_0x54923e": {
       "name": "initBackgroundImage",
       "module": "ui_theme",
       "fingerprintHash": "0::0::1::0::1::0::0::1::10::\"::document|localStorage::_0x1edaab.style.setProperty|clearInterval|document.querySelector|if|localStorage.getItem|setInterval|url",
       "params": [],
-      "locals": [
-        "backgroundUrl",
-        "homeBgElement",
-        "bgCheckInterval"
-      ]
+      "locals": ["backgroundUrl", "homeBgElement", "bgCheckInterval"]
     },
     "global/_0x54923e::_0x1b050f": {
       "name": "applyBackgroundImage",
@@ -4856,23 +3807,15 @@
       "name": "setTheme",
       "module": "ui_theme",
       "fingerprintHash": "1::0::0::0::1::0::0::0::6::\"::Object|document|localStorage::Object.entries|_0x45ecfe.style.setProperty|forEach|localStorage.setItem|rgba",
-      "params": [
-        "themeColor"
-      ],
-      "locals": [
-        "rootElement",
-        "themeConfigs",
-        "selectedTheme"
-      ]
+      "params": ["themeColor"],
+      "locals": ["rootElement", "themeConfigs", "selectedTheme"]
     },
     "global::_0x47a8c6": {
       "name": "injectSettingsStyles",
       "module": "ui_panels",
       "fingerprintHash": "0::0::1::0::1::1::0::3::156::\"|'::Math|classList|document|localStorage::Blue|blur|document.body.appendChild|document.createElement|document.head.appendChild|gradient|not|rgba|translateY|var",
       "params": [],
-      "locals": [
-        "styleElement"
-      ]
+      "locals": ["styleElement"]
     },
     "global/_0x47a8c6/anon::_0x198b82": {
       "name": "updateBackgroundImage",
@@ -4885,13 +3828,8 @@
       "name": "autoChat",
       "module": "features_chat",
       "fingerprintHash": "1::0::1::0::1::0::0::2::20::\"::console|document::Event|InputEvent|_0x4c53cb.click|_0x92b80c.blur|_0x92b80c.dispatchEvent|_0x92b80c.focus|console.warn|document.querySelector|if|setTimeout",
-      "params": [
-        "messageText"
-      ],
-      "locals": [
-        "chatInput",
-        "charIndex"
-      ]
+      "params": ["messageText"],
+      "locals": ["chatInput", "charIndex"]
     },
     "global/_0x53d059::_0xae7ed0": {
       "name": "typeCharacter",
@@ -4904,21 +3842,14 @@
       "name": "initPacketInterceptor",
       "module": "core",
       "fingerprintHash": "1::1::1::1::1::0::0::17::39::\"::Number|Reflect|String|TextEncoder|document::Number.parseInt|String.fromCharCode|String.fromCodePoint|_0x77b636.replace|for|function|if|switch|u|x",
-      "params": [
-        "config"
-      ],
-      "locals": [
-        "actionIds",
-        "originalEncode"
-      ]
+      "params": ["config"],
+      "locals": ["actionIds", "originalEncode"]
     },
     "global/_0x178c1c::_0x107918": {
       "name": "unescapeString",
       "module": "",
       "fingerprintHash": "1::0::1::0::0::0::0::15::16::\"::Number|String::Number.parseInt|String.fromCharCode|String.fromCodePoint|_0x77b636.replace|if|switch|u|x",
-      "params": [
-        "inputString"
-      ],
+      "params": ["inputString"],
       "locals": []
     },
     "global::_0x46c5a1": {
@@ -4926,9 +3857,7 @@
       "module": "features_movement",
       "fingerprintHash": "0::0::1::0::1::1::0::2::11::\"::Math|window::Math.cos|Math.round|Math.sin|MouseEvent|_0x8fe5b0.dispatchEvent|if|setInterval",
       "params": [],
-      "locals": [
-        "gameCanvas"
-      ]
+      "locals": ["gameCanvas"]
     },
     "global::_0x46b105": {
       "name": "initializePanels",
@@ -4953,12 +3882,8 @@
       "name": "showNotification",
       "module": "ui_interaction",
       "fingerprintHash": "1::0::0::0::1::0::0::0::25::\"::document::_0x490da0.remove|blur|document.body.appendChild|document.createElement|setTimeout|translateY|var",
-      "params": [
-        "message"
-      ],
-      "locals": [
-        "notificationDiv"
-      ]
+      "params": ["message"],
+      "locals": ["notificationDiv"]
     },
     "global::_0x2ccccf": {
       "name": "setupProxyHooks",
@@ -4985,23 +3910,14 @@
       "name": "generateRandomString",
       "module": "utils",
       "fingerprintHash": "1::1::0::0::0::1::0::1::6::::Math|String::Math.floor|Math.random|String.fromCodePoint|for",
-      "params": [
-        "length"
-      ],
-      "locals": [
-        "resultString",
-        "i",
-        "randomCodePoint"
-      ]
+      "params": ["length"],
+      "locals": ["resultString", "i", "randomCodePoint"]
     },
     "global::_0x7a4fb7": {
       "name": "startScheduledTask",
       "module": "features_chat",
       "fingerprintHash": "2::0::1::0::0::0::0::0::4::::::clearInterval|if|setInterval",
-      "params": [
-        "taskData",
-        "intervalSeconds"
-      ],
+      "params": ["taskData", "intervalSeconds"],
       "locals": []
     },
     "global::_0x31f009": {
@@ -5153,14 +4069,8 @@
       "name": "simulateTyping",
       "module": "ui_interaction",
       "fingerprintHash": "2::0::1::0::1::0::0::3::16::\"::document::Event|InputEvent|_0xbb78d6.dispatchEvent|_0xbb78d6.focus|document.querySelector|if|setTimeout",
-      "params": [
-        "selector",
-        "textToType"
-      ],
-      "locals": [
-        "inputElement",
-        "charIndex"
-      ]
+      "params": ["selector", "textToType"],
+      "locals": ["inputElement", "charIndex"]
     },
     "global/_0x2d177d::_0x22c686": {
       "name": "typeNextChar",
@@ -5173,25 +4083,15 @@
       "name": "wrapWithProxy",
       "module": "core",
       "fingerprintHash": "3::0::0::0::0::0::0::0::4::::::Proxy|_0x3a13b5.set",
-      "params": [
-        "targetObject",
-        "propertyKey",
-        "proxyHandler"
-      ],
-      "locals": [
-        "originalValue",
-        "proxyValue"
-      ]
+      "params": ["targetObject", "propertyKey", "proxyHandler"],
+      "locals": ["originalValue", "proxyValue"]
     },
     "global::_0x338aea": {
       "name": "initAdBlocker",
       "module": "features_adblock",
       "fingerprintHash": "0::0::1::0::1::0::0::0::20::\"::div|document|sidebar::MutationObserver|_0x22b37b.remove|_0x22b37b.removeAttribute|_0x59fc0e.forEach|document.querySelector|document.querySelectorAll|forEach|has|if|not",
       "params": [],
-      "locals": [
-        "adSelectors",
-        "mutationObserver"
-      ]
+      "locals": ["adSelectors", "mutationObserver"]
     },
     "global/_0x338aea::_0x41f302": {
       "name": "removeAds",
@@ -5212,49 +4112,35 @@
       "module": "",
       "fingerprintHash": "0::0::1::1::1::0::0::0::12::\"::div|document::_0x46e27e.preventDefault|_0x5caa6f.insertBefore|addEventListener|document.createElement|document.getElementById|document.querySelector|if|remove",
       "params": [],
-      "locals": [
-        "overlayDiv",
-        "gameContainer"
-      ]
+      "locals": ["overlayDiv", "gameContainer"]
     },
     "global::_0x36bd4b": {
       "name": "createUpdateHistoryPanel",
       "module": "ui_panels",
       "fingerprintHash": "0::0::1::0::1::1::0::2::92::\"|'::Math|button|document::_0x38854d.addEventListener|_0x38854d.querySelector|_0x501e4c.stopPropagation|blur|document.body.appendChild|document.createElement|document.head.appendChild|feature|rgba|translateY",
       "params": [],
-      "locals": [
-        "historyStyle",
-        "historyPanel"
-      ]
+      "locals": ["historyStyle", "historyPanel"]
     },
     "global::_0x139ecb": {
       "name": "createDeepToolsPanel",
       "module": "ui_panels",
       "fingerprintHash": "0::0::1::0::1::1::0::3::214::\"|'::Math|classList|div|document::Characters|Name|blur|document.createElement|document.head.appendChild|gradient|not|rgba|translateY|var",
       "params": [],
-      "locals": [
-        "toolsStyle"
-      ]
+      "locals": ["toolsStyle"]
     },
     "global::_0xcdca37": {
       "name": "injectPlusPanelStyles",
       "module": "ui_panels",
       "fingerprintHash": "0::0::1::0::1::1::0::4::141::\"|'::Math|classList|document::Boost|Vision|blur|document.createElement|document.head.appendChild|gradient|not|rgba|translateY|var",
       "params": [],
-      "locals": [
-        "styleElement"
-      ]
+      "locals": ["styleElement"]
     },
     "global::_0x443a2d": {
       "name": "initBackgroundImage",
       "module": "ui_theme",
       "fingerprintHash": "0::0::1::0::1::0::0::1::10::\"::document|localStorage::_0x5afb4e.style.setProperty|clearInterval|document.querySelector|if|localStorage.getItem|setInterval|url",
       "params": [],
-      "locals": [
-        "backgroundUrl",
-        "homeBgElement",
-        "elementCheckInterval"
-      ]
+      "locals": ["backgroundUrl", "homeBgElement", "elementCheckInterval"]
     },
     "global/_0x443a2d::_0x5e169d": {
       "name": "applyBackgroundImage",
@@ -5268,9 +4154,7 @@
       "module": "ui_panels",
       "fingerprintHash": "0::0::1::0::1::1::0::3::138::\"|'::Math|classList|document|localStorage::_0xe13ce1.querySelector|blur|document.body.appendChild|document.createElement|document.head.appendChild|gradient|not|rgba|translateY|var",
       "params": [],
-      "locals": [
-        "styleElement"
-      ]
+      "locals": ["styleElement"]
     },
     "global/_0x44c329/anon::_0x5c589a": {
       "name": "updateBackgroundImage",
@@ -5283,13 +4167,8 @@
       "name": "autoChat",
       "module": "features_chat",
       "fingerprintHash": "1::0::1::0::1::0::0::2::20::\"::console|document::Event|InputEvent|_0x1e90b1.blur|_0x1e90b1.dispatchEvent|_0x1e90b1.focus|_0x5b2ecd.click|console.warn|document.querySelector|if|setTimeout",
-      "params": [
-        "textToType"
-      ],
-      "locals": [
-        "chatInput",
-        "charIndex"
-      ]
+      "params": ["textToType"],
+      "locals": ["chatInput", "charIndex"]
     },
     "global/_0xbde387::_0x110a4f": {
       "name": "typeCharacter",
@@ -5302,21 +4181,14 @@
       "name": "hookTextEncoder",
       "module": "core",
       "fingerprintHash": "1::1::1::1::1::0::0::17::39::\"::Number|Reflect|String|TextEncoder|document::Number.parseInt|String.fromCharCode|String.fromCodePoint|_0x4ca34c.replace|for|function|if|switch|u|x",
-      "params": [
-        "config"
-      ],
-      "locals": [
-        "packetTypes",
-        "originalEncode"
-      ]
+      "params": ["config"],
+      "locals": ["packetTypes", "originalEncode"]
     },
     "global/_0x11129c::_0x475297": {
       "name": "unescapeString",
       "module": "",
       "fingerprintHash": "1::0::1::0::0::0::0::15::16::\"::Number|String::Number.parseInt|String.fromCharCode|String.fromCodePoint|_0x4ca34c.replace|if|switch|u|x",
-      "params": [
-        "inputString"
-      ],
+      "params": ["inputString"],
       "locals": []
     },
     "global::_0x2be694": {
@@ -5324,9 +4196,7 @@
       "module": "features_antidetection",
       "fingerprintHash": "0::0::1::0::1::1::0::2::11::\"::Math|window::Math.cos|Math.round|Math.sin|MouseEvent|_0x57837c.dispatchEvent|if|setInterval",
       "params": [],
-      "locals": [
-        "gameCanvas"
-      ]
+      "locals": ["gameCanvas"]
     },
     "global::_0x3e1551": {
       "name": "toggleMinimapSize",
@@ -5339,12 +4209,8 @@
       "name": "showNotification",
       "module": "ui_interaction",
       "fingerprintHash": "1::0::0::0::1::0::0::0::25::\"::document::_0x4a85ee.remove|blur|document.body.appendChild|document.createElement|rgba|setTimeout|translateY",
-      "params": [
-        "message"
-      ],
-      "locals": [
-        "notificationDiv"
-      ]
+      "params": ["message"],
+      "locals": ["notificationDiv"]
     },
     "global::_0x9a242a": {
       "name": "initHooks",
@@ -5371,23 +4237,14 @@
       "name": "generateRandomString",
       "module": "utils",
       "fingerprintHash": "1::1::0::0::0::1::0::1::6::::Math|String::Math.floor|Math.random|String.fromCodePoint|for",
-      "params": [
-        "length"
-      ],
-      "locals": [
-        "resultString",
-        "i",
-        "randomCodePoint"
-      ]
+      "params": ["length"],
+      "locals": ["resultString", "i", "randomCodePoint"]
     },
     "global::_0x1b8352": {
       "name": "startScheduledTask",
       "module": "features_chat",
       "fingerprintHash": "2::0::1::0::0::0::0::0::4::::::clearInterval|if|setInterval",
-      "params": [
-        "taskData",
-        "intervalSeconds"
-      ],
+      "params": ["taskData", "intervalSeconds"],
       "locals": []
     },
     "global::_0x290efe": {
@@ -5540,62 +4397,42 @@
       "module": "",
       "fingerprintHash": "0::0::1::1::1::0::0::0::12::\"::div|document::_0x54d0eb.insertBefore|_0x58e264.preventDefault|addEventListener|document.createElement|document.getElementById|document.querySelector|if|remove",
       "params": [],
-      "locals": [
-        "overlayElement",
-        "gameContainer"
-      ]
+      "locals": ["overlayElement", "gameContainer"]
     },
     "global::_0x5a2ace": {
       "name": "createUpdateHistoryPanel",
       "module": "ui_panels",
       "fingerprintHash": "0::0::1::0::1::1::0::2::88::\"|'::Math|button|document::_0x425393.stopPropagation|_0x4a9b03.addEventListener|_0x4a9b03.querySelector|document.body.appendChild|document.createElement|document.head.appendChild|feature|if|rgba|translateY",
       "params": [],
-      "locals": [
-        "historyStyle",
-        "historyPanel"
-      ]
+      "locals": ["historyStyle", "historyPanel"]
     },
     "global::_0x5a58b5": {
       "name": "createDeepToolsPanel",
       "module": "ui_panels",
       "fingerprintHash": "0::0::1::0::1::1::0::3::214::\"|'::Math|button|classList|div|document::Characters|Name|_0x3b4912.querySelector|_0x3bfa93.stopPropagation|document.body.appendChild|document.createElement|document.head.appendChild|not|rgba|translateY",
       "params": [],
-      "locals": [
-        "deepToolsStyle"
-      ]
+      "locals": ["deepToolsStyle"]
     },
     "global::_0x405622": {
       "name": "createPlusPanel",
       "module": "ui_panels",
       "fingerprintHash": "0::0::1::0::1::1::0::4::143::\"|'::Math|button|classList|document::Boost|Vision|_0x18ae3f.querySelector|_0x57c7fb.stopPropagation|document.body.appendChild|document.createElement|document.head.appendChild|not|rgba|translateY",
       "params": [],
-      "locals": [
-        "plusPanelStyle"
-      ]
+      "locals": ["plusPanelStyle"]
     },
     "global::_0x3587a1": {
       "name": "applyCustomBackground",
       "module": "ui_theme",
       "fingerprintHash": "0::0::1::0::1::0::0::1::10::\"::document|localStorage::_0x53c2d2.style.setProperty|clearInterval|document.querySelector|if|localStorage.getItem|setInterval|url",
       "params": [],
-      "locals": [
-        "backgroundUrl",
-        "homeBgElement",
-        "checkBgInterval"
-      ]
+      "locals": ["backgroundUrl", "homeBgElement", "checkBgInterval"]
     },
     "global::_0x3c029c": {
       "name": "simulateTyping",
       "module": "ui_interaction",
       "fingerprintHash": "2::0::1::0::1::0::0::3::16::\"::document::Event|InputEvent|_0x4e2f5a.dispatchEvent|_0x4e2f5a.focus|document.querySelector|if|setTimeout",
-      "params": [
-        "selector",
-        "textToType"
-      ],
-      "locals": [
-        "inputElement",
-        "charIndex"
-      ]
+      "params": ["selector", "textToType"],
+      "locals": ["inputElement", "charIndex"]
     },
     "global/_0x3c029c::_0x31199e": {
       "name": "typeNextChar",
@@ -5608,25 +4445,15 @@
       "name": "wrapWithProxy",
       "module": "core",
       "fingerprintHash": "3::0::0::0::0::0::0::0::4::::::Proxy|_0x180b6a.set",
-      "params": [
-        "targetObject",
-        "propertyKey",
-        "proxyHandler"
-      ],
-      "locals": [
-        "originalValue",
-        "proxyInstance"
-      ]
+      "params": ["targetObject", "propertyKey", "proxyHandler"],
+      "locals": ["originalValue", "proxyInstance"]
     },
     "global::_0x43832a": {
       "name": "initAdBlocker",
       "module": "features_adblock",
       "fingerprintHash": "0::0::1::0::1::0::0::0::20::\"::div|document|sidebar::MutationObserver|_0x36e6fa.forEach|_0x5e8aef.remove|_0x5e8aef.removeAttribute|document.querySelector|document.querySelectorAll|forEach|has|if|not",
       "params": [],
-      "locals": [
-        "adSelectors",
-        "observer"
-      ]
+      "locals": ["adSelectors", "observer"]
     },
     "global/_0x43832a::_0x3e0715": {
       "name": "removeAds",
@@ -5639,13 +4466,8 @@
       "name": "autoTypeChat",
       "module": "ui_interaction",
       "fingerprintHash": "1::0::1::0::1::0::0::2::20::\"::console|document::Event|InputEvent|_0x3e14ab.click|_0x5625b6.blur|_0x5625b6.dispatchEvent|_0x5625b6.focus|console.warn|document.querySelector|if|setTimeout",
-      "params": [
-        "textToType"
-      ],
-      "locals": [
-        "chatInput",
-        "charIndex"
-      ]
+      "params": ["textToType"],
+      "locals": ["chatInput", "charIndex"]
     },
     "global/_0xcdeefd::_0x21fd74": {
       "name": "typeNextChar",
@@ -5658,21 +4480,14 @@
       "name": "initNetworkHook",
       "module": "core",
       "fingerprintHash": "1::1::1::1::1::0::0::17::39::\"::Number|Reflect|String|TextEncoder|document::Number.parseInt|String.fromCharCode|String.fromCodePoint|_0x2846ad.replace|for|function|if|switch|u|x",
-      "params": [
-        "config"
-      ],
-      "locals": [
-        "actionIds",
-        "originalEncode"
-      ]
+      "params": ["config"],
+      "locals": ["actionIds", "originalEncode"]
     },
     "global/_0xb84eb4::_0x197401": {
       "name": "unescapeString",
       "module": "",
       "fingerprintHash": "1::0::1::0::0::0::0::15::16::\"::Number|String::Number.parseInt|String.fromCharCode|String.fromCodePoint|_0x2846ad.replace|if|switch|u|x",
-      "params": [
-        "inputString"
-      ],
+      "params": ["inputString"],
       "locals": []
     },
     "global::_0x3c4f1b": {
@@ -5680,9 +4495,7 @@
       "module": "features_antidetection",
       "fingerprintHash": "0::0::1::0::1::1::0::2::11::\"::Math|window::Math.cos|Math.round|Math.sin|MouseEvent|_0x2d7eff.dispatchEvent|if|setInterval",
       "params": [],
-      "locals": [
-        "gameCanvas"
-      ]
+      "locals": ["gameCanvas"]
     },
     "global/_0x3587a1::_0x1d4955": {
       "name": "applyBackgroundImage",
@@ -5696,9 +4509,7 @@
       "module": "ui_theme",
       "fingerprintHash": "0::0::1::0::1::1::0::3::149::\"|'::Math|button|classList|document|localStorage::_0x4420e2.querySelector|_0xb4d0d7.value.trim|document.body.appendChild|document.createElement|document.head.appendChild|if|localStorage.getItem|not|rgba|translateY",
       "params": [],
-      "locals": [
-        "styleElement"
-      ]
+      "locals": ["styleElement"]
     },
     "global/_0x1953dc/anon::_0x33d3f8": {
       "name": "applyBackgroundImageSecondary",
@@ -5711,12 +4522,8 @@
       "name": "showNotification",
       "module": "ui_interaction",
       "fingerprintHash": "1::0::0::0::1::0::0::0::21::\"::document::_0x9c24e3.remove|document.body.appendChild|document.createElement|rgba|setTimeout",
-      "params": [
-        "message"
-      ],
-      "locals": [
-        "notificationDiv"
-      ]
+      "params": ["message"],
+      "locals": ["notificationDiv"]
     },
     "global::_0x1288eb": {
       "name": "setupAntiDetection",
@@ -5750,23 +4557,14 @@
       "name": "generateRandomString",
       "module": "utils",
       "fingerprintHash": "1::1::0::0::0::1::0::1::6::::Math|String::Math.floor|Math.random|String.fromCodePoint|for",
-      "params": [
-        "length"
-      ],
-      "locals": [
-        "resultString",
-        "i",
-        "randomCodePoint"
-      ]
+      "params": ["length"],
+      "locals": ["resultString", "i", "randomCodePoint"]
     },
     "global::_0x479383": {
       "name": "startScheduledTask",
       "module": "features_chat",
       "fingerprintHash": "2::0::1::0::0::0::0::0::4::::::clearInterval|if|setInterval",
-      "params": [
-        "taskData",
-        "intervalSeconds"
-      ],
+      "params": ["taskData", "intervalSeconds"],
       "locals": []
     },
     "global::_0x25675d": {
@@ -5879,10 +4677,7 @@
       "module": "",
       "fingerprintHash": "0::0::1::1::1::0::0::0::12::\"::div|document::_0x388576.preventDefault|_0x43e67c.insertBefore|addEventListener|document.createElement|document.getElementById|document.querySelector|if|remove",
       "params": [],
-      "locals": [
-        "overlayElement",
-        "gameContainer"
-      ]
+      "locals": ["overlayElement", "gameContainer"]
     },
     "global::_0x1729c9": {
       "name": "createUpdateHistoryPanel",
@@ -5940,14 +4735,8 @@
       "name": "simulateTyping",
       "module": "ui_interaction",
       "fingerprintHash": "2::0::1::0::1::0::0::3::16::\"::document::Event|InputEvent|_0x1d420b.dispatchEvent|_0x1d420b.focus|document.querySelector|if|setTimeout",
-      "params": [
-        "selector",
-        "text"
-      ],
-      "locals": [
-        "inputElement",
-        "charIndex"
-      ]
+      "params": ["selector", "text"],
+      "locals": ["inputElement", "charIndex"]
     },
     "global/_0x5b6e9c::_0x401bb2": {
       "name": "typeText",
@@ -5960,25 +4749,15 @@
       "name": "wrapWithProxy",
       "module": "core",
       "fingerprintHash": "3::0::0::0::0::0::0::0::4::::::Proxy|_0x57d638.set",
-      "params": [
-        "targetObject",
-        "propertyKey",
-        "proxyHandler"
-      ],
-      "locals": [
-        "originalValue",
-        "proxyValue"
-      ]
+      "params": ["targetObject", "propertyKey", "proxyHandler"],
+      "locals": ["originalValue", "proxyValue"]
     },
     "global::_0x2c070d": {
       "name": "initAdBlocker",
       "module": "features_adblock",
       "fingerprintHash": "0::0::1::0::1::0::0::0::20::\"::div|document|sidebar::MutationObserver|_0x3db86c.remove|_0x3db86c.removeAttribute|_0x45f07d.forEach|document.querySelector|document.querySelectorAll|forEach|has|if|not",
       "params": [],
-      "locals": [
-        "adSelectors",
-        "mutationObserver"
-      ]
+      "locals": ["adSelectors", "mutationObserver"]
     },
     "global/_0x2c070d::_0x4f05b0": {
       "name": "removeAds",
@@ -5991,13 +4770,8 @@
       "name": "autoTypeChat",
       "module": "ui_interaction",
       "fingerprintHash": "1::0::1::0::1::0::0::2::20::\"::console|document::Event|InputEvent|_0x46f2f2.click|_0x5c49c3.blur|_0x5c49c3.dispatchEvent|_0x5c49c3.focus|console.warn|document.querySelector|if|setTimeout",
-      "params": [
-        "textToType"
-      ],
-      "locals": [
-        "chatInput",
-        "charIndex"
-      ]
+      "params": ["textToType"],
+      "locals": ["chatInput", "charIndex"]
     },
     "global/_0x4d641b::_0x2a7322": {
       "name": "typeNextChar",
@@ -6010,21 +4784,14 @@
       "name": "setupTextEncoderHook",
       "module": "core",
       "fingerprintHash": "1::1::1::1::1::0::0::17::39::\"::Number|Reflect|String|TextEncoder|document::Number.parseInt|String.fromCharCode|String.fromCodePoint|_0x1142d5.replace|for|function|if|switch|u|x",
-      "params": [
-        "unusedParam"
-      ],
-      "locals": [
-        "actionIds",
-        "originalEncode"
-      ]
+      "params": ["unusedParam"],
+      "locals": ["actionIds", "originalEncode"]
     },
     "global/_0x4fb5f9::_0x1cb2fe": {
       "name": "unescapeString",
       "module": "",
       "fingerprintHash": "1::0::1::0::0::0::0::15::16::\"::Number|String::Number.parseInt|String.fromCharCode|String.fromCodePoint|_0x1142d5.replace|if|switch|u|x",
-      "params": [
-        "inputString"
-      ],
+      "params": ["inputString"],
       "locals": []
     },
     "global::_0x1d5400": {
@@ -6032,20 +4799,14 @@
       "module": "features_movement",
       "fingerprintHash": "0::0::1::0::1::1::0::2::11::\"::Math|window::Math.cos|Math.round|Math.sin|MouseEvent|_0x531561.dispatchEvent|if|setInterval",
       "params": [],
-      "locals": [
-        "gameCanvas"
-      ]
+      "locals": ["gameCanvas"]
     },
     "global::_0x2ead82": {
       "name": "showToast",
       "module": "ui_interaction",
       "fingerprintHash": "1::0::0::0::1::0::0::0::21::\"::document::_0x3958a6.remove|document.body.appendChild|document.createElement|rgba|setTimeout",
-      "params": [
-        "message"
-      ],
-      "locals": [
-        "toastElement"
-      ]
+      "params": ["message"],
+      "locals": ["toastElement"]
     },
     "global::_0x41028a": {
       "name": "initHooks",
@@ -6128,12 +4889,7 @@
       "module": "core",
       "fingerprintHash": "0::0::0::0::0::0::0::1::6::::::",
       "params": [],
-      "locals": [
-        "mainPanel",
-        "historyPanel",
-        "settingsPanel",
-        "plusPanel"
-      ]
+      "locals": ["mainPanel", "historyPanel", "settingsPanel", "plusPanel"]
     }
   },
   "variables": {

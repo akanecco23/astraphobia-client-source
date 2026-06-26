@@ -1,11 +1,11 @@
-import { showNotification } from "../ui/interaction.js";
-import { refreshUI } from "../ui/panels.js";
 import {
   getGameState_2,
   startEntityTrail,
   currentTime,
   state,
 } from "../core.js";
+import { showNotification } from "../ui/interaction.js";
+import { refreshUI } from "../ui/panels.js";
 
 function stopEntityTrail() {
   if (state.entityTrailInterval) {

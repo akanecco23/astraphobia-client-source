@@ -1,5 +1,5 @@
-import { showNotification } from "../ui/interaction.js";
 import { gameInstance, playerData, state } from "../core.js";
+import { showNotification } from "../ui/interaction.js";
 
 const activateAstraVision = () => {
   if (state.isEnabled) {

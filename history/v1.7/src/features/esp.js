@@ -13,8 +13,8 @@ import {
   animalData,
   state,
 } from "../core.js";
-import { drawRadar } from "../ui/radar.js";
 import { showNotification } from "../ui/interaction.js";
+import { drawRadar } from "../ui/radar.js";
 
 window.espEnabled = false;
 window.espColors = {

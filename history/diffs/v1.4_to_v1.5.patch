@@ -2,50 +2,8 @@ Index: content.js
 ===================================================================
 --- content.js	v1.4
 +++ content.js	v1.5
-@@ -2,43 +2,47 @@
-   generateRandomString,
-   getGameCanvas,
-   getAllPropertyNames,
- } from "./src/utils.js";
--import { simulateTyping, showNotification } from "./src/ui/interaction.js";
- import { handleAnimalAction } from "./src/features/autofarm.js";
--import { toggleMinimapSize } from "./src/features/esp.js";
--import { initBackgroundImage, setTheme } from "./src/ui/theme.js";
+@@ -1,44 +1,48 @@
  import {
--  initControlOverlay,
--  setupUpdateHistory,
--  injectPlusPanelStyles,
--  injectSettingsStyles,
--  togglePanels,
--} from "./src/ui/panels.js";
--import {
-   startScheduledTask,
-   stopInterval,
-   autoChat,
- } from "./src/features/chat.js";
-+import { startAntiAfk } from "./src/features/antidetection.js";
- import {
--  startAntiAfkMouseMovement,
-   stopMouseSimulation,
-   toggleMouseSimulation,
- } from "./src/features/movement.js";
-+import { toggleMinimapScale } from "./src/ui/radar.js";
- import { initAdBlocker } from "./src/features/adblock.js";
- import {
-+  applyHomeBackground,
-+  applyThemeColors,
-+  setBlueTheme,
-+} from "./src/ui/theme.js";
-+import {
-+  createHalloweenModal,
-+  initControlOverlay,
-+  createUpdateHistoryStyles,
-+  injectDeepToolsStyles,
-+  injectPlusPanelStyles,
-+  injectSettingsPanelStyles,
-+  togglePanels,
-+} from "./src/ui/panels.js";
-+import {
    wrapPropertyWithProxy,
 -  initPacketInterceptor,
 +  initInterceptor,
@@ -68,7 +26,48 @@ Index: content.js
 +  securityConfigs,
 +  coreSharedState,
  } from "./src/core.js";
-+import { simulateTyping, showNotification } from "./src/ui/interaction.js";
+ import {
++  createHalloweenModal,
+   initControlOverlay,
+-  setupUpdateHistory,
++  createUpdateHistoryStyles,
++  injectDeepToolsStyles,
+   injectPlusPanelStyles,
+-  injectSettingsStyles,
++  injectSettingsPanelStyles,
+   togglePanels,
+ } from "./src/ui/panels.js";
+ import {
+-  startAntiAfkMouseMovement,
+-  stopMouseSimulation,
+-  toggleMouseSimulation,
+-} from "./src/features/movement.js";
+-import {
+   generateRandomString,
+   getGameCanvas,
+   getAllPropertyNames,
+ } from "./src/utils.js";
+ import {
++  stopMouseSimulation,
++  toggleMouseSimulation,
++} from "./src/features/movement.js";
++import {
++  applyHomeBackground,
++  applyThemeColors,
++  setBlueTheme,
++} from "./src/ui/theme.js";
++import {
+   startScheduledTask,
+   stopInterval,
+   autoChat,
+ } from "./src/features/chat.js";
+ import { simulateTyping, showNotification } from "./src/ui/interaction.js";
+-import { initBackgroundImage, setTheme } from "./src/ui/theme.js";
+ import { handleAnimalAction } from "./src/features/autofarm.js";
++import { startAntiAfk } from "./src/features/antidetection.js";
+ import { initAdBlocker } from "./src/features/adblock.js";
+-import { toggleMinimapSize } from "./src/features/esp.js";
++import { toggleMinimapScale } from "./src/ui/radar.js";
 Index: manifest.json
 ===================================================================
 --- manifest.json	v1.4
@@ -90,8 +89,6 @@ Index: src/core.js
 --- src/core.js	v1.4
 +++ src/core.js	v1.5
 @@ -1,28 +1,20 @@
--import { showNotification, simulateTyping } from "./ui/interaction.js";
--import { getAllPropertyNames, generateRandomString } from "./utils.js";
 -import {
 -  initControlOverlay,
 -  setupUpdateHistory,
@@ -100,13 +97,15 @@ Index: src/core.js
 -  togglePanels,
 -} from "./ui/panels.js";
 -import { startScheduledTask, stopInterval, autoChat } from "./features/chat.js";
+-import { showNotification, simulateTyping } from "./ui/interaction.js";
+-import { getAllPropertyNames, generateRandomString } from "./utils.js";
 -import { toggleMouseSimulation } from "./features/movement.js";
--import { initBackgroundImage } from "./ui/theme.js";
-+import { showNotification } from "./ui/interaction.js";
-+import { getAllPropertyNames } from "./utils.js";
 +import { initControlOverlay, togglePanels } from "./ui/panels.js";
++import { showNotification } from "./ui/interaction.js";
  import { initAdBlocker } from "./features/adblock.js";
+-import { initBackgroundImage } from "./ui/theme.js";
 +import { applyHomeBackground } from "./ui/theme.js";
++import { getAllPropertyNames } from "./utils.js";
  
  const stateMap = new WeakMap();
  function wrapPropertyWithProxy(targetObject, propertyKey, proxyHandler) {
@@ -833,9 +832,9 @@ Index: src/features/antidetection.js
 --- src/features/antidetection.js	v1.4
 +++ src/features/antidetection.js	v1.5
 @@ -0,0 +1,31 @@
-+import { getGameCanvas } from "../utils.js";
-+import { showNotification } from "../ui/interaction.js";
 +import { angleSteps, radius, coreSharedState } from "../core.js";
++import { showNotification } from "../ui/interaction.js";
++import { getGameCanvas } from "../utils.js";
 +
 +function startAntiAfk() {
 +  if (coreSharedState.rotationInterval) {
@@ -972,9 +971,9 @@ Index: src/features/movement.js
 --- src/features/movement.js	v1.4
 +++ src/features/movement.js	v1.5
 @@ -1,47 +1,18 @@
--import { getGameCanvas } from "../utils.js";
--import { showNotification } from "../ui/interaction.js";
 -import { rotationAngles, orbitRadius, state } from "../core.js";
+-import { showNotification } from "../ui/interaction.js";
+-import { getGameCanvas } from "../utils.js";
 +import { startAntiAfk } from "./antidetection.js";
 +import { coreSharedState } from "../core.js";
  
@@ -1116,15 +1115,7 @@ Index: src/ui/panels.js
 --- src/ui/panels.js	v1.4
 +++ src/ui/panels.js	v1.5
 @@ -1,20 +1,87 @@
-+import { showNotification, simulateTyping } from "./interaction.js";
- import { handleAnimalAction } from "../features/autofarm.js";
--import { showNotification } from "./interaction.js";
  import {
-+  startScheduledTask,
-+  stopInterval,
-+  autoChat,
-+} from "../features/chat.js";
-+import {
 +  radius,
    gameInstance,
    playerData,
@@ -1138,10 +1129,18 @@ Index: src/ui/panels.js
 -  state,
 +  coreSharedState,
  } from "../core.js";
++import {
++  startScheduledTask,
++  stopInterval,
++  autoChat,
++} from "../features/chat.js";
++import { showNotification, simulateTyping } from "./interaction.js";
++import { toggleMouseSimulation } from "../features/movement.js";
+ import { handleAnimalAction } from "../features/autofarm.js";
 -import { toggleMinimapSize } from "../features/esp.js";
+-import { showNotification } from "./interaction.js";
 -import { setTheme } from "./theme.js";
 +import { generateRandomString } from "../utils.js";
-+import { toggleMouseSimulation } from "../features/movement.js";
 +import { toggleMinimapScale } from "./radar.js";
 +import { applyThemeColors } from "./theme.js";
  
@@ -1958,8 +1957,8 @@ Index: src/ui/radar.js
 --- src/ui/radar.js	v1.4
 +++ src/ui/radar.js	v1.5
 @@ -0,0 +1,22 @@
-+import { showNotification } from "./interaction.js";
 +import { playerData, coreSharedState } from "../core.js";
++import { showNotification } from "./interaction.js";
 +
 +function toggleMinimapScale() {
 +  if (!playerData || !playerData.minimap) {

@@ -1,13 +1,13 @@
-import { simulateTyping, autoTypeChat, showToast } from "./interaction.js";
 import {
   setupTextEncoderHook,
   isInitialized_2,
   initHooks,
   coreSharedState,
 } from "../core.js";
-import { generateRandomString } from "../utils.js";
-import { toggleMouseSimulation } from "../features/movement.js";
+import { simulateTyping, autoTypeChat, showToast } from "./interaction.js";
 import { startScheduledTask, stopInterval } from "../features/chat.js";
+import { toggleMouseSimulation } from "../features/movement.js";
+import { generateRandomString } from "../utils.js";
 
 function createUpdateHistoryPanel() {
   const historyStyleElement = document.createElement("style");

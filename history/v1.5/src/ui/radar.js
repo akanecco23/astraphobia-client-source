@@ -1,5 +1,5 @@
-import { showNotification } from "./interaction.js";
 import { playerData, coreSharedState } from "../core.js";
+import { showNotification } from "./interaction.js";
 
 function toggleMinimapScale() {
   if (!playerData || !playerData.minimap) {

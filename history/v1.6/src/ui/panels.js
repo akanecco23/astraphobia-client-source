@@ -1,9 +1,3 @@
-import { showToast, typeText } from "./interaction.js";
-import {
-  startScheduledTask,
-  stopInterval,
-  simulateChatInput,
-} from "../features/chat.js";
 import {
   radius,
   hookTextEncoder,
@@ -16,16 +10,22 @@ import {
   initializeViewportSettings,
   coreSharedState,
 } from "../core.js";
-import { generateRandomString } from "../utils.js";
-import { toggleMouseSimulation } from "../features/movement.js";
+import {
+  startScheduledTask,
+  stopInterval,
+  simulateChatInput,
+} from "../features/chat.js";
 import {
   clearTracking,
   trackPlayer,
   toggleMinimapSize,
 } from "../features/esp.js";
-import { enableAutoDodge } from "../features/aimbot.js";
 import { generatePatrolPoints, stopAutoFarm } from "../features/autofarm.js";
+import { toggleMouseSimulation } from "../features/movement.js";
+import { enableAutoDodge } from "../features/aimbot.js";
 import { applyTheme, initBackground } from "./theme.js";
+import { showToast, typeText } from "./interaction.js";
+import { generateRandomString } from "../utils.js";
 
 function showHalloweenModal(config) {
   const modalContainer = document.createElement("div");

@@ -1,5 +1,3 @@
-import { calculateDistance, isPlayer, getGameCanvas } from "../utils.js";
-import { showToast } from "../ui/interaction.js";
 import {
   radius,
   expiryTimeout,
@@ -14,7 +12,9 @@ import {
   initAutoFarm,
   coreSharedState,
 } from "../core.js";
+import { calculateDistance, isPlayer, getGameCanvas } from "../utils.js";
 import { simulateMoveAndClick } from "./movement.js";
+import { showToast } from "../ui/interaction.js";
 
 window.autoFarmActive = false;
 window.autoFarmMode = "nearest";

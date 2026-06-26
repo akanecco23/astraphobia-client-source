@@ -1,11 +1,4 @@
 import {
-  getGameCanvas,
-  isPlayer,
-  calculateDistance,
-  getNearbyEntities,
-  getZoomLevel,
-} from "../utils.js";
-import {
   getEntityPosition,
   calculateDirection,
   findEntityById,
@@ -13,8 +6,15 @@ import {
   getFirstAnimalPosition,
   coreSharedState,
 } from "../core.js";
-import { drawRadar } from "../ui/radar.js";
+import {
+  getGameCanvas,
+  isPlayer,
+  calculateDistance,
+  getNearbyEntities,
+  getZoomLevel,
+} from "../utils.js";
 import { showToast } from "../ui/interaction.js";
+import { drawRadar } from "../ui/radar.js";
 
 window.espEnabled = false;
 window.espTrackedEntityId = null;

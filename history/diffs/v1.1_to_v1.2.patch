@@ -2,35 +2,7 @@ Index: content.js
 ===================================================================
 --- content.js	v1.1
 +++ content.js	v1.2
-@@ -2,40 +2,41 @@
-   generateRandomString,
-   getGameCanvas,
-   getAllPropertyNames,
- } from "./src/utils.js";
--import {
--  simulateTyping,
--  autoTypeChat,
--  showToast,
--} from "./src/ui/interaction.js";
- import { handleAnimalAction } from "./src/features/autofarm.js";
-+import { startAntiAfk } from "./src/features/antidetection.js";
- import {
--  startCircularMouseMovement,
-   stopMouseSimulation,
-   toggleMouseSimulation,
- } from "./src/features/movement.js";
- import { startScheduledTask, stopInterval } from "./src/features/chat.js";
- import {
-   createUpdateHistoryPanel,
--  createToolsPanel,
--  initPlusPanel,
--  initSettingsPanel,
-+  createDeepToolsPanel,
-+  createPlusPanel,
-   togglePanels,
- } from "./src/ui/panels.js";
-+import { applyCustomBackground, createSettingsStyles } from "./src/ui/theme.js";
- import { initAdBlocker } from "./src/features/adblock.js";
+@@ -1,41 +1,42 @@
  import {
    wrapWithProxy,
 -  setupTextEncoderHook,
@@ -57,11 +29,40 @@ Index: content.js
 +  securityConfigs,
    coreSharedState,
  } from "./src/core.js";
-+import {
-+  simulateTyping,
-+  autoTypeChat,
+ import {
+   createUpdateHistoryPanel,
+-  createToolsPanel,
+-  initPlusPanel,
+-  initSettingsPanel,
++  createDeepToolsPanel,
++  createPlusPanel,
+   togglePanels,
+ } from "./src/ui/panels.js";
+ import {
+-  startCircularMouseMovement,
+-  stopMouseSimulation,
+-  toggleMouseSimulation,
+-} from "./src/features/movement.js";
+-import {
+   generateRandomString,
+   getGameCanvas,
+   getAllPropertyNames,
+ } from "./src/utils.js";
+ import {
+   simulateTyping,
+   autoTypeChat,
+-  showToast,
 +  showNotification,
-+} from "./src/ui/interaction.js";
+ } from "./src/ui/interaction.js";
++import {
++  stopMouseSimulation,
++  toggleMouseSimulation,
++} from "./src/features/movement.js";
++import { applyCustomBackground, createSettingsStyles } from "./src/ui/theme.js";
+ import { startScheduledTask, stopInterval } from "./src/features/chat.js";
+ import { handleAnimalAction } from "./src/features/autofarm.js";
++import { startAntiAfk } from "./src/features/antidetection.js";
+ import { initAdBlocker } from "./src/features/adblock.js";
 Index: manifest.json
 ===================================================================
 --- manifest.json	v1.1
@@ -83,10 +84,6 @@ Index: src/core.js
 --- src/core.js	v1.1
 +++ src/core.js	v1.2
 @@ -1,36 +1,36 @@
--import { showToast } from "./ui/interaction.js";
-+import { showNotification } from "./ui/interaction.js";
- import { getAllPropertyNames } from "./utils.js";
- import { handleAnimalAction } from "./features/autofarm.js";
  import {
    createUpdateHistoryPanel,
 -  createToolsPanel,
@@ -97,7 +94,11 @@ Index: src/core.js
    togglePanels,
  } from "./ui/panels.js";
 +import { applyCustomBackground, createSettingsStyles } from "./ui/theme.js";
+ import { handleAnimalAction } from "./features/autofarm.js";
++import { showNotification } from "./ui/interaction.js";
  import { initAdBlocker } from "./features/adblock.js";
+ import { getAllPropertyNames } from "./utils.js";
+-import { showToast } from "./ui/interaction.js";
  
 -const privateStateMap = new WeakMap();
 +const stateMap = new WeakMap();
@@ -785,9 +786,9 @@ Index: src/features/antidetection.js
 --- src/features/antidetection.js	v1.1
 +++ src/features/antidetection.js	v1.2
 @@ -0,0 +1,31 @@
-+import { getGameCanvas } from "../utils.js";
-+import { showNotification } from "../ui/interaction.js";
 +import { angles, radius, coreSharedState } from "../core.js";
++import { showNotification } from "../ui/interaction.js";
++import { getGameCanvas } from "../utils.js";
 +
 +function startAntiAfk() {
 +  if (coreSharedState.animationInterval) {
@@ -911,9 +912,9 @@ Index: src/features/movement.js
 --- src/features/movement.js	v1.1
 +++ src/features/movement.js	v1.2
 @@ -1,48 +1,18 @@
--import { getGameCanvas } from "../utils.js";
--import { showToast } from "../ui/interaction.js";
 -import { angleSteps, orbitRadius, coreSharedState } from "../core.js";
+-import { showToast } from "../ui/interaction.js";
+-import { getGameCanvas } from "../utils.js";
 +import { startAntiAfk } from "./antidetection.js";
 +import { coreSharedState } from "../core.js";
  
@@ -1048,14 +1049,8 @@ Index: src/ui/panels.js
 --- src/ui/panels.js	v1.1
 +++ src/ui/panels.js	v1.2
 @@ -1,401 +1,342 @@
--import { simulateTyping, autoTypeChat, showToast } from "./interaction.js";
  import {
 -  setupTextEncoderHook,
-+  simulateTyping,
-+  autoTypeChat,
-+  showNotification,
-+} from "./interaction.js";
-+import {
 +  radius,
 +  initNetworkHook,
 +  isInitialized,
@@ -1065,9 +1060,15 @@ Index: src/ui/panels.js
 +  applyGameHacks,
    coreSharedState,
  } from "../core.js";
- import { generateRandomString } from "../utils.js";
- import { toggleMouseSimulation } from "../features/movement.js";
+-import { simulateTyping, autoTypeChat, showToast } from "./interaction.js";
++import {
++  simulateTyping,
++  autoTypeChat,
++  showNotification,
++} from "./interaction.js";
  import { startScheduledTask, stopInterval } from "../features/chat.js";
+ import { toggleMouseSimulation } from "../features/movement.js";
+ import { generateRandomString } from "../utils.js";
  
  function createUpdateHistoryPanel() {
 -  const historyStyleElement = document.createElement("style");
@@ -1677,8 +1678,8 @@ Index: src/ui/theme.js
 --- src/ui/theme.js	v1.1
 +++ src/ui/theme.js	v1.2
 @@ -0,0 +1,134 @@
-+import { showNotification } from "./interaction.js";
 +import { radius, coreSharedState } from "../core.js";
++import { showNotification } from "./interaction.js";
 +
 +function applyCustomBackground() {
 +  const backgroundUrl = localStorage.getItem("bgUrl") || "";

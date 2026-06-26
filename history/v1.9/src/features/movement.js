@@ -1,5 +1,3 @@
-import { getGameCanvas } from "../utils.js";
-import { showNotification } from "../ui/interaction.js";
 import {
   angles,
   radius,
@@ -7,6 +5,8 @@ import {
   getFirstAnimalPosition,
   state,
 } from "../core.js";
+import { showNotification } from "../ui/interaction.js";
+import { getGameCanvas } from "../utils.js";
 
 function startMouseSimulation() {
   if (state.animationInterval) {

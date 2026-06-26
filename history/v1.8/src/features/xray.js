@@ -1,5 +1,5 @@
-import { showNotification } from "../ui/interaction.js";
 import { gameInstance, animalData, state } from "../core.js";
+import { showNotification } from "../ui/interaction.js";
 
 const initializeAstraVision = () => {
   if (state.isEnabled) {

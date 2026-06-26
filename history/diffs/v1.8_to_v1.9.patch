@@ -3,127 +3,6 @@ Index: content.js
 --- content.js	v1.8
 +++ content.js	v1.9
 @@ -1,110 +1,136 @@
--import { typeText, showNotification } from "./src/ui/interaction.js";
- import {
--  updateLockButtonUI,
--  drawRadar,
--  initRadarDrag,
--} from "./src/ui/radar.js";
-+  simulateTyping,
-+  showNotification,
-+  initNameAutofill,
-+} from "./src/ui/interaction.js";
- import {
--  startCircularMovement,
-+  startScheduledTask,
-+  stopInterval,
-+  simulateChatInput,
-+} from "./src/features/chat.js";
-+import {
-+  startMouseSimulation,
-   stopMouseSimulation,
-   toggleMouseSimulation,
--  moveMouseSide,
-+  simulatePointerMove,
-   simulateClick,
-+  moveAndClickTarget,
- } from "./src/features/movement.js";
-+import { activateAstraVision } from "./src/features/xray.js";
-+import { updateLockButton, drawRadar, initRadarDrag } from "./src/ui/radar.js";
- import {
--  updateLockOnTarget,
-+  drawEsp,
-+  drawTrackedEntity,
-+  renderEspLoop,
-+  toggleEsp,
-+  trackPlayer,
-+  clearTracking,
-+  toggleMinimapSize,
-+} from "./src/features/esp.js";
-+import {
-+  updateLockTarget,
-   toggleLock,
--  aimAtTarget,
-   autoDodgeLoop,
-   enableAutoDodge,
-+  disableAutoDodge,
- } from "./src/features/aimbot.js";
- import {
-   handleFarmFailure,
-   isAreaSkipped,
-   findClosestFarmableEntity,
--  getNearbyFarmTargets,
--  findBestFarmSpot,
-+  findNearbyFarmableEntities,
-+  findDensestFoodCluster,
-   calculatePlayerAvoidanceVector,
--  simulateEvolveKey,
-+  triggerRandomEvolution,
-   detectAndHandleStuck,
-   setupPatrolPoints,
-   autoFarmLoop,
-   stopAutoFarm,
- } from "./src/features/autofarm.js";
--import { applyTheme, initBackground, injectStyles } from "./src/ui/theme.js";
- import {
--  startScheduledTask,
--  stopInterval,
--  typeAndSendMessage,
--} from "./src/features/chat.js";
--import { initializeAstraVision } from "./src/features/xray.js";
-+  applyTheme,
-+  initBackgroundImage,
-+  injectStyles,
-+} from "./src/ui/theme.js";
- import {
--  drawEsp,
--  drawTrackedEntity,
--  renderEspLoop,
--  clearTracking,
--  trackPlayer,
--  toggleMinimapSize,
--} from "./src/features/esp.js";
-+  isYouTubeUrl,
-+  extractYouTubeId,
-+  ensureYouTubeApiReady,
-+  getYoutubeHostElement,
-+  playYouTubeVideo,
-+  stopAndCleanupPlayer,
-+  playTrack,
-+  pausePlayback,
-+  resumePlayback,
-+  stopPlayback,
-+  isPlaying,
-+  playNextOrRandom,
-+  playPrevious,
-+  addTrackToPlaylist,
-+  removeTrackFromPlaylist,
-+  updateMusicPanel,
-+} from "./src/ui/audio.js";
- import {
-   refreshUI,
--  showHalloweenModal,
-+  showHalloweenCodeModal,
-   makeDraggable,
-   createToolsPanel,
-   createVisionPanel,
-   createCombatPanel,
-   createAutomationPanel,
-   createSettingsPanel,
--  createUpdateHistoryPanel,
-+  createMusicPanel,
-+  createUpdatePanel,
-   togglePanelsVisibility,
- } from "./src/ui/panels.js";
--import { initAdBlocker } from "./src/features/adblock.js";
- import {
--  stopMouseSimulation_2,
-+  stopEntityTrail,
-   toggleEntityTrail,
-   drawEntityTrail,
--  renderOverlay,
- } from "./src/features/entitytrail.js";
-+import { initAdBlocker } from "./src/features/adblock.js";
  import {
 -  wrapWithProxy,
 -  interceptTextEncoder,
@@ -175,16 +54,136 @@ Index: content.js
    state,
  } from "./src/core.js";
  import {
-   generateRandomString,
-   getGameCanvas,
-   getAllPropertyNames,
++  isYouTubeUrl,
++  extractYouTubeId,
++  ensureYouTubeApiReady,
++  getYoutubeHostElement,
++  playYouTubeVideo,
++  stopAndCleanupPlayer,
++  playTrack,
++  pausePlayback,
++  resumePlayback,
++  stopPlayback,
++  isPlaying,
++  playNextOrRandom,
++  playPrevious,
++  addTrackToPlaylist,
++  removeTrackFromPlaylist,
++  updateMusicPanel,
++} from "./src/ui/audio.js";
++import {
+   handleFarmFailure,
+   isAreaSkipped,
+   findClosestFarmableEntity,
+-  getNearbyFarmTargets,
+-  findBestFarmSpot,
++  findNearbyFarmableEntities,
++  findDensestFoodCluster,
+   calculatePlayerAvoidanceVector,
+-  simulateEvolveKey,
++  triggerRandomEvolution,
+   detectAndHandleStuck,
+   setupPatrolPoints,
+   autoFarmLoop,
+   stopAutoFarm,
+ } from "./src/features/autofarm.js";
+ import {
+   refreshUI,
+-  showHalloweenModal,
++  showHalloweenCodeModal,
+   makeDraggable,
+   createToolsPanel,
+   createVisionPanel,
+   createCombatPanel,
+   createAutomationPanel,
+   createSettingsPanel,
+-  createUpdateHistoryPanel,
++  createMusicPanel,
++  createUpdatePanel,
+   togglePanelsVisibility,
+ } from "./src/ui/panels.js";
+ import {
+-  generateRandomString,
+-  getGameCanvas,
+-  getAllPropertyNames,
 -  isPlayer,
-   calculateDistance,
+-  calculateDistance,
 -  getNearbyEntities,
 -  getZoomScale,
 -  getOrCreateOverlayCanvas,
+-} from "./src/utils.js";
+-import {
+-  startCircularMovement,
++  startMouseSimulation,
+   stopMouseSimulation,
+   toggleMouseSimulation,
+-  moveMouseSide,
++  simulatePointerMove,
+   simulateClick,
++  moveAndClickTarget,
+ } from "./src/features/movement.js";
+ import {
+   drawEsp,
+   drawTrackedEntity,
+   renderEspLoop,
+-  clearTracking,
++  toggleEsp,
+   trackPlayer,
++  clearTracking,
+   toggleMinimapSize,
+ } from "./src/features/esp.js";
+ import {
+-  stopMouseSimulation_2,
+-  toggleEntityTrail,
+-  drawEntityTrail,
+-  renderOverlay,
+-} from "./src/features/entitytrail.js";
++  generateRandomString,
++  getGameCanvas,
++  getAllPropertyNames,
++  calculateDistance,
 +  getOrCreateCanvas,
- } from "./src/utils.js";
++} from "./src/utils.js";
+ import {
+-  updateLockOnTarget,
++  updateLockTarget,
+   toggleLock,
+-  aimAtTarget,
+   autoDodgeLoop,
+   enableAutoDodge,
++  disableAutoDodge,
+ } from "./src/features/aimbot.js";
+ import {
++  stopEntityTrail,
++  toggleEntityTrail,
++  drawEntityTrail,
++} from "./src/features/entitytrail.js";
++import {
++  simulateTyping,
++  showNotification,
++  initNameAutofill,
++} from "./src/ui/interaction.js";
++import {
+   startScheduledTask,
+   stopInterval,
+-  typeAndSendMessage,
++  simulateChatInput,
+ } from "./src/features/chat.js";
+ import {
+-  updateLockButtonUI,
+-  drawRadar,
+-  initRadarDrag,
+-} from "./src/ui/radar.js";
+-import { applyTheme, initBackground, injectStyles } from "./src/ui/theme.js";
+-import { typeText, showNotification } from "./src/ui/interaction.js";
+-import { initializeAstraVision } from "./src/features/xray.js";
++  applyTheme,
++  initBackgroundImage,
++  injectStyles,
++} from "./src/ui/theme.js";
++import { updateLockButton, drawRadar, initRadarDrag } from "./src/ui/radar.js";
++import { activateAstraVision } from "./src/features/xray.js";
+ import { initAdBlocker } from "./src/features/adblock.js";
 +
 +initializeApplication();
 Index: manifest.json
@@ -207,21 +206,7 @@ Index: src/core.js
 ===================================================================
 --- src/core.js	v1.8
 +++ src/core.js	v1.9
-@@ -1,51 +1,53 @@
--import { showNotification } from "./ui/interaction.js";
-+import { showNotification, initNameAutofill } from "./ui/interaction.js";
- import {
-   calculateDistance,
--  getNearbyEntities,
-+  getOrCreateCanvas,
-   getAllPropertyNames,
- } from "./utils.js";
-+import { drawEntityTrail, toggleEntityTrail } from "./features/entitytrail.js";
- import { setupPatrolPoints, autoFarmLoop } from "./features/autofarm.js";
--import { applyTheme, initBackground, injectStyles } from "./ui/theme.js";
-+import { applyTheme, initBackgroundImage, injectStyles } from "./ui/theme.js";
- import {
-   createToolsPanel,
+@@ -3,49 +3,51 @@
    createVisionPanel,
    createCombatPanel,
    createAutomationPanel,
@@ -231,22 +216,34 @@ Index: src/core.js
 +  createUpdatePanel,
    togglePanelsVisibility,
  } from "./ui/panels.js";
- import { initAdBlocker } from "./features/adblock.js";
- import { initRadarDrag } from "./ui/radar.js";
--import { renderEspLoop, trackPlayer } from "./features/esp.js";
--import { renderOverlay, toggleEntityTrail } from "./features/entitytrail.js";
-+import { renderEspLoop, trackPlayer, clearTracking } from "./features/esp.js";
+ import {
+   calculateDistance,
+-  getNearbyEntities,
++  getOrCreateCanvas,
+   getAllPropertyNames,
+ } from "./utils.js";
  import {
 -  updateLockOnTarget,
 +  updateLockTarget,
    autoDodgeLoop,
    toggleLock,
  } from "./features/aimbot.js";
+-import { renderOverlay, toggleEntityTrail } from "./features/entitytrail.js";
++import { drawEntityTrail, toggleEntityTrail } from "./features/entitytrail.js";
++import { renderEspLoop, trackPlayer, clearTracking } from "./features/esp.js";
++import { applyTheme, initBackgroundImage, injectStyles } from "./ui/theme.js";
+ import { setupPatrolPoints, autoFarmLoop } from "./features/autofarm.js";
+-import { applyTheme, initBackground, injectStyles } from "./ui/theme.js";
+-import { renderEspLoop, trackPlayer } from "./features/esp.js";
 -import { moveMouseSide } from "./features/movement.js";
+-import { showNotification } from "./ui/interaction.js";
++import { showNotification, initNameAutofill } from "./ui/interaction.js";
++import { simulatePointerMove } from "./features/movement.js";
+ import { initAdBlocker } from "./features/adblock.js";
+ import { initRadarDrag } from "./ui/radar.js";
 -const stateMap = new WeakMap();
 -function wrapWithProxy(targetObject, propertyKey, proxyHandler) {
 -  const originalValue = targetObject[propertyKey];
-+import { simulatePointerMove } from "./features/movement.js";
 +const stateCache = new WeakMap();
 +function wrapPropertyWithProxy(targetObject, propertyName, proxyHandler) {
 +  const originalValue = targetObject[propertyName];
@@ -1101,18 +1098,18 @@ Index: src/features/aimbot.js
 +  angle,
    state,
  } from "../core.js";
- import { showNotification } from "../ui/interaction.js";
--import { updateLockButtonUI } from "../ui/radar.js";
 -import {
 -  getGameCanvas,
 -  getNearbyEntities,
 -  isPlayer,
 -  calculateDistance,
 -} from "../utils.js";
--import { simulateClick } from "./movement.js";
-+import { updateLockButton } from "../ui/radar.js";
 +import { getGameCanvas, calculateDistance } from "../utils.js";
+ import { showNotification } from "../ui/interaction.js";
+-import { updateLockButtonUI } from "../ui/radar.js";
+-import { simulateClick } from "./movement.js";
 +import { moveAndClickTarget } from "./movement.js";
++import { updateLockButton } from "../ui/radar.js";
  
  window.autoDodgeEnabled = false;
  
@@ -1474,9 +1471,6 @@ Index: src/features/autofarm.js
 --- src/features/autofarm.js	v1.8
 +++ src/features/autofarm.js	v1.9
 @@ -1,20 +1,22 @@
--import { calculateDistance, isPlayer, getGameCanvas } from "../utils.js";
-+import { calculateDistance, getGameCanvas } from "../utils.js";
- import { showNotification } from "../ui/interaction.js";
  import {
 +  currentTime,
    radius,
@@ -1496,6 +1490,9 @@ Index: src/features/autofarm.js
    startAutoFarm,
    state,
  } from "../core.js";
+-import { calculateDistance, isPlayer, getGameCanvas } from "../utils.js";
++import { calculateDistance, getGameCanvas } from "../utils.js";
+ import { showNotification } from "../ui/interaction.js";
 -import { aimAtTarget } from "./aimbot.js";
 +import { moveAndClickTarget } from "./movement.js";
  
@@ -2200,8 +2197,6 @@ Index: src/features/entitytrail.js
 --- src/features/entitytrail.js	v1.8
 +++ src/features/entitytrail.js	v1.9
 @@ -1,30 +1,30 @@
- import { showNotification } from "../ui/interaction.js";
- import { refreshUI } from "../ui/panels.js";
  import {
 -  getNearbyEntities,
 -  getZoomScale,
@@ -2213,6 +2208,8 @@ Index: src/features/entitytrail.js
 +  currentTime,
 +  state,
 +} from "../core.js";
+ import { showNotification } from "../ui/interaction.js";
+ import { refreshUI } from "../ui/panels.js";
  
 -function stopMouseSimulation_2() {
 -  if (state.trailInterval) {
@@ -2369,8 +2366,8 @@ Index: src/features/esp.js
 -  getOrCreateOverlayCanvas,
 -} from "../utils.js";
 +import { calculateDistance, getOrCreateCanvas } from "../utils.js";
- import { drawRadar } from "../ui/radar.js";
  import { showNotification } from "../ui/interaction.js";
+ import { drawRadar } from "../ui/radar.js";
  
  window.espEnabled = false;
 @@ -30,17 +28,17 @@
@@ -2750,8 +2747,6 @@ Index: src/features/movement.js
 --- src/features/movement.js	v1.8
 +++ src/features/movement.js	v1.9
 @@ -1,19 +1,25 @@
- import { getGameCanvas } from "../utils.js";
- import { showNotification } from "../ui/interaction.js";
 -import { angles, radius, offsetValue, state } from "../core.js";
 +import {
 +  angles,
@@ -2760,6 +2755,8 @@ Index: src/features/movement.js
 +  getFirstAnimalPosition,
 +  state,
 +} from "../core.js";
+ import { showNotification } from "../ui/interaction.js";
+ import { getGameCanvas } from "../utils.js";
  
 -function startCircularMovement() {
 -  if (state.secondaryIntervalId) {
@@ -2929,9 +2926,9 @@ Index: src/features/xray.js
 --- src/features/xray.js	v1.8
 +++ src/features/xray.js	v1.9
 @@ -1,33 +1,33 @@
- import { showNotification } from "../ui/interaction.js";
 -import { gameInstance, animalData, state } from "../core.js";
 +import { gameInstance, playerData, state } from "../core.js";
+ import { showNotification } from "../ui/interaction.js";
  
 -const initializeAstraVision = () => {
 +const activateAstraVision = () => {
@@ -2990,8 +2987,8 @@ Index: src/ui/audio.js
 --- src/ui/audio.js	v1.8
 +++ src/ui/audio.js	v1.9
 @@ -0,0 +1,361 @@
-+import { showNotification } from "./interaction.js";
 +import { musicPlaylist, currentTime, state } from "../core.js";
++import { showNotification } from "./interaction.js";
 +
 +function isYouTubeUrl(url) {
 +  return /(?:youtube\.com|youtu\.be)/i.test(url || "");
@@ -3483,19 +3480,17 @@ Index: src/ui/panels.js
 --- src/ui/panels.js	v1.8
 +++ src/ui/panels.js	v1.9
 @@ -1,54 +1,75 @@
--import { showNotification, typeText } from "./interaction.js";
  import {
-+  showNotification,
-+  simulateTyping,
-+  initNameAutofill,
-+} from "./interaction.js";
++  pausePlayback,
++  resumePlayback,
++  stopPlayback,
++  isPlaying,
++  playNextOrRandom,
++  playPrevious,
++  addTrackToPlaylist,
++  updateMusicPanel,
++} from "./audio.js";
 +import {
-   startScheduledTask,
-   stopInterval,
--  typeAndSendMessage,
-+  simulateChatInput,
- } from "../features/chat.js";
- import {
    radius,
 -  interceptTextEncoder,
 -  clearTracking_2,
@@ -3509,36 +3504,41 @@ Index: src/ui/panels.js
 +  musicPlaylist,
    state,
  } from "../core.js";
- import { generateRandomString } from "../utils.js";
- import { toggleMouseSimulation } from "../features/movement.js";
--import { initializeAstraVision } from "../features/xray.js";
-+import { activateAstraVision } from "../features/xray.js";
+ import {
++  toggleEsp,
++  trackPlayer,
++  clearTracking,
++  toggleMinimapSize,
++} from "../features/esp.js";
++import {
+   startScheduledTask,
+   stopInterval,
+-  typeAndSendMessage,
++  simulateChatInput,
+ } from "../features/chat.js";
  import {
 -  clearTracking,
-+  toggleEsp,
-   trackPlayer,
-+  clearTracking,
-   toggleMinimapSize,
- } from "../features/esp.js";
--import { toggleLock, enableAutoDodge } from "../features/aimbot.js";
-+import {
+-  trackPlayer,
+-  toggleMinimapSize,
+-} from "../features/esp.js";
 +  toggleLock,
 +  enableAutoDodge,
 +  disableAutoDodge,
 +} from "../features/aimbot.js";
++import {
++  showNotification,
++  simulateTyping,
++  initNameAutofill,
++} from "./interaction.js";
  import { setupPatrolPoints, stopAutoFarm } from "../features/autofarm.js";
+-import { toggleLock, enableAutoDodge } from "../features/aimbot.js";
+ import { toggleMouseSimulation } from "../features/movement.js";
+-import { showNotification, typeText } from "./interaction.js";
+-import { initializeAstraVision } from "../features/xray.js";
 -import { applyTheme, initBackground } from "./theme.js";
 +import { applyTheme, initBackgroundImage } from "./theme.js";
-+import {
-+  pausePlayback,
-+  resumePlayback,
-+  stopPlayback,
-+  isPlaying,
-+  playNextOrRandom,
-+  playPrevious,
-+  addTrackToPlaylist,
-+  updateMusicPanel,
-+} from "./audio.js";
++import { activateAstraVision } from "../features/xray.js";
+ import { generateRandomString } from "../utils.js";
  
  window.lockKey = "t";
  window.entityTraceKey = "h";
