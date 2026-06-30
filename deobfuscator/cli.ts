@@ -173,7 +173,21 @@ async function processVersion(
   const varDecls: { name: string; code: string }[] = [];
   const windowProps: string[] = [];
 
-  const ast = parseCode(renamedCode);
+  let ast;
+  try {
+    ast = parseCode(renamedCode);
+  } catch (e) {
+    log("error", `Failed to parse renamed code: ${(e as Error).message}`);
+    // Save problematic code for debugging
+    const debugPath = resolve(getRoot(), `debug_v${version}_parse_error.js`);
+    try {
+      writeFileSync(debugPath, renamedCode, "utf-8");
+      log("info", `Saved problematic code to ${debugPath}`);
+    } catch {
+      /* ignore write errors */
+    }
+    return false;
+  }
   for (const stmt of ast.program.body) {
     if (t.isFunctionDeclaration(stmt) && stmt.id) {
       funcDecls.push({
@@ -238,14 +252,37 @@ async function processVersion(
       return !existing?.module || !validModules.has(existing.module);
     });
 
+    const missingCount = missingFuncs.length + missingVars.length;
     log(
       "info",
-      `Module assignment cache: ${assignedItems}/${totalItems} cached (${Math.round(cacheRatio * 100)}%), ${missingFuncs.length + missingVars.length} need LLM`,
+      `Module assignment cache: ${assignedItems}/${totalItems} cached (${Math.round(cacheRatio * 100)}%), ${missingCount} need LLM`,
     );
 
-    const llm = new LLMClient(llmConfig);
-    const { functionAssignments, variableAssignments, windowPropAssignments } =
-      await generateModuleAssignments(
+    if (missingCount > 100) {
+      log(
+        "warn",
+        `Too many unassigned items (${missingCount}), skipping LLM module assignment to avoid timeouts. Assigning to "core" module.`,
+      );
+      for (const f of missingFuncs) {
+        const existing = Object.values(mapping.data.functions).find(
+          (e) => e.name === f.name,
+        );
+        if (existing) existing.module = "core";
+      }
+      for (const v of missingVars) {
+        const existing = Object.values(mapping.data.variables).find(
+          (e) => e.name === v.name,
+        );
+        if (existing) existing.module = "core";
+      }
+      mapping.save();
+    } else {
+      const llm = new LLMClient(llmConfig);
+      const {
+        functionAssignments,
+        variableAssignments,
+        windowPropAssignments,
+      } = await generateModuleAssignments(
         llm,
         {
           functions: missingFuncs,
@@ -255,23 +292,24 @@ async function processVersion(
         splitterConfig,
       );
 
-    for (const [name, mod] of Object.entries(functionAssignments)) {
-      const existing = Object.values(mapping.data.functions).find(
-        (e) => e.name === name,
-      );
-      if (existing) {
-        existing.module = mod;
+      for (const [name, mod] of Object.entries(functionAssignments)) {
+        const existing = Object.values(mapping.data.functions).find(
+          (e) => e.name === name,
+        );
+        if (existing) {
+          existing.module = mod;
+        }
       }
-    }
-    for (const [name, mod] of Object.entries(variableAssignments)) {
-      const existing = Object.values(mapping.data.variables).find(
-        (e) => e.name === name,
-      );
-      if (existing) {
-        existing.module = mod;
+      for (const [name, mod] of Object.entries(variableAssignments)) {
+        const existing = Object.values(mapping.data.variables).find(
+          (e) => e.name === name,
+        );
+        if (existing) {
+          existing.module = mod;
+        }
       }
+      mapping.save();
     }
-    mapping.save();
   } else if (llmConfig.enabled) {
     log(
       "info",
@@ -583,10 +621,15 @@ program
       log("cyan", `=== Backward [${i + 1}/${versions.length}]: v${v} ===`);
 
       if (VERSIONS[v]) {
-        const ok = await processVersion(config, VERSIONS[v]!, v, !opts.llm);
+        let ok = false;
+        try {
+          ok = await processVersion(config, VERSIONS[v]!, v, !opts.llm);
+        } catch (e) {
+          log("error", `Failed to process v${v}: ${(e as Error).message}`);
+        }
         if (!ok) {
-          log("error", `Failed to process v${v}, stopping`);
-          break;
+          log("error", `Failed to process v${v}, continuing with next version`);
+          continue;
         }
       }
 
@@ -676,6 +719,30 @@ program
     const code = readFileSync(resolve(file), "utf-8");
     const nameMapping = JSON.parse(readFileSync(resolve(mappingFile), "utf-8"));
     process.stdout.write(applyRenames(code, nameMapping));
+  });
+
+program
+  .command("dedupe")
+  .description(
+    "Post-process mapping.json to merge duplicate function/variable entries with identical DNA/role fingerprints but different names",
+  )
+  .option("--config <path>", "Config file path", "config.json")
+  .action(async (opts) => {
+    const mappingPath = resolve(getRoot(), "mapping.json");
+    const mapping = new MappingStore(mappingPath);
+
+    const fnMerged = mapping.mergeDuplicateFunctions();
+    log("info", `Merged ${fnMerged} duplicate function entries`);
+
+    const varMerged = mapping.mergeDuplicateVariables();
+    log("info", `Merged ${varMerged} duplicate variable entries`);
+
+    if (fnMerged > 0 || varMerged > 0) {
+      mapping.save();
+      log("info", "Saved deduplicated mapping.json");
+    } else {
+      log("info", "No duplicates found");
+    }
   });
 
 program.parse();

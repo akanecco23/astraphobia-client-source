@@ -1,6 +1,11 @@
-import { showToast } from "../ui/interaction.js";
+import { showNotification } from "../ui/interaction.js";
+import { state } from "../core.js";
 
 function initAdBlocker() {
+  if (state.isProcessed) {
+    return;
+  }
+  state.isProcessed = true;
   const adSelectors = [
     "div.ad-block",
     'a[href*="ad"]',
@@ -11,15 +16,15 @@ function initAdBlocker() {
     ".sidebar.left > a",
     ".sidebar.left > div:not(.sidebar-content)",
     "div.sidebar.left > div:has(> iframe)",
-    'div.sidebar.left > div:has(> a[href*="doubleclick"]',
+    'div.sidebar.left > div:has(> a[href*="doubleclick"])',
   ];
   const removeAds = () => {
-    adSelectors.forEach((elementSelector) => {
-      document.querySelectorAll(elementSelector).forEach((targetElement) => {
-        targetElement.style.display = "none !important";
-        targetElement.style.opacity = "0 !important";
-        targetElement.style.pointerEvents = "none !important";
-        targetElement.style.visibility = "hidden !important";
+    adSelectors.forEach((cssSelector) => {
+      document.querySelectorAll(cssSelector).forEach((targetElement) => {
+        targetElement.style.display = "none";
+        targetElement.style.opacity = "0";
+        targetElement.style.pointerEvents = "none";
+        targetElement.style.visibility = "hidden";
         targetElement.removeAttribute("src");
         targetElement.remove();
       });
@@ -28,19 +33,17 @@ function initAdBlocker() {
     if (leftSidebar) {
       leftSidebar.style.maxWidth = "30vw";
       leftSidebar.style.width = "21rem";
-      leftSidebar.style.bottom = "0 !important";
       leftSidebar.style.overflow = "hidden";
     }
   };
   removeAds();
-  const mutationObserver = new MutationObserver(removeAds);
-  mutationObserver.observe(document.body, {
+  new MutationObserver(removeAds).observe(document.body, {
     childList: true,
     subtree: true,
     attributes: true,
   });
   setInterval(removeAds, 5000);
-  showToast("🛡️ Built-in Ad Blocker activated!");
+  showNotification("Ad blocker active");
 }
 
 export { initAdBlocker };

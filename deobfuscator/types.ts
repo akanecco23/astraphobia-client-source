@@ -48,8 +48,31 @@ export interface FunctionMappingEntry {
   name: string;
   module: string;
   fingerprintHash: string;
+  fingerprint: Fingerprint;
   params: string[];
   locals: string[];
+}
+
+export interface VariableRoleFingerprint {
+  initPattern: string | null;
+  propertyAccesses: string[];
+  methodCalls: string[];
+  comparisonTargets: string[];
+  assignmentTargets: string[];
+  hash: string;
+}
+
+export interface VariableMappingEntry {
+  name: string;
+  module: string;
+  roleFingerprint: VariableRoleFingerprint;
+}
+
+export interface FunctionDNA {
+  stringDNA: string;
+  apiDNA: string;
+  propertyDNA: string;
+  callDNA: string;
 }
 
 export interface MappingFile {
@@ -60,6 +83,9 @@ export interface MappingFile {
   };
   functions: Record<string, FunctionMappingEntry>;
   variables: Record<string, { name: string; module: string }>;
+  variableFingerprints: Record<string, VariableMappingEntry>;
+  functionDNAIndex: Record<string, string>;
+  canonicalNames: Record<string, string>;
 }
 
 export interface TransformEntry {

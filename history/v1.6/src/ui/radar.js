@@ -1,4 +1,4 @@
-import { dragState, coreSharedState } from "../core.js";
+import { dragState, state } from "../core.js";
 
 function drawRadar(ctx, canvas, gameState) {
   if (!gameState || gameState.error) {
@@ -56,22 +56,22 @@ function drawRadar(ctx, canvas, gameState) {
   const espMode = window.espMode;
   const entities =
     espMode === "players" ? gameState.players || [] : gameState.food || [];
-  entities.forEach((targetPos) => {
-    const diffX = targetPos.x - gameState.myPos.x;
-    const diffY = targetPos.y - gameState.myPos.y;
+  entities.forEach((entityPos) => {
+    const diffX = entityPos.x - gameState.myPos.x;
+    const diffY = entityPos.y - gameState.myPos.y;
     let renderX = radarX + radarSize / 2 + diffX * radarScale;
-    let renderY = radarY + radarSize / 2 + diffY * radarScale;
+    let drawY = radarY + radarSize / 2 + diffY * radarScale;
     renderX = Math.max(radarX + 2, Math.min(radarX + radarSize - 2, renderX));
-    renderY = Math.max(radarY + 2, Math.min(radarY + radarSize - 2, renderY));
+    drawY = Math.max(radarY + 2, Math.min(radarY + radarSize - 2, drawY));
     let markerColor;
     let markerRadius;
     if (espMode === "players") {
       markerColor =
-        targetPos.distance < 500
+        entityPos.distance < 500
           ? "#ff0000"
-          : targetPos.distance < 1500
+          : entityPos.distance < 1500
             ? "#ffff00"
-            : targetPos.distance < 3000
+            : entityPos.distance < 3000
               ? "#00ffff"
               : "#888";
       markerRadius = 3;
@@ -81,14 +81,14 @@ function drawRadar(ctx, canvas, gameState) {
     }
     if (
       window.espTrackedEntityId &&
-      targetPos.id === window.espTrackedEntityId
+      entityPos.id === window.espTrackedEntityId
     ) {
       markerColor = "#ff00ff";
       markerRadius = 4;
     }
     ctx.fillStyle = markerColor;
     ctx.beginPath();
-    ctx.arc(renderX, renderY, markerRadius, 0, Math.PI * 2);
+    ctx.arc(renderX, drawY, markerRadius, 0, Math.PI * 2);
     ctx.fill();
   });
   ctx.fillStyle = "rgba(20,20,20,0.9)";
@@ -98,11 +98,11 @@ function drawRadar(ctx, canvas, gameState) {
   ctx.fillStyle = "#888";
   ctx.font = "10px monospace";
   ctx.fillText("RADAR", radarX + 5, radarY + radarSize + 14);
-  const countLabel =
+  const finalY =
     espMode === "players"
       ? "P:" + (gameState.players || []).length
       : "F:" + (gameState.food || []).length;
-  ctx.fillText(countLabel, radarX + radarSize - 50, radarY + radarSize + 14);
+  ctx.fillText(finalY, radarX + radarSize - 50, radarY + radarSize + 14);
 }
 function initRadarDrag() {
   if (window._radarDragInit) {

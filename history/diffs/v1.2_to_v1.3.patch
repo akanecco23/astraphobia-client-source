@@ -2,7 +2,7 @@ Index: content.js
 ===================================================================
 --- content.js	v1.2
 +++ content.js	v1.3
-@@ -1,42 +1,44 @@
+@@ -1,43 +1,45 @@
  import {
    wrapWithProxy,
 -  initNetworkHook,
@@ -17,15 +17,12 @@ Index: content.js
    initializePanels,
    angles,
    radius,
--  userData,
--  isInitialized,
--  isInitialized_2,
--  securityConfigs,
-+  game,
-+  player,
-+  isActive,
-+  securitySettings,
-   coreSharedState,
++  gameInstance,
+   playerData,
+   isProcessed_2,
+-  isProcessed_3,
+   config,
+   state,
  } from "./src/core.js";
  import {
 +  initControlOverlay,
@@ -47,7 +44,7 @@ Index: content.js
 -  showNotification,
 -} from "./src/ui/interaction.js";
 -import {
-   stopMouseSimulation,
+   stopEntityTrail,
    toggleMouseSimulation,
  } from "./src/features/movement.js";
 -import { applyCustomBackground, createSettingsStyles } from "./src/ui/theme.js";
@@ -58,6 +55,7 @@ Index: content.js
 +  autoChat,
 +} from "./src/features/chat.js";
 +import { simulateTyping, showNotification } from "./src/ui/interaction.js";
+ import { featuresentitytrailState } from "./src/features/entitytrail.js";
  import { handleAnimalAction } from "./src/features/autofarm.js";
  import { startAntiAfk } from "./src/features/antidetection.js";
  import { initAdBlocker } from "./src/features/adblock.js";
@@ -81,7 +79,7 @@ Index: src/core.js
 ===================================================================
 --- src/core.js	v1.2
 +++ src/core.js	v1.3
-@@ -1,37 +1,38 @@
+@@ -1,26 +1,27 @@
  import {
 +  initControlOverlay,
    createUpdateHistoryPanel,
@@ -98,27 +96,25 @@ Index: src/core.js
 +import { initBackgroundImage } from "./ui/theme.js";
  import { getAllPropertyNames } from "./utils.js";
  
- const stateMap = new WeakMap();
+ const stateCache = new WeakMap();
  function wrapWithProxy(targetObject, propertyKey, proxyHandler) {
    const originalValue = targetObject[propertyKey];
 -  const proxyInstance = new Proxy(originalValue, proxyHandler);
--  stateMap.set(proxyInstance, originalValue);
+-  stateCache.set(proxyInstance, originalValue);
 -  targetObject[propertyKey] = proxyInstance;
 +  const proxyValue = new Proxy(originalValue, proxyHandler);
-+  stateMap.set(proxyValue, originalValue);
++  stateCache.set(proxyValue, originalValue);
 +  targetObject[propertyKey] = proxyValue;
  }
  
--let isStarted = false;
+ let isProcessed = false;
 -function initNetworkHook(config) {
--  if (isStarted) {
-+let isInitialized = false;
 +function hookTextEncoder(config) {
-+  if (isInitialized) {
+   if (isProcessed) {
      return;
    }
    function unescapeString(inputString) {
-     if (typeof inputString !== "string") {
+@@ -28,10 +29,10 @@
        return inputString;
      }
      return inputString.replace(
@@ -221,32 +217,13 @@ Index: src/core.js
    const inputMaxLengthObserver = new MutationObserver(() => {
      document
        .querySelector(".play-game .el-input__inner")
-@@ -126,9 +125,9 @@
-   inputMaxLengthObserver.observe(document.body, {
-     childList: true,
-     subtree: true,
-   });
--  isStarted = true;
-+  isInitialized = true;
-   if (config) {
-     config.textContent = "Special Characters Active";
-     config.disabled = true;
-     config.style.opacity = "0.6";
-@@ -138,14 +137,14 @@
- }
- 
- const angles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
- const radius = 300;
--let gameInstance;
--let globalState;
--let userData;
--let isInitialized = false;
--let isInitialized_2 = false;
+@@ -142,10 +141,10 @@
+ let gameInstance;
+ let appState;
+ let playerData;
+ let isProcessed_2 = false;
+-let isProcessed_3 = false;
 -const encryptPacketData = (options, charCode, suffix = "") => {
-+let game;
-+let appState;
-+let player;
-+let isActive = false;
 +
 +const encryptPacketData = (inputData, checksumByte, suffix = "") => {
    const stringTable = [
@@ -276,17 +253,16 @@ Index: src/core.js
 +    const cipherTextBytes = new Uint8Array(
 +      plainTextBytes["l" + stringTable[4] + stringTable[6].slice(0, 2)],
      );
--    for (let index = 0; index < encodedInput.length; index++) {
--      outputBuffer[index] =
--        encodedInput[index] ^
+-    for (let i = 0; i < encodedInput.length; i++) {
+-      outputBuffer[i] =
+-        encodedInput[i] ^
 -        encodedKey[
--          index %
--            encodedKey[
 +    for (let i = 0; i < plainTextBytes.length; i++) {
 +      cipherTextBytes[i] =
 +        plainTextBytes[i] ^
 +        keyBytes[
-+          i %
+           i %
+-            encodedKey[
 +            keyBytes[
                "" +
                  stringTable[9].toLowerCase() +
@@ -308,7 +284,7 @@ Index: src/core.js
    const encodedBytes = new TextEncoder()[stringTable[5] + stringTable[0]](
      plainText,
    );
-@@ -199,12 +199,12 @@
+@@ -199,9 +199,9 @@
    new Uint8Array(arrayBuffer)[stringTable[11].slice(0, (9 / 27) * 9)](
      encodedBytes,
      1,
@@ -317,30 +293,24 @@ Index: src/core.js
 +  dataView.setUint8(totalBufferSize - 1, checksumByte);
    return arrayBuffer;
  };
--const securityConfigs = {
-+const securitySettings = {
+ const config = {
    107: {
-     hasSec: true,
-     secLoadTime: 750,
-     hasScaling: true,
-@@ -214,124 +214,138 @@
+@@ -214,79 +214,95 @@
      secLoadTime: 500,
      hasScaling: false,
    },
  };
 -const sendPacket = (payload, extraData = "") => {
--  if (gameInstance && globalState && state.socketManager) {
--    gameInstance[state.socketManager].sendBytePacket(
--      encryptPacketData(globalState.token._value, payload, extraData),
 +const sendPacket = (payload, additionalData = "") => {
-+  if (game && appState && state.socketManager) {
-+    game[state.socketManager].sendBytePacket(
+   if (gameInstance && appState && config_2.socketManager) {
+     gameInstance[config_2.socketManager].sendBytePacket(
+-      encryptPacketData(appState.token._value, payload, extraData),
 +      encryptPacketData(appState.token._value, payload, additionalData),
      );
    }
  };
- const state = {};
- const counter = 0;
+ const config_2 = {};
+ const currentTime = 0;
 -const setupAntiDetection = () => {
 -  const storage = {};
 -  for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
@@ -354,27 +324,27 @@ Index: src/core.js
    const lookupGetter = Object.prototype.__lookupGetter__;
 -  const wrapWithProxy = (dataStore, storeIndex, storeValue) => {
 -    const processedValue = new ProxyClass(dataStore[storeIndex], storeValue);
--    stateMap.set(processedValue, dataStore[storeIndex]);
+-    stateCache.set(processedValue, dataStore[storeIndex]);
 -    dataStore[storeIndex] = processedValue;
 +  const createPropertyProxy = (targetObject, propertyKey, propertyValue) => {
 +    const propertyInstance = new ProxyClass(
 +      targetObject[propertyKey],
 +      propertyValue,
 +    );
-+    stateMap.set(propertyInstance, targetObject[propertyKey]);
++    stateCache.set(propertyInstance, targetObject[propertyKey]);
 +    targetObject[propertyKey] = propertyInstance;
    };
 -  wrapWithProxy(Function.prototype, "toString", {
 -    apply(context, functionKey, applyArgs) {
 -      return storage.apply(
 -        context,
--        stateMap.get(functionKey) || functionKey,
+-        stateCache.get(functionKey) || functionKey,
 -        applyArgs,
 +  createPropertyProxy(Function.prototype, "toString", {
 +    apply(thisContext, propertyKey_2, thisArg) {
 +      return propertyCache.apply(
 +        thisContext,
-+        stateMap.get(propertyKey_2) || propertyKey_2,
++        stateCache.get(propertyKey_2) || propertyKey_2,
 +        thisArg,
        );
      },
@@ -425,73 +395,51 @@ Index: src/core.js
            }
          } catch {}
 -        if (applyArgs3[0] && applyArgs3[0].aboveBgPlatformsContainer != null) {
--          userData = applyArgs3[0];
+-          playerData = applyArgs3[0];
 -          gameInstance = applyArgs3[0].game;
--          const allKeys = getAllPropertyNames(userData);
--          const obfuscatedKeys = allKeys.filter((obfuscatedVarName) =>
--            obfuscatedVarName.startsWith("_0x"),
 +        if (
 +          functionContext2[0] &&
 +          functionContext2[0].aboveBgPlatformsContainer != null
 +        ) {
-+          player = functionContext2[0];
-+          game = functionContext2[0].game;
-+          const allKeys = getAllPropertyNames(player);
++          playerData = functionContext2[0];
++          gameInstance = functionContext2[0].game;
+           const allKeys = getAllPropertyNames(playerData);
+-          const obfuscatedKeys = allKeys.filter((obfuscatedVarName) =>
+-            obfuscatedVarName.startsWith("_0x"),
 +          const obfuscatedKeys = allKeys.filter((varName) =>
 +            varName.startsWith("_0x"),
            );
-           state.setFlash =
--            Object.getOwnPropertyNames(userData.__proto__.__proto__)
+           config_2.setFlash =
+             Object.getOwnPropertyNames(playerData.__proto__.__proto__)
 -              .filter((targetVarName) => targetVarName.startsWith("_0x"))
--              .find((methodName) => userData[methodName] instanceof Function) ||
-+            Object.getOwnPropertyNames(player.__proto__.__proto__)
 +              .filter((propName) => propName.startsWith("_0x"))
-+              .find((methodName) => player[methodName] instanceof Function) ||
-             state.setFlash;
-           state.terrainManager =
+               .find(
+                 (methodName) => playerData[methodName] instanceof Function,
+               ) || config_2.setFlash;
+           config_2.terrainManager =
              obfuscatedKeys.find(
 -              (shadowEntityKey) =>
--                typeof userData[shadowEntityKey]?.shadow !== "undefined",
-+              (shadowKey) => typeof player[shadowKey]?.shadow !== "undefined",
-             ) || state.terrainManager;
-           state.entityManager =
+-                typeof playerData[shadowEntityKey]?.shadow !== "undefined",
++              (shadowKey) =>
++                typeof playerData[shadowKey]?.shadow !== "undefined",
+             ) || config_2.terrainManager;
+           config_2.entityManager =
              obfuscatedKeys.find(
                (entitiesListKey) =>
--                typeof userData[entitiesListKey]?.entitiesList !== "undefined",
-+                typeof player[entitiesListKey]?.entitiesList !== "undefined",
-             ) || state.entityManager;
-           state.entityManagerProps = {};
-           const entityManagerKeys = getAllPropertyNames(
--            userData[state.entityManager],
-+            player[state.entityManager],
-           );
-           const animalsUpdateInterval = setInterval(() => {
-             state.entityManagerProps.animalsList =
-               entityManagerKeys
-                 .filter((variableName) => variableName.startsWith("_0x"))
-                 .find(
-                   (entityKey) =>
--                    typeof userData?.[state.entityManager]?.[entityKey]?.[0] !==
-+                    typeof player?.[state.entityManager]?.[entityKey]?.[0] !==
-                     "undefined",
-                 ) || state.entityManagerProps.animalsList;
-             if (typeof state.entityManagerProps.animalsList !== "undefined") {
-               clearInterval(animalsUpdateInterval);
+@@ -314,10 +330,10 @@
              }
            }, 1000);
-           state.socketManager =
--            getAllPropertyNames(gameInstance).find(
+           config_2.socketManager =
+             getAllPropertyNames(gameInstance).find(
 -              (networkServiceKey) =>
 -                typeof gameInstance[networkServiceKey]?.sendBytePacket !==
--                "undefined",
-+            getAllPropertyNames(game).find(
 +              (packetSenderKey) =>
-+                typeof game[packetSenderKey]?.sendBytePacket !== "undefined",
-             ) || state.socketManager;
++                typeof gameInstance[packetSenderKey]?.sendBytePacket !==
+                 "undefined",
+             ) || config_2.socketManager;
            try {
--            globalState = document
-+            appState = document
-               .getElementById("app")
+             appState = document
+@@ -325,13 +341,13 @@
                ._vnode.appContext.config.globalProperties.$simpleState.states.find(
                  (gameStore) => gameStore._storeMeta.id === "game",
                );
@@ -505,17 +453,10 @@ Index: src/core.js
 -          animalsCheckInterval = setInterval(() => {
 +          myAnimalsUpdateInterval = setInterval(() => {
              try {
--              if (!userData?.myAnimals?.[0]) {
-+              if (!player?.myAnimals?.[0]) {
+               if (!playerData?.myAnimals?.[0]) {
                  return;
                }
--              const myAnimal = userData.myAnimals[0];
-+              const myAnimal = player.myAnimals[0];
-               if (myAnimal.fadingTrail) {
-                 const fadingTrailPrototype = Object.getPrototypeOf(
-                   myAnimal.fadingTrail,
-                 );
-@@ -346,161 +360,67 @@
+@@ -351,28 +367,32 @@
                  Object.defineProperty(bubblesEmitterPrototype, "emit", {
                    set: () => {},
                  });
@@ -542,51 +483,24 @@ Index: src/core.js
    });
  };
 -const applyGameHacks = () => {
--  if (isInitialized) {
 +const disableGameRestrictions = () => {
-+  if (isActive) {
+   if (isProcessed_2) {
      return;
    }
--  if (!userData) {
+   if (!playerData) {
 -    setTimeout(applyGameHacks, 500);
-+  if (!player) {
 +    setTimeout(disableGameRestrictions, 500);
      return;
    }
    setInterval(() => {
      try {
--      gameInstance.viewport.clampZoom({
-+      game.viewport.clampZoom({
-         minWidth: 0,
-         maxWidth: 10000000,
-       });
--      gameInstance.viewport.plugins.plugins.clamp = null;
--      gameInstance.viewport.plugins.plugins["clamp-zoom"] = null;
-+      game.viewport.plugins.plugins.clamp = null;
-+      game.viewport.plugins.plugins["clamp-zoom"] = null;
-     } catch {}
-   }, 300);
-   try {
-     if (state.setFlash) {
--      userData[state.setFlash] = () => {};
-+      player[state.setFlash] = () => {};
-     }
-     if (state.terrainManager) {
--      const terrainManager = userData[state.terrainManager];
-+      const terrainManager = player[state.terrainManager];
-       if (terrainManager && terrainManager.shadow) {
-         terrainManager.shadow.setShadowSize(1000000);
-         terrainManager.shadow.setShadowSize = () => {};
-       }
-     }
-   } catch (error) {
-     console.error(error);
+@@ -399,113 +419,15 @@
+     console.error(url);
    }
--  isInitialized = true;
-+  isActive = true;
+   isProcessed_2 = true;
  };
 -const initMod = () => {
--  if (isInitialized_2) {
+-  if (isProcessed_3) {
 -    return;
 -  }
 -  function sendActionSequence() {
@@ -623,13 +537,13 @@ Index: src/core.js
 -    "click",
 -    (animalsProcessHandler) => {
 -      try {
--        if (!userData?.myAnimals?.[0]) {
+-        if (!playerData?.myAnimals?.[0]) {
 -          return;
 -        }
--        const visibleFishLevel = userData.myAnimals[0].visibleFishLevel;
+-        const visibleFishLevel = playerData.myAnimals[0].visibleFishLevel;
 -        const fishLevelConfig = {
--          ...securityConfigs.default,
--          ...securityConfigs[visibleFishLevel],
+-          ...config.default,
+-          ...config[visibleFishLevel],
 -        };
 -        if (animalsProcessHandler.ctrlKey) {
 -          if (animalsProcessHandler.shiftKey && visibleFishLevel === 107) {
@@ -638,7 +552,7 @@ Index: src/core.js
 -          } else if (
 -            animalsProcessHandler.shiftKey &&
 -            visibleFishLevel !== 101 &&
--            userData.myAnimals[0]._standing
+-            playerData.myAnimals[0]._standing
 -          ) {
 -            handleAnimalAction(
 -              Math.floor(Math.random() * 1647483648) + 500000000,
@@ -656,7 +570,7 @@ Index: src/core.js
 -          }
 -        } else if (animalsProcessHandler.altKey) {
 -          handleAnimalAction(
--            userData?.myAnimals?.[0]?._standing
+-            playerData?.myAnimals?.[0]?._standing
 -              ? 41
 -              : Math.floor(fishLevelConfig.secLoadTime / 2),
 -          );
@@ -681,7 +595,7 @@ Index: src/core.js
 -      document.getElementById("ctrl-overlay").style.pointerEvents = "none";
 -    } catch {}
 -  });
--  isInitialized_2 = true;
+-  isProcessed_3 = true;
 -};
  
  function initializePanels() {
@@ -697,18 +611,7 @@ Index: src/core.js
    return {
      mainPanel: mainPanelElement,
      historyPanel: historyPanelElement,
-@@ -509,9 +429,9 @@
-   };
- }
- document.addEventListener("keydown", (event) => {
-   if (
--    event.key === coreSharedState.pressedKey &&
-+    event.key === coreSharedState.currentKey &&
-     !event.repeat &&
-     !event.target.matches("input, textarea, button")
-   ) {
-     event.preventDefault();
-@@ -519,34 +439,35 @@
+@@ -524,33 +446,33 @@
    }
  });
  window.addEventListener("load", () => {
@@ -721,17 +624,12 @@ Index: src/core.js
    }, 1000);
  });
  
- export const coreSharedState = {
--  mainInterval: null,
--  isActive: false,
-+  updateInterval: null,
-+  isProcessing: false,
-   animationInterval: null,
+ export const state = {
+   entityTrailInterval: null,
+   isToggled: false,
    angleIndex: 0,
--  pressedKey: "Shift",
-+  isInitialized_2: false,
-+  isActive_2: false,
-+  currentKey: "Shift",
++  isToggled_2: false,
+   activeKey: "Shift",
  };
  
  export {
@@ -748,14 +646,11 @@ Index: src/core.js
    initializePanels,
    angles,
    radius,
--  userData,
--  isInitialized,
--  isInitialized_2,
--  securityConfigs,
-+  game,
-+  player,
-+  isActive,
-+  securitySettings,
++  gameInstance,
+   playerData,
+   isProcessed_2,
+-  isProcessed_3,
+   config,
  };
 Index: src/features/adblock.js
 ===================================================================
@@ -768,8 +663,8 @@ Index: src/features/adblock.js
    const removeAds = () => {
 -    adSelectors.forEach((elementSelector) => {
 -      document.querySelectorAll(elementSelector).forEach((targetElement) => {
-+    adSelectors.forEach((selector) => {
-+      document.querySelectorAll(selector).forEach((targetElement) => {
++    adSelectors.forEach((y) => {
++      document.querySelectorAll(y).forEach((targetElement) => {
          targetElement.style.display = "none !important";
          targetElement.style.opacity = "0 !important";
          targetElement.style.pointerEvents = "none !important";
@@ -791,15 +686,8 @@ Index: src/features/autofarm.js
 ===================================================================
 --- src/features/autofarm.js	v1.2
 +++ src/features/autofarm.js	v1.3
-@@ -1,31 +1,31 @@
- import {
--  userData,
--  securityConfigs,
-+  player,
-+  securitySettings,
-   sendPacket,
-   coreSharedState,
- } from "../core.js";
+@@ -1,26 +1,26 @@
+ import { playerData, config, sendPacket, state } from "../core.js";
  
 -const handleAnimalAction = (value) => {
 +const handleAnimalAction = (currentValue) => {
@@ -808,18 +696,15 @@ Index: src/features/autofarm.js
    const id5 = 5;
    try {
      const fishLevelConfig = {
--      ...securityConfigs.default,
--      ...(securityConfigs[userData?.myAnimals?.[0]?.visibleFishLevel] || {}),
-+      ...securitySettings.default,
-+      ...(securitySettings[player?.myAnimals?.[0]?.visibleFishLevel] || {}),
+       ...config.default,
+       ...(config[playerData?.myAnimals?.[0]?.visibleFishLevel] || {}),
      };
--    if (value < (userData?.myAnimals?.[0]?._standing ? 40 : 100)) {
-+    if (currentValue < (player?.myAnimals?.[0]?._standing ? 40 : 100)) {
+-    if (value < (playerData?.myAnimals?.[0]?._standing ? 40 : 100)) {
++    if (currentValue < (playerData?.myAnimals?.[0]?._standing ? 40 : 100)) {
        return sendPacket(id1);
      }
--    if (userData?.myAnimals?.[0]?._standing) {
+     if (playerData?.myAnimals?.[0]?._standing) {
 -      return sendPacket(id5, value);
-+    if (player?.myAnimals?.[0]?._standing) {
 +      return sendPacket(id5, currentValue);
      }
      if (fishLevelConfig.hasScaling) {
@@ -837,34 +722,26 @@ Index: src/features/chat.js
 ===================================================================
 --- src/features/chat.js	v1.2
 +++ src/features/chat.js	v1.3
-@@ -1,21 +1,69 @@
+@@ -1,14 +1,13 @@
 -import { autoTypeChat } from "../ui/interaction.js";
- import { coreSharedState } from "../core.js";
+ import { state } from "../core.js";
  
  function startScheduledTask(taskData, intervalSeconds) {
--  if (coreSharedState.mainInterval) {
--    clearInterval(coreSharedState.mainInterval);
-+  if (coreSharedState.updateInterval) {
-+    clearInterval(coreSharedState.updateInterval);
+   if (state.entityTrailInterval) {
+     clearInterval(state.entityTrailInterval);
    }
--  coreSharedState.isActive = true;
--  coreSharedState.mainInterval = setInterval(() => {
+   state.isToggled = true;
+   state.entityTrailInterval = setInterval(() => {
 -    autoTypeChat(taskData);
-+  coreSharedState.isProcessing = true;
-+  coreSharedState.updateInterval = setInterval(() => {
 +    autoChat(taskData);
    }, intervalSeconds * 1000);
  }
  function stopInterval() {
--  if (coreSharedState.mainInterval) {
--    clearInterval(coreSharedState.mainInterval);
--    coreSharedState.mainInterval = null;
-+  if (coreSharedState.updateInterval) {
-+    clearInterval(coreSharedState.updateInterval);
-+    coreSharedState.updateInterval = null;
+   if (state.entityTrailInterval) {
+@@ -16,6 +15,55 @@
+     state.entityTrailInterval = null;
    }
--  coreSharedState.isActive = false;
-+  coreSharedState.isProcessing = false;
+   state.isToggled = false;
  }
 +function autoChat(textToType) {
 +  const chatInput =
@@ -924,22 +801,22 @@ Index: src/features/esp.js
 +++ src/features/esp.js	v1.3
 @@ -0,0 +1,22 @@
 +import { showNotification } from "../ui/interaction.js";
-+import { player, coreSharedState } from "../core.js";
++import { playerData, state } from "../core.js";
 +
 +function toggleMinimapSize() {
-+  if (!player || !player.minimap) {
++  if (!playerData || !playerData.minimap) {
 +    showNotification("Minimap not available yet!");
 +    return;
 +  }
-+  if (coreSharedState.isActive_2) {
-+    player.minimap.scale.set(1);
-+    player.minimap.pivot.set(0, 0);
-+    coreSharedState.isActive_2 = false;
++  if (state.isToggled_2) {
++    playerData.minimap.scale.set(1);
++    playerData.minimap.pivot.set(0, 0);
++    state.isToggled_2 = false;
 +    showNotification("🗺️ Minimap restored to normal!");
 +  } else {
-+    player.minimap.scale.set(0.5);
-+    player.minimap.pivot.set(-70, -45);
-+    coreSharedState.isActive_2 = true;
++    playerData.minimap.scale.set(0.5);
++    playerData.minimap.pivot.set(-70, -45);
++    state.isToggled_2 = true;
 +    showNotification("🗺️ Small Minimap enabled!");
 +  }
 +}
@@ -1027,22 +904,21 @@ Index: src/ui/panels.js
 ===================================================================
 --- src/ui/panels.js	v1.2
 +++ src/ui/panels.js	v1.3
-@@ -1,58 +1,162 @@
+@@ -1,59 +1,164 @@
  import {
-+  game,
-+  player,
-+  securitySettings,
++  gameInstance,
++  playerData,
++  config,
    radius,
 -  initNetworkHook,
--  isInitialized,
--  isInitialized_2,
++  hookTextEncoder,
+   isProcessed_2,
+-  isProcessed_3,
 -  setupAntiDetection,
 -  applyGameHacks,
-+  hookTextEncoder,
-+  isActive,
 +  initHooks,
 +  disableGameRestrictions,
-   coreSharedState,
+   state,
  } from "../core.js";
  import {
 -  simulateTyping,
@@ -1054,14 +930,16 @@ Index: src/ui/panels.js
 +  stopInterval,
 +  autoChat,
 +} from "../features/chat.js";
+ import { featuresentitytrailState } from "../features/entitytrail.js";
 +import { simulateTyping, showNotification } from "./interaction.js";
  import { toggleMouseSimulation } from "../features/movement.js";
 +import { handleAnimalAction } from "../features/autofarm.js";
 +import { toggleMinimapSize } from "../features/esp.js";
  import { generateRandomString } from "../utils.js";
  
++let isProcessed_3 = false;
 +const initControlOverlay = () => {
-+  if (coreSharedState.isInitialized_2) {
++  if (isProcessed_3) {
 +    return;
 +  }
 +  function sendActionSequence() {
@@ -1098,13 +976,13 @@ Index: src/ui/panels.js
 +    "click",
 +    (myAnimalsHandler) => {
 +      try {
-+        if (!player?.myAnimals?.[0]) {
++        if (!playerData?.myAnimals?.[0]) {
 +          return;
 +        }
-+        const visibleFishLevel = player.myAnimals[0].visibleFishLevel;
++        const visibleFishLevel = playerData.myAnimals[0].visibleFishLevel;
 +        const fishSettings = {
-+          ...securitySettings.default,
-+          ...securitySettings[visibleFishLevel],
++          ...config.default,
++          ...config[visibleFishLevel],
 +        };
 +        if (myAnimalsHandler.ctrlKey) {
 +          if (myAnimalsHandler.shiftKey && visibleFishLevel === 107) {
@@ -1113,15 +991,15 @@ Index: src/ui/panels.js
 +          } else if (
 +            myAnimalsHandler.shiftKey &&
 +            visibleFishLevel !== 101 &&
-+            player.myAnimals[0]._standing
++            playerData.myAnimals[0]._standing
 +          ) {
 +            handleAnimalAction(
 +              Math.floor(Math.random() * 1647483648) + 500000000,
 +            );
 +            return;
 +          } else {
-+            let keyMap = Object.getOwnPropertyNames(game)
-+              .map((clientKey) => game[clientKey])
++            let keyMap = Object.getOwnPropertyNames(gameInstance)
++              .map((clientKey) => gameInstance[clientKey])
 +              .find((inputMap) => inputMap.keys instanceof Array);
 +            if (keyMap) {
 +              keyMap.pointerDown = true;
@@ -1131,7 +1009,7 @@ Index: src/ui/panels.js
 +          }
 +        } else if (myAnimalsHandler.altKey) {
 +          handleAnimalAction(
-+            player?.myAnimals?.[0]?._standing
++            playerData?.myAnimals?.[0]?._standing
 +              ? 41
 +              : Math.floor(fishSettings.secLoadTime / 2),
 +          );
@@ -1156,7 +1034,7 @@ Index: src/ui/panels.js
 +      document.getElementById("ctrl-overlay").style.pointerEvents = "none";
 +    } catch {}
 +  });
-+  coreSharedState.isInitialized_2 = true;
++  isProcessed_3 = true;
 +};
  function createUpdateHistoryPanel() {
    const historyStyle = document.createElement("style");
@@ -1174,23 +1052,23 @@ Index: src/ui/panels.js
 -  const historyContent = historyPanel.querySelector("#historyContent");
 +  const minHistElement = historyPanel.querySelector("#minHist");
 +  const historyContentElement = historyPanel.querySelector("#historyContent");
-   let isHistoryHidden = false;
+   let isHidden = false;
 -  minHistBtn.onclick = (event) => {
 -    event.stopPropagation();
 +  minHistElement.onclick = (toggleEvent) => {
 +    toggleEvent.stopPropagation();
-     isHistoryHidden = !isHistoryHidden;
--    historyContent.style.display = isHistoryHidden ? "none" : "block";
--    historyPanel.style.height = isHistoryHidden ? "50px" : "auto";
--    minHistBtn.textContent = isHistoryHidden ? "+" : "−";
-+    historyContentElement.style.display = isHistoryHidden ? "none" : "block";
-+    historyPanel.style.height = isHistoryHidden ? "60px" : "auto";
-+    minHistElement.textContent = isHistoryHidden ? "+" : "−";
+     isHidden = !isHidden;
+-    historyContent.style.display = isHidden ? "none" : "block";
+-    historyPanel.style.height = isHidden ? "50px" : "auto";
+-    minHistBtn.textContent = isHidden ? "+" : "−";
++    historyContentElement.style.display = isHidden ? "none" : "block";
++    historyPanel.style.height = isHidden ? "60px" : "auto";
++    minHistElement.textContent = isHidden ? "+" : "−";
    };
    let offsetX;
    let offsetY;
-   let isDragging = false;
-   let isResizing = false;
+   let isActive = false;
+   let isActive_2 = false;
 -  historyPanel.addEventListener("mousedown", (event_2) => {
 -    if (["BUTTON", "INPUT", "TEXTAREA", "A"].includes(event_2.target.tagName)) {
 +  historyPanel.addEventListener("mousedown", (clickEvent) => {
@@ -1199,8 +1077,8 @@ Index: src/ui/panels.js
 +    ) {
        return;
      }
-     isDragging = true;
-     isResizing = false;
+     isActive = true;
+     isActive_2 = false;
 -    offsetX = event_2.clientX - historyPanel.getBoundingClientRect().left;
 -    offsetY = event_2.clientY - historyPanel.getBoundingClientRect().top;
 +    offsetX = clickEvent.clientX - historyPanel.getBoundingClientRect().left;
@@ -1211,18 +1089,18 @@ Index: src/ui/panels.js
 -      const deltaY = mouseEvent.clientY - event_2.clientY;
 +      const deltaX = mouseEvent.clientX - clickEvent.clientX;
 +      const deltaY = mouseEvent.clientY - clickEvent.clientY;
-       if (!isResizing && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-         isResizing = true;
+       if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+         isActive_2 = true;
        }
-       if (isDragging) {
-@@ -70,57 +174,47 @@
+       if (isActive) {
+@@ -71,56 +176,46 @@
      };
      document.addEventListener("mousemove", handleMouseMove);
      document.addEventListener("mouseup", handleMouseUp);
    });
 -  historyPanel.addEventListener("click", (event_3) => {
 +  historyPanel.addEventListener("click", (interceptEvent) => {
-     if (isResizing) {
+     if (isActive_2) {
 -      event_3.stopImmediatePropagation();
 +      interceptEvent.stopImmediatePropagation();
      }
@@ -1234,162 +1112,126 @@ Index: src/ui/panels.js
 -  deepToolsStyle.textContent =
 -    "\n      #deep-tools-panel {\n        font-family: 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n        border: 1px solid #333;\n        background: #1e1e1e;\n      }\n      #deep-tools-panel:hover {\n        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n      }\n      #deep-tools-panel textarea {\n        background: #2d2d2d;\n        border: 1px solid #444;\n        color: #e0e0e0;\n        border-radius: 6px;\n        padding: 8px;\n        transition: border-color 0.2s;\n        font-size: 13px;\n      }\n      #deep-tools-panel textarea:focus {\n        outline: none;\n        border-color: #e74c3c;\n        box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);\n      }\n      #deep-tools-panel input[type=\"number\"] {\n        background: #2d2d2d;\n        border: 1px solid #444;\n        color: #e0e0e0;\n        border-radius: 4px;\n        padding: 4px;\n        width: 60px;\n        text-align: center;\n      }\n      #deep-tools-panel button {\n        background: #2d2d2d;\n        color: #e74c3c;\n        border: 1px solid #444;\n        border-radius: 6px;\n        padding: 8px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n      }\n      #deep-tools-panel button:hover:not(:disabled) {\n        background: #3d3d3d;\n        border-color: #e74c3c;\n        transform: translateY(-1px);\n        box-shadow: 0 2px 6px rgba(231, 76, 60, 0.2);\n      }\n      #deep-tools-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);\n      }\n      #deep-tools-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #deep-tools-panel button.min-btn {\n        background: none;\n        border: none;\n        color: #e74c3c;\n        font-size: 18px;\n        cursor: pointer;\n        position: absolute;\n        top: 30%;\n        right: 5px;\n        transform: translateY(-50%);\n        z-index: 1;\n        transition: color 0.2s ease;\n        width: 20px;\n        height: 20px;\n        line-height: 20px;\n      }\n      #deep-tools-panel button.min-btn:hover {\n        color: #f39c12;\n      }\n      #deep-tools-panel .credits {\n        margin-top: 10px;\n        font-size: 10px;\n        color: #888;\n        line-height: 1.3;\n      }\n      #deep-tools-panel .auto-chat-controls {\n        display: flex;\n        gap: 5px;\n        margin-bottom: 8px;\n        align-items: center;\n        justify-content: center;\n      }\n      #deep-tools-panel .spin-keybind {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        margin-bottom: 8px;\n        font-size: 12px;\n      }\n      #deep-tools-panel .spin-keybind label {\n        color: #e0e0e0;\n      }\n      #deep-tools-panel #spinKeyInput {\n        background: #2d2d2d;\n        border: 1px solid #444;\n        color: #e0e0e0;\n        border-radius: 4px;\n        padding: 4px;\n        width: 50px;\n        text-align: center;\n      }\n      #aim-overlay, #ctrl-overlay {\n        z-index: 10000 !important;\n      }\n      div.game {\n        position: relative;\n      }\n      /* Ad Removal */\n      div.sidebar.left > div.ad-block {\n        opacity: 0 !important;\n        pointer-events: none !important;\n        display: none !important;\n      }\n      div.sidebar.left > a {\n        display: none !important;\n      }\n      div.sidebar.left {\n        max-width: 30vw;\n        width: 21rem;\n        bottom: 0 !important;\n      }\n    ";
 -  document.head.appendChild(deepToolsStyle);
--  const mainContainer = document.createElement("div");
--  mainContainer.id = "deep-tools-panel";
--  mainContainer.style.position = "fixed";
--  mainContainer.style.bottom = "20px";
--  mainContainer.style.right = "20px";
--  mainContainer.style.color = "#e0e0e0";
--  mainContainer.style.padding = "14px";
--  mainContainer.style.borderRadius = "8px";
--  mainContainer.style.fontSize = "14px";
--  mainContainer.style.zIndex = "99999";
--  mainContainer.style.userSelect = "none";
--  mainContainer.style.width = "220px";
--  mainContainer.style.textAlign = "center";
--  mainContainer.style.cursor = "move";
--  mainContainer.style.overflow = "hidden";
--  mainContainer.innerHTML =
--    '\n      <div style="font-weight:600; margin-bottom:10px; color:#e74c3c; position: relative; height: 40px; line-height: 40px; padding-right: 25px;">\n        ASTRAPHOBIA CLIENT\n        <button class="min-btn" id="minPanel">−</button>\n      </div>\n      <div id="panelContent">\n        <textarea id="chatMsg" placeholder="Type message..." style="width:100%; height:45px; margin-bottom:10px; resize:none;"></textarea>\n        <button id="sendBtn" style="width:100%; margin-bottom:8px;">Send Typed Chat</button>\n        <div class="auto-chat-controls">\n          <input type="number" id="delayInput" min="1" max="300" value="10" style="margin-right:5px;">\n          <span style="font-size:12px;">sec</span>\n        </div>\n        <button id="autoChatBtn" style="width:100%; margin-bottom:8px;">Enable Auto Chat</button>\n        <button id="patchBtn" style="width:100%; margin-bottom:8px;">Enable Special Characters(in chat/clan/name)</button>\n        <button id="spoofBtn" style="width:100%; margin-bottom:8px;">Spoof Username:Random Unicode Name(ban decrease)</button>\n        <button id="spinBtn" style="width:100%; margin-bottom:8px;">Enable Auto Spin</button>\n        <div class="spin-keybind">\n          <label for="spinKeyInput">Keybind:</label>\n          <input type="text" id="spinKeyInput" placeholder="Press key..." readonly>\n        </div>\n        <div class="credits">\n          Coder: Astraphobia<br>\n          Owner/Founder: Astraphobia<br>\n          Designer/Marketer: Astraphobia<br>\n          Tester: Astraphobia\n        </div>\n      </div>\n    ';
--  document.body.appendChild(mainContainer);
--  const minPanel = mainContainer.querySelector("#minPanel");
--  const panelContent = mainContainer.querySelector("#panelContent");
--  let isMinimized = false;
--  minPanel.onclick = (event) => {
--    event.stopPropagation();
--    isMinimized = !isMinimized;
--    panelContent.style.display = isMinimized ? "none" : "block";
--    mainContainer.style.height = isMinimized ? "50px" : "auto";
--    minPanel.textContent = isMinimized ? "+" : "−";
--  };
--  mainContainer.querySelector("#sendBtn").onclick = () => {
--    const chatMessage = mainContainer.querySelector("#chatMsg").value;
 +  const toolsStyle = document.createElement("style");
 +  toolsStyle.textContent =
 +    "\n      :root {\n        --bg-primary: rgba(15, 15, 35, 0.95);\n        --bg-secondary: rgba(45, 45, 75, 0.8);\n        --text-primary: #ffffff;\n        --text-secondary: #b0b0d4;\n        --accent: #00d4ff;\n        --accent-hover: #ffffff;\n        --border: rgba(0, 212, 255, 0.2);\n        --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);\n        --shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.4);\n      }\n      #deep-tools-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n      }\n      #deep-tools-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #deep-tools-panel textarea {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 8px;\n        padding: 10px;\n        transition: all 0.2s ease;\n        font-size: 13px;\n      }\n      #deep-tools-panel textarea:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);\n      }\n      #deep-tools-panel input[type=\"number\"] {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 60px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #deep-tools-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        position: relative;\n        overflow: hidden;\n      }\n      #deep-tools-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #deep-tools-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #deep-tools-panel button:hover:not(:disabled) {\n        background: rgba(45, 45, 75, 1);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);\n        color: var(--accent-hover);\n      }\n      #deep-tools-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #deep-tools-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #deep-tools-panel .credits {\n        margin-top: 12px;\n        font-size: 11px;\n        color: var(--text-secondary);\n        line-height: 1.4;\n      }\n      #deep-tools-panel .auto-chat-controls {\n        display: flex;\n        gap: 8px;\n        margin-bottom: 10px;\n        align-items: center;\n        justify-content: center;\n      }\n      #deep-tools-panel .spin-keybind {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        margin-bottom: 10px;\n        font-size: 12px;\n      }\n      #deep-tools-panel .spin-keybind label {\n        color: var(--text-primary);\n      }\n      #deep-tools-panel #spinKeyInput {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 50px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #aim-overlay, #ctrl-overlay {\n        z-index: 10000 !important;\n      }\n      div.game {\n        position: relative;\n      }\n      /* Ad Removal */\n      div.sidebar.left > div.ad-block {\n        opacity: 0 !important;\n        pointer-events: none !important;\n        display: none !important;\n      }\n      div.sidebar.left > a {\n        display: none !important;\n      }\n      div.sidebar.left {\n        max-width: 30vw;\n        width: 21rem;\n        bottom: 0 !important;\n      }\n    ";
 +  document.head.appendChild(toolsStyle);
-+  const container = document.createElement("div");
-+  container.id = "deep-tools-panel";
-+  container.style.position = "fixed";
-+  container.style.bottom = "20px";
-+  container.style.right = "20px";
+   const container = document.createElement("div");
+   container.id = "deep-tools-panel";
+   container.style.position = "fixed";
+   container.style.bottom = "20px";
+   container.style.right = "20px";
+-  container.style.color = "#e0e0e0";
+-  container.style.padding = "14px";
+-  container.style.borderRadius = "8px";
 +  container.style.color = "var(--text-primary)";
 +  container.style.padding = "16px";
 +  container.style.borderRadius = "16px";
-+  container.style.fontSize = "14px";
-+  container.style.zIndex = "99999";
-+  container.style.userSelect = "none";
+   container.style.fontSize = "14px";
+   container.style.zIndex = "99999";
+   container.style.userSelect = "none";
+-  container.style.width = "220px";
 +  container.style.width = "240px";
-+  container.style.textAlign = "center";
-+  container.style.cursor = "move";
-+  container.style.overflow = "hidden";
-+  container.innerHTML =
+   container.style.textAlign = "center";
+   container.style.cursor = "move";
+   container.style.overflow = "hidden";
+   container.innerHTML =
+-    '\n      <div style="font-weight:600; margin-bottom:10px; color:#e74c3c; position: relative; height: 40px; line-height: 40px; padding-right: 25px;">\n        ASTRAPHOBIA CLIENT\n        <button class="min-btn" id="minPanel">−</button>\n      </div>\n      <div id="panelContent">\n        <textarea id="chatMsg" placeholder="Type message..." style="width:100%; height:45px; margin-bottom:10px; resize:none;"></textarea>\n        <button id="sendBtn" style="width:100%; margin-bottom:8px;">Send Typed Chat</button>\n        <div class="auto-chat-controls">\n          <input type="number" id="delayInput" min="1" max="300" value="10" style="margin-right:5px;">\n          <span style="font-size:12px;">sec</span>\n        </div>\n        <button id="autoChatBtn" style="width:100%; margin-bottom:8px;">Enable Auto Chat</button>\n        <button id="patchBtn" style="width:100%; margin-bottom:8px;">Enable Special Characters(in chat/clan/name)</button>\n        <button id="spoofBtn" style="width:100%; margin-bottom:8px;">Spoof Username:Random Unicode Name(ban decrease)</button>\n        <button id="spinBtn" style="width:100%; margin-bottom:8px;">Enable Auto Spin</button>\n        <div class="spin-keybind">\n          <label for="spinKeyInput">Keybind:</label>\n          <input type="text" id="spinKeyInput" placeholder="Press key..." readonly>\n        </div>\n        <div class="credits">\n          Coder: Astraphobia<br>\n          Owner/Founder: Astraphobia<br>\n          Designer/Marketer: Astraphobia<br>\n          Tester: Astraphobia\n        </div>\n      </div>\n    ';
 +    '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        ASTRAPHOBIA CLIENT\n      </div>\n      <div id="panelContent">\n        <textarea id="chatMsg" placeholder="Type message..." style="width:100%; height:50px; margin-bottom:10px; resize:none;"></textarea>\n        <button id="sendBtn" style="width:100%; margin-bottom:10px;">Send Typed Chat</button>\n        <div class="auto-chat-controls">\n          <input type="number" id="delayInput" min="1" max="300" value="10" style="margin-right:8px;">\n          <span style="font-size:12px;">sec</span>\n        </div>\n        <button id="autoChatBtn" style="width:100%; margin-bottom:10px;">Enable Auto Chat</button>\n        <button id="patchBtn" style="width:100%; margin-bottom:10px;">Enable Special Characters(in chat/clan/name)</button>\n        <button id="spoofBtn" style="width:100%; margin-bottom:10px;">Spoof Username:Random Unicode Name(ban decrease)</button>\n        <button id="spinBtn" style="width:100%; margin-bottom:10px;">Enable Auto Spin</button>\n        <div class="spin-keybind">\n          <label for="spinKeyInput">Keybind:</label>\n          <input type="text" id="spinKeyInput" placeholder="PRESS" readonly>\n        </div>\n        <div class="credits">\n          Coder: Astraphobia<br>\n          Owner/Founder: Astraphobia<br>\n          Designer/Marketer: Astraphobia<br>\n          Tester: Astraphobia\n        </div>\n      </div>\n    ';
-+  document.body.appendChild(container);
-+  container.querySelector("#sendBtn").onclick = () => {
-+    const chatMessage = container.querySelector("#chatMsg").value;
+   document.body.appendChild(container);
+-  const minPanel = container.querySelector("#minPanel");
+-  const panelContent = container.querySelector("#panelContent");
+-  let isHidden = false;
+-  minPanel.onclick = (event) => {
+-    event.stopPropagation();
+-    isHidden = !isHidden;
+-    panelContent.style.display = isHidden ? "none" : "block";
+-    container.style.height = isHidden ? "50px" : "auto";
+-    minPanel.textContent = isHidden ? "+" : "−";
+-  };
+   container.querySelector("#sendBtn").onclick = () => {
+     const chatMessage = container.querySelector("#chatMsg").value;
      if (chatMessage) {
 -      autoTypeChat(chatMessage);
 +      autoChat(chatMessage);
      }
    };
--  const patchButton = mainContainer.querySelector("#patchBtn");
--  patchButton.onclick = () => initNetworkHook(patchButton);
--  const spoofButton = mainContainer.querySelector("#spoofBtn");
-+  const patchButton = container.querySelector("#patchBtn");
-+  patchButton.onclick = () => hookTextEncoder(patchButton);
-+  const spoofButton = container.querySelector("#spoofBtn");
-   spoofButton.onclick = () => {
+   const spoofButton = container.querySelector("#patchBtn");
+-  spoofButton.onclick = () => initNetworkHook(spoofButton);
++  spoofButton.onclick = () => hookTextEncoder(spoofButton);
+   const spoofButton_2 = container.querySelector("#spoofBtn");
+   spoofButton_2.onclick = () => {
      const maxLength = generateRandomString(8);
      if (simulateTyping(".play-game .el-input__inner", maxLength)) {
-       showNotification("Spoofed name!");
-@@ -129,215 +223,311 @@
+@@ -138,75 +233,75 @@
+       autoChatButton.textContent = "Disable Auto Spin";
+       autoChatButton.style.color = "#27ae60";
      } else {
-       showNotification("No name input found! Enable special characters first.");
+       autoChatButton.textContent = "Enable Auto Spin";
+-      autoChatButton.style.color = "#e74c3c";
++      autoChatButton.style.color = "var(--accent)";
      }
    };
--  const spinButton = mainContainer.querySelector("#spinBtn");
-+  const spinButton = container.querySelector("#spinBtn");
-   spinButton.onclick = () => {
-     toggleMouseSimulation();
-     if (coreSharedState.animationInterval) {
-       spinButton.textContent = "Disable Auto Spin";
-       spinButton.style.color = "#27ae60";
-     } else {
-       spinButton.textContent = "Enable Auto Spin";
--      spinButton.style.color = "#e74c3c";
-+      spinButton.style.color = "var(--accent)";
-     }
-   };
--  const spinKeyInput = mainContainer.querySelector("#spinKeyInput");
--  let activeKey = null;
+   const spinKeyInput = container.querySelector("#spinKeyInput");
+   let lastPressedKey = null;
 -  spinKeyInput.addEventListener("keydown", (keyEvent) => {
 -    keyEvent.preventDefault();
--    activeKey = keyEvent.code || keyEvent.key;
--    spinKeyInput.value = activeKey.replace("Key", "").toLowerCase();
-+  const spinKeyInput = container.querySelector("#spinKeyInput");
-+  let lastKeyCode = null;
+-    lastPressedKey = keyEvent.code || keyEvent.key;
 +  spinKeyInput.addEventListener("keydown", (event) => {
 +    event.preventDefault();
-+    lastKeyCode = event.code || event.key;
-+    spinKeyInput.value = lastKeyCode.replace("Key", "").toLowerCase();
++    lastPressedKey = event.code || event.key;
+     spinKeyInput.value = lastPressedKey.replace("Key", "").toLowerCase();
    });
 -  document.addEventListener("keydown", (event_2) => {
 +  document.addEventListener("keydown", (keyEvent) => {
      if (
--      activeKey &&
--      event_2.code === activeKey &&
+       lastPressedKey &&
+-      event_2.code === lastPressedKey &&
 -      !event_2.target.matches("input, textarea, button")
-+      lastKeyCode &&
-+      keyEvent.code === lastKeyCode &&
++      keyEvent.code === lastPressedKey &&
 +      !keyEvent.target.matches("input, textarea, button")
      ) {
 -      event_2.preventDefault();
 +      keyEvent.preventDefault();
        toggleMouseSimulation();
-       if (coreSharedState.animationInterval) {
-         spinButton.textContent = "Disable Auto Spin";
-         spinButton.style.color = "#27ae60";
+       if (featuresentitytrailState.entityTrailInterval_2) {
+         autoChatButton.textContent = "Disable Auto Spin";
+         autoChatButton.style.color = "#27ae60";
        } else {
-         spinButton.textContent = "Enable Auto Spin";
--        spinButton.style.color = "#e74c3c";
-+        spinButton.style.color = "var(--accent)";
+         autoChatButton.textContent = "Enable Auto Spin";
+-        autoChatButton.style.color = "#e74c3c";
++        autoChatButton.style.color = "var(--accent)";
        }
      }
    });
--  const autoChatButton = mainContainer.querySelector("#autoChatBtn");
-+  const autoChatButton = container.querySelector("#autoChatBtn");
-   autoChatButton.onclick = () => {
--    const chatMessageText = mainContainer.querySelector("#chatMsg").value;
--    const delayInput = mainContainer.querySelector("#delayInput");
+   const autoChatButton_2 = container.querySelector("#autoChatBtn");
+   autoChatButton_2.onclick = () => {
+-    const chatMessageText = container.querySelector("#chatMsg").value;
 +    const chatMessageValue = container.querySelector("#chatMsg").value;
-+    const delayInput = container.querySelector("#delayInput");
+     const delayInput = container.querySelector("#delayInput");
      const delayValue = parseInt(delayInput.value) || 10;
 -    if (!chatMessageText) {
 +    if (!chatMessageValue) {
        showNotification("⚠️ Enter a message first!");
        return;
      }
--    if (coreSharedState.isActive) {
-+    if (coreSharedState.isProcessing) {
+     if (state.isToggled) {
        stopInterval();
-       autoChatButton.textContent = "Enable Auto Chat";
--      autoChatButton.style.color = "#e74c3c";
-+      autoChatButton.style.color = "var(--accent)";
+       autoChatButton_2.textContent = "Enable Auto Chat";
+-      autoChatButton_2.style.color = "#e74c3c";
++      autoChatButton_2.style.color = "var(--accent)";
      } else {
 -      startScheduledTask(chatMessageText, delayValue);
 +      startScheduledTask(chatMessageValue, delayValue);
-       autoChatButton.textContent = "Disable Auto Chat";
-       autoChatButton.style.color = "#27ae60";
+       autoChatButton_2.textContent = "Disable Auto Chat";
+       autoChatButton_2.style.color = "#27ae60";
      }
    };
    let offsetX;
    let offsetY;
--  let isLoading = false;
--  let isInitialized = false;
--  mainContainer.addEventListener("mousedown", (event_3) => {
-+  let isDragging = false;
-+  let isEnabled = false;
+   let isActive = false;
+   let isActive_2 = false;
+-  container.addEventListener("mousedown", (event_3) => {
 +  container.addEventListener("mousedown", (clickEvent) => {
      if (
 -      event_3.target.tagName === "BUTTON" ||
@@ -1403,83 +1245,69 @@ Index: src/ui/panels.js
      ) {
        return;
      }
--    isLoading = true;
--    isInitialized = false;
--    offsetX = event_3.clientX - mainContainer.getBoundingClientRect().left;
--    offsetY = event_3.clientY - mainContainer.getBoundingClientRect().top;
--    mainContainer.style.transition = "none";
-+    isDragging = true;
-+    isEnabled = false;
+     isActive = true;
+     isActive_2 = false;
+-    offsetX = event_3.clientX - container.getBoundingClientRect().left;
+-    offsetY = event_3.clientY - container.getBoundingClientRect().top;
 +    offsetX = clickEvent.clientX - container.getBoundingClientRect().left;
 +    offsetY = clickEvent.clientY - container.getBoundingClientRect().top;
-+    container.style.transition = "none";
+     container.style.transition = "none";
      const handleMouseMove = (mouseEvent) => {
 -      const deltaX = mouseEvent.clientX - event_3.clientX;
 -      const deltaY = mouseEvent.clientY - event_3.clientY;
--      if (!isInitialized && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
--        isInitialized = true;
 +      const deltaX = mouseEvent.clientX - clickEvent.clientX;
 +      const deltaY = mouseEvent.clientY - clickEvent.clientY;
-+      if (!isEnabled && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-+        isEnabled = true;
+       if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+         isActive_2 = true;
        }
--      if (isLoading) {
--        mainContainer.style.left = mouseEvent.clientX - offsetX + "px";
--        mainContainer.style.top = mouseEvent.clientY - offsetY + "px";
--        mainContainer.style.bottom = "auto";
--        mainContainer.style.right = "auto";
-+      if (isDragging) {
-+        container.style.left = mouseEvent.clientX - offsetX + "px";
-+        container.style.top = mouseEvent.clientY - offsetY + "px";
-+        container.style.bottom = "auto";
-+        container.style.right = "auto";
-       }
-     };
-     const handleMouseUp = () => {
--      isLoading = false;
--      mainContainer.style.transition = "all 0.3s ease";
-+      isDragging = false;
-+      container.style.transition = "all 0.3s ease";
-       document.removeEventListener("mousemove", handleMouseMove);
-       document.removeEventListener("mouseup", handleMouseUp);
+       if (isActive) {
+@@ -224,95 +319,97 @@
      };
      document.addEventListener("mousemove", handleMouseMove);
      document.addEventListener("mouseup", handleMouseUp);
    });
--  mainContainer.addEventListener("click", (event_4) => {
--    if (isInitialized) {
--      event_4.stopImmediatePropagation();
+-  container.addEventListener("click", (event_4) => {
 +  container.addEventListener("click", (eventToStop) => {
-+    if (isEnabled) {
+     if (isActive_2) {
+-      event_4.stopImmediatePropagation();
 +      eventToStop.stopImmediatePropagation();
      }
    });
--  return mainContainer;
-+  return container;
+   return container;
  }
 -function createPlusPanel() {
 -  const plusPanelStyle = document.createElement("style");
 -  plusPanelStyle.textContent =
 -    "\n      #plus-panel {\n        font-family: 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n        border: 1px solid #333;\n        background: #1e1e1e;\n      }\n      #plus-panel:hover {\n        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n      }\n      #plus-panel textarea {\n        background: #2d2d2d;\n        border: 1px solid #444;\n        color: #e0e0e0;\n        border-radius: 6px;\n        padding: 8px;\n        transition: border-color 0.2s;\n        font-size: 13px;\n      }\n      #plus-panel textarea:focus {\n        outline: none;\n        border-color: #e74c3c;\n        box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);\n      }\n      #plus-panel input[type=\"number\"] {\n        background: #2d2d2d;\n        border: 1px solid #444;\n        color: #e0e0e0;\n        border-radius: 4px;\n        padding: 4px;\n        width: 60px;\n        text-align: center;\n      }\n      #plus-panel button {\n        background: #2d2d2d;\n        color: #e74c3c;\n        border: 1px solid #444;\n        border-radius: 6px;\n        padding: 8px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        width: 100%;\n        margin-bottom: 8px;\n      }\n      #plus-panel button:hover:not(:disabled) {\n        background: #3d3d3d;\n        border-color: #e74c3c;\n        transform: translateY(-1px);\n        box-shadow: 0 2px 6px rgba(231, 76, 60, 0.2);\n      }\n      #plus-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);\n      }\n      #plus-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #plus-panel button.min-btn {\n        background: none;\n        border: none;\n        color: #e74c3c;\n        font-size: 18px;\n        cursor: pointer;\n        position: absolute;\n        top: 30%;\n        right: 5px;\n        transform: translateY(-50%);\n        z-index: 1;\n        transition: color 0.2s ease;\n        width: 20px;\n        height: 20px;\n        line-height: 20px;\n      }\n      #plus-panel button.min-btn:hover {\n        color: #f39c12;\n      }\n    ";
 -  document.head.appendChild(plusPanelStyle);
--  const container = document.createElement("div");
--  container.id = "plus-panel";
--  container.style.position = "fixed";
--  container.style.top = "20px";
--  container.style.right = "20px";
++function injectPlusPanelStyles() {
++  const styleElement = document.createElement("style");
++  styleElement.textContent =
++    "\n      #plus-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n      }\n      #plus-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #plus-panel textarea {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 8px;\n        padding: 10px;\n        transition: all 0.2s ease;\n        font-size: 13px;\n      }\n      #plus-panel textarea:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);\n      }\n      #plus-panel input[type=\"number\"] {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 60px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #plus-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        position: relative;\n        overflow: hidden;\n        width: 100%;\n        margin-bottom: 10px;\n      }\n      #plus-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #plus-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #plus-panel button:hover:not(:disabled) {\n        background: rgba(45, 45, 75, 1);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);\n        color: var(--accent-hover);\n      }\n      #plus-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #plus-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n    ";
++  document.head.appendChild(styleElement);
+   const container = document.createElement("div");
+   container.id = "plus-panel";
+   container.style.position = "fixed";
+   container.style.top = "20px";
+   container.style.right = "20px";
 -  container.style.color = "#e0e0e0";
 -  container.style.padding = "14px";
 -  container.style.borderRadius = "8px";
--  container.style.fontSize = "14px";
--  container.style.zIndex = "99999";
--  container.style.userSelect = "none";
++  container.style.color = "var(--text-primary)";
++  container.style.padding = "16px";
++  container.style.borderRadius = "16px";
+   container.style.fontSize = "14px";
+   container.style.zIndex = "99999";
+   container.style.userSelect = "none";
 -  container.style.width = "220px";
--  container.style.textAlign = "center";
--  container.style.cursor = "move";
--  container.style.overflow = "hidden";
--  container.innerHTML =
++  container.style.width = "240px";
+   container.style.textAlign = "center";
+   container.style.cursor = "move";
+   container.style.overflow = "hidden";
+   container.innerHTML =
 -    '\n      <div style="font-weight:600; margin-bottom:10px; color:#e74c3c; position: relative; height: 40px; line-height: 40px; padding-right: 25px;">\n        ASTRAPHOBIA CLIENT\n        <button class="min-btn" id="minPlus">−</button>\n      </div>\n      <div id="plusContent">\n        <button id="thresherBtn">Enable Thresher Super Boost(ctrl + shift and click)(minumum required 2 boost)</button>\n        <button id="astraVisionBtn">Enable Astra-Vision (no-zoom limit, no ink flash or deep darkness)</button>\n      </div>\n    ';
--  document.body.appendChild(container);
++    '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        ASTRAPHOBIA CLIENT+\n      </div>\n      <div id="plusContent">\n        <button id="thresherBtn">Enable Thresher Super Boost(ctrl + shift and click)(minumum required 2 boost)</button>\n        <button id="astraVisionBtn">Enable Astra-Vision (no-zoom limit, no ink flash or deep darkness)</button>\n        <button id="smallMinimapBtn">Enable Small Minimap</button>\n      </div>\n    ';
+   document.body.appendChild(container);
 -  const minPlusBtn = container.querySelector("#minPlus");
 -  const plusContent = container.querySelector("#plusContent");
 -  let isHidden = false;
@@ -1490,75 +1318,50 @@ Index: src/ui/panels.js
 -    container.style.height = isHidden ? "50px" : "auto";
 -    minPlusBtn.textContent = isHidden ? "+" : "−";
 -  };
--  const thresherBtn = container.querySelector("#thresherBtn");
--  thresherBtn.onclick = () => {
--    if (isInitialized_2) {
-+function injectPlusPanelStyles() {
-+  const styleElement = document.createElement("style");
-+  styleElement.textContent =
-+    "\n      #plus-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n      }\n      #plus-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #plus-panel textarea {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 8px;\n        padding: 10px;\n        transition: all 0.2s ease;\n        font-size: 13px;\n      }\n      #plus-panel textarea:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);\n      }\n      #plus-panel input[type=\"number\"] {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 60px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #plus-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        position: relative;\n        overflow: hidden;\n        width: 100%;\n        margin-bottom: 10px;\n      }\n      #plus-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #plus-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #plus-panel button:hover:not(:disabled) {\n        background: rgba(45, 45, 75, 1);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);\n        color: var(--accent-hover);\n      }\n      #plus-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #plus-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n    ";
-+  document.head.appendChild(styleElement);
-+  const uiContainer = document.createElement("div");
-+  uiContainer.id = "plus-panel";
-+  uiContainer.style.position = "fixed";
-+  uiContainer.style.top = "20px";
-+  uiContainer.style.right = "20px";
-+  uiContainer.style.color = "var(--text-primary)";
-+  uiContainer.style.padding = "16px";
-+  uiContainer.style.borderRadius = "16px";
-+  uiContainer.style.fontSize = "14px";
-+  uiContainer.style.zIndex = "99999";
-+  uiContainer.style.userSelect = "none";
-+  uiContainer.style.width = "240px";
-+  uiContainer.style.textAlign = "center";
-+  uiContainer.style.cursor = "move";
-+  uiContainer.style.overflow = "hidden";
-+  uiContainer.innerHTML =
-+    '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        ASTRAPHOBIA CLIENT+\n      </div>\n      <div id="plusContent">\n        <button id="thresherBtn">Enable Thresher Super Boost(ctrl + shift and click)(minumum required 2 boost)</button>\n        <button id="astraVisionBtn">Enable Astra-Vision (no-zoom limit, no ink flash or deep darkness)</button>\n        <button id="smallMinimapBtn">Enable Small Minimap</button>\n      </div>\n    ';
-+  document.body.appendChild(uiContainer);
-+  const thresherButton = uiContainer.querySelector("#thresherBtn");
-+  thresherButton.onclick = () => {
-+    if (coreSharedState.isInitialized_2) {
+-  const astraVisionBtn = container.querySelector("#thresherBtn");
+-  astraVisionBtn.onclick = () => {
++  const astraVisionButton = container.querySelector("#thresherBtn");
++  astraVisionButton.onclick = () => {
+     if (isProcessed_3) {
        showNotification("Thresher Super Boost is already active!");
        return;
      }
 -    setupAntiDetection();
--    thresherBtn.textContent = "Thresher Super Boost Active";
--    thresherBtn.style.color = "#27ae60";
--    thresherBtn.disabled = true;
+-    astraVisionBtn.textContent = "Thresher Super Boost Active";
+-    astraVisionBtn.style.color = "#27ae60";
+-    astraVisionBtn.disabled = true;
 +    initHooks();
-+    thresherButton.textContent = "Thresher Super Boost Active";
-+    thresherButton.style.color = "#27ae60";
-+    thresherButton.disabled = true;
++    astraVisionButton.textContent = "Thresher Super Boost Active";
++    astraVisionButton.style.color = "#27ae60";
++    astraVisionButton.disabled = true;
    };
--  const astraVisionBtn = container.querySelector("#astraVisionBtn");
--  astraVisionBtn.onclick = () => {
--    if (isInitialized) {
-+  const astraVisionButton = uiContainer.querySelector("#astraVisionBtn");
-+  astraVisionButton.onclick = () => {
-+    if (isActive) {
+-  const astraVisionBtn_2 = container.querySelector("#astraVisionBtn");
+-  astraVisionBtn_2.onclick = () => {
++  const astraVisionButton_2 = container.querySelector("#astraVisionBtn");
++  astraVisionButton_2.onclick = () => {
+     if (isProcessed_2) {
        showNotification("Astra-Vision already enabled!");
        return;
      }
 -    setupAntiDetection();
 -    applyGameHacks();
--    astraVisionBtn.textContent = "Astra-Vision Active";
--    astraVisionBtn.style.color = "#27ae60";
--    astraVisionBtn.disabled = true;
+-    astraVisionBtn_2.textContent = "Astra-Vision Active";
+-    astraVisionBtn_2.style.color = "#27ae60";
+-    astraVisionBtn_2.disabled = true;
 +    initHooks();
 +    disableGameRestrictions();
-+    astraVisionButton.textContent = "Astra-Vision Active";
-+    astraVisionButton.style.color = "#27ae60";
-+    astraVisionButton.disabled = true;
++    astraVisionButton_2.textContent = "Astra-Vision Active";
++    astraVisionButton_2.style.color = "#27ae60";
++    astraVisionButton_2.disabled = true;
      showNotification(
        "👁️ Astra-Vision enabled! (zoom-limit unlocked, no ink-flash or deep darkness effects)",
      );
    };
-+  const smallMinimapButton = uiContainer.querySelector("#smallMinimapBtn");
++  const smallMinimapButton = container.querySelector("#smallMinimapBtn");
 +  smallMinimapButton.onclick = () => {
 +    initHooks();
 +    toggleMinimapSize();
-+    if (coreSharedState.isActive_2) {
++    if (state.isToggled_2) {
 +      smallMinimapButton.textContent = "Disable Small Minimap";
 +      smallMinimapButton.style.color = "#27ae60";
 +    } else {
@@ -1568,11 +1371,10 @@ Index: src/ui/panels.js
 +  };
    let offsetX;
    let offsetY;
-   let isDragging = false;
--  let isMinimized = false;
+   let isActive = false;
+   let isActive_2 = false;
 -  container.addEventListener("mousedown", (clickEvent) => {
-+  let isActive = false;
-+  uiContainer.addEventListener("mousedown", (event) => {
++  container.addEventListener("mousedown", (event) => {
      if (
 -      clickEvent.target.tagName === "BUTTON" ||
 -      clickEvent.target.tagName === "TEXTAREA" ||
@@ -1585,90 +1387,69 @@ Index: src/ui/panels.js
      ) {
        return;
      }
-     isDragging = true;
--    isMinimized = false;
+     isActive = true;
+     isActive_2 = false;
 -    offsetX = clickEvent.clientX - container.getBoundingClientRect().left;
 -    offsetY = clickEvent.clientY - container.getBoundingClientRect().top;
--    container.style.transition = "none";
-+    isActive = false;
-+    offsetX = event.clientX - uiContainer.getBoundingClientRect().left;
-+    offsetY = event.clientY - uiContainer.getBoundingClientRect().top;
-+    uiContainer.style.transition = "none";
++    offsetX = event.clientX - container.getBoundingClientRect().left;
++    offsetY = event.clientY - container.getBoundingClientRect().top;
+     container.style.transition = "none";
      const handleMouseMove = (mouseEvent) => {
 -      const deltaX = mouseEvent.clientX - clickEvent.clientX;
 -      const deltaY = mouseEvent.clientY - clickEvent.clientY;
--      if (!isMinimized && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
--        isMinimized = true;
 +      const deltaX = mouseEvent.clientX - event.clientX;
 +      const deltaY = mouseEvent.clientY - event.clientY;
-+      if (!isActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-+        isActive = true;
+       if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+         isActive_2 = true;
        }
-       if (isDragging) {
--        container.style.left = mouseEvent.clientX - offsetX + "px";
--        container.style.top = mouseEvent.clientY - offsetY + "px";
--        container.style.bottom = "auto";
--        container.style.right = "auto";
-+        uiContainer.style.left = mouseEvent.clientX - offsetX + "px";
-+        uiContainer.style.top = mouseEvent.clientY - offsetY + "px";
-+        uiContainer.style.bottom = "auto";
-+        uiContainer.style.right = "auto";
-       }
-     };
-     const handleMouseUp = () => {
-       isDragging = false;
--      container.style.transition = "all 0.3s ease";
-+      uiContainer.style.transition = "all 0.3s ease";
-       document.removeEventListener("mousemove", handleMouseMove);
-       document.removeEventListener("mouseup", handleMouseUp);
+       if (isActive) {
+@@ -330,15 +427,109 @@
      };
      document.addEventListener("mousemove", handleMouseMove);
      document.addEventListener("mouseup", handleMouseUp);
    });
 -  container.addEventListener("click", (keyboardEvent) => {
--    if (isMinimized) {
++  container.addEventListener("click", (event_2) => {
+     if (isActive_2) {
 -      keyboardEvent.stopImmediatePropagation();
-+  uiContainer.addEventListener("click", (event_2) => {
-+    if (isActive) {
 +      event_2.stopImmediatePropagation();
      }
    });
--  return container;
-+  return uiContainer;
+   return container;
  }
 +function injectSettingsStyles() {
 +  const styleElement = document.createElement("style");
 +  styleElement.textContent =
 +    "\n      #settings-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n        position: fixed;\n        top: 20px;\n        left: 20px;\n        color: var(--text-primary);\n        padding: 16px;\n        font-size: 14px;\n        z-index: 99999;\n        user-select: none;\n        width: 240px;\n        text-align: center;\n        cursor: move;\n        overflow: hidden;\n      }\n      #settings-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #settings-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        width: 100%;\n        margin-bottom: 10px;\n        position: relative;\n        overflow: hidden;\n      }\n      #settings-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #settings-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #settings-panel button:hover:not(:disabled) {\n        background: rgba(45, 45, 75, 1);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);\n        color: var(--accent-hover);\n      }\n      #settings-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #settings-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #settings-panel .keybind-set, #settings-panel .bg-set {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        margin-bottom: 10px;\n        font-size: 12px;\n      }\n      #settings-panel .keybind-set label, #settings-panel .bg-set label {\n        color: var(--text-primary);\n      }\n      #settings-panel #toggleKeyInput, #settings-panel #bgUrl {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #settings-panel #toggleKeyInput {\n        width: 80px;\n      }\n      #settings-panel #bgUrl {\n        width: 120px;\n      }\n      #settings-panel .section-header {\n        font-weight: bold;\n        color: var(--accent);\n        margin: 12px 0 6px 0;\n        font-size: 13px;\n      }\n    ";
 +  document.head.appendChild(styleElement);
-+  const mainContainer = document.createElement("div");
-+  mainContainer.id = "settings-panel";
-+  mainContainer.innerHTML =
++  const container = document.createElement("div");
++  container.id = "settings-panel";
++  container.innerHTML =
 +    '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        SETTINGS\n      </div>\n      <div id="settingsContent">\n        <div class="keybind-set">\n          <label for="toggleKeyInput">Toggle Client:</label>\n          <input type="text" id="toggleKeyInput" placeholder="PRESS" readonly>\n        </div>\n        <div class="section-header">Custom Background</div>\n        <div class="bg-set">\n          <label for="bgUrl">BG URL:</label>\n          <input type="text" id="bgUrl" placeholder="Image/GIF URL">\n        </div>\n        <button id="applyBg">Apply Custom Background</button>\n      </div>\n    ';
-+  document.body.appendChild(mainContainer);
-+  const bgUrlInput = mainContainer.querySelector("#bgUrl");
++  document.body.appendChild(container);
++  const bgUrlInput = container.querySelector("#bgUrl");
 +  bgUrlInput.value = localStorage.getItem("bgUrl") || "";
-+  const applyBgButton = mainContainer.querySelector("#applyBg");
++  const applyBgButton = container.querySelector("#applyBg");
 +  applyBgButton.onclick = () => {
-+    const backgroundUrl = bgUrlInput.value.trim();
-+    if (backgroundUrl === "") {
++    const bgUrl = bgUrlInput.value.trim();
++    if (bgUrl === "") {
 +      showNotification("Enter a URL first!");
 +      return;
 +    }
-+    localStorage.setItem("bgUrl", backgroundUrl);
++    localStorage.setItem("bgUrl", bgUrl);
 +    let homeBgElement = document.querySelector(".home-bg");
 +    const updateBackgroundImage = () => {
 +      homeBgElement.style.setProperty(
 +        "background-image",
-+        'url("' + backgroundUrl + '")',
++        'url("' + bgUrl + '")',
 +        "important",
 +      );
 +    };
 +    if (homeBgElement == null) {
-+      const bgCheckInterval = setInterval(() => {
++      const pollInterval = setInterval(() => {
 +        homeBgElement = document.querySelector(".home-bg");
 +        if (homeBgElement != null) {
-+          clearInterval(bgCheckInterval);
++          clearInterval(pollInterval);
 +        }
 +        updateBackgroundImage();
 +      }, 100);
@@ -1677,18 +1458,18 @@ Index: src/ui/panels.js
 +    }
 +    showNotification("Custom Background applied!");
 +  };
-+  const toggleKeyInputButton = mainContainer.querySelector("#toggleKeyInput");
-+  toggleKeyInputButton.value = coreSharedState.currentKey;
++  const toggleKeyInputButton = container.querySelector("#toggleKeyInput");
++  toggleKeyInputButton.value = state.activeKey;
 +  toggleKeyInputButton.addEventListener("keydown", (event) => {
 +    event.preventDefault();
-+    coreSharedState.currentKey = event.key;
-+    toggleKeyInputButton.value = coreSharedState.currentKey;
++    state.activeKey = event.key;
++    toggleKeyInputButton.value = state.activeKey;
 +  });
 +  let offsetX;
 +  let offsetY;
-+  let isDragging = false;
-+  let isToggled = false;
-+  mainContainer.addEventListener("mousedown", (event_2) => {
++  let isActive = false;
++  let isActive_2 = false;
++  container.addEventListener("mousedown", (event_2) => {
 +    if (
 +      event_2.target.tagName === "BUTTON" ||
 +      event_2.target.tagName === "INPUT" ||
@@ -1696,45 +1477,45 @@ Index: src/ui/panels.js
 +    ) {
 +      return;
 +    }
-+    isDragging = true;
-+    isToggled = false;
-+    offsetX = event_2.clientX - mainContainer.getBoundingClientRect().left;
-+    offsetY = event_2.clientY - mainContainer.getBoundingClientRect().top;
-+    mainContainer.style.transition = "none";
++    isActive = true;
++    isActive_2 = false;
++    offsetX = event_2.clientX - container.getBoundingClientRect().left;
++    offsetY = event_2.clientY - container.getBoundingClientRect().top;
++    container.style.transition = "none";
 +    const handleMouseMove = (mouseEvent) => {
 +      const deltaX = mouseEvent.clientX - event_2.clientX;
 +      const deltaY = mouseEvent.clientY - event_2.clientY;
-+      if (!isToggled && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-+        isToggled = true;
++      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
++        isActive_2 = true;
 +      }
-+      if (isDragging) {
-+        mainContainer.style.left = mouseEvent.clientX - offsetX + "px";
-+        mainContainer.style.top = mouseEvent.clientY - offsetY + "px";
-+        mainContainer.style.bottom = "auto";
-+        mainContainer.style.right = "auto";
++      if (isActive) {
++        container.style.left = mouseEvent.clientX - offsetX + "px";
++        container.style.top = mouseEvent.clientY - offsetY + "px";
++        container.style.bottom = "auto";
++        container.style.right = "auto";
 +      }
 +    };
 +    const handleMouseUp = () => {
-+      isDragging = false;
-+      mainContainer.style.transition = "all 0.3s ease";
++      isActive = false;
++      container.style.transition = "all 0.3s ease";
 +      document.removeEventListener("mousemove", handleMouseMove);
 +      document.removeEventListener("mouseup", handleMouseUp);
 +    };
 +    document.addEventListener("mousemove", handleMouseMove);
 +    document.addEventListener("mouseup", handleMouseUp);
 +  });
-+  mainContainer.addEventListener("click", (event_3) => {
-+    if (isToggled) {
++  container.addEventListener("click", (event_3) => {
++    if (isActive_2) {
 +      event_3.stopImmediatePropagation();
 +    }
 +  });
-+  return mainContainer;
++  return container;
 +}
  function togglePanels() {
    const deepToolsPanel = document.getElementById("deep-tools-panel");
    const updateHistoryPanel = document.getElementById("update-history");
    const settingsPanel = document.getElementById("settings-panel");
-@@ -350,9 +540,11 @@
+@@ -351,9 +542,11 @@
    plusPanel.style.display = newDisplay;
  }
  
@@ -1752,8 +1533,8 @@ Index: src/ui/theme.js
 --- src/ui/theme.js	v1.2
 +++ src/ui/theme.js	v1.3
 @@ -1,8 +1,5 @@
--import { radius, coreSharedState } from "../core.js";
 -import { showNotification } from "./interaction.js";
+-import { radius, state } from "../core.js";
 -
 -function applyCustomBackground() {
 +function initBackgroundImage() {
@@ -1784,34 +1565,34 @@ Index: src/ui/theme.js
 -  styleElement.textContent =
 -    "\n      #settings-panel {\n        font-family: 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n        border: 1px solid #333;\n        background: #1e1e1e;\n        position: fixed;\n        top: 20px;\n        left: 20px;\n        color: #e0e0e0;\n        padding: 14px;\n        border-radius: 8px;\n        font-size: 14px;\n        z-index: 99999;\n        user-select: none;\n        width: 220px;\n        text-align: center;\n        cursor: move;\n        overflow: hidden;\n      }\n      #settings-panel:hover {\n        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n      }\n      #settings-panel button {\n        background: #2d2d2d;\n        color: #e74c3c;\n        border: 1px solid #444;\n        border-radius: 6px;\n        padding: 8px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        width: 100%;\n        margin-bottom: 8px;\n      }\n      #settings-panel button:hover:not(:disabled) {\n        background: #3d3d3d;\n        border-color: #e74c3c;\n        transform: translateY(-1px);\n        box-shadow: 0 2px 6px rgba(231, 76, 60, 0.2);\n      }\n      #settings-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);\n      }\n      #settings-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #settings-panel button.min-btn {\n        background: none;\n        border: none;\n        color: #e74c3c;\n        font-size: 18px;\n        cursor: pointer;\n        position: absolute;\n        top: 30%;\n        right: 5px;\n        transform: translateY(-50%);\n        z-index: 1;\n        transition: color 0.2s ease;\n        width: 20px;\n        height: 20px;\n        line-height: 20px;\n      }\n      #settings-panel button.min-btn:hover {\n        color: #f39c12;\n      }\n      #settings-panel .keybind-set, #settings-panel .bg-set {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        margin-bottom: 8px;\n        font-size: 12px;\n      }\n      #settings-panel .keybind-set label, #settings-panel .bg-set label {\n        color: #e0e0e0;\n      }\n      #settings-panel #toggleKeyInput, #settings-panel #bgUrl {\n        background: #2d2d2d;\n        border: 1px solid #444;\n        color: #e0e0e0;\n        border-radius: 4px;\n        padding: 4px;\n        text-align: center;\n      }\n      #settings-panel #toggleKeyInput {\n        width: 80px;\n      }\n      #settings-panel #bgUrl {\n        width: 120px;\n      }\n      #settings-panel .section-header {\n        font-weight: bold;\n        color: #e74c3c;\n        margin: 10px 0 5px 0;\n        font-size: 13px;\n      }\n    ";
 -  document.head.appendChild(styleElement);
--  const mainContainer = document.createElement("div");
--  mainContainer.id = "settings-panel";
--  mainContainer.innerHTML =
+-  const container = document.createElement("div");
+-  container.id = "settings-panel";
+-  container.innerHTML =
 -    '\n      <div style="font-weight:600; margin-bottom:10px; color:#e74c3c; position: relative; height: 40px; line-height: 40px; padding-right: 25px;">\n        SETTINGS\n        <button class="min-btn" id="minSettings">−</button>\n      </div>\n      <div id="settingsContent">\n        <div class="keybind-set">\n          <label for="toggleKeyInput">Toggle Client:</label>\n          <input type="text" id="toggleKeyInput" placeholder="Press key..." readonly>\n        </div>\n        <div class="section-header">Custom Background</div>\n        <div class="bg-set">\n          <label for="bgUrl">BG URL:</label>\n          <input type="text" id="bgUrl" placeholder="Image/GIF URL">\n        </div>\n        <button id="applyBg">Apply Custom Background</button>\n      </div>\n    ';
--  document.body.appendChild(mainContainer);
--  const bgUrlInput = mainContainer.querySelector("#bgUrl");
+-  document.body.appendChild(container);
+-  const bgUrlInput = container.querySelector("#bgUrl");
 -  bgUrlInput.value = localStorage.getItem("bgUrl") || "";
--  const applyBgButton = mainContainer.querySelector("#applyBg");
+-  const applyBgButton = container.querySelector("#applyBg");
 -  applyBgButton.onclick = () => {
--    const backgroundUrl = bgUrlInput.value.trim();
--    if (backgroundUrl === "") {
+-    const bgUrl = bgUrlInput.value.trim();
+-    if (bgUrl === "") {
 -      showNotification("Enter a URL first!");
 -      return;
 -    }
--    localStorage.setItem("bgUrl", backgroundUrl);
+-    localStorage.setItem("bgUrl", bgUrl);
 -    let homeBgElement = document.querySelector(".home-bg");
 -    const applyBackgroundImageSecondary = () => {
 -      homeBgElement.style.setProperty(
 -        "background-image",
--        'url("' + backgroundUrl + '")',
+-        'url("' + bgUrl + '")',
 -        "important",
 -      );
 -    };
 -    if (homeBgElement == null) {
--      const bgCheckInterval = setInterval(() => {
+-      const pollInterval = setInterval(() => {
 -        homeBgElement = document.querySelector(".home-bg");
 -        if (homeBgElement != null) {
--          clearInterval(bgCheckInterval);
+-          clearInterval(pollInterval);
 -        }
 -        applyBackgroundImageSecondary();
 -      }, 100);
@@ -1820,28 +1601,28 @@ Index: src/ui/theme.js
 -    }
 -    showNotification("Custom Background applied!");
 -  };
--  const minimizeSettingsButton = mainContainer.querySelector("#minSettings");
--  const settingsContent = mainContainer.querySelector("#settingsContent");
--  let isMinimized = false;
+-  const minimizeSettingsButton = container.querySelector("#minSettings");
+-  const settingsContent = container.querySelector("#settingsContent");
+-  let isHidden = false;
 -  minimizeSettingsButton.onclick = (event) => {
 -    event.stopPropagation();
--    isMinimized = !isMinimized;
--    settingsContent.style.display = isMinimized ? "none" : "block";
--    mainContainer.style.height = isMinimized ? "50px" : "auto";
--    minimizeSettingsButton.textContent = isMinimized ? "+" : "−";
+-    isHidden = !isHidden;
+-    settingsContent.style.display = isHidden ? "none" : "block";
+-    container.style.height = isHidden ? "50px" : "auto";
+-    minimizeSettingsButton.textContent = isHidden ? "+" : "−";
 -  };
--  const toggleKeyInput = mainContainer.querySelector("#toggleKeyInput");
--  toggleKeyInput.value = coreSharedState.pressedKey;
+-  const toggleKeyInput = container.querySelector("#toggleKeyInput");
+-  toggleKeyInput.value = state.activeKey;
 -  toggleKeyInput.addEventListener("keydown", (keyEvent) => {
 -    keyEvent.preventDefault();
--    coreSharedState.pressedKey = keyEvent.key;
--    toggleKeyInput.value = coreSharedState.pressedKey;
+-    state.activeKey = keyEvent.key;
+-    toggleKeyInput.value = state.activeKey;
 -  });
 -  let offsetX;
 -  let offsetY;
--  let isDragging = false;
--  let isToggled = false;
--  mainContainer.addEventListener("mousedown", (clickEvent) => {
+-  let isActive = false;
+-  let isActive_2 = false;
+-  container.addEventListener("mousedown", (clickEvent) => {
 -    if (
 -      clickEvent.target.tagName === "BUTTON" ||
 -      clickEvent.target.tagName === "INPUT" ||
@@ -1849,39 +1630,39 @@ Index: src/ui/theme.js
 -    ) {
 -      return;
 -    }
--    isDragging = true;
--    isToggled = false;
--    offsetX = clickEvent.clientX - mainContainer.getBoundingClientRect().left;
--    offsetY = clickEvent.clientY - mainContainer.getBoundingClientRect().top;
--    mainContainer.style.transition = "none";
+-    isActive = true;
+-    isActive_2 = false;
+-    offsetX = clickEvent.clientX - container.getBoundingClientRect().left;
+-    offsetY = clickEvent.clientY - container.getBoundingClientRect().top;
+-    container.style.transition = "none";
 -    const handleMouseMove = (mouseEvent) => {
 -      const deltaX = mouseEvent.clientX - clickEvent.clientX;
 -      const deltaY = mouseEvent.clientY - clickEvent.clientY;
--      if (!isToggled && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
--        isToggled = true;
+-      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+-        isActive_2 = true;
 -      }
--      if (isDragging) {
--        mainContainer.style.left = mouseEvent.clientX - offsetX + "px";
--        mainContainer.style.top = mouseEvent.clientY - offsetY + "px";
--        mainContainer.style.bottom = "auto";
--        mainContainer.style.right = "auto";
+-      if (isActive) {
+-        container.style.left = mouseEvent.clientX - offsetX + "px";
+-        container.style.top = mouseEvent.clientY - offsetY + "px";
+-        container.style.bottom = "auto";
+-        container.style.right = "auto";
 -      }
 -    };
 -    const handleMouseUp = () => {
--      isDragging = false;
--      mainContainer.style.transition = "all 0.3s ease";
+-      isActive = false;
+-      container.style.transition = "all 0.3s ease";
 -      document.removeEventListener("mousemove", handleMouseMove);
 -      document.removeEventListener("mouseup", handleMouseUp);
 -    };
 -    document.addEventListener("mousemove", handleMouseMove);
 -    document.addEventListener("mouseup", handleMouseUp);
 -  });
--  mainContainer.addEventListener("click", (propagationEvent) => {
--    if (isToggled) {
+-  container.addEventListener("click", (propagationEvent) => {
+-    if (isActive_2) {
 -      propagationEvent.stopImmediatePropagation();
 -    }
 -  });
--  return mainContainer;
+-  return container;
 -}
  
 -export { applyCustomBackground, createSettingsStyles };

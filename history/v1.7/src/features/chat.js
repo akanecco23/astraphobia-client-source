@@ -2,20 +2,20 @@ import { typeText } from "../ui/interaction.js";
 import { state } from "../core.js";
 
 function startScheduledTask(taskData, intervalSeconds) {
-  if (state.updateIntervalId) {
-    clearInterval(state.updateIntervalId);
+  if (state.entityTrailInterval) {
+    clearInterval(state.entityTrailInterval);
   }
-  state.isProcessing = true;
-  state.updateIntervalId = setInterval(() => {
+  state.isToggled = true;
+  state.entityTrailInterval = setInterval(() => {
     simulateChatInput(taskData);
   }, intervalSeconds * 1000);
 }
 function stopInterval() {
-  if (state.updateIntervalId) {
-    clearInterval(state.updateIntervalId);
-    state.updateIntervalId = null;
+  if (state.entityTrailInterval) {
+    clearInterval(state.entityTrailInterval);
+    state.entityTrailInterval = null;
   }
-  state.isProcessing = false;
+  state.isToggled = false;
 }
 function simulateChatInput(textToType) {
   const chatInput =

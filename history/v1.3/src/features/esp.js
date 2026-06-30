@@ -1,20 +1,20 @@
 import { showNotification } from "../ui/interaction.js";
-import { player, coreSharedState } from "../core.js";
+import { playerData, state } from "../core.js";
 
 function toggleMinimapSize() {
-  if (!player || !player.minimap) {
+  if (!playerData || !playerData.minimap) {
     showNotification("Minimap not available yet!");
     return;
   }
-  if (coreSharedState.isActive_2) {
-    player.minimap.scale.set(1);
-    player.minimap.pivot.set(0, 0);
-    coreSharedState.isActive_2 = false;
+  if (state.isToggled_2) {
+    playerData.minimap.scale.set(1);
+    playerData.minimap.pivot.set(0, 0);
+    state.isToggled_2 = false;
     showNotification("🗺️ Minimap restored to normal!");
   } else {
-    player.minimap.scale.set(0.5);
-    player.minimap.pivot.set(-70, -45);
-    coreSharedState.isActive_2 = true;
+    playerData.minimap.scale.set(0.5);
+    playerData.minimap.pivot.set(-70, -45);
+    state.isToggled_2 = true;
     showNotification("🗺️ Small Minimap enabled!");
   }
 }

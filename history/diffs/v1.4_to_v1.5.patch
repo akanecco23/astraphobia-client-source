@@ -2,7 +2,7 @@ Index: content.js
 ===================================================================
 --- content.js	v1.4
 +++ content.js	v1.5
-@@ -1,44 +1,48 @@
+@@ -1,13 +1,11 @@
  import {
    wrapPropertyWithProxy,
 -  initPacketInterceptor,
@@ -14,17 +14,13 @@ Index: content.js
    disableGameRestrictions,
 -  setupToolsPanel,
 -  initializePanels,
--  rotationAngles,
--  orbitRadius,
-+  angleSteps,
-+  radius,
+   angles,
+   radius,
    gameInstance,
    playerData,
-   isReady,
--  securitySettings,
--  state,
-+  securityConfigs,
-+  coreSharedState,
+@@ -15,31 +13,37 @@
+   config,
+   state,
  } from "./src/core.js";
  import {
 +  createHalloweenModal,
@@ -39,7 +35,7 @@ Index: content.js
  } from "./src/ui/panels.js";
  import {
 -  startAntiAfkMouseMovement,
--  stopMouseSimulation,
+-  stopEntityTrail,
 -  toggleMouseSimulation,
 -} from "./src/features/movement.js";
 -import {
@@ -48,20 +44,21 @@ Index: content.js
    getAllPropertyNames,
  } from "./src/utils.js";
  import {
-+  stopMouseSimulation,
-+  toggleMouseSimulation,
-+} from "./src/features/movement.js";
-+import {
 +  applyHomeBackground,
 +  applyThemeColors,
 +  setBlueTheme,
 +} from "./src/ui/theme.js";
++import {
++  stopEntityTrail,
++  toggleMouseSimulation,
++} from "./src/features/movement.js";
 +import {
    startScheduledTask,
    stopInterval,
    autoChat,
  } from "./src/features/chat.js";
  import { simulateTyping, showNotification } from "./src/ui/interaction.js";
+ import { featuresentitytrailState } from "./src/features/entitytrail.js";
 -import { initBackgroundImage, setTheme } from "./src/ui/theme.js";
  import { handleAnimalAction } from "./src/features/autofarm.js";
 +import { startAntiAfk } from "./src/features/antidetection.js";
@@ -88,7 +85,7 @@ Index: src/core.js
 ===================================================================
 --- src/core.js	v1.4
 +++ src/core.js	v1.5
-@@ -1,28 +1,20 @@
+@@ -1,29 +1,20 @@
 -import {
 -  initControlOverlay,
 -  setupUpdateHistory,
@@ -99,6 +96,7 @@ Index: src/core.js
 -import { startScheduledTask, stopInterval, autoChat } from "./features/chat.js";
 -import { showNotification, simulateTyping } from "./ui/interaction.js";
 -import { getAllPropertyNames, generateRandomString } from "./utils.js";
+-import { featuresentitytrailState } from "./features/entitytrail.js";
 -import { toggleMouseSimulation } from "./features/movement.js";
 +import { initControlOverlay, togglePanels } from "./ui/panels.js";
 +import { showNotification } from "./ui/interaction.js";
@@ -107,25 +105,25 @@ Index: src/core.js
 +import { applyHomeBackground } from "./ui/theme.js";
 +import { getAllPropertyNames } from "./utils.js";
  
- const stateMap = new WeakMap();
+ const stateCache = new WeakMap();
  function wrapPropertyWithProxy(targetObject, propertyKey, proxyHandler) {
    const originalValue = targetObject[propertyKey];
 -  const proxyValue = new Proxy(originalValue, proxyHandler);
--  stateMap.set(proxyValue, originalValue);
+-  stateCache.set(proxyValue, originalValue);
 -  targetObject[propertyKey] = proxyValue;
 +  const proxyInstance = new Proxy(originalValue, proxyHandler);
-+  stateMap.set(proxyInstance, originalValue);
++  stateCache.set(proxyInstance, originalValue);
 +  targetObject[propertyKey] = proxyInstance;
  }
  
- let isInitialized = false;
+ let isProcessed = false;
 -function initPacketInterceptor(config) {
 +function initInterceptor(config) {
-   if (isInitialized) {
+   if (isProcessed) {
      return;
    }
    function unescapeString(inputString) {
-@@ -30,9 +22,9 @@
+@@ -31,9 +22,9 @@
        return inputString;
      }
      return inputString.replace(
@@ -136,7 +134,7 @@ Index: src/core.js
            case "\\":
              return "\\";
            case "n":
-@@ -56,18 +48,18 @@
+@@ -57,18 +48,18 @@
            case "6":
            case "7":
              return String.fromCharCode(Number.parseInt(escapeSequence, 8) || 0);
@@ -162,7 +160,7 @@ Index: src/core.js
                  return String.fromCodePoint(codePoint);
                }
              }
-@@ -75,15 +67,15 @@
+@@ -76,15 +67,15 @@
          }
        },
      );
@@ -180,7 +178,7 @@ Index: src/core.js
        const commandPatterns = [
          /^(\x14{3}\d+\|6\|)(.+)$/gm,
          /^(\x14{3}\d+\|8\|)(.+)$/gm,
-@@ -94,24 +86,24 @@
+@@ -95,24 +86,24 @@
          let patternIndex = 0;
          patternIndex < commandPatterns.length;
          patternIndex++
@@ -214,36 +212,26 @@ Index: src/core.js
    const inputMaxLengthObserver = new MutationObserver(() => {
      document
        .querySelector(".play-game .el-input__inner")
-@@ -136,17 +128,17 @@
-   }
-   showNotification("✅ Special Characters enabled! (One-time use)");
- }
- 
--const rotationAngles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
--const orbitRadius = 300;
-+const angleSteps = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
-+const radius = 300;
- let gameInstance;
--let globalState;
-+let appState;
+@@ -144,10 +135,10 @@
+ let appState;
  let playerData;
- let isReady = false;
+ let isProcessed_2 = false;
  
--const encryptPacketData = (message, byteValue, suffix = "") => {
+-const encryptPacketData = (url, byteValue, suffix = "") => {
 -  const stringPool = [
-+const encryptPacketData = (isEnabled, charCode, suffix = "") => {
++const encryptPacketData = (isActive, charCode, suffix = "") => {
 +  const stringTable = [
      "ode",
      "eat",
      "fr",
      "bite",
-@@ -158,51 +150,53 @@
+@@ -159,49 +150,51 @@
      "L",
      "en",
      "setter",
    ];
--  if (!message) {
-+  if (!isEnabled) {
+-  if (!url) {
++  if (!isActive) {
      return null;
    }
 -  const plainText = ((firstText, secondText) => {
@@ -265,13 +253,12 @@ Index: src/core.js
 -      byteBuffer[i] =
 -        firstEncodedBytes[i] ^
 -        secondEncodedBytes[
--          i %
--            secondEncodedBytes[
-+    for (let index = 0; index < encodedInput.length; index++) {
-+      resultBuffer[index] =
-+        encodedInput[index] ^
++    for (let i = 0; i < encodedInput.length; i++) {
++      resultBuffer[i] =
++        encodedInput[i] ^
 +        encodedKey[
-+          index %
+           i %
+-            secondEncodedBytes[
 +            encodedKey[
                "" +
 -                stringPool[9].toLowerCase() +
@@ -288,9 +275,9 @@ Index: src/core.js
 +    return btoa(String.fromCharCode(...resultBuffer));
    })(
 -    String.fromCharCode(byteValue)[stringPool[8] + stringPool[1]](3) + suffix,
--    message,
+-    url,
 +    String.fromCharCode(charCode)[stringTable[8] + stringTable[1]](3) + suffix,
-+    isEnabled,
++    isActive,
    );
 -  const encodedText = new TextEncoder()[stringPool[5] + stringPool[0]](
 +  const encodedBytes = new TextEncoder()[stringTable[5] + stringTable[0]](
@@ -313,31 +300,25 @@ Index: src/core.js
 +  dataView.setUint8(bufferLength - 1, charCode);
 +  return arrayBuffer;
  };
--const securitySettings = {
-+const securityConfigs = {
+ const config = {
    107: {
      hasSec: true,
-     secLoadTime: 750,
-     hasScaling: true,
-@@ -212,164 +206,154 @@
+@@ -213,71 +206,67 @@
      secLoadTime: 500,
      hasScaling: false,
    },
  };
 -const sendPacket = (payload, metadata = "") => {
--  if (gameInstance && globalState && stateCache.socketManager) {
--    gameInstance[stateCache.socketManager].sendBytePacket(
--      encryptPacketData(globalState.token._value, payload, metadata),
 +const sendPacket = (payload, additionalData = "") => {
-+  if (gameInstance && appState && state.socketManager) {
-+    gameInstance[state.socketManager].sendBytePacket(
+   if (gameInstance && appState && config_2.socketManager) {
+     gameInstance[config_2.socketManager].sendBytePacket(
+-      encryptPacketData(appState.token._value, payload, metadata),
 +      encryptPacketData(appState.token._value, payload, additionalData),
      );
    }
  };
--const stateCache = {};
-+const state = {};
- const counter = 0;
+ const config_2 = {};
+ const currentTime = 0;
 -const setupProxyHooks = () => {
 -  const propertyCache = {};
 +const initializeAntiTamper = () => {
@@ -357,21 +338,24 @@ Index: src/core.js
 +      dataStore[storeIndex],
 +      storeValue,
      );
--    stateMap.set(contextInstance, contextMap[contextKey]);
+-    stateCache.set(contextInstance, contextMap[contextKey]);
 -    contextMap[contextKey] = contextInstance;
-+    stateMap.set(processedValue, dataStore[storeIndex]);
++    stateCache.set(processedValue, dataStore[storeIndex]);
 +    dataStore[storeIndex] = processedValue;
    };
 -  wrapWithProxy(Function.prototype, "toString", {
 -    apply(thisArg, propertyKey, applyParams) {
 -      return propertyCache.apply(
 -        thisArg,
--        stateMap.get(propertyKey) || propertyKey,
+-        stateCache.get(propertyKey) || propertyKey,
 -        applyParams,
--      );
 +  createProxyHook(Function.prototype, "toString", {
 +    apply(context, argsKey, extraArg) {
-+      return storage.apply(context, stateMap.get(argsKey) || argsKey, extraArg);
++      return storage.apply(
++        context,
++        stateCache.get(argsKey) || argsKey,
++        extraArg,
+       );
      },
    });
 -  wrapWithProxy(window, "Proxy", {
@@ -384,11 +368,11 @@ Index: src/core.js
    });
 -  wrapWithProxy(ProxyConstructor, "revocable", {
 -    apply(context, args, options) {
--      const result = propertyCache.apply(context, args, options);
+-      const data = propertyCache.apply(context, args, options);
 +  createProxyHook(ProxyConstructor, "revocable", {
 +    apply(thisArg, args, extraArg2) {
-+      const result = storage.apply(thisArg, args, extraArg2);
-       return result;
++      const data = storage.apply(thisArg, args, extraArg2);
+       return data;
      },
    });
 -  let lastExecutionTime = 0;
@@ -421,74 +405,47 @@ Index: src/core.js
            const obfuscatedKeys = allKeys.filter((obfuscatedVarName) =>
              obfuscatedVarName.startsWith("_0x"),
            );
--          stateCache.setFlash =
-+          state.setFlash =
-             Object.getOwnPropertyNames(playerData.__proto__.__proto__)
+@@ -286,14 +275,14 @@
                .filter((obfuscatedPropName) =>
                  obfuscatedPropName.startsWith("_0x"),
                )
                .find(
 -                (functionKey) => playerData[functionKey] instanceof Function,
--              ) || stateCache.setFlash;
--          stateCache.terrainManager =
 +                (methodName) => playerData[methodName] instanceof Function,
-+              ) || state.setFlash;
-+          state.terrainManager =
+               ) || config_2.setFlash;
+           config_2.terrainManager =
              obfuscatedKeys.find(
 -              (shadowObjectKey) =>
 -                typeof playerData[shadowObjectKey]?.shadow !== "undefined",
--            ) || stateCache.terrainManager;
--          stateCache.entityManager =
 +              (shadowEntityKey) =>
 +                typeof playerData[shadowEntityKey]?.shadow !== "undefined",
-+            ) || state.terrainManager;
-+          state.entityManager =
+             ) || config_2.terrainManager;
+           config_2.entityManager =
              obfuscatedKeys.find(
                (entitiesListKey) =>
-                 typeof playerData[entitiesListKey]?.entitiesList !==
-                 "undefined",
--            ) || stateCache.entityManager;
--          stateCache.entityManagerProps = {};
-+            ) || state.entityManager;
-+          state.entityManagerProps = {};
+@@ -303,9 +292,9 @@
+           config_2.entityManagerProps = {};
            const entityManagerKeys = getAllPropertyNames(
--            playerData[stateCache.entityManager],
-+            playerData[state.entityManager],
+             playerData[config_2.entityManager],
            );
 -          const animalsListInterval = setInterval(() => {
--            stateCache.entityManagerProps.animalsList =
 +          const animalsUpdateInterval = setInterval(() => {
-+            state.entityManagerProps.animalsList =
+             config_2.entityManagerProps.animalsList =
                entityManagerKeys
                  .filter((variableName) => variableName.startsWith("_0x"))
                  .find(
-                   (entityName) =>
--                    typeof playerData?.[stateCache.entityManager]?.[
-+                    typeof playerData?.[state.entityManager]?.[
-                       entityName
-                     ]?.[0] !== "undefined",
--                ) || stateCache.entityManagerProps.animalsList;
--            if (
--              typeof stateCache.entityManagerProps.animalsList !== "undefined"
--            ) {
+@@ -316,9 +305,9 @@
+                 ) || config_2.entityManagerProps.animalsList;
+             if (
+               typeof config_2.entityManagerProps.animalsList !== "undefined"
+             ) {
 -              clearInterval(animalsListInterval);
-+                ) || state.entityManagerProps.animalsList;
-+            if (typeof state.entityManagerProps.animalsList !== "undefined") {
 +              clearInterval(animalsUpdateInterval);
              }
            }, 1000);
--          stateCache.socketManager =
-+          state.socketManager =
+           config_2.socketManager =
              getAllPropertyNames(gameInstance).find(
-               (networkClientKey) =>
-                 typeof gameInstance[networkClientKey]?.sendBytePacket !==
-                 "undefined",
--            ) || stateCache.socketManager;
-+            ) || state.socketManager;
-           try {
--            globalState = document
-+            appState = document
-               .getElementById("app")
+@@ -332,45 +321,45 @@
                ._vnode.appContext.config.globalProperties.$simpleState.states.find(
                  (gameStore) => gameStore._storeMeta.id === "game",
                );
@@ -546,28 +503,17 @@ Index: src/core.js
    });
  };
  const disableGameRestrictions = () => {
-@@ -390,13 +374,13 @@
-       gameInstance.viewport.plugins.plugins["clamp-zoom"] = null;
-     } catch {}
-   }, 300);
-   try {
--    if (stateCache.setFlash) {
--      playerData[stateCache.setFlash] = () => {};
-+    if (state.setFlash) {
-+      playerData[state.setFlash] = () => {};
-     }
--    if (stateCache.terrainManager) {
--      const terrainManager = playerData[stateCache.terrainManager];
-+    if (state.terrainManager) {
-+      const terrainManager = playerData[state.terrainManager];
-       if (terrainManager && terrainManager.shadow) {
+@@ -401,192 +390,29 @@
          terrainManager.shadow.setShadowSize(1000000);
          terrainManager.shadow.setShadowSize = () => {};
        }
-@@ -405,212 +389,47 @@
-     console.error(error);
+     }
+-  } catch (url_2) {
+-    console.error(url_2);
++  } catch (url) {
++    console.error(url);
    }
-   isReady = true;
+   isProcessed_2 = true;
  };
 -function setupToolsPanel() {
 -  const toolsStyle = document.createElement("style");
@@ -598,10 +544,10 @@ Index: src/core.js
 -      autoChat(chatMessage);
 -    }
 -  };
--  const patchButton = container.querySelector("#patchBtn");
--  patchButton.onclick = () => initPacketInterceptor(patchButton);
--  const spoofButton = container.querySelector("#spoofBtn");
--  spoofButton.onclick = () => {
+-  const spoofButton = container.querySelector("#patchBtn");
+-  spoofButton.onclick = () => initPacketInterceptor(spoofButton);
+-  const spoofButton_2 = container.querySelector("#spoofBtn");
+-  spoofButton_2.onclick = () => {
 -    const randomValue = generateRandomString(8);
 -    if (simulateTyping(".play-game .el-input__inner", randomValue)) {
 -      showNotification("Spoofed name!");
@@ -611,47 +557,47 @@ Index: src/core.js
 -      showNotification("No name input found! Enable special characters first.");
 -    }
 -  };
--  const spinButton = container.querySelector("#spinBtn");
--  spinButton.onclick = () => {
+-  const autoChatButton = container.querySelector("#spinBtn");
+-  autoChatButton.onclick = () => {
 -    toggleMouseSimulation();
--    if (state.animationIntervalId) {
--      spinButton.textContent = "Disable Auto Spin";
--      spinButton.style.color = "var(--accent)";
--      spinButton.style.opacity = "0.6";
+-    if (featuresentitytrailState.entityTrailInterval_2) {
+-      autoChatButton.textContent = "Disable Auto Spin";
+-      autoChatButton.style.color = "var(--accent)";
+-      autoChatButton.style.opacity = "0.6";
 -    } else {
--      spinButton.textContent = "Enable Auto Spin";
--      spinButton.style.color = "var(--accent)";
--      spinButton.style.opacity = "1";
+-      autoChatButton.textContent = "Enable Auto Spin";
+-      autoChatButton.style.color = "var(--accent)";
+-      autoChatButton.style.opacity = "1";
 -    }
 -  };
 -  const spinKeyInput = container.querySelector("#spinKeyInput");
--  let pressedKey = null;
+-  let lastPressedKey = null;
 -  spinKeyInput.addEventListener("keydown", (keyboardEvent) => {
 -    keyboardEvent.preventDefault();
--    pressedKey = keyboardEvent.code || keyboardEvent.key;
--    spinKeyInput.value = pressedKey.replace("Key", "").toLowerCase();
+-    lastPressedKey = keyboardEvent.code || keyboardEvent.key;
+-    spinKeyInput.value = lastPressedKey.replace("Key", "").toLowerCase();
 -  });
 -  document.addEventListener("keydown", (keyboardEvent_2) => {
 -    if (
--      pressedKey &&
--      keyboardEvent_2.code === pressedKey &&
+-      lastPressedKey &&
+-      keyboardEvent_2.code === lastPressedKey &&
 -      !keyboardEvent_2.target.matches("input, textarea, button")
 -    ) {
 -      keyboardEvent_2.preventDefault();
 -      toggleMouseSimulation();
--      if (state.animationIntervalId) {
--        spinButton.textContent = "Disable Auto Spin";
--        spinButton.style.color = "var(--accent)";
--        spinButton.style.opacity = "0.6";
+-      if (featuresentitytrailState.entityTrailInterval_2) {
+-        autoChatButton.textContent = "Disable Auto Spin";
+-        autoChatButton.style.color = "var(--accent)";
+-        autoChatButton.style.opacity = "0.6";
 -      } else {
--        spinButton.textContent = "Enable Auto Spin";
--        spinButton.style.color = "var(--accent)";
--        spinButton.style.opacity = "1";
+-        autoChatButton.textContent = "Enable Auto Spin";
+-        autoChatButton.style.color = "var(--accent)";
+-        autoChatButton.style.opacity = "1";
 -      }
 -    }
 -  });
--  const autoChatButton = container.querySelector("#autoChatBtn");
--  autoChatButton.onclick = () => {
+-  const autoChatButton_2 = container.querySelector("#autoChatBtn");
+-  autoChatButton_2.onclick = () => {
 -    const chatMessage_2 = container.querySelector("#chatMsg").value;
 -    const delayInput = container.querySelector("#delayInput");
 -    const delayValue = parseInt(delayInput.value) || 10;
@@ -659,22 +605,22 @@ Index: src/core.js
 -      showNotification("⚠️ Enter a message first!");
 -      return;
 -    }
--    if (state.isProcessing) {
+-    if (state.isToggled) {
 -      stopInterval();
--      autoChatButton.textContent = "Enable Auto Chat";
--      autoChatButton.style.color = "var(--accent)";
--      autoChatButton.style.opacity = "1";
+-      autoChatButton_2.textContent = "Enable Auto Chat";
+-      autoChatButton_2.style.color = "var(--accent)";
+-      autoChatButton_2.style.opacity = "1";
 -    } else {
 -      startScheduledTask(chatMessage_2, delayValue);
--      autoChatButton.textContent = "Disable Auto Chat";
--      autoChatButton.style.color = "var(--accent)";
--      autoChatButton.style.opacity = "0.6";
+-      autoChatButton_2.textContent = "Disable Auto Chat";
+-      autoChatButton_2.style.color = "var(--accent)";
+-      autoChatButton_2.style.opacity = "0.6";
 -    }
 -  };
 -  let offsetX;
 -  let offsetY;
 -  let isActive = false;
--  let isDragging = false;
+-  let isActive_2 = false;
 -  container.addEventListener("mousedown", (clickEvent) => {
 -    if (
 -      clickEvent.target.tagName === "BUTTON" ||
@@ -685,15 +631,15 @@ Index: src/core.js
 -      return;
 -    }
 -    isActive = true;
--    isDragging = false;
+-    isActive_2 = false;
 -    offsetX = clickEvent.clientX - container.getBoundingClientRect().left;
 -    offsetY = clickEvent.clientY - container.getBoundingClientRect().top;
 -    container.style.transition = "none";
 -    const handleMouseMove = (mouseEvent) => {
 -      const deltaX = mouseEvent.clientX - clickEvent.clientX;
 -      const deltaY = mouseEvent.clientY - clickEvent.clientY;
--      if (!isDragging && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
--        isDragging = true;
+-      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+-        isActive_2 = true;
 -      }
 -      if (isActive) {
 -        container.style.left = mouseEvent.clientX - offsetX + "px";
@@ -712,7 +658,7 @@ Index: src/core.js
 -    document.addEventListener("mouseup", handleMouseUp);
 -  });
 -  container.addEventListener("click", (event) => {
--    if (isDragging) {
+-    if (isActive_2) {
 -      event.stopImmediatePropagation();
 -    }
 -  });
@@ -736,10 +682,10 @@ Index: src/core.js
 -document.addEventListener("keydown", (event) => {
 +document.addEventListener("keydown", (keyboardEvent) => {
    if (
--    event.key === state.currentKey &&
+-    event.key === state.activeKey &&
 -    !event.repeat &&
 -    !event.target.matches("input, textarea, button")
-+    keyboardEvent.key === coreSharedState.activeKey &&
++    keyboardEvent.key === state.activeKey &&
 +    !keyboardEvent.repeat &&
 +    !keyboardEvent.target.matches("input, textarea, button")
    ) {
@@ -758,18 +704,8 @@ Index: src/core.js
    }, 1000);
  });
  
--export const state = {
--  mainIntervalId: null,
-+export const coreSharedState = {
-+  updateInterval: null,
-   isProcessing: false,
--  animationIntervalId: null,
-+  rotationInterval: null,
-   angleIndex: 0,
-   isInitialized_2: false,
-   isProcessing_2: false,
--  currentKey: "Shift",
-+  activeKey: "Shift",
+ export const state = {
+@@ -598,15 +424,13 @@
  };
  
  export {
@@ -783,16 +719,10 @@ Index: src/core.js
    disableGameRestrictions,
 -  setupToolsPanel,
 -  initializePanels,
--  rotationAngles,
--  orbitRadius,
-+  angleSteps,
-+  radius,
+   angles,
+   radius,
    gameInstance,
    playerData,
-   isReady,
--  securitySettings,
-+  securityConfigs,
- };
 Index: src/features/adblock.js
 ===================================================================
 --- src/features/adblock.js	v1.4
@@ -832,12 +762,13 @@ Index: src/features/antidetection.js
 --- src/features/antidetection.js	v1.4
 +++ src/features/antidetection.js	v1.5
 @@ -0,0 +1,31 @@
-+import { angleSteps, radius, coreSharedState } from "../core.js";
++import { featuresentitytrailState } from "./entitytrail.js";
 +import { showNotification } from "../ui/interaction.js";
++import { angles, radius, state } from "../core.js";
 +import { getGameCanvas } from "../utils.js";
 +
 +function startAntiAfk() {
-+  if (coreSharedState.rotationInterval) {
++  if (featuresentitytrailState.entityTrailInterval_2) {
 +    return;
 +  }
 +  const gameCanvas = getGameCanvas();
@@ -845,8 +776,8 @@ Index: src/features/antidetection.js
 +    showNotification("Game canvas not found!");
 +    return;
 +  }
-+  coreSharedState.rotationInterval = setInterval(() => {
-+    const angleDegrees = angleSteps[coreSharedState.angleIndex];
++  featuresentitytrailState.entityTrailInterval_2 = setInterval(() => {
++    const angleDegrees = angles[state.angleIndex];
 +    const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
 +    const offsetX = Math.round(radius * Math.sin(angleRadians));
 +    const offsetY = Math.round(radius * Math.cos(angleRadians));
@@ -857,8 +788,7 @@ Index: src/features/antidetection.js
 +        bubbles: true,
 +      }),
 +    );
-+    coreSharedState.angleIndex =
-+      (coreSharedState.angleIndex + 1) % angleSteps.length;
++    state.angleIndex = (state.angleIndex + 1) % angles.length;
 +  }, 15);
 +}
 +
@@ -867,29 +797,18 @@ Index: src/features/autofarm.js
 ===================================================================
 --- src/features/autofarm.js	v1.4
 +++ src/features/autofarm.js	v1.5
-@@ -1,25 +1,30 @@
--import { playerData, securitySettings, sendPacket, state } from "../core.js";
-+import {
-+  playerData,
-+  securityConfigs,
-+  sendPacket,
-+  coreSharedState,
-+} from "../core.js";
- 
- const handleAnimalAction = (currentValue) => {
+@@ -4,9 +4,9 @@
    const id1 = 1;
    const id4 = 4;
    const id5 = 5;
    try {
 -    const fishLevelConfig = {
--      ...securitySettings.default,
--      ...(securitySettings[playerData?.myAnimals?.[0]?.visibleFishLevel] || {}),
 +    const fishLevelSettings = {
-+      ...securityConfigs.default,
-+      ...(securityConfigs[playerData?.myAnimals?.[0]?.visibleFishLevel] || {}),
+       ...config.default,
+       ...(config[playerData?.myAnimals?.[0]?.visibleFishLevel] || {}),
      };
      if (currentValue < (playerData?.myAnimals?.[0]?._standing ? 40 : 100)) {
-       return sendPacket(id1);
+@@ -14,12 +14,12 @@
      }
      if (playerData?.myAnimals?.[0]?._standing) {
        return sendPacket(id5, currentValue);
@@ -904,41 +823,6 @@ Index: src/features/autofarm.js
      }
      return sendPacket(id1);
    } catch {}
-Index: src/features/chat.js
-===================================================================
---- src/features/chat.js	v1.4
-+++ src/features/chat.js	v1.5
-@@ -1,21 +1,21 @@
--import { state } from "../core.js";
-+import { coreSharedState } from "../core.js";
- 
- function startScheduledTask(taskData, intervalSeconds) {
--  if (state.mainIntervalId) {
--    clearInterval(state.mainIntervalId);
-+  if (coreSharedState.updateInterval) {
-+    clearInterval(coreSharedState.updateInterval);
-   }
--  state.isProcessing = true;
--  state.mainIntervalId = setInterval(() => {
-+  coreSharedState.isProcessing = true;
-+  coreSharedState.updateInterval = setInterval(() => {
-     autoChat(taskData);
-   }, intervalSeconds * 1000);
- }
- function stopInterval() {
--  if (state.mainIntervalId) {
--    clearInterval(state.mainIntervalId);
--    state.mainIntervalId = null;
-+  if (coreSharedState.updateInterval) {
-+    clearInterval(coreSharedState.updateInterval);
-+    coreSharedState.updateInterval = null;
-   }
--  state.isProcessing = false;
-+  coreSharedState.isProcessing = false;
- }
- function autoChat(messageText) {
-   const chatInput =
-     document.querySelector(".chat-input input") ||
 Index: src/features/esp.js
 ===================================================================
 --- src/features/esp.js	v1.4
@@ -952,15 +836,15 @@ Index: src/features/esp.js
 -    showNotification("Minimap not available yet!");
 -    return;
 -  }
--  if (state.isProcessing_2) {
+-  if (state.isToggled_2) {
 -    playerData.minimap.scale.set(1);
 -    playerData.minimap.pivot.set(0, 0);
--    state.isProcessing_2 = false;
+-    state.isToggled_2 = false;
 -    showNotification("🗺️ Minimap restored to normal!");
 -  } else {
 -    playerData.minimap.scale.set(0.5);
 -    playerData.minimap.pivot.set(-70, -45);
--    state.isProcessing_2 = true;
+-    state.isToggled_2 = true;
 -    showNotification("🗺️ Small Minimap enabled!");
 -  }
 -}
@@ -970,15 +854,15 @@ Index: src/features/movement.js
 ===================================================================
 --- src/features/movement.js	v1.4
 +++ src/features/movement.js	v1.5
-@@ -1,47 +1,18 @@
--import { rotationAngles, orbitRadius, state } from "../core.js";
+@@ -1,33 +1,7 @@
+ import { featuresentitytrailState } from "./entitytrail.js";
 -import { showNotification } from "../ui/interaction.js";
+-import { angles, radius, state } from "../core.js";
 -import { getGameCanvas } from "../utils.js";
 +import { startAntiAfk } from "./antidetection.js";
-+import { coreSharedState } from "../core.js";
  
 -function startAntiAfkMouseMovement() {
--  if (state.animationIntervalId) {
+-  if (featuresentitytrailState.entityTrailInterval_2) {
 -    return;
 -  }
 -  const gameCanvas = getGameCanvas();
@@ -986,11 +870,11 @@ Index: src/features/movement.js
 -    showNotification("Game canvas not found!");
 -    return;
 -  }
--  state.animationIntervalId = setInterval(() => {
--    const angleDegrees = rotationAngles[state.angleIndex];
+-  featuresentitytrailState.entityTrailInterval_2 = setInterval(() => {
+-    const angleDegrees = angles[state.angleIndex];
 -    const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
--    const offsetX = Math.round(orbitRadius * Math.sin(angleRadians));
--    const offsetY = Math.round(orbitRadius * Math.cos(angleRadians));
+-    const offsetX = Math.round(radius * Math.sin(angleRadians));
+-    const offsetY = Math.round(radius * Math.cos(angleRadians));
 -    gameCanvas.dispatchEvent(
 -      new MouseEvent("pointermove", {
 -        clientX: window.innerWidth / 2 + offsetX,
@@ -998,44 +882,35 @@ Index: src/features/movement.js
 -        bubbles: true,
 -      }),
 -    );
--    state.angleIndex = (state.angleIndex + 1) % rotationAngles.length;
+-    state.angleIndex = (state.angleIndex + 1) % angles.length;
 -  }, 15);
 -}
- function stopMouseSimulation() {
--  if (state.animationIntervalId) {
--    clearInterval(state.animationIntervalId);
--    state.animationIntervalId = null;
-+  if (coreSharedState.rotationInterval) {
-+    clearInterval(coreSharedState.rotationInterval);
-+    coreSharedState.rotationInterval = null;
-   }
- }
+ function stopEntityTrail() {
+   if (featuresentitytrailState.entityTrailInterval_2) {
+     clearInterval(featuresentitytrailState.entityTrailInterval_2);
+     featuresentitytrailState.entityTrailInterval_2 = null;
+@@ -36,9 +10,9 @@
  function toggleMouseSimulation() {
--  if (state.animationIntervalId) {
-+  if (coreSharedState.rotationInterval) {
-     stopMouseSimulation();
+   if (featuresentitytrailState.entityTrailInterval_2) {
+     stopEntityTrail();
    } else {
 -    startAntiAfkMouseMovement();
 +    startAntiAfk();
    }
  }
  
--export {
--  startAntiAfkMouseMovement,
--  stopMouseSimulation,
--  toggleMouseSimulation,
--};
-+export { stopMouseSimulation, toggleMouseSimulation };
+-export { startAntiAfkMouseMovement, stopEntityTrail, toggleMouseSimulation };
++export { stopEntityTrail, toggleMouseSimulation };
 Index: src/ui/interaction.js
 ===================================================================
 --- src/ui/interaction.js	v1.4
 +++ src/ui/interaction.js	v1.5
-@@ -1,53 +1,55 @@
+@@ -1,55 +1,55 @@
+ import { radius, state } from "../core.js";
+ 
 -function simulateTyping(selector, text) {
 -  const element = document.querySelector(selector);
 -  if (!element) {
-+import { radius, coreSharedState } from "../core.js";
-+
 +function simulateTyping(inputSelector, textToType) {
 +  const inputElement = document.querySelector(inputSelector);
 +  if (!inputElement) {
@@ -1119,21 +994,21 @@ Index: src/ui/panels.js
 +  radius,
    gameInstance,
    playerData,
--  securitySettings,
-+  securityConfigs,
+   config,
+-  radius,
 +  initInterceptor,
-   isReady,
+   isProcessed_2,
 -  setupProxyHooks,
 +  initializeAntiTamper,
    disableGameRestrictions,
--  state,
-+  coreSharedState,
+   state,
  } from "../core.js";
 +import {
 +  startScheduledTask,
 +  stopInterval,
 +  autoChat,
 +} from "../features/chat.js";
++import { featuresentitytrailState } from "../features/entitytrail.js";
 +import { showNotification, simulateTyping } from "./interaction.js";
 +import { toggleMouseSimulation } from "../features/movement.js";
  import { handleAnimalAction } from "../features/autofarm.js";
@@ -1144,6 +1019,7 @@ Index: src/ui/panels.js
 +import { toggleMinimapScale } from "./radar.js";
 +import { applyThemeColors } from "./theme.js";
  
+ let isProcessed_3 = false;
 +function createHalloweenModal(modalConfig) {
 +  const modalContainer = document.createElement("div");
 +  modalContainer.id = "halloween-code-modal";
@@ -1203,13 +1079,10 @@ Index: src/ui/panels.js
 +  halloweenCodeInput.focus();
 +}
  const initControlOverlay = () => {
--  if (state.isInitialized_2) {
-+  if (coreSharedState.isInitialized_2) {
+   if (isProcessed_3) {
      return;
    }
-   function sendActionSequence() {
-     try {
-@@ -34,11 +101,11 @@
+@@ -36,11 +103,11 @@
      try {
        document.getElementById("ctrl-overlay").remove();
      } catch {}
@@ -1224,7 +1097,7 @@ Index: src/ui/panels.js
      overlayDiv.outerHTML =
        '<div id="ctrl-overlay" style="width: 100%;height: 100%;position: absolute;display: block;z-index:10000;pointer-events:none;"></div>';
      document
-@@ -47,57 +114,57 @@
+@@ -49,57 +116,57 @@
    }
    createControlOverlay();
    window.addEventListener(
@@ -1237,11 +1110,9 @@ Index: src/ui/panels.js
          }
          const visibleFishLevel = playerData.myAnimals[0].visibleFishLevel;
 -        const fishLevelConfig = {
--          ...securitySettings.default,
--          ...securitySettings[visibleFishLevel],
 +        const mergedFishConfig = {
-+          ...securityConfigs.default,
-+          ...securityConfigs[visibleFishLevel],
+           ...config.default,
+           ...config[visibleFishLevel],
          };
 -        if (callbackParam.ctrlKey) {
 -          if (callbackParam.shiftKey && visibleFishLevel === 107) {
@@ -1300,13 +1171,10 @@ Index: src/ui/panels.js
          }
        } catch {}
      },
-@@ -107,116 +174,289 @@
-     try {
-       document.getElementById("ctrl-overlay").style.pointerEvents = "none";
+@@ -111,114 +178,287 @@
      } catch {}
    });
--  state.isInitialized_2 = true;
-+  coreSharedState.isInitialized_2 = true;
+   isProcessed_3 = true;
  };
 -function setupUpdateHistory() {
 -  const historyStyle = document.createElement("style");
@@ -1333,32 +1201,33 @@ Index: src/ui/panels.js
 +  const minHistElement = draggableElement.querySelector("#minHist");
 +  const historyContentElement =
 +    draggableElement.querySelector("#historyContent");
-   let isHistoryHidden = false;
+   let isHidden = false;
 -  minHistBtn.onclick = (event) => {
 +  minHistElement.onclick = (event) => {
      event.stopPropagation();
-     isHistoryHidden = !isHistoryHidden;
--    historyContent.style.display = isHistoryHidden ? "none" : "block";
--    historyPanel.style.height = isHistoryHidden ? "60px" : "auto";
--    minHistBtn.textContent = isHistoryHidden ? "+" : "−";
-+    historyContentElement.style.display = isHistoryHidden ? "none" : "block";
-+    draggableElement.style.height = isHistoryHidden ? "60px" : "auto";
-+    minHistElement.textContent = isHistoryHidden ? "+" : "−";
+     isHidden = !isHidden;
+-    historyContent.style.display = isHidden ? "none" : "block";
+-    historyPanel.style.height = isHidden ? "60px" : "auto";
+-    minHistBtn.textContent = isHidden ? "+" : "−";
++    historyContentElement.style.display = isHidden ? "none" : "block";
++    draggableElement.style.height = isHidden ? "60px" : "auto";
++    minHistElement.textContent = isHidden ? "+" : "−";
    };
    let offsetX;
    let offsetY;
-+  let isMoving = false;
-   let isDragging = false;
 -  let isActive = false;
+-  let isActive_2 = false;
 -  historyPanel.addEventListener("mousedown", (clickEvent) => {
++  let isMoving = false;
++  let isDragging = false;
 +  draggableElement.addEventListener("mousedown", (clickEvent) => {
      if (
        ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(clickEvent.target.tagName)
      ) {
        return;
      }
--    isDragging = true;
--    isActive = false;
+-    isActive = true;
+-    isActive_2 = false;
 -    offsetX = clickEvent.clientX - historyPanel.getBoundingClientRect().left;
 -    offsetY = clickEvent.clientY - historyPanel.getBoundingClientRect().top;
 -    historyPanel.style.transition = "none";
@@ -1371,12 +1240,12 @@ Index: src/ui/panels.js
      const handleMouseMove = (mouseEvent) => {
        const deltaX = mouseEvent.clientX - clickEvent.clientX;
        const deltaY = mouseEvent.clientY - clickEvent.clientY;
--      if (!isActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
--        isActive = true;
+-      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+-        isActive_2 = true;
 +      if (!isDragging && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
 +        isDragging = true;
        }
--      if (isDragging) {
+-      if (isActive) {
 -        historyPanel.style.left = mouseEvent.clientX - offsetX + "px";
 -        historyPanel.style.top = mouseEvent.clientY - offsetY + "px";
 -        historyPanel.style.bottom = "auto";
@@ -1389,7 +1258,7 @@ Index: src/ui/panels.js
        }
      };
      const handleMouseUp = () => {
--      isDragging = false;
+-      isActive = false;
 -      historyPanel.style.transition = "all 0.3s ease";
 +      isMoving = false;
 +      draggableElement.style.transition = "all 0.3s ease";
@@ -1400,7 +1269,7 @@ Index: src/ui/panels.js
      document.addEventListener("mouseup", handleMouseUp);
    });
 -  historyPanel.addEventListener("click", (inputEvent) => {
--    if (isActive) {
+-    if (isActive_2) {
 +  draggableElement.addEventListener("click", (inputEvent) => {
 +    if (isDragging) {
        inputEvent.stopImmediatePropagation();
@@ -1408,7 +1277,7 @@ Index: src/ui/panels.js
    });
 -  return historyPanel;
 +  if (localStorage.getItem("theme") === "halloween") {
-+    for (let loopIndex = 0; loopIndex < 3; loopIndex++) {
++    for (let i = 0; i < 3; i++) {
 +      const spanElement = document.createElement("span");
 +      spanElement.className = "bat";
 +      spanElement.textContent = "🦇";
@@ -1446,10 +1315,10 @@ Index: src/ui/panels.js
 +      autoChat(chatMessage);
 +    }
 +  };
-+  const patchButton = deepToolsPanel.querySelector("#patchBtn");
-+  patchButton.onclick = () => initInterceptor(patchButton);
-+  const spoofButton = deepToolsPanel.querySelector("#spoofBtn");
-+  spoofButton.onclick = () => {
++  const spoofButton = deepToolsPanel.querySelector("#patchBtn");
++  spoofButton.onclick = () => initInterceptor(spoofButton);
++  const spoofButton_2 = deepToolsPanel.querySelector("#spoofBtn");
++  spoofButton_2.onclick = () => {
 +    const inputLimit = generateRandomString(8);
 +    if (simulateTyping(".play-game .el-input__inner", inputLimit)) {
 +      showNotification("Spoofed name!");
@@ -1459,47 +1328,47 @@ Index: src/ui/panels.js
 +      showNotification("No name input found! Enable special characters first.");
 +    }
 +  };
-+  const spinButton = deepToolsPanel.querySelector("#spinBtn");
-+  spinButton.onclick = () => {
++  const autoChatButton = deepToolsPanel.querySelector("#spinBtn");
++  autoChatButton.onclick = () => {
 +    toggleMouseSimulation();
-+    if (coreSharedState.rotationInterval) {
-+      spinButton.textContent = "Disable Auto Spin";
-+      spinButton.style.color = "var(--accent)";
-+      spinButton.style.opacity = "0.6";
++    if (featuresentitytrailState.entityTrailInterval_2) {
++      autoChatButton.textContent = "Disable Auto Spin";
++      autoChatButton.style.color = "var(--accent)";
++      autoChatButton.style.opacity = "0.6";
 +    } else {
-+      spinButton.textContent = "Enable Auto Spin";
-+      spinButton.style.color = "var(--accent)";
-+      spinButton.style.opacity = "1";
++      autoChatButton.textContent = "Enable Auto Spin";
++      autoChatButton.style.color = "var(--accent)";
++      autoChatButton.style.opacity = "1";
 +    }
 +  };
 +  const spinKeyInput = deepToolsPanel.querySelector("#spinKeyInput");
-+  let pressedKey = null;
++  let lastPressedKey = null;
 +  spinKeyInput.addEventListener("keydown", (event) => {
 +    event.preventDefault();
-+    pressedKey = event.code || event.key;
-+    spinKeyInput.value = pressedKey.replace("Key", "").toLowerCase();
++    lastPressedKey = event.code || event.key;
++    spinKeyInput.value = lastPressedKey.replace("Key", "").toLowerCase();
 +  });
 +  document.addEventListener("keydown", (event_2) => {
 +    if (
-+      pressedKey &&
-+      event_2.code === pressedKey &&
++      lastPressedKey &&
++      event_2.code === lastPressedKey &&
 +      !event_2.target.matches("input, textarea, button")
 +    ) {
 +      event_2.preventDefault();
 +      toggleMouseSimulation();
-+      if (coreSharedState.rotationInterval) {
-+        spinButton.textContent = "Disable Auto Spin";
-+        spinButton.style.color = "var(--accent)";
-+        spinButton.style.opacity = "0.6";
++      if (featuresentitytrailState.entityTrailInterval_2) {
++        autoChatButton.textContent = "Disable Auto Spin";
++        autoChatButton.style.color = "var(--accent)";
++        autoChatButton.style.opacity = "0.6";
 +      } else {
-+        spinButton.textContent = "Enable Auto Spin";
-+        spinButton.style.color = "var(--accent)";
-+        spinButton.style.opacity = "1";
++        autoChatButton.textContent = "Enable Auto Spin";
++        autoChatButton.style.color = "var(--accent)";
++        autoChatButton.style.opacity = "1";
 +      }
 +    }
 +  });
-+  const autoChatButton = deepToolsPanel.querySelector("#autoChatBtn");
-+  autoChatButton.onclick = () => {
++  const autoChatButton_2 = deepToolsPanel.querySelector("#autoChatBtn");
++  autoChatButton_2.onclick = () => {
 +    const chatMessageValue = deepToolsPanel.querySelector("#chatMsg").value;
 +    const delayInput = deepToolsPanel.querySelector("#delayInput");
 +    const delayValue = parseInt(delayInput.value) || 10;
@@ -1507,16 +1376,16 @@ Index: src/ui/panels.js
 +      showNotification("⚠️ Enter a message first!");
 +      return;
 +    }
-+    if (coreSharedState.isProcessing) {
++    if (state.isToggled) {
 +      stopInterval();
-+      autoChatButton.textContent = "Enable Auto Chat";
-+      autoChatButton.style.color = "var(--accent)";
-+      autoChatButton.style.opacity = "1";
++      autoChatButton_2.textContent = "Enable Auto Chat";
++      autoChatButton_2.style.color = "var(--accent)";
++      autoChatButton_2.style.opacity = "1";
 +    } else {
 +      startScheduledTask(chatMessageValue, delayValue);
-+      autoChatButton.textContent = "Disable Auto Chat";
-+      autoChatButton.style.color = "var(--accent)";
-+      autoChatButton.style.opacity = "0.6";
++      autoChatButton_2.textContent = "Disable Auto Chat";
++      autoChatButton_2.style.color = "var(--accent)";
++      autoChatButton_2.style.opacity = "0.6";
 +    }
 +  };
 +  let deepToolsOffsetX;
@@ -1539,7 +1408,7 @@ Index: src/ui/panels.js
 +    deepToolsOffsetY =
 +      event_3.clientY - deepToolsPanel.getBoundingClientRect().top;
 +    deepToolsPanel.style.transition = "none";
-+    const handleDeepToolsDrag = (mouseEvent) => {
++    const handleMouseMove = (mouseEvent) => {
 +      const deltaX = mouseEvent.clientX - event_3.clientX;
 +      const deltaY = mouseEvent.clientY - event_3.clientY;
 +      if (
@@ -1559,10 +1428,10 @@ Index: src/ui/panels.js
 +    const handleMouseUp = () => {
 +      deepToolsDragActive = false;
 +      deepToolsPanel.style.transition = "all 0.3s ease";
-+      document.removeEventListener("mousemove", handleDeepToolsDrag);
++      document.removeEventListener("mousemove", handleMouseMove);
 +      document.removeEventListener("mouseup", handleMouseUp);
 +    };
-+    document.addEventListener("mousemove", handleDeepToolsDrag);
++    document.addEventListener("mousemove", handleMouseMove);
 +    document.addEventListener("mouseup", handleMouseUp);
 +  });
 +  deepToolsPanel.addEventListener("click", (event_4) => {
@@ -1571,7 +1440,7 @@ Index: src/ui/panels.js
 +    }
 +  });
 +  if (localStorage.getItem("theme") === "halloween") {
-+    for (let loopIndex = 0; loopIndex < 3; loopIndex++) {
++    for (let i = 0; i < 3; i++) {
 +      const spanElement = document.createElement("span");
 +      spanElement.className = "bat";
 +      spanElement.textContent = "🦇";
@@ -1585,22 +1454,22 @@ Index: src/ui/panels.js
 -  styleElement.textContent =
 -    "\n      #plus-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n      }\n      #plus-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #plus-panel textarea {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 8px;\n        padding: 10px;\n        transition: all 0.2s ease;\n        font-size: 13px;\n      }\n      #plus-panel textarea:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);\n      }\n      #plus-panel input[type=\"number\"] {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 60px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #plus-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        position: relative;\n        overflow: hidden;\n        width: 100%;\n        margin-bottom: 10px;\n      }\n      #plus-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #plus-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #plus-panel button:hover:not(:disabled) {\n        background: var(--hover-bg);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2);\n        color: var(--accent-hover);\n      }\n      #plus-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #plus-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n    ";
 -  document.head.appendChild(styleElement);
--  const uiContainer = document.createElement("div");
--  uiContainer.id = "plus-panel";
--  uiContainer.style.position = "fixed";
--  uiContainer.style.top = "20px";
--  uiContainer.style.right = "20px";
--  uiContainer.style.color = "var(--text-primary)";
--  uiContainer.style.padding = "16px";
--  uiContainer.style.borderRadius = "16px";
--  uiContainer.style.fontSize = "14px";
--  uiContainer.style.zIndex = "99999";
--  uiContainer.style.userSelect = "none";
--  uiContainer.style.width = "240px";
--  uiContainer.style.textAlign = "center";
--  uiContainer.style.cursor = "move";
--  uiContainer.style.overflow = "hidden";
--  uiContainer.innerHTML =
+-  const container = document.createElement("div");
+-  container.id = "plus-panel";
+-  container.style.position = "fixed";
+-  container.style.top = "20px";
+-  container.style.right = "20px";
+-  container.style.color = "var(--text-primary)";
+-  container.style.padding = "16px";
+-  container.style.borderRadius = "16px";
+-  container.style.fontSize = "14px";
+-  container.style.zIndex = "99999";
+-  container.style.userSelect = "none";
+-  container.style.width = "240px";
+-  container.style.textAlign = "center";
+-  container.style.cursor = "move";
+-  container.style.overflow = "hidden";
+-  container.innerHTML =
 +  const plusPanelStyleElement = document.createElement("style");
 +  plusPanelStyleElement.textContent =
 +    "\n      #plus-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n        position: relative;\n      }\n      #plus-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #plus-panel textarea {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 8px;\n        padding: 10px;\n        transition: all 0.2s ease;\n        font-size: 13px;\n      }\n      #plus-panel textarea:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);\n      }\n      #plus-panel input[type=\"number\"] {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 60px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #plus-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        position: relative;\n        overflow: hidden;\n        width: 100%;\n        margin-bottom: 10px;\n      }\n      #plus-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #plus-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #plus-panel button:hover:not(:disabled) {\n        background: var(--hover-bg);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2);\n        color: var(--accent-hover);\n      }\n      #plus-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #plus-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      /* Theme-specific panel animations */\n      #plus-panel.themestarwars::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        background: radial-gradient(circle at center, rgba(255,255,255,0.1) 1px, transparent 1px);\n        background-size: 20px 20px;\n        animation: twinkle-stars 20s linear infinite;\n        z-index: -1;\n        border-radius: 16px;\n      }\n      #plus-panel.themekfc::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 20% 30%, rgba(244,0,0,0.1) 2px, transparent 2px),\n                    radial-gradient(circle at 80% 70%, rgba(255,204,0,0.05) 1px, transparent 1px);\n        background-size: 40px 40px;\n      }\n      #plus-panel.themehalloween::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 30% 20%, rgba(255, 102, 0, 0.1) 1px, transparent 1px),\n                    radial-gradient(circle at 70% 80%, rgba(139, 0, 255, 0.05) 2px, transparent 2px);\n        background-size: 30px 30px;\n        animation: halloween-glow 15s ease-in-out infinite alternate;\n      }\n      #plus-panel.themehalloween .bat {\n        position: absolute;\n        font-size: 20px;\n        animation: fly-bat 10s linear infinite;\n        pointer-events: none;\n        opacity: 0.7;\n      }\n      #plus-panel.themehalloween .bat:nth-child(1) { top: 10%; left: -10%; animation-delay: 0s; }\n      #plus-panel.themehalloween .bat:nth-child(2) { top: 50%; right: -10%; animation-delay: 3s; animation-direction: reverse; }\n      #plus-panel.themehalloween .bat:nth-child(3) { top: 80%; left: -10%; animation-delay: 6s; }\n      @keyframes fly-bat {\n        0% { transform: translateX(0) rotate(0deg); }\n        100% { transform: translateX(120%) rotate(360deg); }\n      }\n      @keyframes twinkle-stars {\n        0% { background-position: 0 0; }\n        100% { background-position: 20px 20px; }\n      }\n      @keyframes halloween-glow {\n        0% { opacity: 0.8; }\n        100% { opacity: 1; }\n      }\n    ";
@@ -1622,55 +1491,52 @@ Index: src/ui/panels.js
 +  plusPanel.style.overflow = "hidden";
 +  plusPanel.innerHTML =
      '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        ASTRAPHOBIA CLIENT+\n      </div>\n      <div id="plusContent">\n        <button id="thresherBtn">Enable Thresher Super Boost(ctrl + shift and click)(minumum required 2 boost)</button>\n        <button id="astraVisionBtn">Enable Astra-Vision (no-zoom limit, no ink flash or deep darkness)</button>\n        <button id="smallMinimapBtn">Enable Small Minimap</button>\n      </div>\n    ';
--  document.body.appendChild(uiContainer);
--  const thresherButton = uiContainer.querySelector("#thresherBtn");
+-  document.body.appendChild(container);
+-  const astraVisionButton = container.querySelector("#thresherBtn");
 +  document.body.appendChild(plusPanel);
-+  const thresherButton = plusPanel.querySelector("#thresherBtn");
-   thresherButton.onclick = () => {
--    if (state.isInitialized_2) {
-+    if (coreSharedState.isInitialized_2) {
++  const astraVisionButton = plusPanel.querySelector("#thresherBtn");
+   astraVisionButton.onclick = () => {
+     if (isProcessed_3) {
        showNotification("Thresher Super Boost is already active!");
        return;
      }
 -    setupProxyHooks();
 +    initializeAntiTamper();
-     thresherButton.textContent = "Thresher Super Boost Active";
-     thresherButton.style.color = "var(--accent)";
-     thresherButton.style.opacity = "0.6";
-     thresherButton.disabled = true;
+     astraVisionButton.textContent = "Thresher Super Boost Active";
+     astraVisionButton.style.color = "var(--accent)";
+     astraVisionButton.style.opacity = "0.6";
+     astraVisionButton.disabled = true;
    };
--  const astraVisionButton = uiContainer.querySelector("#astraVisionBtn");
-+  const astraVisionButton = plusPanel.querySelector("#astraVisionBtn");
-   astraVisionButton.onclick = () => {
-     if (isReady) {
+-  const astraVisionButton_2 = container.querySelector("#astraVisionBtn");
++  const astraVisionButton_2 = plusPanel.querySelector("#astraVisionBtn");
+   astraVisionButton_2.onclick = () => {
+     if (isProcessed_2) {
        showNotification("Astra-Vision already enabled!");
        return;
      }
 -    setupProxyHooks();
 +    initializeAntiTamper();
      disableGameRestrictions();
-     astraVisionButton.textContent = "Astra-Vision Active";
-     astraVisionButton.style.color = "var(--accent)";
-     astraVisionButton.style.opacity = "0.6";
-@@ -224,13 +464,13 @@
+     astraVisionButton_2.textContent = "Astra-Vision Active";
+     astraVisionButton_2.style.color = "var(--accent)";
+     astraVisionButton_2.style.opacity = "0.6";
+@@ -226,12 +466,12 @@
      showNotification(
        "👁️ Astra-Vision enabled! (zoom-limit unlocked, no ink-flash or deep darkness effects)",
      );
    };
--  const smallMinimapButton = uiContainer.querySelector("#smallMinimapBtn");
+-  const smallMinimapButton = container.querySelector("#smallMinimapBtn");
 +  const smallMinimapButton = plusPanel.querySelector("#smallMinimapBtn");
    smallMinimapButton.onclick = () => {
 -    setupProxyHooks();
 -    toggleMinimapSize();
--    if (state.isProcessing_2) {
 +    initializeAntiTamper();
 +    toggleMinimapScale();
-+    if (coreSharedState.isProcessing_2) {
+     if (state.isToggled_2) {
        smallMinimapButton.textContent = "Disable Small Minimap";
        smallMinimapButton.style.color = "var(--accent)";
        smallMinimapButton.style.opacity = "0.6";
-     } else {
-@@ -238,156 +478,191 @@
+@@ -240,156 +480,191 @@
        smallMinimapButton.style.color = "var(--accent)";
        smallMinimapButton.style.opacity = "1";
      }
@@ -1678,8 +1544,8 @@ Index: src/ui/panels.js
 -  let relativeX;
 -  let relativeY;
 -  let isActive = false;
--  let isEnabled = false;
--  uiContainer.addEventListener("mousedown", (event) => {
+-  let isActive_2 = false;
+-  container.addEventListener("mousedown", (event) => {
 +  let plusPanelOffsetX;
 +  let plusPanelOffsetY;
 +  let plusPanelDragActive = false;
@@ -1694,21 +1560,20 @@ Index: src/ui/panels.js
        return;
      }
 -    isActive = true;
--    isEnabled = false;
--    relativeX = event.clientX - uiContainer.getBoundingClientRect().left;
--    relativeY = event.clientY - uiContainer.getBoundingClientRect().top;
--    uiContainer.style.transition = "none";
--    const handleMouseMove = (mouseEvent) => {
+-    isActive_2 = false;
+-    relativeX = event.clientX - container.getBoundingClientRect().left;
+-    relativeY = event.clientY - container.getBoundingClientRect().top;
+-    container.style.transition = "none";
 +    plusPanelDragActive = true;
 +    plusPanelIsDragging = false;
 +    plusPanelOffsetX = event.clientX - plusPanel.getBoundingClientRect().left;
 +    plusPanelOffsetY = event.clientY - plusPanel.getBoundingClientRect().top;
 +    plusPanel.style.transition = "none";
-+    const handlePlusPanelDrag = (mouseEvent) => {
+     const handleMouseMove = (mouseEvent) => {
        const deltaX = mouseEvent.clientX - event.clientX;
        const deltaY = mouseEvent.clientY - event.clientY;
--      if (!isEnabled && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
--        isEnabled = true;
+-      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+-        isActive_2 = true;
 +      if (
 +        !plusPanelIsDragging &&
 +        (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)
@@ -1716,10 +1581,10 @@ Index: src/ui/panels.js
 +        plusPanelIsDragging = true;
        }
 -      if (isActive) {
--        uiContainer.style.left = mouseEvent.clientX - relativeX + "px";
--        uiContainer.style.top = mouseEvent.clientY - relativeY + "px";
--        uiContainer.style.bottom = "auto";
--        uiContainer.style.right = "auto";
+-        container.style.left = mouseEvent.clientX - relativeX + "px";
+-        container.style.top = mouseEvent.clientY - relativeY + "px";
+-        container.style.bottom = "auto";
+-        container.style.right = "auto";
 +      if (plusPanelDragActive) {
 +        plusPanel.style.left = mouseEvent.clientX - plusPanelOffsetX + "px";
 +        plusPanel.style.top = mouseEvent.clientY - plusPanelOffsetY + "px";
@@ -1729,27 +1594,25 @@ Index: src/ui/panels.js
      };
      const handleMouseUp = () => {
 -      isActive = false;
--      uiContainer.style.transition = "all 0.3s ease";
--      document.removeEventListener("mousemove", handleMouseMove);
+-      container.style.transition = "all 0.3s ease";
 +      plusPanelDragActive = false;
 +      plusPanel.style.transition = "all 0.3s ease";
-+      document.removeEventListener("mousemove", handlePlusPanelDrag);
+       document.removeEventListener("mousemove", handleMouseMove);
        document.removeEventListener("mouseup", handleMouseUp);
      };
--    document.addEventListener("mousemove", handleMouseMove);
-+    document.addEventListener("mousemove", handlePlusPanelDrag);
+     document.addEventListener("mousemove", handleMouseMove);
      document.addEventListener("mouseup", handleMouseUp);
    });
--  uiContainer.addEventListener("click", (event_2) => {
--    if (isEnabled) {
+-  container.addEventListener("click", (event_2) => {
+-    if (isActive_2) {
 +  plusPanel.addEventListener("click", (event_2) => {
 +    if (plusPanelIsDragging) {
        event_2.stopImmediatePropagation();
      }
    });
--  return uiContainer;
+-  return container;
 +  if (localStorage.getItem("theme") === "halloween") {
-+    for (let index = 0; index < 3; index++) {
++    for (let i = 0; i < 3; i++) {
 +      const spanElement = document.createElement("span");
 +      spanElement.className = "bat";
 +      spanElement.textContent = "🦇";
@@ -1781,17 +1644,17 @@ Index: src/ui/panels.js
 -  const applyBgButton = container.querySelector("#applyBg");
 +  const applyBgButton = draggableElement.querySelector("#applyBg");
    applyBgButton.onclick = () => {
-     const backgroundUrl = bgUrlInput.value.trim();
-     if (backgroundUrl === "") {
+     const bgUrl = bgUrlInput.value.trim();
+     if (bgUrl === "") {
        showNotification("Enter a URL first!");
        return;
      }
-     localStorage.setItem("bgUrl", backgroundUrl);
+     localStorage.setItem("bgUrl", bgUrl);
      let homeBgElement = document.querySelector(".home-bg");
 -    const updateBackgroundImage = () => {
 -      homeBgElement.style.setProperty(
 -        "background-image",
--        'url("' + backgroundUrl + '")',
+-        'url("' + bgUrl + '")',
 -        "important",
 -      );
 +    const updateHomeBackgroundImage = () => {
@@ -1799,16 +1662,16 @@ Index: src/ui/panels.js
 +      if (homeBgElement) {
 +        homeBgElement.style.setProperty(
 +          "background-image",
-+          'url("' + backgroundUrl + '")',
++          'url("' + bgUrl + '")',
 +          "important",
 +        );
 +      }
      };
      if (homeBgElement == null) {
-       const bgCheckInterval = setInterval(() => {
+       const pollInterval = setInterval(() => {
          homeBgElement = document.querySelector(".home-bg");
          if (homeBgElement != null) {
-           clearInterval(bgCheckInterval);
+           clearInterval(pollInterval);
 +          updateHomeBackgroundImage();
          }
 -        updateBackgroundImage();
@@ -1821,15 +1684,15 @@ Index: src/ui/panels.js
    };
 -  const themeSelect = container.querySelector("#themeSelect");
 +  const themeSelect = draggableElement.querySelector("#themeSelect");
-   const currentTheme = localStorage.getItem("theme") || "blue";
-   themeSelect.value = currentTheme;
--  setTheme(currentTheme);
-+  applyThemeColors(currentTheme);
+   const angle = localStorage.getItem("theme") || "blue";
+   themeSelect.value = angle;
+-  setTheme(angle);
++  applyThemeColors(angle);
    themeSelect.onchange = (themeChangeEvent) => {
 -    setTheme(themeChangeEvent.target.value);
 -    showNotification("Theme changed to " + themeChangeEvent.target.value);
-+    const selectedTheme = themeChangeEvent.target.value;
-+    if (selectedTheme === "halloween") {
++    const myY = themeChangeEvent.target.value;
++    if (myY === "halloween") {
 +      createHalloweenModal((isHalloween) => {
 +        if (isHalloween) {
 +          applyThemeColors("halloween");
@@ -1839,27 +1702,25 @@ Index: src/ui/panels.js
 +        }
 +      });
 +    } else {
-+      applyThemeColors(selectedTheme);
-+      showNotification("Theme changed to " + selectedTheme);
++      applyThemeColors(myY);
++      showNotification("Theme changed to " + myY);
 +    }
    };
 -  const toggleKeyInput = container.querySelector("#toggleKeyInput");
--  toggleKeyInput.value = state.currentKey;
 +  const toggleKeyInput = draggableElement.querySelector("#toggleKeyInput");
-+  toggleKeyInput.value = coreSharedState.activeKey;
+   toggleKeyInput.value = state.activeKey;
    toggleKeyInput.addEventListener("keydown", (keyboardEvent) => {
      keyboardEvent.preventDefault();
--    state.currentKey = keyboardEvent.key;
--    toggleKeyInput.value = state.currentKey;
-+    coreSharedState.activeKey = keyboardEvent.key;
-+    toggleKeyInput.value = coreSharedState.activeKey;
+     state.activeKey = keyboardEvent.key;
+     toggleKeyInput.value = state.activeKey;
    });
    let offsetX;
    let offsetY;
-+  let isDraggingActive = false;
-   let isDragging = false;
--  let isToggled = false;
+-  let isActive = false;
+-  let isActive_2 = false;
 -  container.addEventListener("mousedown", (uiEvent) => {
++  let isDraggingActive = false;
++  let isDragging = false;
 +  draggableElement.addEventListener("mousedown", (clickEvent) => {
      if (
 -      uiEvent.target.tagName === "BUTTON" ||
@@ -1871,8 +1732,8 @@ Index: src/ui/panels.js
      ) {
        return;
      }
--    isDragging = true;
--    isToggled = false;
+-    isActive = true;
+-    isActive_2 = false;
 -    offsetX = uiEvent.clientX - container.getBoundingClientRect().left;
 -    offsetY = uiEvent.clientY - container.getBoundingClientRect().top;
 -    container.style.transition = "none";
@@ -1885,14 +1746,14 @@ Index: src/ui/panels.js
      const handleMouseMove = (mouseEvent) => {
 -      const deltaX = mouseEvent.clientX - uiEvent.clientX;
 -      const deltaY = mouseEvent.clientY - uiEvent.clientY;
--      if (!isToggled && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
--        isToggled = true;
+-      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+-        isActive_2 = true;
 +      const deltaX = mouseEvent.clientX - clickEvent.clientX;
 +      const deltaY = mouseEvent.clientY - clickEvent.clientY;
 +      if (!isDragging && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
 +        isDragging = true;
        }
--      if (isDragging) {
+-      if (isActive) {
 -        container.style.left = mouseEvent.clientX - offsetX + "px";
 -        container.style.top = mouseEvent.clientY - offsetY + "px";
 -        container.style.bottom = "auto";
@@ -1905,7 +1766,7 @@ Index: src/ui/panels.js
        }
      };
      const handleMouseUp = () => {
--      isDragging = false;
+-      isActive = false;
 -      container.style.transition = "all 0.3s ease";
 +      isDraggingActive = false;
 +      draggableElement.style.transition = "all 0.3s ease";
@@ -1916,7 +1777,7 @@ Index: src/ui/panels.js
      document.addEventListener("mouseup", handleMouseUp);
    });
 -  container.addEventListener("click", (interceptedEvent) => {
--    if (isToggled) {
+-    if (isActive_2) {
 -      interceptedEvent.stopImmediatePropagation();
 +  draggableElement.addEventListener("click", (propagationEvent) => {
 +    if (isDragging) {
@@ -1937,7 +1798,7 @@ Index: src/ui/panels.js
  function togglePanels() {
    const deepToolsPanel = document.getElementById("deep-tools-panel");
    const updateHistoryPanel = document.getElementById("update-history");
-@@ -401,10 +676,12 @@
+@@ -403,10 +678,12 @@
    plusPanel.style.display = newDisplay;
  }
  
@@ -1957,23 +1818,23 @@ Index: src/ui/radar.js
 --- src/ui/radar.js	v1.4
 +++ src/ui/radar.js	v1.5
 @@ -0,0 +1,22 @@
-+import { playerData, coreSharedState } from "../core.js";
 +import { showNotification } from "./interaction.js";
++import { playerData, state } from "../core.js";
 +
 +function toggleMinimapScale() {
 +  if (!playerData || !playerData.minimap) {
 +    showNotification("Minimap not available yet!");
 +    return;
 +  }
-+  if (coreSharedState.isProcessing_2) {
++  if (state.isToggled_2) {
 +    playerData.minimap.scale.set(1);
 +    playerData.minimap.pivot.set(0, 0);
-+    coreSharedState.isProcessing_2 = false;
++    state.isToggled_2 = false;
 +    showNotification("🗺️ Minimap restored to normal!");
 +  } else {
 +    playerData.minimap.scale.set(0.5);
 +    playerData.minimap.pivot.set(-70, -45);
-+    coreSharedState.isProcessing_2 = true;
++    state.isToggled_2 = true;
 +    showNotification("🗺️ Small Minimap enabled!");
 +  }
 +}
@@ -2101,8 +1962,8 @@ Index: src/ui/theme.js
 -  const selectedTheme = themeConfigs[themeColor] || themeConfigs.blue;
 -  Object.entries(selectedTheme).forEach(([styleProperty, styleValue]) => {
 -    rootElement.style.setProperty(styleProperty, styleValue);
-+  const selectedColor = themeConfig[themeName] || themeConfig.blue;
-+  Object.entries(selectedColor).forEach(([cssProperty, cssValue]) => {
++  const myY = themeConfig[themeName] || themeConfig.blue;
++  Object.entries(myY).forEach(([cssProperty, cssValue]) => {
 +    rootElement.style.setProperty(cssProperty, cssValue);
    });
 -  localStorage.setItem("theme", themeColor);
@@ -2124,7 +1985,7 @@ Index: src/ui/theme.js
 +      containerElement
 +        .querySelectorAll(".bat")
 +        .forEach((element) => element.remove());
-+      for (let index = 0; index < 3; index++) {
++      for (let i = 0; i < 3; i++) {
 +        const spanElement = document.createElement("span");
 +        spanElement.className = "bat";
 +        spanElement.textContent = "🦇";

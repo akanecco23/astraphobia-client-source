@@ -1,21 +1,67 @@
-import { autoTypeChat } from "../ui/interaction.js";
-import { coreSharedState } from "../core.js";
+import { state } from "../core.js";
 
 function startScheduledTask(taskData, intervalSeconds) {
-  if (coreSharedState.updateInterval) {
-    clearInterval(coreSharedState.updateInterval);
+  if (state.entityTrailInterval) {
+    clearInterval(state.entityTrailInterval);
   }
-  coreSharedState.isProcessing = true;
-  coreSharedState.updateInterval = setInterval(() => {
-    autoTypeChat(taskData);
+  state.isToggled_2 = true;
+  state.entityTrailInterval = setInterval(() => {
+    simulateChatInput(taskData);
   }, intervalSeconds * 1000);
 }
 function stopInterval() {
-  if (coreSharedState.updateInterval) {
-    clearInterval(coreSharedState.updateInterval);
-    coreSharedState.updateInterval = null;
+  if (state.entityTrailInterval) {
+    clearInterval(state.entityTrailInterval);
+    state.entityTrailInterval = null;
   }
-  coreSharedState.isProcessing = false;
+  state.isToggled_2 = false;
+}
+function simulateChatInput(textToType) {
+  const chatInput =
+    document.querySelector(".chat-input input") ||
+    document.querySelector('input[placeholder*="chat" i]') ||
+    document.querySelector('input[type="text"]');
+  if (!chatInput) {
+    return;
+  }
+  chatInput.focus();
+  chatInput.value = "";
+  let charIndex = 0;
+  const typeNextChar = () => {
+    if (charIndex >= textToType.length) {
+      const sendButton =
+        document.querySelector(".chat-input button") ||
+        document.querySelector('button[aria-label*="send" i]');
+      if (sendButton) {
+        sendButton.click();
+      } else {
+        chatInput.dispatchEvent(
+          new Event("change", {
+            bubbles: true,
+          }),
+        );
+        chatInput.dispatchEvent(
+          new Event("input", {
+            bubbles: true,
+          }),
+        );
+        setTimeout(() => {
+          chatInput.value = "";
+          chatInput.blur();
+        }, 100);
+      }
+      return;
+    }
+    chatInput.value += textToType[charIndex];
+    chatInput.dispatchEvent(
+      new InputEvent("input", {
+        bubbles: true,
+      }),
+    );
+    charIndex++;
+    setTimeout(typeNextChar, 25);
+  };
+  typeNextChar();
 }
 
-export { startScheduledTask, stopInterval };
+export { startScheduledTask, stopInterval, simulateChatInput };

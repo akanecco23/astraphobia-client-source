@@ -1,4 +1,4 @@
-import { radius, game, coreSharedState } from "../core.js";
+import { currentTime, radius, state } from "../core.js";
 import { getMyAnimal } from "../utils.js";
 
 function typeText(selector, text) {
@@ -10,7 +10,7 @@ function typeText(selector, text) {
   inputElement.value = "";
   let currentIndex = 0;
   const typeChar = () => {
-    if (coreSharedState.currentIndex >= text.length) {
+    if (currentIndex >= text.length) {
       inputElement.dispatchEvent(
         new Event("change", {
           bubbles: true,
@@ -23,13 +23,13 @@ function typeText(selector, text) {
       );
       return;
     }
-    inputElement.value += text[coreSharedState.currentIndex];
+    inputElement.value += text[currentIndex];
     inputElement.dispatchEvent(
       new InputEvent("input", {
         bubbles: true,
       }),
     );
-    coreSharedState.currentIndex++;
+    currentIndex++;
     setTimeout(typeChar, 25);
   };
   typeChar();
@@ -37,14 +37,11 @@ function typeText(selector, text) {
 }
 function showToast(message) {
   const currentTime = Date.now();
-  if (
-    message === coreSharedState.previousValue &&
-    currentTime - coreSharedState.lastTimestamp < 3000
-  ) {
+  if (message === state.currentTrackId && currentTime - currentTime < 3000) {
     return;
   }
-  coreSharedState.previousValue = message;
-  coreSharedState.lastTimestamp = currentTime;
+  state.currentTrackId = message;
+  currentTime = currentTime;
   const toastElement = document.createElement("div");
   toastElement.style.cssText =
     "\n      position: fixed; top: 16px; right: 16px;\n      background: #282828; color: #e0e0e0;\n      padding: 10px 16px; border-radius: 4px;\n      z-index: 10000000; font-size: 13px;\n      opacity: 0; transition: opacity 0.2s ease, transform 0.2s ease;\n      pointer-events: none; font-family: 'Segoe UI', system-ui, sans-serif;\n      border-left: 3px solid var(--acc, #888);\n      transform: translateX(20px);\n    ";
@@ -70,10 +67,10 @@ function restoreUIInteractivity() {
     if (!isReady) {
       if (window.autoFarmActive) {
         window.autoFarmActive = false;
-        const autoFarmButton = document.getElementById("autoFarmBtn");
-        if (autoFarmButton) {
-          autoFarmButton.textContent = "Auto Farm";
-          autoFarmButton.classList.remove("toggle-on");
+        const farmBtn = document.getElementById("autoFarmBtn");
+        if (farmBtn) {
+          farmBtn.textContent = "Auto Farm";
+          farmBtn.classList.remove("toggle-on");
         }
       }
       const interactiveElements = document.querySelectorAll(

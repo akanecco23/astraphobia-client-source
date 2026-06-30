@@ -16,6 +16,63 @@ const generate = (_generate as any).default ?? _generate;
 
 const OBFUSCATED_RE = /^(_0x[a-f0-9]+|[a-z]{1,2}_?[0-9a-f]{4,})$/;
 
+const RESERVED_WORDS = new Set([
+  "break",
+  "case",
+  "catch",
+  "class",
+  "const",
+  "continue",
+  "debugger",
+  "default",
+  "delete",
+  "do",
+  "else",
+  "export",
+  "extends",
+  "finally",
+  "for",
+  "function",
+  "if",
+  "import",
+  "in",
+  "instanceof",
+  "let",
+  "new",
+  "return",
+  "super",
+  "switch",
+  "this",
+  "throw",
+  "try",
+  "typeof",
+  "var",
+  "void",
+  "while",
+  "with",
+  "yield",
+  "enum",
+  "await",
+  "implements",
+  "interface",
+  "package",
+  "private",
+  "protected",
+  "public",
+  "static",
+  "null",
+  "true",
+  "false",
+  "undefined",
+  "NaN",
+  "Infinity",
+  "arguments",
+]);
+
+export function isReservedWord(name: string): boolean {
+  return RESERVED_WORDS.has(name);
+}
+
 const DOM_APIS = [
   "document",
   "window",
@@ -186,6 +243,31 @@ export function fingerprintHash(fp: Fingerprint): string {
   ].join("::");
 }
 
+export function computeFunctionDNA(fp: Fingerprint): FunctionDNA {
+  // DNA hashes are derived from the function's interaction with the outside
+  // world. These are extremely stable across versions because they reflect
+  // the function's *purpose* (strings, APIs, calls) rather than its
+  // *implementation* (body structure, variable names).
+  const hash = (items: string[]) =>
+    items.length === 0
+      ? ""
+      : createHash("sha256")
+          .update(items.sort().join("\x00"))
+          .digest("hex")
+          .slice(0, 16);
+
+  return {
+    stringDNA: hash(fp.stringLiterals ?? []),
+    apiDNA: hash([
+      ...(fp.callsDomApi ? ["dom"] : []),
+      ...(fp.callsMathApi ? ["math"] : []),
+      ...(fp.callsJsonApi ? ["json"] : []),
+    ]),
+    propertyDNA: hash(fp.propertyAccesses ?? []),
+    callDNA: hash(fp.calledFunctions ?? []),
+  };
+}
+
 export function computeSimilarity(fp1: Fingerprint, fp2: Fingerprint): number {
   if (!fp1 || !fp2) return 0;
   let matches = 0,
@@ -284,8 +366,6 @@ export function extractVariables(code: string): VariableInfo[] {
           } catch {
             /* */
           }
-          if (snippet.length > 2000)
-            snippet = snippet.slice(0, 2000) + "\n  // ... truncated";
           scopeVars.set(key, {
             key,
             originalName: name,
@@ -316,8 +396,6 @@ export function extractVariables(code: string): VariableInfo[] {
           } catch {
             /* */
           }
-          if (snippet.length > 2000)
-            snippet = snippet.slice(0, 2000) + "\n  // ... truncated";
           scopeVars.set(key, {
             key,
             originalName: name,
@@ -602,4 +680,169 @@ export function applyRenames(
     retainLines: false,
     comments: true,
   }).code;
+}
+
+import type { VariableRoleFingerprint, FunctionDNA } from "./types.js";
+import { createHash } from "crypto";
+
+function hashString(s: string): string {
+  return createHash("sha256").update(s).digest("hex").slice(0, 16);
+}
+
+function simplifyExpression(node: t.Node): string {
+  if (t.isIdentifier(node)) return node.name;
+  if (t.isMemberExpression(node)) {
+    const obj = simplifyExpression(node.object);
+    const prop = t.isIdentifier(node.property)
+      ? node.property.name
+      : t.isStringLiteral(node.property)
+        ? node.property.value
+        : "?";
+    return `${obj}.${prop}`;
+  }
+  if (t.isOptionalMemberExpression(node)) {
+    const obj = simplifyExpression(node.object);
+    const prop = t.isIdentifier(node.property)
+      ? node.property.name
+      : t.isStringLiteral(node.property)
+        ? node.property.value
+        : "?";
+    return `${obj}?.${prop}`;
+  }
+  if (t.isCallExpression(node)) {
+    const callee = simplifyExpression(node.callee);
+    return `${callee}(...)`;
+  }
+  if (t.isOptionalCallExpression(node)) {
+    const callee = simplifyExpression(node.callee);
+    return `${callee}?.(...)`;
+  }
+  if (t.isArrayExpression(node)) return "[...]";
+  if (t.isObjectExpression(node)) return "{...}";
+  if (t.isLiteral(node)) {
+    if (t.isStringLiteral(node)) return `"${node.value}"`;
+    if (t.isNumericLiteral(node)) return String(node.value);
+    if (t.isBooleanLiteral(node)) return String(node.value);
+    return "literal";
+  }
+  return "?";
+}
+
+export function computeVariableRoleFingerprint(
+  funcCode: string,
+  varOriginalName: string,
+): VariableRoleFingerprint {
+  const ast = parseCode(funcCode);
+
+  let initPattern: string | null = null;
+  const propertyAccesses = new Set<string>();
+  const methodCalls = new Set<string>();
+  const comparisonTargets = new Set<string>();
+  const assignmentTargets = new Set<string>();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (traverse as any)(ast, {
+    // Find initialization pattern
+    VariableDeclarator(path: any) {
+      if (
+        t.isIdentifier(path.node.id) &&
+        path.node.id.name === varOriginalName &&
+        path.node.init
+      ) {
+        initPattern = simplifyExpression(path.node.init);
+      }
+    },
+    AssignmentExpression(path: any) {
+      if (
+        t.isIdentifier(path.node.left) &&
+        path.node.left.name === varOriginalName
+      ) {
+        assignmentTargets.add(simplifyExpression(path.node.right));
+      }
+    },
+    MemberExpression(path: any) {
+      if (
+        t.isIdentifier(path.node.object) &&
+        path.node.object.name === varOriginalName
+      ) {
+        const prop = t.isIdentifier(path.node.property)
+          ? path.node.property.name
+          : t.isStringLiteral(path.node.property)
+            ? path.node.property.value
+            : "?";
+        propertyAccesses.add(prop);
+      }
+    },
+    OptionalMemberExpression(path: any) {
+      if (
+        t.isIdentifier(path.node.object) &&
+        path.node.object.name === varOriginalName
+      ) {
+        const prop = t.isIdentifier(path.node.property)
+          ? path.node.property.name
+          : t.isStringLiteral(path.node.property)
+            ? path.node.property.value
+            : "?";
+        propertyAccesses.add(prop);
+      }
+    },
+    CallExpression(path: any) {
+      if (
+        t.isMemberExpression(path.node.callee) &&
+        t.isIdentifier(path.node.callee.object) &&
+        path.node.callee.object.name === varOriginalName
+      ) {
+        const method = t.isIdentifier(path.node.callee.property)
+          ? path.node.callee.property.name
+          : "?";
+        methodCalls.add(method);
+      }
+    },
+    OptionalCallExpression(path: any) {
+      if (
+        t.isMemberExpression(path.node.callee) &&
+        t.isIdentifier(path.node.callee.object) &&
+        path.node.callee.object.name === varOriginalName
+      ) {
+        const method = t.isIdentifier(path.node.callee.property)
+          ? path.node.callee.property.name
+          : "?";
+        methodCalls.add(method);
+      }
+    },
+    BinaryExpression(path: any) {
+      // Check if the variable is compared against something
+      const checkSide = (side: t.Node) => {
+        if (t.isIdentifier(side) && side.name === varOriginalName) {
+          const otherSide =
+            side === path.node.left ? path.node.right : path.node.left;
+          comparisonTargets.add(simplifyExpression(otherSide));
+        }
+      };
+      checkSide(path.node.left);
+      checkSide(path.node.right);
+    },
+  });
+
+  const sortedProps = [...propertyAccesses].sort();
+  const sortedMethods = [...methodCalls].sort();
+  const sortedComparisons = [...comparisonTargets].sort();
+  const sortedAssignments = [...assignmentTargets].sort();
+
+  const hashInput = [
+    initPattern || "",
+    sortedProps.join(","),
+    sortedMethods.join(","),
+    sortedComparisons.join(","),
+    sortedAssignments.join(","),
+  ].join("::");
+
+  return {
+    initPattern,
+    propertyAccesses: sortedProps,
+    methodCalls: sortedMethods,
+    comparisonTargets: sortedComparisons,
+    assignmentTargets: sortedAssignments,
+    hash: hashString(hashInput),
+  };
 }

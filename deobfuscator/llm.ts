@@ -7,7 +7,7 @@ export interface ResolvedLLMConfig extends LLMConfig {
   concurrency: number;
 }
 
-const MAX_RETRIES = 5;
+const MAX_RETRIES = 10;
 const BASE_DELAY_MS = 1000;
 
 export class LLMClient {
@@ -19,14 +19,16 @@ export class LLMClient {
   concurrency: number;
   private apiKeys: string[];
   private keyIndex: number;
+  private lastRequestTime: Map<string, number> = new Map();
 
   constructor(config: ResolvedLLMConfig) {
     this.enabled = config.enabled;
-    this.models = (config.model ?? "gemma-4-31b-it")
+    // Default: try flash-lite first (faster), fall back to gemma-4 when rate-limited
+    this.models = (config.model ?? "gemini-3.1-flash-lite,gemma-4-31b-it")
       .split(",")
       .map((m) => m.trim())
       .filter(Boolean);
-    this.model = this.models[0] ?? "gemma-4-31b-it";
+    this.model = this.models[0] ?? "gemini-3.1-flash-lite";
     this.maxTokens = parseInt(String(config.max_tokens ?? "16000"), 10);
     this.temperature = config.temperature ?? 0.1;
     this.concurrency = config.concurrency ?? 4;
@@ -54,6 +56,21 @@ export class LLMClient {
     );
   }
 
+  private async enforceRateLimit(model: string): Promise<void> {
+    // Rate limits (requests per minute) for free tier Gemini models.
+    // Flash-lite: 15/min  =>  1 request every 4000ms
+    // Gemma-4:    no hard limit, but be polite (1000ms)
+    const minInterval = model.includes("flash-lite") ? 4500 : 1000;
+    const last = this.lastRequestTime.get(model) ?? 0;
+    const now = Date.now();
+    const elapsed = now - last;
+    if (elapsed < minInterval) {
+      const delay = minInterval - elapsed;
+      await new Promise((r) => setTimeout(r, delay));
+    }
+    this.lastRequestTime.set(model, Date.now());
+  }
+
   private async generateWithBackoff(
     params: {
       model: string;
@@ -69,21 +86,89 @@ export class LLMClient {
   ): Promise<string> {
     const ai = this.getClient();
     const currentModel = this.models[modelIndex] ?? this.model;
+    await this.enforceRateLimit(currentModel);
+
+    // Progress logging: every 15 seconds log how many tokens have been received
+    let receivedTokens = 0;
+    let progressInterval: ReturnType<typeof setInterval> | null = null;
+    const startProgress = () => {
+      if (progressInterval) clearInterval(progressInterval);
+      progressInterval = setInterval(() => {
+        log("info", `LLM is working... ${receivedTokens} tokens received`);
+      }, 15000);
+    };
+    const stopProgress = () => {
+      if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+      }
+    };
+
     try {
-      const response = (await Promise.race([
-        ai.models.generateContent({
-          ...params,
-          model: currentModel,
-        }),
-        new Promise<never>((_, reject) =>
-          setTimeout(
-            () => reject(new Error("LLM request timeout after 60s")),
-            60000,
-          ),
-        ),
-      ])) as Awaited<ReturnType<typeof ai.models.generateContent>>;
-      return response.text ?? "";
+      startProgress();
+      const timeoutMs = 300000; // 300s for all models
+      let result = "";
+      let usedStreaming = false;
+
+      // Try streaming API first (if available) so we can count tokens live
+      try {
+        const streamMethod = (ai.models as any).generateContentStream;
+        if (typeof streamMethod === "function") {
+          const streamPromise = (async () => {
+            const stream = await streamMethod.call(ai.models, {
+              ...params,
+              model: currentModel,
+            });
+            for await (const chunk of stream) {
+              const text = chunk.text ?? "";
+              result += text;
+              receivedTokens += text.length; // approximate token count
+            }
+            return result;
+          })();
+
+          const timeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(
+              () =>
+                reject(
+                  new Error(`LLM request timeout after ${timeoutMs / 1000}s`),
+                ),
+              timeoutMs,
+            );
+          });
+
+          await Promise.race([streamPromise, timeoutPromise]);
+          usedStreaming = true;
+        }
+      } catch {
+        // Streaming failed; will fall back to non-streaming
+        result = "";
+        usedStreaming = false;
+      }
+
+      if (!usedStreaming) {
+        const response = (await Promise.race([
+          ai.models.generateContent({
+            ...params,
+            model: currentModel,
+          }),
+          new Promise<never>((_, reject) => {
+            setTimeout(
+              () =>
+                reject(
+                  new Error(`LLM request timeout after ${timeoutMs / 1000}s`),
+                ),
+              timeoutMs,
+            );
+          }),
+        ])) as Awaited<ReturnType<typeof ai.models.generateContent>>;
+        result = response.text ?? "";
+      }
+
+      stopProgress();
+      return result;
     } catch (e: unknown) {
+      stopProgress();
       const err = e as {
         status?: number;
         message?: string;
@@ -105,20 +190,27 @@ export class LLMClient {
         null,
         2,
       );
-      if (
-        (status === 429 || status === 503 || status === 504) &&
-        attempt < MAX_RETRIES &&
-        this.apiKeys.length > 1
-      ) {
-        this.rotateKey();
-        const delay =
-          BASE_DELAY_MS * Math.pow(2, attempt) * (0.75 + Math.random() * 0.5);
-        log(
-          "warn",
-          `Rate limited/overloaded (${status}), rotating key, retrying in ${Math.round(delay)}ms (attempt ${attempt + 1}/${MAX_RETRIES})\nDetails: ${errorDetails}`,
-        );
-        await new Promise((r) => setTimeout(r, delay));
-        return this.generateWithBackoff(params, attempt + 1, modelIndex);
+      // On rate-limit or overload, try the next model immediately if available.
+      // Only rotate keys / retry the same model if we're already on the last model.
+      if (status === 429 || status === 503 || status === 504) {
+        if (modelIndex < this.models.length - 1) {
+          log(
+            "warn",
+            `Model ${currentModel} rate-limited (${status}), falling back to ${this.models[modelIndex + 1]}`,
+          );
+          return this.generateWithBackoff(params, 0, modelIndex + 1);
+        }
+        if (attempt < MAX_RETRIES && this.apiKeys.length > 1) {
+          this.rotateKey();
+          const delay =
+            BASE_DELAY_MS * Math.pow(2, attempt) * (0.75 + Math.random() * 0.5);
+          log(
+            "warn",
+            `Rate limited/overloaded (${status}), rotating key, retrying in ${Math.round(delay)}ms (attempt ${attempt + 1}/${MAX_RETRIES})\nDetails: ${errorDetails}`,
+          );
+          await new Promise((r) => setTimeout(r, delay));
+          return this.generateWithBackoff(params, attempt + 1, modelIndex);
+        }
       }
       if (attempt < MAX_RETRIES) {
         const delay =

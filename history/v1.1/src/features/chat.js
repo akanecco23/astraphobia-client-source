@@ -1,21 +1,21 @@
 import { autoTypeChat } from "../ui/interaction.js";
-import { coreSharedState } from "../core.js";
+import { state } from "../core.js";
 
 function startScheduledTask(taskData, intervalSeconds) {
-  if (coreSharedState.updateInterval) {
-    clearInterval(coreSharedState.updateInterval);
+  if (state.entityTrailInterval) {
+    clearInterval(state.entityTrailInterval);
   }
-  coreSharedState.isProcessing = true;
-  coreSharedState.updateInterval = setInterval(() => {
+  state.isToggled = true;
+  state.entityTrailInterval = setInterval(() => {
     autoTypeChat(taskData);
   }, intervalSeconds * 1000);
 }
 function stopInterval() {
-  if (coreSharedState.updateInterval) {
-    clearInterval(coreSharedState.updateInterval);
-    coreSharedState.updateInterval = null;
+  if (state.entityTrailInterval) {
+    clearInterval(state.entityTrailInterval);
+    state.entityTrailInterval = null;
   }
-  coreSharedState.isProcessing = false;
+  state.isToggled = false;
 }
 
 export { startScheduledTask, stopInterval };

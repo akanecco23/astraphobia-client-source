@@ -1,20 +1,22 @@
 import {
+  currentTime,
   getGameState,
   getEntityManager,
   getFirstAnimalPosition,
-  maxDistance,
-  distanceThreshold,
+  tickInterval,
+  deltaThreshold,
   angle,
-  coreSharedState,
+  state,
 } from "../core.js";
 import { isPlayer, calculateDistance } from "../utils.js";
 import { simulateMoveAndClick } from "./movement.js";
 import { showToast } from "../ui/interaction.js";
 
-window.autoDodgeEnabled = false;
-
+let currentTime_2 = 0;
+let currentTime_3 = 0;
+let entityTrailInterval_3 = null;
 function autoDodgeLoop() {
-  if (!coreSharedState.isInitialized_2) {
+  if (!state.isProcessed_4) {
     return;
   }
   setTimeout(autoDodgeLoop, 80);
@@ -41,52 +43,52 @@ function autoDodgeLoop() {
       if (!isPlayer(targetEntity)) {
         return;
       }
-      const targetX = targetEntity.position?._x || targetEntity.position?.x;
-      const targetY = targetEntity.position?._y || targetEntity.position?.y;
-      if (targetX == null || targetY == null) {
+      const myY = targetEntity.position?._x || targetEntity.position?.x;
+      const posY = targetEntity.position?._y || targetEntity.position?.y;
+      if (myY == null || posY == null) {
         return;
       }
       const distanceToTarget = calculateDistance(
         playerPosition.x,
         playerPosition.y,
-        targetX,
-        targetY,
+        myY,
+        posY,
       );
-      if (distanceToTarget < maxDistance) {
+      if (distanceToTarget < tickInterval) {
         nearbyEntities.push({
-          x: targetX,
-          y: targetY,
+          x: myY,
+          y: posY,
           dist: distanceToTarget,
         });
       }
     });
     if (nearbyEntities.length === 0) {
-      coreSharedState.currentPosition = null;
-      coreSharedState.counter = 0;
-      coreSharedState.dataList = [];
-      coreSharedState.targetReference = null;
+      state.position = null;
+      state.counter = 0;
+      state.dataList = [];
+      entityTrailInterval_3 = null;
       return;
     }
     const currentTime = Date.now();
     let hasMoved = false;
-    if (currentTime - coreSharedState.lastTimeB > 600) {
-      coreSharedState.lastTimeB = currentTime;
-      if (coreSharedState.currentPosition) {
+    if (currentTime - currentTime_3 > 600) {
+      currentTime_3 = currentTime;
+      if (state.position) {
         const distFromLastPos = calculateDistance(
           playerPosition.x,
           playerPosition.y,
-          coreSharedState.currentPosition.x,
-          coreSharedState.currentPosition.y,
+          state.position.x,
+          state.position.y,
         );
         if (distFromLastPos < 20) {
-          coreSharedState.counter++;
+          state.counter++;
           hasMoved = true;
         } else {
-          coreSharedState.counter = 0;
-          coreSharedState.dataList = [];
+          state.counter = 0;
+          state.dataList = [];
         }
       }
-      coreSharedState.currentPosition = {
+      state.position = {
         x: playerPosition.x,
         y: playerPosition.y,
       };
@@ -98,7 +100,7 @@ function autoDodgeLoop() {
       const deltaY = playerPosition.y - sourceEntity.y;
       const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
       if (distance > 0.01) {
-        const distanceRatio = (maxDistance - sourceEntity.dist) / maxDistance;
+        const distanceRatio = (tickInterval - sourceEntity.dist) / tickInterval;
         sumX += (deltaX / distance) * distanceRatio;
         sumY += (deltaY / distance) * distanceRatio;
       }
@@ -112,8 +114,8 @@ function autoDodgeLoop() {
     sumX /= magnitude;
     sumY /= magnitude;
     let angle = Math.atan2(sumY, sumX);
-    if (hasMoved && coreSharedState.counter >= 1) {
-      const presetAngles = [
+    if (hasMoved && state.counter >= 1) {
+      const anglePresets = [
         Math.PI / 4,
         -Math.PI / 4,
         Math.PI / 2,
@@ -123,12 +125,12 @@ function autoDodgeLoop() {
       ];
       let tempAngle = angle;
       let maxValue = -Infinity;
-      for (const angleOffset of presetAngles) {
+      for (const angleOffset of anglePresets) {
         const adjustedAngle = angle + angleOffset;
-        const isAngleSimilar = coreSharedState.dataList.some(
+        const isAngleSimilar = state.dataList.some(
           (currentValue) => Math.abs(currentValue - adjustedAngle) < 0.3,
         );
-        if (isAngleSimilar && coreSharedState.counter < 5) {
+        if (isAngleSimilar && state.counter < 5) {
           continue;
         }
         let currentValue = 0;
@@ -147,35 +149,34 @@ function autoDodgeLoop() {
         }
       }
       angle = tempAngle;
-      coreSharedState.dataList.push(angle);
-      if (coreSharedState.dataList.length > 8) {
-        coreSharedState.dataList.shift();
+      state.dataList.push(angle);
+      if (state.dataList.length > 8) {
+        state.dataList.shift();
       }
-      if (coreSharedState.counter >= 5) {
+      if (state.counter >= 5) {
         angle = angle + (Math.random() > 0.5 ? Math.PI / 2 : -Math.PI / 2);
-        coreSharedState.counter = 0;
-        coreSharedState.dataList = [];
+        state.counter = 0;
+        state.dataList = [];
       }
     }
-    coreSharedState.targetReference = angle;
-    const targetX = playerPosition.x + Math.cos(angle) * 2000;
-    const targetY = playerPosition.y + Math.sin(angle) * 2000;
-    const isAboveThreshold =
-      currentTime - coreSharedState.lastTimeA > distanceThreshold;
-    if (isAboveThreshold) {
-      coreSharedState.lastTimeA = currentTime;
+    entityTrailInterval_3 = angle;
+    const angle_2 = playerPosition.x + Math.cos(angle) * 2000;
+    const angle_3 = playerPosition.y + Math.sin(angle) * 2000;
+    const angle_4 = currentTime - currentTime_2 > deltaThreshold;
+    if (angle_4) {
+      currentTime_2 = currentTime;
     }
-    simulateMoveAndClick(targetX, targetY, isAboveThreshold);
-  } catch (tempValue) {}
+    simulateMoveAndClick(angle_2, angle_3, angle_4);
+  } catch (data) {}
 }
 function enableAutoDodge() {
   window.autoDodgeEnabled = true;
-  coreSharedState.currentPosition = null;
-  coreSharedState.counter = 0;
-  coreSharedState.dataList = [];
-  coreSharedState.targetReference = null;
-  if (!coreSharedState.isInitialized_2) {
-    coreSharedState.isInitialized_2 = true;
+  state.position = null;
+  state.counter = 0;
+  state.dataList = [];
+  entityTrailInterval_3 = null;
+  if (!state.isProcessed_4) {
+    state.isProcessed_4 = true;
     autoDodgeLoop();
   }
   showToast("Auto dodge enabled");

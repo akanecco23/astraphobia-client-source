@@ -1,23 +1,28 @@
 import {
+  startEntityTrail,
+  currentTime,
+  getFirstAnimalPosition,
+  state,
+} from "../core.js";
+import {
   getNearbyEntities,
   getZoomLevel,
   getOrCreateOverlayCanvas,
 } from "../utils.js";
-import { startEntityTrail, getFirstAnimalPosition, state } from "../core.js";
 import { showNotification } from "../ui/interaction.js";
 import { refreshUI } from "../ui/panels.js";
 
-function stopMouseSimulation_2() {
-  if (state.trailInterval) {
-    clearInterval(state.trailInterval);
-    state.trailInterval = null;
+function stopEntityTrail_2() {
+  if (featuresentitytrailState.entityTrailInterval_3) {
+    clearInterval(featuresentitytrailState.entityTrailInterval_3);
+    featuresentitytrailState.entityTrailInterval_3 = null;
   }
 }
 function toggleEntityTrail() {
   if (window.entityTrailEnabled) {
     window.entityTrailEnabled = false;
     window.entityTrailTargetId = null;
-    stopMouseSimulation_2();
+    stopEntityTrail_2();
     window.entityTrailHistory = [];
     showNotification("Trail stopped");
     refreshUI();
@@ -84,14 +89,14 @@ function drawEntityTrail(ctx, canvas, playerPos, zoomScale) {
   if (window.entityTrailHistory.length > 0) {
     const lastTrailPoint =
       window.entityTrailHistory[window.entityTrailHistory.length - 1];
-    const calculatedX = centerX + (lastTrailPoint.x - playerPos.x) * zoomScale;
-    const calculatedY = centerY + (lastTrailPoint.y - playerPos.y) * zoomScale;
+    const screenY = centerX + (lastTrailPoint.x - playerPos.x) * zoomScale;
+    const screenY_2 = centerY + (lastTrailPoint.y - playerPos.y) * zoomScale;
     ctx.fillStyle = "rgb(" + colorR + "," + colorG + "," + colorB + ")";
     ctx.font = "bold 10px monospace";
     ctx.fillText(
       "TRAIL (" + window.entityTrailHistory.length + " pts)",
-      calculatedX + 8,
-      calculatedY - 8,
+      screenY + 8,
+      screenY_2 - 8,
     );
   }
 }
@@ -119,8 +124,13 @@ window.entityTrailHistory = [];
 window.entityTrailMaxLength = 200;
 window.entityTrailRecordInterval = 100;
 
+export const featuresentitytrailState = {
+  entityTrailInterval_2: null,
+  entityTrailInterval_3: null,
+};
+
 export {
-  stopMouseSimulation_2,
+  stopEntityTrail_2,
   toggleEntityTrail,
   drawEntityTrail,
   renderOverlayLoop,

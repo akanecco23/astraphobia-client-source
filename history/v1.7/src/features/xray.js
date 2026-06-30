@@ -1,10 +1,10 @@
-import { gameInstance, animalData, settings, state } from "../core.js";
+import { gameInstance, playerData, config, state } from "../core.js";
 
 const initializeViewportHacks = () => {
-  if (state.isProcessed) {
+  if (state.isProcessed_3) {
     return;
   }
-  if (!animalData) {
+  if (!playerData) {
     setTimeout(initializeViewportHacks, 500);
     return;
   }
@@ -19,20 +19,20 @@ const initializeViewportHacks = () => {
     } catch {}
   }, 300);
   try {
-    if (settings.setFlash) {
-      animalData[settings.setFlash] = () => {};
+    if (config.setFlash) {
+      playerData[config.setFlash] = () => {};
     }
-    if (settings.terrainManager) {
-      const terrainManager = animalData[settings.terrainManager];
+    if (config.terrainManager) {
+      const terrainManager = playerData[config.terrainManager];
       if (terrainManager?.shadow) {
         terrainManager.shadow.setShadowSize(1000000);
         terrainManager.shadow.setShadowSize = () => {};
       }
     }
-  } catch (error) {
-    console.error(error);
+  } catch (url) {
+    console.error(url);
   }
-  state.isProcessed = true;
+  state.isProcessed_3 = true;
 };
 
 export { initializeViewportHacks };

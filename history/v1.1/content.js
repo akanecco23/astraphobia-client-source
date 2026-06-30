@@ -7,12 +7,12 @@ import {
   disableZoomClamp,
   initGameCheats,
   initAllPanels,
-  angleSteps,
-  orbitRadius,
+  angles,
+  radius,
   playerData,
-  isInitialized_2,
-  securityConfig,
-  coreSharedState,
+  isProcessed_3,
+  config,
+  state,
 } from "./src/core.js";
 import {
   createUpdateHistoryPanel,
@@ -23,7 +23,7 @@ import {
 } from "./src/ui/panels.js";
 import {
   startCircularMouseMovement,
-  stopMouseSimulation,
+  stopEntityTrail,
   toggleMouseSimulation,
 } from "./src/features/movement.js";
 import {
@@ -37,5 +37,6 @@ import {
   showToast,
 } from "./src/ui/interaction.js";
 import { startScheduledTask, stopInterval } from "./src/features/chat.js";
+import { featuresentitytrailState } from "./src/features/entitytrail.js";
 import { handleAnimalAction } from "./src/features/autofarm.js";
 import { initAdBlocker } from "./src/features/adblock.js";

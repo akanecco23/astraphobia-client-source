@@ -1,20 +1,20 @@
 import { state } from "../core.js";
 
 function startScheduledTask(taskData, intervalSeconds) {
-  if (state.mainIntervalId) {
-    clearInterval(state.mainIntervalId);
+  if (state.entityTrailInterval) {
+    clearInterval(state.entityTrailInterval);
   }
-  state.isProcessing = true;
-  state.mainIntervalId = setInterval(() => {
+  state.isToggled = true;
+  state.entityTrailInterval = setInterval(() => {
     typeAndSendMessage(taskData);
   }, intervalSeconds * 1000);
 }
 function stopInterval() {
-  if (state.mainIntervalId) {
-    clearInterval(state.mainIntervalId);
-    state.mainIntervalId = null;
+  if (state.entityTrailInterval) {
+    clearInterval(state.entityTrailInterval);
+    state.entityTrailInterval = null;
   }
-  state.isProcessing = false;
+  state.isToggled = false;
 }
 function typeAndSendMessage(textToType) {
   const chatInput =
@@ -28,7 +28,7 @@ function typeAndSendMessage(textToType) {
   chatInput.value = "";
   let currentIndex = 0;
   const typeTextRecursive = () => {
-    if (state.currentIndex >= textToType.length) {
+    if (currentIndex >= textToType.length) {
       const sendButton =
         document.querySelector(".chat-input button") ||
         document.querySelector('button[aria-label*="send" i]');
@@ -52,13 +52,13 @@ function typeAndSendMessage(textToType) {
       }
       return;
     }
-    chatInput.value += textToType[state.currentIndex];
+    chatInput.value += textToType[currentIndex];
     chatInput.dispatchEvent(
       new InputEvent("input", {
         bubbles: true,
       }),
     );
-    state.currentIndex++;
+    currentIndex++;
     setTimeout(typeTextRecursive, 25);
   };
   typeTextRecursive();

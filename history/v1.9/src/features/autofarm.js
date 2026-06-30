@@ -102,29 +102,29 @@ function findClosestFarmableEntity(farmRange) {
       ) {
         return;
       }
-      const targetX =
+      const myY =
         targetEntity.position?._x !== undefined
           ? targetEntity.position._x
           : targetEntity.position?.x;
-      const targetY =
+      const posY =
         targetEntity.position?._y !== undefined
           ? targetEntity.position._y
           : targetEntity.position?.y;
       if (
-        targetX == null ||
-        targetY == null ||
+        myY == null ||
+        posY == null ||
         isValidEntity(targetEntity) ||
-        isAreaSkipped(targetX, targetY)
+        isAreaSkipped(myY, posY)
       ) {
         return;
       }
-      const distance = calculateDistance(playerX, playerY, targetX, targetY);
+      const distance = calculateDistance(playerX, playerY, myY, posY);
       if (distance < minDistance && distance < farmRange) {
         minDistance = distance;
         closestEntity = {
           id: targetEntity.id,
-          x: targetX,
-          y: targetY,
+          x: myY,
+          y: posY,
           distance: distance,
           entity: targetEntity,
         };
@@ -161,33 +161,28 @@ function findNearbyFarmableEntities(farmRange) {
       ) {
         return;
       }
-      const targetX =
+      const myY =
         targetEntity.position?._x !== undefined
           ? targetEntity.position._x
           : targetEntity.position?.x;
-      const targetY =
+      const posY =
         targetEntity.position?._y !== undefined
           ? targetEntity.position._y
           : targetEntity.position?.y;
       if (
-        targetX == null ||
-        targetY == null ||
+        myY == null ||
+        posY == null ||
         isValidEntity(targetEntity) ||
-        isAreaSkipped(targetX, targetY)
+        isAreaSkipped(myY, posY)
       ) {
         return;
       }
-      const distanceToTarget = calculateDistance(
-        playerX,
-        playerY,
-        targetX,
-        targetY,
-      );
+      const distanceToTarget = calculateDistance(playerX, playerY, myY, posY);
       if (distanceToTarget < farmRange) {
         nearbyEntities.push({
           id: targetEntity.id,
-          x: targetX,
-          y: targetY,
+          x: myY,
+          y: posY,
           distance: distanceToTarget,
           entity: targetEntity,
         });
@@ -272,26 +267,26 @@ function calculatePlayerAvoidanceVector() {
       ) {
         return;
       }
-      const targetX =
+      const myY =
         targetEntity.position?._x !== undefined
           ? targetEntity.position._x
           : targetEntity.position?.x;
-      const targetY =
+      const posY =
         targetEntity.position?._y !== undefined
           ? targetEntity.position._y
           : targetEntity.position?.y;
-      if (targetX == null || targetY == null) {
+      if (myY == null || posY == null) {
         return;
       }
       const currentDistance = calculateDistance(
         playerPosition.x,
         playerPosition.y,
-        targetX,
-        targetY,
+        myY,
+        posY,
       );
       if (currentDistance < window.autoFarmAvoidDistance) {
-        const diffX = playerPosition.x - targetX;
-        const diffY = playerPosition.y - targetY;
+        const diffX = playerPosition.x - myY;
+        const diffY = playerPosition.y - posY;
         const distance = Math.sqrt(diffX * diffX + diffY * diffY);
         const avoidanceFactor =
           (window.autoFarmAvoidDistance - Math.max(currentDistance, 50)) /
@@ -349,13 +344,13 @@ function detectAndHandleStuck(currentPos) {
     return false;
   }
   state.lastValue = now;
-  if (state.position) {
+  if (state.position_2) {
     if (
       calculateDistance(
         currentPos.x,
         currentPos.y,
-        state.position.x,
-        state.position.y,
+        state.position_2.x,
+        state.position_2.y,
       ) < 25
     ) {
       state.counter_2++;
@@ -385,7 +380,7 @@ function detectAndHandleStuck(currentPos) {
       state.counter_2 = 0;
     }
   }
-  state.position = {
+  state.position_2 = {
     x: currentPos.x,
     y: currentPos.y,
   };
@@ -408,7 +403,7 @@ function setupPatrolPoints() {
 }
 function autoFarmLoop() {
   if (!window.autoFarmActive) {
-    state.isToggled = false;
+    state.isToggled_4 = false;
     return;
   }
   const currentTime = Date.now();
@@ -435,7 +430,7 @@ function autoFarmLoop() {
     const currentTarget = getFirstAnimalPosition();
     if (!currentTarget) {
       window.autoFarmActive = false;
-      state.isToggled = false;
+      state.isToggled_4 = false;
       const autoFarmButton = document.getElementById("autoFarmBtn");
       if (autoFarmButton) {
         autoFarmButton.textContent = "Auto Farm";
@@ -515,16 +510,16 @@ function autoFarmLoop() {
           farmTarget.y,
         );
       } else {
-        const currentTarget_2 = findClosestFarmableEntity();
-        if (currentTarget_2) {
-          targetX = currentTarget_2.x;
-          targetY = currentTarget_2.y;
-          minDistance = currentTarget_2.distance;
+        const selectedTarget = findClosestFarmableEntity();
+        if (selectedTarget) {
+          targetX = selectedTarget.x;
+          targetY = selectedTarget.y;
+          minDistance = selectedTarget.distance;
           if (
             !window.autoFarmCurrentTarget ||
-            window.autoFarmCurrentTarget.id !== currentTarget_2.id
+            window.autoFarmCurrentTarget.id !== selectedTarget.id
           ) {
-            window.autoFarmCurrentTarget = currentTarget_2;
+            window.autoFarmCurrentTarget = selectedTarget;
             window.autoFarmTargetStartTime = currentTime;
           }
         } else {
@@ -543,16 +538,16 @@ function autoFarmLoop() {
       if (!window.autoFarmPatrolPoints.length) {
         setupPatrolPoints();
       }
-      const selectedTarget = findClosestFarmableEntity(800);
-      if (selectedTarget) {
-        targetX = selectedTarget.x;
-        targetY = selectedTarget.y;
-        minDistance = selectedTarget.distance;
+      const selectedTarget_2 = findClosestFarmableEntity(800);
+      if (selectedTarget_2) {
+        targetX = selectedTarget_2.x;
+        targetY = selectedTarget_2.y;
+        minDistance = selectedTarget_2.distance;
         if (
           !window.autoFarmCurrentTarget ||
-          window.autoFarmCurrentTarget.id !== selectedTarget.id
+          window.autoFarmCurrentTarget.id !== selectedTarget_2.id
         ) {
-          window.autoFarmCurrentTarget = selectedTarget;
+          window.autoFarmCurrentTarget = selectedTarget_2;
           window.autoFarmTargetStartTime = currentTime;
         }
       } else {
@@ -578,23 +573,23 @@ function autoFarmLoop() {
       }
     }
     if (targetX != null) {
-      const shouldBoost_2 =
+      const angle =
         window.autoFarmBoost &&
         minDistance > 350 &&
         currentTime - state.lastTickTime > tickInterval;
-      if (shouldBoost_2) {
+      if (angle) {
         state.lastTickTime = currentTime;
       }
-      moveAndClickTarget(targetX, targetY, shouldBoost_2);
+      moveAndClickTarget(targetX, targetY, angle);
     }
-  } catch (errorMessage) {
-    console.error("[AutoFarm]", errorMessage);
+  } catch (data) {
+    console.error("[AutoFarm]", data);
   }
   setTimeout(autoFarmLoop, 60);
 }
 function stopAutoFarm() {
   window.autoFarmActive = false;
-  state.isToggled = false;
+  state.isToggled_4 = false;
   showNotification(
     "Farm stopped. ~" +
       window.autoFarmStats.collected +

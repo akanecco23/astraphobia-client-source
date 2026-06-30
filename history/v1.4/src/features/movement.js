@@ -1,9 +1,10 @@
-import { rotationAngles, orbitRadius, state } from "../core.js";
+import { featuresentitytrailState } from "./entitytrail.js";
 import { showNotification } from "../ui/interaction.js";
+import { angles, radius, state } from "../core.js";
 import { getGameCanvas } from "../utils.js";
 
 function startAntiAfkMouseMovement() {
-  if (state.animationIntervalId) {
+  if (featuresentitytrailState.entityTrailInterval_2) {
     return;
   }
   const gameCanvas = getGameCanvas();
@@ -11,11 +12,11 @@ function startAntiAfkMouseMovement() {
     showNotification("Game canvas not found!");
     return;
   }
-  state.animationIntervalId = setInterval(() => {
-    const angleDegrees = rotationAngles[state.angleIndex];
+  featuresentitytrailState.entityTrailInterval_2 = setInterval(() => {
+    const angleDegrees = angles[state.angleIndex];
     const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
-    const offsetX = Math.round(orbitRadius * Math.sin(angleRadians));
-    const offsetY = Math.round(orbitRadius * Math.cos(angleRadians));
+    const offsetX = Math.round(radius * Math.sin(angleRadians));
+    const offsetY = Math.round(radius * Math.cos(angleRadians));
     gameCanvas.dispatchEvent(
       new MouseEvent("pointermove", {
         clientX: window.innerWidth / 2 + offsetX,
@@ -23,25 +24,21 @@ function startAntiAfkMouseMovement() {
         bubbles: true,
       }),
     );
-    state.angleIndex = (state.angleIndex + 1) % rotationAngles.length;
+    state.angleIndex = (state.angleIndex + 1) % angles.length;
   }, 15);
 }
-function stopMouseSimulation() {
-  if (state.animationIntervalId) {
-    clearInterval(state.animationIntervalId);
-    state.animationIntervalId = null;
+function stopEntityTrail() {
+  if (featuresentitytrailState.entityTrailInterval_2) {
+    clearInterval(featuresentitytrailState.entityTrailInterval_2);
+    featuresentitytrailState.entityTrailInterval_2 = null;
   }
 }
 function toggleMouseSimulation() {
-  if (state.animationIntervalId) {
-    stopMouseSimulation();
+  if (featuresentitytrailState.entityTrailInterval_2) {
+    stopEntityTrail();
   } else {
     startAntiAfkMouseMovement();
   }
 }
 
-export {
-  startAntiAfkMouseMovement,
-  stopMouseSimulation,
-  toggleMouseSimulation,
-};
+export { startAntiAfkMouseMovement, stopEntityTrail, toggleMouseSimulation };

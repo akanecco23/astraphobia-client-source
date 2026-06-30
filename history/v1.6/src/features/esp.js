@@ -2,9 +2,10 @@ import {
   getEntityPosition,
   calculateDirection,
   findEntityById,
+  angle,
   playerData,
   getFirstAnimalPosition,
-  coreSharedState,
+  state,
 } from "../core.js";
 import {
   getGameCanvas,
@@ -19,6 +20,7 @@ import { drawRadar } from "../ui/radar.js";
 window.espEnabled = false;
 window.espTrackedEntityId = null;
 window.espMode = "players";
+window.autoDodgeEnabled = false;
 
 function createEspOverlay() {
   let overlayCanvas = document.getElementById("esp-overlay");
@@ -59,7 +61,7 @@ function drawEsp(ctx, gameState, offsetX, offsetY, scale) {
     const screenX = offsetX + deltaX * scale;
     const screenY = offsetY + deltaY * scale;
     const isSelected = trackedEntityId && targetEntity.id === trackedEntityId;
-    const markerSize = 20;
+    const boxSize = 20;
     let markerColor;
     if (espMode === "players") {
       markerColor = isSelected
@@ -74,30 +76,30 @@ function drawEsp(ctx, gameState, offsetX, offsetY, scale) {
       ctx.strokeStyle = markerColor;
       ctx.lineWidth = isSelected ? 3 : 2;
       ctx.strokeRect(
-        screenX - markerSize / 2,
-        screenY - markerSize / 2,
-        markerSize,
-        markerSize,
+        screenX - boxSize / 2,
+        screenY - boxSize / 2,
+        boxSize,
+        boxSize,
       );
       ctx.fillStyle = markerColor;
       ctx.font = "bold 11px monospace";
       const entityLabel = targetEntity.entity?.name || "ID:" + targetEntity.id;
       ctx.fillText(
         entityLabel,
-        screenX - markerSize / 2,
-        screenY - markerSize / 2 - 8,
+        screenX - boxSize / 2,
+        screenY - boxSize / 2 - 8,
       );
       ctx.font = "10px monospace";
       ctx.fillText(
         Math.round(targetEntity.distance).toString(),
-        screenX - markerSize / 2,
-        screenY + markerSize / 2 + 13,
+        screenX - boxSize / 2,
+        screenY + boxSize / 2 + 13,
       );
       if (targetEntity.entity?.visibleFishLevel != null) {
         ctx.fillText(
           "Lvl:" + targetEntity.entity.visibleFishLevel,
-          screenX - markerSize / 2,
-          screenY + markerSize / 2 + 24,
+          screenX - boxSize / 2,
+          screenY + boxSize / 2 + 24,
         );
       }
       ctx.beginPath();
@@ -118,17 +120,17 @@ function drawEsp(ctx, gameState, offsetX, offsetY, scale) {
       ctx.strokeStyle = markerColor;
       ctx.lineWidth = 1.5;
       ctx.strokeRect(
-        screenX - markerSize / 2,
-        screenY - markerSize / 2,
-        markerSize,
-        markerSize,
+        screenX - boxSize / 2,
+        screenY - boxSize / 2,
+        boxSize,
+        boxSize,
       );
       if (targetEntity.distance < 1000) {
         ctx.fillStyle = markerColor;
         ctx.font = "9px monospace";
         ctx.fillText(
           Math.round(targetEntity.distance).toString(),
-          screenX + markerSize / 2 + 3,
+          screenX + boxSize / 2 + 3,
           screenY + 3,
         );
       }
@@ -201,7 +203,7 @@ function drawTrackedEntity(ctx, canvas, myPos, scale) {
   ctx.lineWidth = 2;
   ctx.stroke();
   const offsetDistance = 10;
-  const entityAngle = Math.atan2(entityDir.dirY, entityDir.dirX);
+  const angle = Math.atan2(entityDir.dirY, entityDir.dirX);
   ctx.beginPath();
   ctx.moveTo(
     screenX + entityDir.dirX * dirLineLength,
@@ -210,10 +212,10 @@ function drawTrackedEntity(ctx, canvas, myPos, scale) {
   ctx.lineTo(
     screenX +
       entityDir.dirX * dirLineLength -
-      offsetDistance * Math.cos(entityAngle - 0.4),
+      offsetDistance * Math.cos(angle - 0.4),
     screenY +
       entityDir.dirY * dirLineLength -
-      offsetDistance * Math.sin(entityAngle - 0.4),
+      offsetDistance * Math.sin(angle - 0.4),
   );
   ctx.moveTo(
     screenX + entityDir.dirX * dirLineLength,
@@ -222,10 +224,10 @@ function drawTrackedEntity(ctx, canvas, myPos, scale) {
   ctx.lineTo(
     screenX +
       entityDir.dirX * dirLineLength -
-      offsetDistance * Math.cos(entityAngle + 0.4),
+      offsetDistance * Math.cos(angle + 0.4),
     screenY +
       entityDir.dirY * dirLineLength -
-      offsetDistance * Math.sin(entityAngle + 0.4),
+      offsetDistance * Math.sin(angle + 0.4),
   );
   ctx.strokeStyle = "#ff00ff";
   ctx.lineWidth = 2;
@@ -266,27 +268,27 @@ function drawTrackedEntity(ctx, canvas, myPos, scale) {
     screenY > canvas.height
   ) {
     const targetAngle = Math.atan2(screenY - centerY, screenX - centerX);
-    const targetX = centerX + Math.cos(targetAngle) * (canvas.width / 2 - 40);
-    const targetY = centerY + Math.sin(targetAngle) * (canvas.height / 2 - 40);
+    const posX = centerX + Math.cos(targetAngle) * (canvas.width / 2 - 40);
+    const posY = centerY + Math.sin(targetAngle) * (canvas.height / 2 - 40);
     ctx.fillStyle = "rgba(0,0,0,0.85)";
     ctx.beginPath();
-    ctx.roundRect(targetX - 40, targetY - 15, 80, 30, 4);
+    ctx.roundRect(posX - 40, posY - 15, 80, 30, 4);
     ctx.fill();
     ctx.strokeStyle = "#ff00ff";
     ctx.lineWidth = 1.5;
     ctx.stroke();
     ctx.beginPath();
     ctx.moveTo(
-      targetX + Math.cos(targetAngle) * 20,
-      targetY + Math.sin(targetAngle) * 20,
+      posX + Math.cos(targetAngle) * 20,
+      posY + Math.sin(targetAngle) * 20,
     );
     ctx.lineTo(
-      targetX - Math.cos(targetAngle - 0.5) * 10,
-      targetY - Math.sin(targetAngle - 0.5) * 10,
+      posX - Math.cos(targetAngle - 0.5) * 10,
+      posY - Math.sin(targetAngle - 0.5) * 10,
     );
     ctx.lineTo(
-      targetX - Math.cos(targetAngle + 0.5) * 10,
-      targetY - Math.sin(targetAngle + 0.5) * 10,
+      posX - Math.cos(targetAngle + 0.5) * 10,
+      posY - Math.sin(targetAngle + 0.5) * 10,
     );
     ctx.closePath();
     ctx.fillStyle = "#ff00ff";
@@ -294,7 +296,7 @@ function drawTrackedEntity(ctx, canvas, myPos, scale) {
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 11px monospace";
     ctx.textAlign = "center";
-    ctx.fillText(Math.round(distance).toString(), targetX, targetY + 4);
+    ctx.fillText(Math.round(distance).toString(), posX, posY + 4);
     ctx.textAlign = "left";
   }
 }
@@ -321,7 +323,7 @@ function renderEspLoop() {
   drawRadar(ctx, espCanvas, entities);
   requestAnimationFrame(renderEspLoop);
 }
-function clearTracking() {
+function toggleEsp() {
   window.espEnabled = !window.espEnabled;
   showToast(window.espEnabled ? "ESP enabled" : "ESP disabled");
 }
@@ -337,20 +339,28 @@ function trackPlayer() {
     showToast("No players nearby");
   }
 }
+function toggleEsp_2() {
+  window.espTrackedEntityId = null;
+  showToast("Tracking cleared");
+}
+function toggleEsp_3() {
+  window.autoDodgeEnabled = false;
+  showToast("Auto dodge disabled");
+}
 function toggleMinimapSize() {
   if (!playerData || !playerData.minimap) {
     showToast("Minimap not available");
     return;
   }
-  if (coreSharedState.isToggled) {
+  if (state.isToggled_2) {
     playerData.minimap.scale.set(1);
     playerData.minimap.pivot.set(0, 0);
-    coreSharedState.isToggled = false;
+    state.isToggled_2 = false;
     showToast("Minimap restored");
   } else {
     playerData.minimap.scale.set(0.5);
     playerData.minimap.pivot.set(-70, -45);
-    coreSharedState.isToggled = true;
+    state.isToggled_2 = true;
     showToast("Small minimap enabled");
   }
 }
@@ -360,7 +370,9 @@ export {
   drawEsp,
   drawTrackedEntity,
   renderEspLoop,
-  clearTracking,
+  toggleEsp,
   trackPlayer,
+  toggleEsp_2,
+  toggleEsp_3,
   toggleMinimapSize,
 };

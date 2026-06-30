@@ -9,24 +9,25 @@ import {
   generatePatrolPoints,
   startAutoFarmLoop,
 } from "./features/autofarm.js";
+import { renderEspLoop, trackPlayer, toggleEsp_2 } from "./features/esp.js";
 import { applyTheme, initBackground, injectStyles } from "./ui/theme.js";
 import { showToast, restoreUIInteractivity } from "./ui/interaction.js";
 import { calculateDistance, getAllPropertyNames } from "./utils.js";
-import { renderEspLoop, trackPlayer } from "./features/esp.js";
 import { moveMouseToSide } from "./features/movement.js";
 import { initAdBlocker } from "./features/adblock.js";
 import { autoDodgeLoop } from "./features/aimbot.js";
 import { initRadarDrag } from "./ui/radar.js";
-const privateMap = new WeakMap();
+const stateCache = new WeakMap();
 function wrapWithProxy(targetObject, propertyKey, handler) {
   const originalValue = targetObject[propertyKey];
   const proxyValue = new Proxy(originalValue, handler);
-  privateMap.set(proxyValue, originalValue);
+  stateCache.set(proxyValue, originalValue);
   targetObject[propertyKey] = proxyValue;
 }
-let isStarted = false;
+let currentTime = 0;
+let isProcessed_2 = false;
 function hookTextEncoder() {
-  if (isStarted) {
+  if (isProcessed_2) {
     return;
   }
   function unescapeString(inputString) {
@@ -118,7 +119,7 @@ function hookTextEncoder() {
     } catch {}
     return Reflect.apply(originalEncode, this, inputArgs);
   };
-  const inputMaxLengthObserver = new MutationObserver(() => {
+  const observer = new MutationObserver(() => {
     document
       .querySelector(".play-game .el-input__inner")
       ?.setAttribute("maxlength", "80");
@@ -129,21 +130,21 @@ function hookTextEncoder() {
       .querySelector(".chat-input input")
       ?.setAttribute("maxLength", "1000");
   });
-  inputMaxLengthObserver.observe(document.body, {
+  observer.observe(document.body, {
     childList: true,
     subtree: true,
   });
-  isStarted = true;
+  isProcessed_2 = true;
   showToast("Special characters enabled");
 }
-const angleSteps = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
+const angles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
 const radius = 300;
 const offsetValue = 400;
-let game;
-let globalState;
+let gameInstance;
+let appState;
 let playerData;
-let isActive = false;
-const state = {};
+let isProcessed_3 = false;
+const config = {};
 function getGameState() {
   try {
     if (playerData && playerData.myAnimals && playerData.myAnimals.length > 0) {
@@ -180,8 +181,8 @@ function getEntityManager(gameState) {
   if (window.__cachedEM) {
     return window.__cachedEM;
   }
-  if (state.entityManager) {
-    const entityManager = gameState[state.entityManager];
+  if (config.entityManager) {
+    const entityManager = gameState[config.entityManager];
     if (entityManager) {
       window.__cachedEM = entityManager;
       return entityManager;
@@ -205,16 +206,12 @@ function getFirstAnimalPosition() {
   try {
     const animal = getGameState();
     const position = animal?.myAnimals?.[0];
-    if (!coreSharedState.position) {
+    if (!state.position) {
       return null;
     }
     return {
-      x:
-        coreSharedState.position.position._x ??
-        coreSharedState.position.position.x,
-      y:
-        coreSharedState.position.position._y ??
-        coreSharedState.position.position.y,
+      x: state.position.position._x ?? state.position.position.x,
+      y: state.position.position._y ?? state.position.position.y,
     };
   } catch (error) {
     return null;
@@ -303,24 +300,14 @@ let dragState = {
   x: null,
   y: 20,
 };
-function clearTracking_2() {
-  window.espTrackedEntityId = null;
-  showToast("Tracking cleared");
-}
-const maxDistance = 600;
-const distanceThreshold = 800;
-function clearTracking_3() {
-  window.autoDodgeEnabled = false;
-  showToast("Auto dodge disabled");
-}
-const distanceThreshold_2 = 400;
+const tickInterval = 600;
+const deltaThreshold = 800;
 const maxFailCount = 2;
-const expiryTimeout = 20000;
-const updateInterval_2 = 600;
+const timeoutLimit = 20000;
 function isAreaSkipped_2(x, y) {
   const currentTime = Date.now();
   window.autoFarmSkipAreas = window.autoFarmSkipAreas.filter(
-    (timerState) => currentTime - timerState.time < expiryTimeout,
+    (timerState) => currentTime - timerState.time < timeoutLimit,
   );
   return window.autoFarmSkipAreas.some(
     (cellData) =>
@@ -339,38 +326,38 @@ function initAutoFarm(farmMode) {
   window.autoFarmSkipIds.clear();
   window.autoFarmSkipAreas = [];
   window.autoFarmSkipClearTime = Date.now();
-  coreSharedState.position = null;
-  coreSharedState.counter_2 = 0;
-  coreSharedState.lastValue = 0;
-  coreSharedState.lastUpdateTime = 0;
+  state.position_2 = null;
+  state.counter_3 = 0;
+  state.counter_4 = 0;
+  state.counter_2 = 0;
   if (farmMode === "patrol") {
     generatePatrolPoints();
   }
   showToast("Auto farm started (" + window.autoFarmMode + ")");
   startAutoFarmLoop();
 }
-let isProcessed = false;
+let isProcessed_5 = false;
 const initializeAntiDetection = () => {
-  if (isProcessed) {
+  if (isProcessed_5) {
     return;
   }
-  isProcessed = true;
+  isProcessed_5 = true;
   const cache = {};
   for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
     cache[propertyKey] = Reflect[propertyKey];
   }
   const Proxy = Proxy;
   const lookupGetter = Object.prototype.__lookupGetter__;
-  const wrapValue = (registry, key, options) => {
-    const instance = new Proxy(registry[key], options);
-    privateMap.set(instance, registry[key]);
-    registry[key] = instance;
+  const wrapValue = (registry, url, options) => {
+    const instance = new Proxy(registry[url], options);
+    stateCache.set(instance, registry[url]);
+    registry[url] = instance;
   };
   wrapValue(Function.prototype, "toString", {
     apply(thisContext, paramKey, args) {
       return cache.apply(
         thisContext,
-        privateMap.get(paramKey) || paramKey,
+        stateCache.get(paramKey) || paramKey,
         args,
       );
     },
@@ -398,35 +385,35 @@ const initializeAntiDetection = () => {
         } catch {}
         if (extraArgs[0] && extraArgs[0].aboveBgPlatformsContainer != null) {
           playerData = extraArgs[0];
-          game = extraArgs[0].game;
+          gameInstance = extraArgs[0].game;
           window.__cachedEM = null;
           const allProperties = getAllPropertyNames(playerData);
           const obfuscatedProperties = allProperties.filter((varName) =>
             varName.startsWith("_0x"),
           );
-          state.setFlash =
+          config.setFlash =
             Object.getOwnPropertyNames(playerData.__proto__.__proto__)
               .filter((propName) => propName.startsWith("_0x"))
               .find(
                 (functionKey) => playerData[functionKey] instanceof Function,
-              ) || state.setFlash;
-          state.terrainManager =
+              ) || config.setFlash;
+          config.terrainManager =
             obfuscatedProperties.find(
               (shadowKey) =>
                 typeof playerData[shadowKey]?.shadow !== "undefined",
-            ) || state.terrainManager;
-          state.entityManager =
+            ) || config.terrainManager;
+          config.entityManager =
             obfuscatedProperties.find(
               (entitiesKey) =>
                 typeof playerData[entitiesKey]?.entitiesList !== "undefined",
-            ) || state.entityManager;
-          state.socketManager =
-            getAllPropertyNames(game).find(
+            ) || config.entityManager;
+          config.socketManager =
+            getAllPropertyNames(gameInstance).find(
               (networkKey) =>
-                typeof game[networkKey]?.sendBytePacket !== "undefined",
-            ) || state.socketManager;
+                typeof gameInstance[networkKey]?.sendBytePacket !== "undefined",
+            ) || config.socketManager;
           try {
-            globalState = document
+            appState = document
               .getElementById("app")
               ._vnode.appContext.config.globalProperties.$simpleState.states.find(
                 (gameStore) => gameStore._storeMeta.id === "game",
@@ -463,9 +450,9 @@ const initializeAntiDetection = () => {
               clearInterval(intervalId);
             } catch {}
           }, 200);
-          if (coreSharedState.lastTimestamp < Date.now() - 3000) {
+          if (lastTimestamp < Date.now() - 3000) {
             showToast("Client loaded");
-            coreSharedState.lastTimestamp = Date.now();
+            lastTimestamp = Date.now();
           }
         }
       } catch {}
@@ -474,7 +461,7 @@ const initializeAntiDetection = () => {
   });
 };
 const initializeViewportSettings = () => {
-  if (isActive) {
+  if (isProcessed_3) {
     return;
   }
   if (!playerData) {
@@ -483,40 +470,40 @@ const initializeViewportSettings = () => {
   }
   setInterval(() => {
     try {
-      game.viewport.clampZoom({
+      gameInstance.viewport.clampZoom({
         minWidth: 0,
         maxWidth: 10000000,
       });
-      game.viewport.plugins.plugins.clamp = null;
-      game.viewport.plugins.plugins["clamp-zoom"] = null;
+      gameInstance.viewport.plugins.plugins.clamp = null;
+      gameInstance.viewport.plugins.plugins["clamp-zoom"] = null;
     } catch {}
   }, 300);
   try {
-    if (state.setFlash) {
-      playerData[state.setFlash] = () => {};
+    if (config.setFlash) {
+      playerData[config.setFlash] = () => {};
     }
-    if (state.terrainManager) {
-      const terrainManager = playerData[state.terrainManager];
+    if (config.terrainManager) {
+      const terrainManager = playerData[config.terrainManager];
       if (terrainManager?.shadow) {
         terrainManager.shadow.setShadowSize(1000000);
         terrainManager.shadow.setShadowSize = () => {};
       }
     }
-  } catch (error) {
-    console.error(error);
+  } catch (url) {
+    console.error(url);
   }
-  isActive = true;
+  isProcessed_3 = true;
 };
-let isEnabled = false;
+let isProcessed_6 = false;
 function initializeClient() {
-  if (isEnabled) {
+  if (isProcessed_6) {
     return;
   }
-  isEnabled = true;
+  isProcessed_6 = true;
   setTimeout(() => {
     injectStyles();
-    const currentTheme = localStorage.getItem("theme") || "grey";
-    applyTheme(currentTheme);
+    const myY = localStorage.getItem("theme") || "grey";
+    applyTheme(myY);
     createToolsPanel();
     createPlusPanel();
     createSettingsPanel();
@@ -526,7 +513,7 @@ function initializeClient() {
     restoreUIInteractivity();
     initRadarDrag();
     renderEspLoop();
-    coreSharedState.isInitialized_2 = true;
+    state.isProcessed_4 = true;
     autoDodgeLoop();
   }, 1000);
 }
@@ -539,12 +526,12 @@ document.addEventListener(
     if (event.repeat) {
       return;
     }
-    if (event.key.toLowerCase() === coreSharedState.inputKey.toLowerCase()) {
+    if (event.key.toLowerCase() === state.keyQ.toLowerCase()) {
       event.preventDefault();
       event.stopPropagation();
       moveMouseToSide("left");
     }
-    if (event.key.toLowerCase() === coreSharedState.eventKey.toLowerCase()) {
+    if (event.key.toLowerCase() === state.keyE.toLowerCase()) {
       event.preventDefault();
       event.stopPropagation();
       moveMouseToSide("right");
@@ -562,12 +549,12 @@ document.addEventListener("keydown", (event_2) => {
   }
   if (event_2.key === "F4") {
     event_2.preventDefault();
-    clearTracking_2();
+    toggleEsp_2();
   }
 });
 document.addEventListener("keydown", (event_4) => {
   if (
-    event_4.key === coreSharedState.pressedKey &&
+    event_4.key === state.activeKey &&
     !event_4.repeat &&
     !event_4.target.matches("input,textarea,button,select")
   ) {
@@ -581,32 +568,24 @@ window.addEventListener("load", () => {
     initBackground();
   }, 1000);
 });
-export const coreSharedState = {
-  previousValue: "",
-  lastTimestamp: 0,
-  isInitialized: false,
-  updateInterval: null,
-  isProcessing: false,
-  animationInterval: null,
-  currentIndex: 0,
-  inputKey: "q",
-  eventKey: "e",
+export const state = {
+  currentTrackId: "",
+  isProcessed: false,
+  entityTrailInterval: null,
   isToggled: false,
-  isInitialized_2: false,
-  lastTimeA: 0,
-  currentPosition: null,
-  counter: 0,
-  lastTimeB: 0,
-  targetReference: null,
-  dataList: [],
-  lastUpdateTime: 0,
-  lastFrameTime: 0,
-  isActive_2: false,
+  angleIndex: 0,
+  keyQ: "q",
+  keyE: "e",
+  isToggled_2: false,
+  isProcessed_4: false,
   position: null,
+  counter: 0,
+  dataList: [],
   counter_2: 0,
-  lastValue: 0,
-  lastTimestamp_2: 0,
-  pressedKey: "Shift",
+  position_2: null,
+  counter_3: 0,
+  counter_4: 0,
+  activeKey: "Shift",
 };
 export {
   wrapWithProxy,
@@ -617,25 +596,23 @@ export {
   getEntityPosition,
   calculateDirection,
   findEntityById,
-  clearTracking_2,
-  clearTracking_3,
   isAreaSkipped_2,
   initAutoFarm,
   initializeAntiDetection,
   initializeViewportSettings,
   initializeClient,
-  angleSteps,
+  currentTime,
+  angles,
   radius,
   offsetValue,
-  game,
+  gameInstance,
   playerData,
-  isActive,
+  isProcessed_3,
+  config,
   dragState,
-  maxDistance,
-  distanceThreshold,
-  distanceThreshold_2,
+  tickInterval,
+  deltaThreshold,
   maxFailCount,
-  expiryTimeout,
-  updateInterval_2,
+  timeoutLimit,
   angle,
 };

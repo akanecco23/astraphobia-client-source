@@ -1,8 +1,9 @@
 import {
   gameInstance,
   playerData,
-  securitySettings,
-  isReady,
+  config,
+  radius,
+  isProcessed_2,
   setupProxyHooks,
   disableGameRestrictions,
   state,
@@ -12,8 +13,9 @@ import { toggleMinimapSize } from "../features/esp.js";
 import { showNotification } from "./interaction.js";
 import { setTheme } from "./theme.js";
 
+let isProcessed_3 = false;
 const initControlOverlay = () => {
-  if (state.isInitialized_2) {
+  if (isProcessed_3) {
     return;
   }
   function sendActionSequence() {
@@ -55,8 +57,8 @@ const initControlOverlay = () => {
         }
         const visibleFishLevel = playerData.myAnimals[0].visibleFishLevel;
         const fishLevelConfig = {
-          ...securitySettings.default,
-          ...securitySettings[visibleFishLevel],
+          ...config.default,
+          ...config[visibleFishLevel],
         };
         if (callbackParam.ctrlKey) {
           if (callbackParam.shiftKey && visibleFishLevel === 107) {
@@ -108,7 +110,7 @@ const initControlOverlay = () => {
       document.getElementById("ctrl-overlay").style.pointerEvents = "none";
     } catch {}
   });
-  state.isInitialized_2 = true;
+  isProcessed_3 = true;
 };
 function setupUpdateHistory() {
   const historyStyle = document.createElement("style");
@@ -122,36 +124,36 @@ function setupUpdateHistory() {
   document.body.appendChild(historyPanel);
   const minHistBtn = historyPanel.querySelector("#minHist");
   const historyContent = historyPanel.querySelector("#historyContent");
-  let isHistoryHidden = false;
+  let isHidden = false;
   minHistBtn.onclick = (event) => {
     event.stopPropagation();
-    isHistoryHidden = !isHistoryHidden;
-    historyContent.style.display = isHistoryHidden ? "none" : "block";
-    historyPanel.style.height = isHistoryHidden ? "60px" : "auto";
-    minHistBtn.textContent = isHistoryHidden ? "+" : "−";
+    isHidden = !isHidden;
+    historyContent.style.display = isHidden ? "none" : "block";
+    historyPanel.style.height = isHidden ? "60px" : "auto";
+    minHistBtn.textContent = isHidden ? "+" : "−";
   };
   let offsetX;
   let offsetY;
-  let isDragging = false;
   let isActive = false;
+  let isActive_2 = false;
   historyPanel.addEventListener("mousedown", (clickEvent) => {
     if (
       ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(clickEvent.target.tagName)
     ) {
       return;
     }
-    isDragging = true;
-    isActive = false;
+    isActive = true;
+    isActive_2 = false;
     offsetX = clickEvent.clientX - historyPanel.getBoundingClientRect().left;
     offsetY = clickEvent.clientY - historyPanel.getBoundingClientRect().top;
     historyPanel.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
       const deltaX = mouseEvent.clientX - clickEvent.clientX;
       const deltaY = mouseEvent.clientY - clickEvent.clientY;
-      if (!isActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isActive = true;
+      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+        isActive_2 = true;
       }
-      if (isDragging) {
+      if (isActive) {
         historyPanel.style.left = mouseEvent.clientX - offsetX + "px";
         historyPanel.style.top = mouseEvent.clientY - offsetY + "px";
         historyPanel.style.bottom = "auto";
@@ -159,7 +161,7 @@ function setupUpdateHistory() {
       }
     };
     const handleMouseUp = () => {
-      isDragging = false;
+      isActive = false;
       historyPanel.style.transition = "all 0.3s ease";
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
@@ -168,7 +170,7 @@ function setupUpdateHistory() {
     document.addEventListener("mouseup", handleMouseUp);
   });
   historyPanel.addEventListener("click", (inputEvent) => {
-    if (isActive) {
+    if (isActive_2) {
       inputEvent.stopImmediatePropagation();
     }
   });
@@ -179,57 +181,57 @@ function injectPlusPanelStyles() {
   styleElement.textContent =
     "\n      #plus-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n      }\n      #plus-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #plus-panel textarea {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 8px;\n        padding: 10px;\n        transition: all 0.2s ease;\n        font-size: 13px;\n      }\n      #plus-panel textarea:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);\n      }\n      #plus-panel input[type=\"number\"] {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 60px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #plus-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        position: relative;\n        overflow: hidden;\n        width: 100%;\n        margin-bottom: 10px;\n      }\n      #plus-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #plus-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #plus-panel button:hover:not(:disabled) {\n        background: var(--hover-bg);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2);\n        color: var(--accent-hover);\n      }\n      #plus-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #plus-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n    ";
   document.head.appendChild(styleElement);
-  const uiContainer = document.createElement("div");
-  uiContainer.id = "plus-panel";
-  uiContainer.style.position = "fixed";
-  uiContainer.style.top = "20px";
-  uiContainer.style.right = "20px";
-  uiContainer.style.color = "var(--text-primary)";
-  uiContainer.style.padding = "16px";
-  uiContainer.style.borderRadius = "16px";
-  uiContainer.style.fontSize = "14px";
-  uiContainer.style.zIndex = "99999";
-  uiContainer.style.userSelect = "none";
-  uiContainer.style.width = "240px";
-  uiContainer.style.textAlign = "center";
-  uiContainer.style.cursor = "move";
-  uiContainer.style.overflow = "hidden";
-  uiContainer.innerHTML =
+  const container = document.createElement("div");
+  container.id = "plus-panel";
+  container.style.position = "fixed";
+  container.style.top = "20px";
+  container.style.right = "20px";
+  container.style.color = "var(--text-primary)";
+  container.style.padding = "16px";
+  container.style.borderRadius = "16px";
+  container.style.fontSize = "14px";
+  container.style.zIndex = "99999";
+  container.style.userSelect = "none";
+  container.style.width = "240px";
+  container.style.textAlign = "center";
+  container.style.cursor = "move";
+  container.style.overflow = "hidden";
+  container.innerHTML =
     '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        ASTRAPHOBIA CLIENT+\n      </div>\n      <div id="plusContent">\n        <button id="thresherBtn">Enable Thresher Super Boost(ctrl + shift and click)(minumum required 2 boost)</button>\n        <button id="astraVisionBtn">Enable Astra-Vision (no-zoom limit, no ink flash or deep darkness)</button>\n        <button id="smallMinimapBtn">Enable Small Minimap</button>\n      </div>\n    ';
-  document.body.appendChild(uiContainer);
-  const thresherButton = uiContainer.querySelector("#thresherBtn");
-  thresherButton.onclick = () => {
-    if (state.isInitialized_2) {
+  document.body.appendChild(container);
+  const astraVisionButton = container.querySelector("#thresherBtn");
+  astraVisionButton.onclick = () => {
+    if (isProcessed_3) {
       showNotification("Thresher Super Boost is already active!");
       return;
     }
     setupProxyHooks();
-    thresherButton.textContent = "Thresher Super Boost Active";
-    thresherButton.style.color = "var(--accent)";
-    thresherButton.style.opacity = "0.6";
-    thresherButton.disabled = true;
+    astraVisionButton.textContent = "Thresher Super Boost Active";
+    astraVisionButton.style.color = "var(--accent)";
+    astraVisionButton.style.opacity = "0.6";
+    astraVisionButton.disabled = true;
   };
-  const astraVisionButton = uiContainer.querySelector("#astraVisionBtn");
-  astraVisionButton.onclick = () => {
-    if (isReady) {
+  const astraVisionButton_2 = container.querySelector("#astraVisionBtn");
+  astraVisionButton_2.onclick = () => {
+    if (isProcessed_2) {
       showNotification("Astra-Vision already enabled!");
       return;
     }
     setupProxyHooks();
     disableGameRestrictions();
-    astraVisionButton.textContent = "Astra-Vision Active";
-    astraVisionButton.style.color = "var(--accent)";
-    astraVisionButton.style.opacity = "0.6";
-    astraVisionButton.disabled = true;
+    astraVisionButton_2.textContent = "Astra-Vision Active";
+    astraVisionButton_2.style.color = "var(--accent)";
+    astraVisionButton_2.style.opacity = "0.6";
+    astraVisionButton_2.disabled = true;
     showNotification(
       "👁️ Astra-Vision enabled! (zoom-limit unlocked, no ink-flash or deep darkness effects)",
     );
   };
-  const smallMinimapButton = uiContainer.querySelector("#smallMinimapBtn");
+  const smallMinimapButton = container.querySelector("#smallMinimapBtn");
   smallMinimapButton.onclick = () => {
     setupProxyHooks();
     toggleMinimapSize();
-    if (state.isProcessing_2) {
+    if (state.isToggled_2) {
       smallMinimapButton.textContent = "Disable Small Minimap";
       smallMinimapButton.style.color = "var(--accent)";
       smallMinimapButton.style.opacity = "0.6";
@@ -242,8 +244,8 @@ function injectPlusPanelStyles() {
   let relativeX;
   let relativeY;
   let isActive = false;
-  let isEnabled = false;
-  uiContainer.addEventListener("mousedown", (event) => {
+  let isActive_2 = false;
+  container.addEventListener("mousedown", (event) => {
     if (
       event.target.tagName === "BUTTON" ||
       event.target.tagName === "TEXTAREA" ||
@@ -253,38 +255,38 @@ function injectPlusPanelStyles() {
       return;
     }
     isActive = true;
-    isEnabled = false;
-    relativeX = event.clientX - uiContainer.getBoundingClientRect().left;
-    relativeY = event.clientY - uiContainer.getBoundingClientRect().top;
-    uiContainer.style.transition = "none";
+    isActive_2 = false;
+    relativeX = event.clientX - container.getBoundingClientRect().left;
+    relativeY = event.clientY - container.getBoundingClientRect().top;
+    container.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
       const deltaX = mouseEvent.clientX - event.clientX;
       const deltaY = mouseEvent.clientY - event.clientY;
-      if (!isEnabled && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isEnabled = true;
+      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+        isActive_2 = true;
       }
       if (isActive) {
-        uiContainer.style.left = mouseEvent.clientX - relativeX + "px";
-        uiContainer.style.top = mouseEvent.clientY - relativeY + "px";
-        uiContainer.style.bottom = "auto";
-        uiContainer.style.right = "auto";
+        container.style.left = mouseEvent.clientX - relativeX + "px";
+        container.style.top = mouseEvent.clientY - relativeY + "px";
+        container.style.bottom = "auto";
+        container.style.right = "auto";
       }
     };
     const handleMouseUp = () => {
       isActive = false;
-      uiContainer.style.transition = "all 0.3s ease";
+      container.style.transition = "all 0.3s ease";
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   });
-  uiContainer.addEventListener("click", (event_2) => {
-    if (isEnabled) {
+  container.addEventListener("click", (event_2) => {
+    if (isActive_2) {
       event_2.stopImmediatePropagation();
     }
   });
-  return uiContainer;
+  return container;
 }
 function injectSettingsStyles() {
   const styleElement = document.createElement("style");
@@ -300,25 +302,25 @@ function injectSettingsStyles() {
   bgUrlInput.value = localStorage.getItem("bgUrl") || "";
   const applyBgButton = container.querySelector("#applyBg");
   applyBgButton.onclick = () => {
-    const backgroundUrl = bgUrlInput.value.trim();
-    if (backgroundUrl === "") {
+    const bgUrl = bgUrlInput.value.trim();
+    if (bgUrl === "") {
       showNotification("Enter a URL first!");
       return;
     }
-    localStorage.setItem("bgUrl", backgroundUrl);
+    localStorage.setItem("bgUrl", bgUrl);
     let homeBgElement = document.querySelector(".home-bg");
     const updateBackgroundImage = () => {
       homeBgElement.style.setProperty(
         "background-image",
-        'url("' + backgroundUrl + '")',
+        'url("' + bgUrl + '")',
         "important",
       );
     };
     if (homeBgElement == null) {
-      const bgCheckInterval = setInterval(() => {
+      const pollInterval = setInterval(() => {
         homeBgElement = document.querySelector(".home-bg");
         if (homeBgElement != null) {
-          clearInterval(bgCheckInterval);
+          clearInterval(pollInterval);
         }
         updateBackgroundImage();
       }, 100);
@@ -328,24 +330,24 @@ function injectSettingsStyles() {
     showNotification("Custom Background applied!");
   };
   const themeSelect = container.querySelector("#themeSelect");
-  const currentTheme = localStorage.getItem("theme") || "blue";
-  themeSelect.value = currentTheme;
-  setTheme(currentTheme);
+  const angle = localStorage.getItem("theme") || "blue";
+  themeSelect.value = angle;
+  setTheme(angle);
   themeSelect.onchange = (themeChangeEvent) => {
     setTheme(themeChangeEvent.target.value);
     showNotification("Theme changed to " + themeChangeEvent.target.value);
   };
   const toggleKeyInput = container.querySelector("#toggleKeyInput");
-  toggleKeyInput.value = state.currentKey;
+  toggleKeyInput.value = state.activeKey;
   toggleKeyInput.addEventListener("keydown", (keyboardEvent) => {
     keyboardEvent.preventDefault();
-    state.currentKey = keyboardEvent.key;
-    toggleKeyInput.value = state.currentKey;
+    state.activeKey = keyboardEvent.key;
+    toggleKeyInput.value = state.activeKey;
   });
   let offsetX;
   let offsetY;
-  let isDragging = false;
-  let isToggled = false;
+  let isActive = false;
+  let isActive_2 = false;
   container.addEventListener("mousedown", (uiEvent) => {
     if (
       uiEvent.target.tagName === "BUTTON" ||
@@ -354,18 +356,18 @@ function injectSettingsStyles() {
     ) {
       return;
     }
-    isDragging = true;
-    isToggled = false;
+    isActive = true;
+    isActive_2 = false;
     offsetX = uiEvent.clientX - container.getBoundingClientRect().left;
     offsetY = uiEvent.clientY - container.getBoundingClientRect().top;
     container.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
       const deltaX = mouseEvent.clientX - uiEvent.clientX;
       const deltaY = mouseEvent.clientY - uiEvent.clientY;
-      if (!isToggled && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isToggled = true;
+      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+        isActive_2 = true;
       }
-      if (isDragging) {
+      if (isActive) {
         container.style.left = mouseEvent.clientX - offsetX + "px";
         container.style.top = mouseEvent.clientY - offsetY + "px";
         container.style.bottom = "auto";
@@ -373,7 +375,7 @@ function injectSettingsStyles() {
       }
     };
     const handleMouseUp = () => {
-      isDragging = false;
+      isActive = false;
       container.style.transition = "all 0.3s ease";
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
@@ -382,7 +384,7 @@ function injectSettingsStyles() {
     document.addEventListener("mouseup", handleMouseUp);
   });
   container.addEventListener("click", (interceptedEvent) => {
-    if (isToggled) {
+    if (isActive_2) {
       interceptedEvent.stopImmediatePropagation();
     }
   });

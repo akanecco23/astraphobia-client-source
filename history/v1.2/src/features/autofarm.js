@@ -1,9 +1,4 @@
-import {
-  userData,
-  securityConfigs,
-  sendPacket,
-  coreSharedState,
-} from "../core.js";
+import { playerData, config, sendPacket, state } from "../core.js";
 
 const handleAnimalAction = (value) => {
   const id1 = 1;
@@ -11,13 +6,13 @@ const handleAnimalAction = (value) => {
   const id5 = 5;
   try {
     const fishLevelConfig = {
-      ...securityConfigs.default,
-      ...(securityConfigs[userData?.myAnimals?.[0]?.visibleFishLevel] || {}),
+      ...config.default,
+      ...(config[playerData?.myAnimals?.[0]?.visibleFishLevel] || {}),
     };
-    if (value < (userData?.myAnimals?.[0]?._standing ? 40 : 100)) {
+    if (value < (playerData?.myAnimals?.[0]?._standing ? 40 : 100)) {
       return sendPacket(id1);
     }
-    if (userData?.myAnimals?.[0]?._standing) {
+    if (playerData?.myAnimals?.[0]?._standing) {
       return sendPacket(id5, value);
     }
     if (fishLevelConfig.hasScaling) {

@@ -7,28 +7,26 @@ import {
   getEntityPosition,
   calculateDirection,
   findEntityById,
-  clearTracking_2,
-  clearTracking_3,
   isAreaSkipped_2,
   initAutoFarm,
   initializeAntiDetection,
   initializeViewportSettings,
   initializeClient,
-  angleSteps,
+  currentTime,
+  angles,
   radius,
   offsetValue,
-  game,
+  gameInstance,
   playerData,
-  isActive,
+  isProcessed_3,
+  config,
   dragState,
-  maxDistance,
-  distanceThreshold,
-  distanceThreshold_2,
+  tickInterval,
+  deltaThreshold,
   maxFailCount,
-  expiryTimeout,
-  updateInterval_2,
+  timeoutLimit,
   angle,
-  coreSharedState,
+  state,
 } from "./src/core.js";
 import {
   isAreaSkipped,
@@ -55,6 +53,17 @@ import {
   toggleUiVisibility,
 } from "./src/ui/panels.js";
 import {
+  createEspOverlay,
+  drawEsp,
+  drawTrackedEntity,
+  renderEspLoop,
+  toggleEsp,
+  trackPlayer,
+  toggleEsp_2,
+  toggleEsp_3,
+  toggleMinimapSize,
+} from "./src/features/esp.js";
+import {
   generateRandomString,
   getGameCanvas,
   getAllPropertyNames,
@@ -66,21 +75,12 @@ import {
 } from "./src/utils.js";
 import {
   startCircularMovement,
-  stopMouseSimulation,
+  stopEntityTrail,
   toggleMouseSimulation,
   moveMouseToSide,
   simulateClick,
   simulateMoveAndClick,
 } from "./src/features/movement.js";
-import {
-  createEspOverlay,
-  drawEsp,
-  drawTrackedEntity,
-  renderEspLoop,
-  clearTracking,
-  trackPlayer,
-  toggleMinimapSize,
-} from "./src/features/esp.js";
 import {
   startScheduledTask,
   stopInterval,
@@ -93,5 +93,6 @@ import {
 } from "./src/ui/interaction.js";
 import { applyTheme, initBackground, injectStyles } from "./src/ui/theme.js";
 import { autoDodgeLoop, enableAutoDodge } from "./src/features/aimbot.js";
+import { featuresentitytrailState } from "./src/features/entitytrail.js";
 import { drawRadar, initRadarDrag } from "./src/ui/radar.js";
 import { initAdBlocker } from "./src/features/adblock.js";

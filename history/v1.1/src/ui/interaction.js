@@ -1,3 +1,5 @@
+import { radius, state } from "../core.js";
+
 function simulateTyping(selector, text) {
   const inputElement = document.querySelector(selector);
   if (!inputElement) {

@@ -57,7 +57,7 @@ function showNotification(message) {
   }, 2500);
 }
 function initNameAutofill() {
-  if (state.isMuted) {
+  if (state.isToggled) {
     return;
   }
   let storedName = localStorage.getItem("autofill_name") || "";
@@ -65,10 +65,10 @@ function initNameAutofill() {
     document.querySelector(".name-input input") ||
     document.querySelector(".play-game .el-input__inner");
   function applyAutofill() {
-    if (state.isMuted) {
+    if (state.isToggled) {
       return;
     }
-    state.isMuted = true;
+    state.isToggled = true;
     nameInput.value = storedName;
     nameInput.dispatchEvent(
       new Event("input", {

@@ -1,4 +1,4 @@
-import { radius, coreSharedState } from "../core.js";
+import { radius, state } from "../core.js";
 
 function simulateTyping(inputSelector, textToType) {
   const inputElement = document.querySelector(inputSelector);

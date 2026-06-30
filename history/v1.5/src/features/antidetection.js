@@ -1,9 +1,10 @@
-import { angleSteps, radius, coreSharedState } from "../core.js";
+import { featuresentitytrailState } from "./entitytrail.js";
 import { showNotification } from "../ui/interaction.js";
+import { angles, radius, state } from "../core.js";
 import { getGameCanvas } from "../utils.js";
 
 function startAntiAfk() {
-  if (coreSharedState.rotationInterval) {
+  if (featuresentitytrailState.entityTrailInterval_2) {
     return;
   }
   const gameCanvas = getGameCanvas();
@@ -11,8 +12,8 @@ function startAntiAfk() {
     showNotification("Game canvas not found!");
     return;
   }
-  coreSharedState.rotationInterval = setInterval(() => {
-    const angleDegrees = angleSteps[coreSharedState.angleIndex];
+  featuresentitytrailState.entityTrailInterval_2 = setInterval(() => {
+    const angleDegrees = angles[state.angleIndex];
     const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
     const offsetX = Math.round(radius * Math.sin(angleRadians));
     const offsetY = Math.round(radius * Math.cos(angleRadians));
@@ -23,8 +24,7 @@ function startAntiAfk() {
         bubbles: true,
       }),
     );
-    coreSharedState.angleIndex =
-      (coreSharedState.angleIndex + 1) % angleSteps.length;
+    state.angleIndex = (state.angleIndex + 1) % angles.length;
   }, 15);
 }
 

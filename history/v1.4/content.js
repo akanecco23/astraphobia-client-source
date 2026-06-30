@@ -7,12 +7,12 @@ import {
   disableGameRestrictions,
   setupToolsPanel,
   initializePanels,
-  rotationAngles,
-  orbitRadius,
+  angles,
+  radius,
   gameInstance,
   playerData,
-  isReady,
-  securitySettings,
+  isProcessed_2,
+  config,
   state,
 } from "./src/core.js";
 import {
@@ -24,7 +24,7 @@ import {
 } from "./src/ui/panels.js";
 import {
   startAntiAfkMouseMovement,
-  stopMouseSimulation,
+  stopEntityTrail,
   toggleMouseSimulation,
 } from "./src/features/movement.js";
 import {
@@ -38,6 +38,7 @@ import {
   autoChat,
 } from "./src/features/chat.js";
 import { simulateTyping, showNotification } from "./src/ui/interaction.js";
+import { featuresentitytrailState } from "./src/features/entitytrail.js";
 import { initBackgroundImage, setTheme } from "./src/ui/theme.js";
 import { handleAnimalAction } from "./src/features/autofarm.js";
 import { initAdBlocker } from "./src/features/adblock.js";

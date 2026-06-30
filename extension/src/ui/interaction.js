@@ -1,13 +1,15 @@
-function simulateTyping(selector, text) {
+import { currentTime, radius, state } from "../core.js";
+
+function simulateTyping(selector, textToType) {
   const inputElement = document.querySelector(selector);
   if (!inputElement) {
     return false;
   }
   inputElement.focus();
   inputElement.value = "";
-  let charIndex = 0;
-  const typeText = () => {
-    if (charIndex >= text.length) {
+  let currentIndex = 0;
+  const typeNextChar = () => {
+    if (currentIndex >= textToType.length) {
       inputElement.dispatchEvent(
         new Event("change", {
           bubbles: true,
@@ -18,83 +20,81 @@ function simulateTyping(selector, text) {
           bubbles: true,
         }),
       );
-      setTimeout(() => {}, 100);
       return;
     }
-    inputElement.value += text[charIndex];
+    inputElement.value += textToType[currentIndex];
     inputElement.dispatchEvent(
       new InputEvent("input", {
         bubbles: true,
       }),
     );
-    charIndex++;
-    setTimeout(typeText, 25);
-  };
-  typeText();
-  return true;
-}
-function autoTypeChat(textToType) {
-  const chatInput =
-    document.querySelector(".chat-input input") ||
-    document.querySelector('input[placeholder*="chat" i]') ||
-    document.querySelector('input[type="text"]');
-  if (!chatInput) {
-    console.warn("Chat input not found - skipping auto chat");
-    return;
-  }
-  chatInput.focus();
-  chatInput.value = "";
-  let charIndex = 0;
-  const typeNextChar = () => {
-    if (charIndex >= textToType.length) {
-      const sendButton =
-        document.querySelector(".chat-input button") ||
-        document.querySelector('button[aria-label*="send" i]') ||
-        document.querySelector("button");
-      if (sendButton) {
-        sendButton.click();
-      } else {
-        chatInput.dispatchEvent(
-          new Event("change", {
-            bubbles: true,
-          }),
-        );
-        chatInput.dispatchEvent(
-          new Event("input", {
-            bubbles: true,
-          }),
-        );
-        setTimeout(() => {
-          chatInput.value = "";
-          chatInput.blur();
-        }, 100);
-      }
-      return;
-    }
-    chatInput.value += textToType[charIndex];
-    chatInput.dispatchEvent(
-      new InputEvent("input", {
-        bubbles: true,
-      }),
-    );
-    charIndex++;
+    currentIndex++;
     setTimeout(typeNextChar, 25);
   };
   typeNextChar();
+  return true;
 }
-function showToast(message) {
-  const toastElement = document.createElement("div");
-  toastElement.style.cssText =
-    "position: fixed; top: 20px; right: 20px; background: rgba(0, 0, 0, 0.8); color: white; padding: 10px 15px; border-radius: 5px; z-index: 10001; font-size: 14px; opacity: 0; transition: opacity 0.3s; pointer-events: none;";
-  toastElement.textContent = message;
-  document.body.appendChild(toastElement);
+function showNotification(message) {
+  const currentTime = Date.now();
+  if (message === state.currentTrackId && currentTime - currentTime < 3000) {
+    return;
+  }
+  state.currentTrackId = message;
+  currentTime = currentTime;
+  const notificationElement = document.createElement("div");
+  notificationElement.style.cssText =
+    "\n      position: fixed; top: 16px; right: 16px;\n      background: var(--notif-bg, #282828); color: var(--notif-text, #e0e0e0);\n      padding: 10px 16px; border-radius: 4px;\n      z-index: 10000000; font-size: 13px;\n      opacity: 0; transition: opacity 0.2s ease, transform 0.2s ease;\n      pointer-events: none; font-family: 'Segoe UI', system-ui, sans-serif;\n      border-left: 3px solid var(--notif-border, var(--acc, #888));\n      transform: translateX(20px);\n    ";
+  notificationElement.textContent = message;
+  document.body.appendChild(notificationElement);
+  requestAnimationFrame(() => {
+    notificationElement.style.opacity = "1";
+    notificationElement.style.transform = "translateX(0)";
+  });
   setTimeout(() => {
-    toastElement.style.opacity = "1";
-  }, 10);
-  setTimeout(() => {
-    toastElement.style.opacity = "0";
-    setTimeout(() => toastElement.remove(), 300);
-  }, 3000);
+    notificationElement.style.opacity = "0";
+    notificationElement.style.transform = "translateX(20px)";
+    setTimeout(() => notificationElement.remove(), 200);
+  }, 2500);
+}
+function initNameAutofill() {
+  if (state.isToggled) {
+    return;
+  }
+  let storedName = localStorage.getItem("autofill_name") || "";
+  let nameInput =
+    document.querySelector(".name-input input") ||
+    document.querySelector(".play-game .el-input__inner");
+  function applyAutofill() {
+    if (state.isToggled) {
+      return;
+    }
+    state.isToggled = true;
+    nameInput.value = storedName;
+    nameInput.dispatchEvent(
+      new Event("input", {
+        bubbles: true,
+      }),
+    );
+    nameInput.addEventListener("input", () => {
+      if (storedName !== nameInput.value) {
+        storedName = nameInput.value;
+        localStorage.setItem("autofill_name", storedName);
+      }
+    });
+  }
+  if (nameInput == null) {
+    const pollInterval = setInterval(() => {
+      nameInput =
+        document.querySelector(".name-input input") ||
+        document.querySelector(".play-game .el-input__inner");
+      if (nameInput != null) {
+        clearInterval(pollInterval);
+        applyAutofill();
+      }
+    }, 200);
+  } else {
+    applyAutofill();
+  }
 }
 
-export { simulateTyping, autoTypeChat, showToast };
+export { simulateTyping, showNotification, initNameAutofill };

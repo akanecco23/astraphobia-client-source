@@ -2,18 +2,19 @@ import {
   radius,
   gameInstance,
   playerData,
-  securityConfigs,
+  config,
   initInterceptor,
-  isReady,
+  isProcessed_2,
   initializeAntiTamper,
   disableGameRestrictions,
-  coreSharedState,
+  state,
 } from "../core.js";
 import {
   startScheduledTask,
   stopInterval,
   autoChat,
 } from "../features/chat.js";
+import { featuresentitytrailState } from "../features/entitytrail.js";
 import { showNotification, simulateTyping } from "./interaction.js";
 import { toggleMouseSimulation } from "../features/movement.js";
 import { handleAnimalAction } from "../features/autofarm.js";
@@ -21,6 +22,7 @@ import { generateRandomString } from "../utils.js";
 import { toggleMinimapScale } from "./radar.js";
 import { applyThemeColors } from "./theme.js";
 
+let isProcessed_3 = false;
 function createHalloweenModal(modalConfig) {
   const modalContainer = document.createElement("div");
   modalContainer.id = "halloween-code-modal";
@@ -80,7 +82,7 @@ function createHalloweenModal(modalConfig) {
   halloweenCodeInput.focus();
 }
 const initControlOverlay = () => {
-  if (coreSharedState.isInitialized_2) {
+  if (isProcessed_3) {
     return;
   }
   function sendActionSequence() {
@@ -122,8 +124,8 @@ const initControlOverlay = () => {
         }
         const visibleFishLevel = playerData.myAnimals[0].visibleFishLevel;
         const mergedFishConfig = {
-          ...securityConfigs.default,
-          ...securityConfigs[visibleFishLevel],
+          ...config.default,
+          ...config[visibleFishLevel],
         };
         if (processAnimals.ctrlKey) {
           if (processAnimals.shiftKey && visibleFishLevel === 107) {
@@ -175,7 +177,7 @@ const initControlOverlay = () => {
       document.getElementById("ctrl-overlay").style.pointerEvents = "none";
     } catch {}
   });
-  coreSharedState.isInitialized_2 = true;
+  isProcessed_3 = true;
 };
 function createUpdateHistoryStyles() {
   const styleElement = document.createElement("style");
@@ -190,13 +192,13 @@ function createUpdateHistoryStyles() {
   const minHistElement = draggableElement.querySelector("#minHist");
   const historyContentElement =
     draggableElement.querySelector("#historyContent");
-  let isHistoryHidden = false;
+  let isHidden = false;
   minHistElement.onclick = (event) => {
     event.stopPropagation();
-    isHistoryHidden = !isHistoryHidden;
-    historyContentElement.style.display = isHistoryHidden ? "none" : "block";
-    draggableElement.style.height = isHistoryHidden ? "60px" : "auto";
-    minHistElement.textContent = isHistoryHidden ? "+" : "−";
+    isHidden = !isHidden;
+    historyContentElement.style.display = isHidden ? "none" : "block";
+    draggableElement.style.height = isHidden ? "60px" : "auto";
+    minHistElement.textContent = isHidden ? "+" : "−";
   };
   let offsetX;
   let offsetY;
@@ -242,7 +244,7 @@ function createUpdateHistoryStyles() {
     }
   });
   if (localStorage.getItem("theme") === "halloween") {
-    for (let loopIndex = 0; loopIndex < 3; loopIndex++) {
+    for (let i = 0; i < 3; i++) {
       const spanElement = document.createElement("span");
       spanElement.className = "bat";
       spanElement.textContent = "🦇";
@@ -280,10 +282,10 @@ function injectDeepToolsStyles() {
       autoChat(chatMessage);
     }
   };
-  const patchButton = deepToolsPanel.querySelector("#patchBtn");
-  patchButton.onclick = () => initInterceptor(patchButton);
-  const spoofButton = deepToolsPanel.querySelector("#spoofBtn");
-  spoofButton.onclick = () => {
+  const spoofButton = deepToolsPanel.querySelector("#patchBtn");
+  spoofButton.onclick = () => initInterceptor(spoofButton);
+  const spoofButton_2 = deepToolsPanel.querySelector("#spoofBtn");
+  spoofButton_2.onclick = () => {
     const inputLimit = generateRandomString(8);
     if (simulateTyping(".play-game .el-input__inner", inputLimit)) {
       showNotification("Spoofed name!");
@@ -293,47 +295,47 @@ function injectDeepToolsStyles() {
       showNotification("No name input found! Enable special characters first.");
     }
   };
-  const spinButton = deepToolsPanel.querySelector("#spinBtn");
-  spinButton.onclick = () => {
+  const autoChatButton = deepToolsPanel.querySelector("#spinBtn");
+  autoChatButton.onclick = () => {
     toggleMouseSimulation();
-    if (coreSharedState.rotationInterval) {
-      spinButton.textContent = "Disable Auto Spin";
-      spinButton.style.color = "var(--accent)";
-      spinButton.style.opacity = "0.6";
+    if (featuresentitytrailState.entityTrailInterval_2) {
+      autoChatButton.textContent = "Disable Auto Spin";
+      autoChatButton.style.color = "var(--accent)";
+      autoChatButton.style.opacity = "0.6";
     } else {
-      spinButton.textContent = "Enable Auto Spin";
-      spinButton.style.color = "var(--accent)";
-      spinButton.style.opacity = "1";
+      autoChatButton.textContent = "Enable Auto Spin";
+      autoChatButton.style.color = "var(--accent)";
+      autoChatButton.style.opacity = "1";
     }
   };
   const spinKeyInput = deepToolsPanel.querySelector("#spinKeyInput");
-  let pressedKey = null;
+  let lastPressedKey = null;
   spinKeyInput.addEventListener("keydown", (event) => {
     event.preventDefault();
-    pressedKey = event.code || event.key;
-    spinKeyInput.value = pressedKey.replace("Key", "").toLowerCase();
+    lastPressedKey = event.code || event.key;
+    spinKeyInput.value = lastPressedKey.replace("Key", "").toLowerCase();
   });
   document.addEventListener("keydown", (event_2) => {
     if (
-      pressedKey &&
-      event_2.code === pressedKey &&
+      lastPressedKey &&
+      event_2.code === lastPressedKey &&
       !event_2.target.matches("input, textarea, button")
     ) {
       event_2.preventDefault();
       toggleMouseSimulation();
-      if (coreSharedState.rotationInterval) {
-        spinButton.textContent = "Disable Auto Spin";
-        spinButton.style.color = "var(--accent)";
-        spinButton.style.opacity = "0.6";
+      if (featuresentitytrailState.entityTrailInterval_2) {
+        autoChatButton.textContent = "Disable Auto Spin";
+        autoChatButton.style.color = "var(--accent)";
+        autoChatButton.style.opacity = "0.6";
       } else {
-        spinButton.textContent = "Enable Auto Spin";
-        spinButton.style.color = "var(--accent)";
-        spinButton.style.opacity = "1";
+        autoChatButton.textContent = "Enable Auto Spin";
+        autoChatButton.style.color = "var(--accent)";
+        autoChatButton.style.opacity = "1";
       }
     }
   });
-  const autoChatButton = deepToolsPanel.querySelector("#autoChatBtn");
-  autoChatButton.onclick = () => {
+  const autoChatButton_2 = deepToolsPanel.querySelector("#autoChatBtn");
+  autoChatButton_2.onclick = () => {
     const chatMessageValue = deepToolsPanel.querySelector("#chatMsg").value;
     const delayInput = deepToolsPanel.querySelector("#delayInput");
     const delayValue = parseInt(delayInput.value) || 10;
@@ -341,16 +343,16 @@ function injectDeepToolsStyles() {
       showNotification("⚠️ Enter a message first!");
       return;
     }
-    if (coreSharedState.isProcessing) {
+    if (state.isToggled) {
       stopInterval();
-      autoChatButton.textContent = "Enable Auto Chat";
-      autoChatButton.style.color = "var(--accent)";
-      autoChatButton.style.opacity = "1";
+      autoChatButton_2.textContent = "Enable Auto Chat";
+      autoChatButton_2.style.color = "var(--accent)";
+      autoChatButton_2.style.opacity = "1";
     } else {
       startScheduledTask(chatMessageValue, delayValue);
-      autoChatButton.textContent = "Disable Auto Chat";
-      autoChatButton.style.color = "var(--accent)";
-      autoChatButton.style.opacity = "0.6";
+      autoChatButton_2.textContent = "Disable Auto Chat";
+      autoChatButton_2.style.color = "var(--accent)";
+      autoChatButton_2.style.opacity = "0.6";
     }
   };
   let deepToolsOffsetX;
@@ -373,7 +375,7 @@ function injectDeepToolsStyles() {
     deepToolsOffsetY =
       event_3.clientY - deepToolsPanel.getBoundingClientRect().top;
     deepToolsPanel.style.transition = "none";
-    const handleDeepToolsDrag = (mouseEvent) => {
+    const handleMouseMove = (mouseEvent) => {
       const deltaX = mouseEvent.clientX - event_3.clientX;
       const deltaY = mouseEvent.clientY - event_3.clientY;
       if (
@@ -393,10 +395,10 @@ function injectDeepToolsStyles() {
     const handleMouseUp = () => {
       deepToolsDragActive = false;
       deepToolsPanel.style.transition = "all 0.3s ease";
-      document.removeEventListener("mousemove", handleDeepToolsDrag);
+      document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-    document.addEventListener("mousemove", handleDeepToolsDrag);
+    document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   });
   deepToolsPanel.addEventListener("click", (event_4) => {
@@ -405,7 +407,7 @@ function injectDeepToolsStyles() {
     }
   });
   if (localStorage.getItem("theme") === "halloween") {
-    for (let loopIndex = 0; loopIndex < 3; loopIndex++) {
+    for (let i = 0; i < 3; i++) {
       const spanElement = document.createElement("span");
       spanElement.className = "bat";
       spanElement.textContent = "🦇";
@@ -437,30 +439,30 @@ function injectPlusPanelStyles() {
   plusPanel.innerHTML =
     '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        ASTRAPHOBIA CLIENT+\n      </div>\n      <div id="plusContent">\n        <button id="thresherBtn">Enable Thresher Super Boost(ctrl + shift and click)(minumum required 2 boost)</button>\n        <button id="astraVisionBtn">Enable Astra-Vision (no-zoom limit, no ink flash or deep darkness)</button>\n        <button id="smallMinimapBtn">Enable Small Minimap</button>\n      </div>\n    ';
   document.body.appendChild(plusPanel);
-  const thresherButton = plusPanel.querySelector("#thresherBtn");
-  thresherButton.onclick = () => {
-    if (coreSharedState.isInitialized_2) {
+  const astraVisionButton = plusPanel.querySelector("#thresherBtn");
+  astraVisionButton.onclick = () => {
+    if (isProcessed_3) {
       showNotification("Thresher Super Boost is already active!");
       return;
     }
     initializeAntiTamper();
-    thresherButton.textContent = "Thresher Super Boost Active";
-    thresherButton.style.color = "var(--accent)";
-    thresherButton.style.opacity = "0.6";
-    thresherButton.disabled = true;
+    astraVisionButton.textContent = "Thresher Super Boost Active";
+    astraVisionButton.style.color = "var(--accent)";
+    astraVisionButton.style.opacity = "0.6";
+    astraVisionButton.disabled = true;
   };
-  const astraVisionButton = plusPanel.querySelector("#astraVisionBtn");
-  astraVisionButton.onclick = () => {
-    if (isReady) {
+  const astraVisionButton_2 = plusPanel.querySelector("#astraVisionBtn");
+  astraVisionButton_2.onclick = () => {
+    if (isProcessed_2) {
       showNotification("Astra-Vision already enabled!");
       return;
     }
     initializeAntiTamper();
     disableGameRestrictions();
-    astraVisionButton.textContent = "Astra-Vision Active";
-    astraVisionButton.style.color = "var(--accent)";
-    astraVisionButton.style.opacity = "0.6";
-    astraVisionButton.disabled = true;
+    astraVisionButton_2.textContent = "Astra-Vision Active";
+    astraVisionButton_2.style.color = "var(--accent)";
+    astraVisionButton_2.style.opacity = "0.6";
+    astraVisionButton_2.disabled = true;
     showNotification(
       "👁️ Astra-Vision enabled! (zoom-limit unlocked, no ink-flash or deep darkness effects)",
     );
@@ -469,7 +471,7 @@ function injectPlusPanelStyles() {
   smallMinimapButton.onclick = () => {
     initializeAntiTamper();
     toggleMinimapScale();
-    if (coreSharedState.isProcessing_2) {
+    if (state.isToggled_2) {
       smallMinimapButton.textContent = "Disable Small Minimap";
       smallMinimapButton.style.color = "var(--accent)";
       smallMinimapButton.style.opacity = "0.6";
@@ -497,7 +499,7 @@ function injectPlusPanelStyles() {
     plusPanelOffsetX = event.clientX - plusPanel.getBoundingClientRect().left;
     plusPanelOffsetY = event.clientY - plusPanel.getBoundingClientRect().top;
     plusPanel.style.transition = "none";
-    const handlePlusPanelDrag = (mouseEvent) => {
+    const handleMouseMove = (mouseEvent) => {
       const deltaX = mouseEvent.clientX - event.clientX;
       const deltaY = mouseEvent.clientY - event.clientY;
       if (
@@ -516,10 +518,10 @@ function injectPlusPanelStyles() {
     const handleMouseUp = () => {
       plusPanelDragActive = false;
       plusPanel.style.transition = "all 0.3s ease";
-      document.removeEventListener("mousemove", handlePlusPanelDrag);
+      document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-    document.addEventListener("mousemove", handlePlusPanelDrag);
+    document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   });
   plusPanel.addEventListener("click", (event_2) => {
@@ -528,7 +530,7 @@ function injectPlusPanelStyles() {
     }
   });
   if (localStorage.getItem("theme") === "halloween") {
-    for (let index = 0; index < 3; index++) {
+    for (let i = 0; i < 3; i++) {
       const spanElement = document.createElement("span");
       spanElement.className = "bat";
       spanElement.textContent = "🦇";
@@ -551,28 +553,28 @@ function injectSettingsPanelStyles() {
   bgUrlInput.value = localStorage.getItem("bgUrl") || "";
   const applyBgButton = draggableElement.querySelector("#applyBg");
   applyBgButton.onclick = () => {
-    const backgroundUrl = bgUrlInput.value.trim();
-    if (backgroundUrl === "") {
+    const bgUrl = bgUrlInput.value.trim();
+    if (bgUrl === "") {
       showNotification("Enter a URL first!");
       return;
     }
-    localStorage.setItem("bgUrl", backgroundUrl);
+    localStorage.setItem("bgUrl", bgUrl);
     let homeBgElement = document.querySelector(".home-bg");
     const updateHomeBackgroundImage = () => {
       homeBgElement = document.querySelector(".home-bg");
       if (homeBgElement) {
         homeBgElement.style.setProperty(
           "background-image",
-          'url("' + backgroundUrl + '")',
+          'url("' + bgUrl + '")',
           "important",
         );
       }
     };
     if (homeBgElement == null) {
-      const bgCheckInterval = setInterval(() => {
+      const pollInterval = setInterval(() => {
         homeBgElement = document.querySelector(".home-bg");
         if (homeBgElement != null) {
-          clearInterval(bgCheckInterval);
+          clearInterval(pollInterval);
           updateHomeBackgroundImage();
         }
       }, 100);
@@ -582,12 +584,12 @@ function injectSettingsPanelStyles() {
     showNotification("Custom Background applied!");
   };
   const themeSelect = draggableElement.querySelector("#themeSelect");
-  const currentTheme = localStorage.getItem("theme") || "blue";
-  themeSelect.value = currentTheme;
-  applyThemeColors(currentTheme);
+  const angle = localStorage.getItem("theme") || "blue";
+  themeSelect.value = angle;
+  applyThemeColors(angle);
   themeSelect.onchange = (themeChangeEvent) => {
-    const selectedTheme = themeChangeEvent.target.value;
-    if (selectedTheme === "halloween") {
+    const myY = themeChangeEvent.target.value;
+    if (myY === "halloween") {
       createHalloweenModal((isHalloween) => {
         if (isHalloween) {
           applyThemeColors("halloween");
@@ -597,16 +599,16 @@ function injectSettingsPanelStyles() {
         }
       });
     } else {
-      applyThemeColors(selectedTheme);
-      showNotification("Theme changed to " + selectedTheme);
+      applyThemeColors(myY);
+      showNotification("Theme changed to " + myY);
     }
   };
   const toggleKeyInput = draggableElement.querySelector("#toggleKeyInput");
-  toggleKeyInput.value = coreSharedState.activeKey;
+  toggleKeyInput.value = state.activeKey;
   toggleKeyInput.addEventListener("keydown", (keyboardEvent) => {
     keyboardEvent.preventDefault();
-    coreSharedState.activeKey = keyboardEvent.key;
-    toggleKeyInput.value = coreSharedState.activeKey;
+    state.activeKey = keyboardEvent.key;
+    toggleKeyInput.value = state.activeKey;
   });
   let offsetX;
   let offsetY;

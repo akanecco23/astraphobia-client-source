@@ -4,17 +4,17 @@ import { initAdBlocker } from "./features/adblock.js";
 import { applyHomeBackground } from "./ui/theme.js";
 import { getAllPropertyNames } from "./utils.js";
 
-const stateMap = new WeakMap();
+const stateCache = new WeakMap();
 function wrapPropertyWithProxy(targetObject, propertyKey, proxyHandler) {
   const originalValue = targetObject[propertyKey];
   const proxyInstance = new Proxy(originalValue, proxyHandler);
-  stateMap.set(proxyInstance, originalValue);
+  stateCache.set(proxyInstance, originalValue);
   targetObject[propertyKey] = proxyInstance;
 }
 
-let isInitialized = false;
+let isProcessed = false;
 function initInterceptor(config) {
-  if (isInitialized) {
+  if (isProcessed) {
     return;
   }
   function unescapeString(inputString) {
@@ -119,7 +119,7 @@ function initInterceptor(config) {
     childList: true,
     subtree: true,
   });
-  isInitialized = true;
+  isProcessed = true;
   if (config) {
     config.textContent = "Special Characters Active";
     config.disabled = true;
@@ -129,14 +129,14 @@ function initInterceptor(config) {
   showNotification("✅ Special Characters enabled! (One-time use)");
 }
 
-const angleSteps = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
+const angles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
 const radius = 300;
 let gameInstance;
 let appState;
 let playerData;
-let isReady = false;
+let isProcessed_2 = false;
 
-const encryptPacketData = (isEnabled, charCode, suffix = "") => {
+const encryptPacketData = (isActive, charCode, suffix = "") => {
   const stringTable = [
     "ode",
     "eat",
@@ -151,7 +151,7 @@ const encryptPacketData = (isEnabled, charCode, suffix = "") => {
     "en",
     "setter",
   ];
-  if (!isEnabled) {
+  if (!isActive) {
     return null;
   }
   const plainText = ((inputString, keyString) => {
@@ -162,11 +162,11 @@ const encryptPacketData = (isEnabled, charCode, suffix = "") => {
     const resultBuffer = new Uint8Array(
       encodedInput["l" + stringTable[4] + stringTable[6].slice(0, 2)],
     );
-    for (let index = 0; index < encodedInput.length; index++) {
-      resultBuffer[index] =
-        encodedInput[index] ^
+    for (let i = 0; i < encodedInput.length; i++) {
+      resultBuffer[i] =
+        encodedInput[i] ^
         encodedKey[
-          index %
+          i %
             encodedKey[
               "" +
                 stringTable[9].toLowerCase() +
@@ -179,7 +179,7 @@ const encryptPacketData = (isEnabled, charCode, suffix = "") => {
     return btoa(String.fromCharCode(...resultBuffer));
   })(
     String.fromCharCode(charCode)[stringTable[8] + stringTable[1]](3) + suffix,
-    isEnabled,
+    isActive,
   );
   const encodedBytes = new TextEncoder()[stringTable[5] + stringTable[0]](
     plainText,
@@ -195,7 +195,7 @@ const encryptPacketData = (isEnabled, charCode, suffix = "") => {
   dataView.setUint8(bufferLength - 1, charCode);
   return arrayBuffer;
 };
-const securityConfigs = {
+const config = {
   107: {
     hasSec: true,
     secLoadTime: 750,
@@ -208,14 +208,14 @@ const securityConfigs = {
   },
 };
 const sendPacket = (payload, additionalData = "") => {
-  if (gameInstance && appState && state.socketManager) {
-    gameInstance[state.socketManager].sendBytePacket(
+  if (gameInstance && appState && config_2.socketManager) {
+    gameInstance[config_2.socketManager].sendBytePacket(
       encryptPacketData(appState.token._value, payload, additionalData),
     );
   }
 };
-const state = {};
-const counter = 0;
+const config_2 = {};
+const currentTime = 0;
 const initializeAntiTamper = () => {
   const storage = {};
   for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
@@ -228,12 +228,16 @@ const initializeAntiTamper = () => {
       dataStore[storeIndex],
       storeValue,
     );
-    stateMap.set(processedValue, dataStore[storeIndex]);
+    stateCache.set(processedValue, dataStore[storeIndex]);
     dataStore[storeIndex] = processedValue;
   };
   createProxyHook(Function.prototype, "toString", {
     apply(context, argsKey, extraArg) {
-      return storage.apply(context, stateMap.get(argsKey) || argsKey, extraArg);
+      return storage.apply(
+        context,
+        stateCache.get(argsKey) || argsKey,
+        extraArg,
+      );
     },
   });
   createProxyHook(window, "Proxy", {
@@ -244,8 +248,8 @@ const initializeAntiTamper = () => {
   });
   createProxyHook(ProxyConstructor, "revocable", {
     apply(thisArg, args, extraArg2) {
-      const result = storage.apply(thisArg, args, extraArg2);
-      return result;
+      const data = storage.apply(thisArg, args, extraArg2);
+      return data;
     },
   });
   let lastTimestamp = 0;
@@ -266,49 +270,51 @@ const initializeAntiTamper = () => {
           const obfuscatedKeys = allKeys.filter((obfuscatedVarName) =>
             obfuscatedVarName.startsWith("_0x"),
           );
-          state.setFlash =
+          config_2.setFlash =
             Object.getOwnPropertyNames(playerData.__proto__.__proto__)
               .filter((obfuscatedPropName) =>
                 obfuscatedPropName.startsWith("_0x"),
               )
               .find(
                 (methodName) => playerData[methodName] instanceof Function,
-              ) || state.setFlash;
-          state.terrainManager =
+              ) || config_2.setFlash;
+          config_2.terrainManager =
             obfuscatedKeys.find(
               (shadowEntityKey) =>
                 typeof playerData[shadowEntityKey]?.shadow !== "undefined",
-            ) || state.terrainManager;
-          state.entityManager =
+            ) || config_2.terrainManager;
+          config_2.entityManager =
             obfuscatedKeys.find(
               (entitiesListKey) =>
                 typeof playerData[entitiesListKey]?.entitiesList !==
                 "undefined",
-            ) || state.entityManager;
-          state.entityManagerProps = {};
+            ) || config_2.entityManager;
+          config_2.entityManagerProps = {};
           const entityManagerKeys = getAllPropertyNames(
-            playerData[state.entityManager],
+            playerData[config_2.entityManager],
           );
           const animalsUpdateInterval = setInterval(() => {
-            state.entityManagerProps.animalsList =
+            config_2.entityManagerProps.animalsList =
               entityManagerKeys
                 .filter((variableName) => variableName.startsWith("_0x"))
                 .find(
                   (entityName) =>
-                    typeof playerData?.[state.entityManager]?.[
+                    typeof playerData?.[config_2.entityManager]?.[
                       entityName
                     ]?.[0] !== "undefined",
-                ) || state.entityManagerProps.animalsList;
-            if (typeof state.entityManagerProps.animalsList !== "undefined") {
+                ) || config_2.entityManagerProps.animalsList;
+            if (
+              typeof config_2.entityManagerProps.animalsList !== "undefined"
+            ) {
               clearInterval(animalsUpdateInterval);
             }
           }, 1000);
-          state.socketManager =
+          config_2.socketManager =
             getAllPropertyNames(gameInstance).find(
               (networkClientKey) =>
                 typeof gameInstance[networkClientKey]?.sendBytePacket !==
                 "undefined",
-            ) || state.socketManager;
+            ) || config_2.socketManager;
           try {
             appState = document
               .getElementById("app")
@@ -357,7 +363,7 @@ const initializeAntiTamper = () => {
   });
 };
 const disableGameRestrictions = () => {
-  if (isReady) {
+  if (isProcessed_2) {
     return;
   }
   if (!playerData) {
@@ -375,25 +381,25 @@ const disableGameRestrictions = () => {
     } catch {}
   }, 300);
   try {
-    if (state.setFlash) {
-      playerData[state.setFlash] = () => {};
+    if (config_2.setFlash) {
+      playerData[config_2.setFlash] = () => {};
     }
-    if (state.terrainManager) {
-      const terrainManager = playerData[state.terrainManager];
+    if (config_2.terrainManager) {
+      const terrainManager = playerData[config_2.terrainManager];
       if (terrainManager && terrainManager.shadow) {
         terrainManager.shadow.setShadowSize(1000000);
         terrainManager.shadow.setShadowSize = () => {};
       }
     }
-  } catch (error) {
-    console.error(error);
+  } catch (url) {
+    console.error(url);
   }
-  isReady = true;
+  isProcessed_2 = true;
 };
 
 document.addEventListener("keydown", (keyboardEvent) => {
   if (
-    keyboardEvent.key === coreSharedState.activeKey &&
+    keyboardEvent.key === state.activeKey &&
     !keyboardEvent.repeat &&
     !keyboardEvent.target.matches("input, textarea, button")
   ) {
@@ -409,13 +415,11 @@ window.addEventListener("load", () => {
   }, 1000);
 });
 
-export const coreSharedState = {
-  updateInterval: null,
-  isProcessing: false,
-  rotationInterval: null,
+export const state = {
+  entityTrailInterval: null,
+  isToggled: false,
   angleIndex: 0,
-  isInitialized_2: false,
-  isProcessing_2: false,
+  isToggled_2: false,
   activeKey: "Shift",
 };
 
@@ -426,10 +430,10 @@ export {
   sendPacket,
   initializeAntiTamper,
   disableGameRestrictions,
-  angleSteps,
+  angles,
   radius,
   gameInstance,
   playerData,
-  isReady,
-  securityConfigs,
+  isProcessed_2,
+  config,
 };

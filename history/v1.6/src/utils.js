@@ -2,8 +2,8 @@ import {
   getGameState,
   getEntityManager,
   angle,
-  game,
-  coreSharedState,
+  gameInstance,
+  state,
 } from "./core.js";
 
 function generateRandomString(length) {
@@ -106,7 +106,7 @@ function getNearbyEntities() {
       const deltaX = entityX - myX;
       const deltaY = entityY - myY;
       const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-      const entityData = {
+      const gameData = {
         id: entity.id,
         x: entityX,
         y: entityY,
@@ -114,11 +114,11 @@ function getNearbyEntities() {
         angle: Math.atan2(deltaY, deltaX),
         entity: entity,
       };
-      gameData.entities.push(entityData);
+      gameData.entities.push(gameData);
       if (isPlayer(entity)) {
-        gameData.players.push(entityData);
+        gameData.players.push(gameData);
       } else {
-        gameData.food.push(entityData);
+        gameData.food.push(gameData);
       }
     });
     gameData.entities.sort(
@@ -147,8 +147,8 @@ function getZoomLevel() {
     ) {
       zoomLevel = cameraState.camera.currentZoomLevel;
     }
-    if (game?.viewport?.scale?.x) {
-      zoomLevel = game.viewport.scale.x;
+    if (gameInstance?.viewport?.scale?.x) {
+      zoomLevel = gameInstance.viewport.scale.x;
     }
   } catch (error) {}
   return zoomLevel;

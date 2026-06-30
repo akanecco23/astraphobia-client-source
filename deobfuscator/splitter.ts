@@ -20,6 +20,20 @@ const BOOTSTRAP_CODE_PATTERNS = [
 const PROTOTYPE_PATCH_RE =
   /\b(?:TextEncoder|Function|Element|HTMLElement|Node|EventTarget|Object|Array|String|Number)\.prototype\.\w+\s*=/;
 
+/**
+ * Attempt to fix common invalid syntax patterns introduced by the
+ * deobfuscator so the splitter can still parse the module.
+ */
+function sanitizeInvalidSyntax(code: string): string {
+  // Fix unquoted property names containing dots in object literals.
+  // e.g.  { foo.bar: 1 }  ->  { "foo.bar": 1 }
+  // Only match properties that appear after { or , and are not already quoted.
+  return code.replace(
+    /([{,]\s*)(\w+\.\w+)(\s*:)/g,
+    (_, before, prop, after) => `${before}"${prop}"${after}`,
+  );
+}
+
 function isBootstrapCode(code: string): boolean {
   let hits = 0;
   for (const pat of BOOTSTRAP_CODE_PATTERNS) {
@@ -124,7 +138,13 @@ function collectWindowInits(
 ): void {
   const windowInits: { propName: string; statement: string }[] = [];
 
-  const ast = parseCode(code);
+  let ast: import("@babel/types").File;
+  try {
+    ast = parseCode(code);
+  } catch (e) {
+    log("warn", `Failed to collect window inits: ${(e as Error).message}`);
+    return;
+  }
   for (const stmt of ast.program.body) {
     if (
       !t.isExpressionStatement(stmt) ||
@@ -186,7 +206,7 @@ function collectWindowInits(
   // Remove window init assignments that belong to another module.
   for (const mod of moduleFiles) {
     const sanitized = mod.code.replace(/\s*["']use strict["'];?\s*/g, "");
-    let modAst;
+    let modAst: import("@babel/types").File;
     try {
       modAst = parse(sanitized, {
         sourceType: "module",
@@ -217,7 +237,20 @@ function collectWindowInits(
         for (let i = start2; i < end2; i++) {
           console.error("  " + (i + 1) + ": " + lines2[i]);
         }
-        throw e;
+        // Try to fix common invalid syntax and re-parse.
+        try {
+          const fixed = sanitizeInvalidSyntax(sanitized);
+          modAst = parse(fixed, {
+            sourceType: "module",
+            allowReturnOutsideFunction: true,
+          });
+        } catch {
+          log(
+            "warn",
+            `Skipping module ${mod.name} due to unfixable parse error`,
+          );
+          continue;
+        }
       }
     }
     let removed = false;
@@ -255,7 +288,7 @@ function collectWindowInits(
   // Skip adding inits that are already present in their target module.
   for (const [mod, inits] of initsByModule) {
     const sanitized = mod.code.replace(/\s*["']use strict["'];?\s*/g, "");
-    let modAst;
+    let modAst: import("@babel/types").File;
     try {
       modAst = parse(sanitized, {
         sourceType: "module",
@@ -276,7 +309,20 @@ function collectWindowInits(
           "PARSE ERROR (second loop, mod=" + mod.name + "):",
           String(e),
         );
-        throw e;
+        // Try to fix common invalid syntax and re-parse.
+        try {
+          const fixed = sanitizeInvalidSyntax(sanitized);
+          modAst = parse(fixed, {
+            sourceType: "module",
+            allowReturnOutsideFunction: true,
+          });
+        } catch {
+          log(
+            "warn",
+            `Skipping module ${mod.name} due to unfixable parse error`,
+          );
+          continue;
+        }
       }
     }
     const existing = new Set<string>();
@@ -638,7 +684,18 @@ export async function splitIntoModules(
   mapping: MappingStore,
   config: SplitterConfig,
 ): Promise<SplitResult> {
-  const ast = parseCode(code);
+  // Sanitize common invalid syntax before parsing
+  const sanitizedCode = sanitizeInvalidSyntax(code);
+  let ast: import("@babel/types").File;
+  try {
+    ast = parseCode(sanitizedCode);
+  } catch (e) {
+    log("error", `Failed to parse deobfuscated code: ${(e as Error).message}`);
+    return {
+      modules: [],
+      entry: "",
+    };
+  }
 
   const allDecls: {
     type: "variable" | "function" | "expression";

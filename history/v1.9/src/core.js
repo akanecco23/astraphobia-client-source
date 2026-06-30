@@ -9,6 +9,11 @@ import {
   togglePanelsVisibility,
 } from "./ui/panels.js";
 import {
+  drawEntityTrail,
+  toggleEntityTrail,
+  featuresentitytrailState,
+} from "./features/entitytrail.js";
+import {
   calculateDistance,
   getOrCreateCanvas,
   getAllPropertyNames,
@@ -18,9 +23,8 @@ import {
   autoDodgeLoop,
   toggleLock,
 } from "./features/aimbot.js";
-import { drawEntityTrail, toggleEntityTrail } from "./features/entitytrail.js";
-import { renderEspLoop, trackPlayer, clearTracking } from "./features/esp.js";
 import { applyTheme, initBackgroundImage, injectStyles } from "./ui/theme.js";
+import { renderEspLoop, trackPlayer, toggleEsp_2 } from "./features/esp.js";
 import { setupPatrolPoints, autoFarmLoop } from "./features/autofarm.js";
 import { showNotification, initNameAutofill } from "./ui/interaction.js";
 import { simulatePointerMove } from "./features/movement.js";
@@ -34,9 +38,9 @@ function wrapPropertyWithProxy(targetObject, propertyName, proxyHandler) {
   targetObject[propertyName] = proxyValue;
 }
 let currentTime = 0;
-let isInitialized = false;
+let isProcessed_2 = false;
 function initNetworkInterceptor() {
-  if (isInitialized) {
+  if (isProcessed_2) {
     return;
   }
   function unescapeString(inputString) {
@@ -126,7 +130,7 @@ function initNetworkInterceptor() {
     } catch {}
     return Reflect.apply(originalEncode, this, args);
   };
-  const inputMaxLengthObserver = new MutationObserver(() => {
+  const observer = new MutationObserver(() => {
     document
       .querySelector(".play-game .el-input__inner")
       ?.setAttribute("maxlength", "80");
@@ -137,11 +141,11 @@ function initNetworkInterceptor() {
       .querySelector(".chat-input input")
       ?.setAttribute("maxLength", "1000");
   });
-  inputMaxLengthObserver.observe(document.body, {
+  observer.observe(document.body, {
     childList: true,
     subtree: true,
   });
-  isInitialized = true;
+  isProcessed_2 = true;
   showNotification("Special characters enabled");
 }
 let musicPlaylist = JSON.parse(localStorage.getItem("musicPlaylist") || "[]");
@@ -414,21 +418,21 @@ function getViewportScale() {
   } catch (error) {}
   return 0.554;
 }
-let isLoaded = false;
+let isProcessed_6 = false;
 function startEntityTrail() {
-  if (state.entityTrailInterval) {
-    clearInterval(state.entityTrailInterval);
-    state.entityTrailInterval = null;
+  if (featuresentitytrailState.entityTrailInterval_3) {
+    clearInterval(featuresentitytrailState.entityTrailInterval_3);
+    featuresentitytrailState.entityTrailInterval_3 = null;
   }
-  state.entityTrailInterval = setInterval(() => {
+  featuresentitytrailState.entityTrailInterval_3 = setInterval(() => {
     if (!window.entityTrailEnabled || !window.entityTrailTargetId) {
       return;
     }
     const targetEntityId = findEntityById(window.entityTrailTargetId);
     if (!targetEntityId) {
-      const gameState = getGameState_2();
-      if (gameState && gameState.players && gameState.players.length > 0) {
-        window.entityTrailTargetId = gameState.players[0].id;
+      const gameData = getGameState_2();
+      if (gameData && gameData.players && gameData.players.length > 0) {
+        window.entityTrailTargetId = gameData.players[0].id;
       }
       return;
     }
@@ -493,7 +497,7 @@ function startAutoFarm(farmMode) {
   window.autoFarmSkipIds.clear();
   window.autoFarmSkipAreas = [];
   window.autoFarmSkipClearTime = Date.now();
-  state.position = null;
+  state.position_2 = null;
   state.counter_2 = 0;
   state.lastValue = 0;
   state.lastTickTime = 0;
@@ -501,27 +505,27 @@ function startAutoFarm(farmMode) {
     setupPatrolPoints();
   }
   showNotification("Auto farm started (" + window.autoFarmMode + ")");
-  if (!state.isToggled) {
-    state.isToggled = true;
+  if (!state.isToggled_4) {
+    state.isToggled_4 = true;
     autoFarmLoop();
   }
 }
-let isReady_2 = false;
+let isProcessed_8 = false;
 const initAntiDetection = () => {
-  if (isReady_2) {
+  if (isProcessed_8) {
     return;
   }
-  isReady_2 = true;
+  isProcessed_8 = true;
   const cache = {};
   for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
     cache[propertyKey] = Reflect[propertyKey];
   }
   const Proxy = Proxy;
   const lookupGetter = Object.prototype.__lookupGetter__;
-  const wrapValue = (context, key, value) => {
-    const instance = new Proxy(context[key], value);
-    stateCache.set(instance, context[key]);
-    context[key] = instance;
+  const wrapValue = (context, url, value) => {
+    const instance = new Proxy(context[url], value);
+    stateCache.set(instance, context[url]);
+    context[url] = instance;
   };
   wrapValue(Function.prototype, "toString", {
     apply(thisArg, args, contextArg) {
@@ -626,12 +630,12 @@ const initAntiDetection = () => {
     },
   });
 };
-let isProcessed = false;
+let isProcessed_9 = false;
 function initializeApplication() {
-  if (isProcessed) {
+  if (isProcessed_9) {
     return;
   }
-  isProcessed = true;
+  isProcessed_9 = true;
   setTimeout(() => {
     injectStyles();
     applyTheme(localStorage.getItem("theme") || "grey");
@@ -648,9 +652,9 @@ function initializeApplication() {
     initNameAutofill();
     renderEspLoop();
     renderLoop();
-    isLoaded = true;
+    isProcessed_6 = true;
     updateLockTarget();
-    state.isActive = true;
+    state.isProcessed_7 = true;
     autoDodgeLoop();
   }, 1000);
 }
@@ -725,7 +729,7 @@ document.addEventListener("keydown", (event_4) => {
   }
   if (event_4.key === "F4") {
     event_4.preventDefault();
-    clearTracking();
+    toggleEsp_2();
   }
 });
 document.addEventListener("keydown", (keyboardEvent) => {
@@ -758,36 +762,31 @@ window.addEventListener("load", () => {
 });
 export const state = {
   currentTrackId: "",
-  isPlaying_2: false,
-  isMuted: false,
-  updateIntervalId: null,
-  isLooping: false,
+  isProcessed: false,
+  isToggled: false,
+  entityTrailInterval: null,
+  isToggled_2: false,
   audioPlayer: null,
   currentTrackIndex: 0,
   musicVolume: parseFloat(localStorage.getItem("musicVolume") || "0.5"),
-  isMusicLoopEnabled: localStorage.getItem("musicLoop") !== "false",
-  isMusicShuffleEnabled: localStorage.getItem("musicShuffle") === "true",
+  isMusicShuffleEnabled: localStorage.getItem("musicLoop") !== "false",
+  isMusicShuffleEnabled_2: localStorage.getItem("musicShuffle") === "true",
   youtubePlayer: null,
-  isYtApiLoaded: false,
-  isReady: false,
   audioSourceType: null,
-  animationInterval: null,
   angleIndex: 0,
   keyQ: "q",
   keyE: "e",
-  isEnabled: false,
-  isMinimapSmall: false,
-  entityTrailInterval: null,
-  isActive: false,
-  lastTimestamp: 0,
-  currentPosition: null,
-  counter: 0,
+  isProcessed_5: false,
+  isToggled_3: false,
+  isProcessed_7: false,
   previousTimestamp: 0,
+  position: null,
+  counter: 0,
   dataList: [],
   lastTickTime: 0,
   lastEventTime: 0,
-  isToggled: false,
-  position: null,
+  isToggled_4: false,
+  position_2: null,
   counter_2: 0,
   lastValue: 0,
   previousValue: 0,
@@ -818,7 +817,7 @@ export {
   offsetValue,
   gameInstance,
   playerData,
-  isLoaded,
+  isProcessed_6,
   dragState,
   maxDistance,
   deltaThreshold,

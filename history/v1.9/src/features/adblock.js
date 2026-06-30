@@ -2,10 +2,10 @@ import { showNotification } from "../ui/interaction.js";
 import { state } from "../core.js";
 
 function initAdBlocker() {
-  if (state.isPlaying_2) {
+  if (state.isProcessed) {
     return;
   }
-  state.isPlaying_2 = true;
+  state.isProcessed = true;
   const adSelectors = [
     "div.ad-block",
     'a[href*="ad"]',

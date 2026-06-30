@@ -1,11 +1,13 @@
 import {
+  radius,
   setupTextEncoderHook,
-  isInitialized_2,
+  isProcessed_3,
   initHooks,
-  coreSharedState,
+  state,
 } from "../core.js";
 import { simulateTyping, autoTypeChat, showToast } from "./interaction.js";
 import { startScheduledTask, stopInterval } from "../features/chat.js";
+import { featuresentitytrailState } from "../features/entitytrail.js";
 import { toggleMouseSimulation } from "../features/movement.js";
 import { generateRandomString } from "../utils.js";
 
@@ -21,18 +23,18 @@ function createUpdateHistoryPanel() {
   document.body.appendChild(historyPanel);
   const minHistBtn = historyPanel.querySelector("#minHist");
   const historyContent = historyPanel.querySelector("#historyContent");
-  let isHistoryMinimized = false;
+  let isHidden = false;
   minHistBtn.onclick = (toggleEvent) => {
     toggleEvent.stopPropagation();
-    isHistoryMinimized = !isHistoryMinimized;
-    historyContent.style.display = isHistoryMinimized ? "none" : "block";
-    historyPanel.style.height = isHistoryMinimized ? "50px" : "auto";
-    minHistBtn.textContent = isHistoryMinimized ? "+" : "−";
+    isHidden = !isHidden;
+    historyContent.style.display = isHidden ? "none" : "block";
+    historyPanel.style.height = isHidden ? "50px" : "auto";
+    minHistBtn.textContent = isHidden ? "+" : "−";
   };
   let offsetX;
   let offsetY;
   let isDraggingHistory = false;
-  let isDragging = false;
+  let isActive = false;
   historyPanel.addEventListener("mousedown", (clickEvent) => {
     if (
       ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(clickEvent.target.tagName)
@@ -40,15 +42,15 @@ function createUpdateHistoryPanel() {
       return;
     }
     isDraggingHistory = true;
-    isDragging = false;
+    isActive = false;
     offsetX = clickEvent.clientX - historyPanel.getBoundingClientRect().left;
     offsetY = clickEvent.clientY - historyPanel.getBoundingClientRect().top;
     historyPanel.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
       const deltaX = mouseEvent.clientX - clickEvent.clientX;
       const deltaY = mouseEvent.clientY - clickEvent.clientY;
-      if (!isDragging && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isDragging = true;
+      if (!isActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+        isActive = true;
       }
       if (isDraggingHistory) {
         historyPanel.style.left = mouseEvent.clientX - offsetX + "px";
@@ -57,17 +59,17 @@ function createUpdateHistoryPanel() {
         historyPanel.style.right = "auto";
       }
     };
-    const stopDraggingHistory = () => {
+    const stopDraggingTools = () => {
       isDraggingHistory = false;
       historyPanel.style.transition = "all 0.3s cubic-bezier(0.23, 1, 0.32, 1)";
       document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", stopDraggingHistory);
+      document.removeEventListener("mouseup", stopDraggingTools);
     };
     document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", stopDraggingHistory);
+    document.addEventListener("mouseup", stopDraggingTools);
   });
   historyPanel.addEventListener("click", (event) => {
-    if (isDragging) {
+    if (isActive) {
       event.stopImmediatePropagation();
     }
   });
@@ -98,13 +100,13 @@ function createToolsPanel() {
   document.body.appendChild(toolsPanel);
   const minPanel = toolsPanel.querySelector("#minPanel");
   const panelContent = toolsPanel.querySelector("#panelContent");
-  let isMinimized = false;
+  let isHidden = false;
   minPanel.onclick = (event) => {
     event.stopPropagation();
-    isMinimized = !isMinimized;
-    panelContent.style.display = isMinimized ? "none" : "block";
-    toolsPanel.style.height = isMinimized ? "50px" : "auto";
-    minPanel.textContent = isMinimized ? "+" : "−";
+    isHidden = !isHidden;
+    panelContent.style.display = isHidden ? "none" : "block";
+    toolsPanel.style.height = isHidden ? "50px" : "auto";
+    minPanel.textContent = isHidden ? "+" : "−";
   };
   toolsPanel.querySelector("#sendBtn").onclick = () => {
     const chatMessage = toolsPanel.querySelector("#chatMsg").value;
@@ -112,10 +114,10 @@ function createToolsPanel() {
       autoTypeChat(chatMessage);
     }
   };
-  const patchBtn = toolsPanel.querySelector("#patchBtn");
-  patchBtn.onclick = () => setupTextEncoderHook(patchBtn);
-  const spoofBtn = toolsPanel.querySelector("#spoofBtn");
-  spoofBtn.onclick = () => {
+  const spoofBtn = toolsPanel.querySelector("#patchBtn");
+  spoofBtn.onclick = () => setupTextEncoderHook(spoofBtn);
+  const spoofBtn_2 = toolsPanel.querySelector("#spoofBtn");
+  spoofBtn_2.onclick = () => {
     const generatedValue = generateRandomString(8);
     if (simulateTyping(".play-game .el-input__inner", generatedValue)) {
       showToast("Spoofed name!");
@@ -125,43 +127,43 @@ function createToolsPanel() {
       showToast("No name input found! Enable special characters first.");
     }
   };
-  const spinBtn = toolsPanel.querySelector("#spinBtn");
-  spinBtn.onclick = () => {
+  const autoChatBtn = toolsPanel.querySelector("#spinBtn");
+  autoChatBtn.onclick = () => {
     toggleMouseSimulation();
-    if (coreSharedState.rotationInterval) {
-      spinBtn.textContent = "Disable Auto Spin";
-      spinBtn.style.color = "#4dff4d";
+    if (featuresentitytrailState.entityTrailInterval_2) {
+      autoChatBtn.textContent = "Disable Auto Spin";
+      autoChatBtn.style.color = "#4dff4d";
     } else {
-      spinBtn.textContent = "Enable Auto Spin";
-      spinBtn.style.color = "#ff4d4d";
+      autoChatBtn.textContent = "Enable Auto Spin";
+      autoChatBtn.style.color = "#ff4d4d";
     }
   };
   const spinKeyInput = toolsPanel.querySelector("#spinKeyInput");
-  let activeKeyCode = null;
+  let lastPressedKey = null;
   spinKeyInput.addEventListener("keydown", (keyboardEvent) => {
     keyboardEvent.preventDefault();
-    activeKeyCode = keyboardEvent.code || keyboardEvent.key;
-    spinKeyInput.value = activeKeyCode.replace("Key", "").toLowerCase();
+    lastPressedKey = keyboardEvent.code || keyboardEvent.key;
+    spinKeyInput.value = lastPressedKey.replace("Key", "").toLowerCase();
   });
   document.addEventListener("keydown", (keyEvent) => {
     if (
-      activeKeyCode &&
-      keyEvent.code === activeKeyCode &&
+      lastPressedKey &&
+      keyEvent.code === lastPressedKey &&
       !keyEvent.target.matches("input, textarea, button")
     ) {
       keyEvent.preventDefault();
       toggleMouseSimulation();
-      if (coreSharedState.rotationInterval) {
-        spinBtn.textContent = "Disable Auto Spin";
-        spinBtn.style.color = "#4dff4d";
+      if (featuresentitytrailState.entityTrailInterval_2) {
+        autoChatBtn.textContent = "Disable Auto Spin";
+        autoChatBtn.style.color = "#4dff4d";
       } else {
-        spinBtn.textContent = "Enable Auto Spin";
-        spinBtn.style.color = "#ff4d4d";
+        autoChatBtn.textContent = "Enable Auto Spin";
+        autoChatBtn.style.color = "#ff4d4d";
       }
     }
   });
-  const autoChatBtn = toolsPanel.querySelector("#autoChatBtn");
-  autoChatBtn.onclick = () => {
+  const autoChatBtn_2 = toolsPanel.querySelector("#autoChatBtn");
+  autoChatBtn_2.onclick = () => {
     const chatMessageText = toolsPanel.querySelector("#chatMsg").value;
     const delayInput = toolsPanel.querySelector("#delayInput");
     const delayValue = parseInt(delayInput.value) || 10;
@@ -169,20 +171,20 @@ function createToolsPanel() {
       showToast("⚠️ Enter a message first!");
       return;
     }
-    if (coreSharedState.isProcessing) {
+    if (state.isToggled) {
       stopInterval();
-      autoChatBtn.textContent = "Enable Auto Chat";
-      autoChatBtn.style.color = "#ff4d4d";
+      autoChatBtn_2.textContent = "Enable Auto Chat";
+      autoChatBtn_2.style.color = "#ff4d4d";
     } else {
       startScheduledTask(chatMessageText, delayValue);
-      autoChatBtn.textContent = "Disable Auto Chat";
-      autoChatBtn.style.color = "#4dff4d";
+      autoChatBtn_2.textContent = "Disable Auto Chat";
+      autoChatBtn_2.style.color = "#4dff4d";
     }
   };
   let offsetX;
   let offsetY;
   let isDraggingTools = false;
-  let isDragging = false;
+  let isActive = false;
   toolsPanel.addEventListener("mousedown", (uiEvent) => {
     if (
       uiEvent.target.tagName === "BUTTON" ||
@@ -193,15 +195,15 @@ function createToolsPanel() {
       return;
     }
     isDraggingTools = true;
-    isDragging = false;
+    isActive = false;
     offsetX = uiEvent.clientX - toolsPanel.getBoundingClientRect().left;
     offsetY = uiEvent.clientY - toolsPanel.getBoundingClientRect().top;
     toolsPanel.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
       const deltaX = mouseEvent.clientX - uiEvent.clientX;
       const deltaY = mouseEvent.clientY - uiEvent.clientY;
-      if (!isDragging && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isDragging = true;
+      if (!isActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+        isActive = true;
       }
       if (isDraggingTools) {
         toolsPanel.style.left = mouseEvent.clientX - offsetX + "px";
@@ -220,7 +222,7 @@ function createToolsPanel() {
     document.addEventListener("mouseup", stopDraggingTools);
   });
   toolsPanel.addEventListener("click", (propagationEvent) => {
-    if (isDragging) {
+    if (isActive) {
       propagationEvent.stopImmediatePropagation();
     }
   });
@@ -261,7 +263,7 @@ function initPlusPanel() {
   };
   const thresherBtn = plusPanelElement.querySelector("#thresherBtn");
   thresherBtn.onclick = () => {
-    if (isInitialized_2) {
+    if (isProcessed_3) {
       showToast("Thresher Super Boost is already active!");
       return;
     }
@@ -273,7 +275,7 @@ function initPlusPanel() {
   let offsetX;
   let offsetY;
   let isDraggingPlusPanel = false;
-  let isDragging = false;
+  let isActive = false;
   plusPanelElement.addEventListener("mousedown", (clickEvent) => {
     if (
       clickEvent.target.tagName === "BUTTON" ||
@@ -284,7 +286,7 @@ function initPlusPanel() {
       return;
     }
     isDraggingPlusPanel = true;
-    isDragging = false;
+    isActive = false;
     offsetX =
       clickEvent.clientX - plusPanelElement.getBoundingClientRect().left;
     offsetY = clickEvent.clientY - plusPanelElement.getBoundingClientRect().top;
@@ -292,8 +294,8 @@ function initPlusPanel() {
     const handleMouseMove = (mouseEvent) => {
       const deltaX = mouseEvent.clientX - clickEvent.clientX;
       const deltaY = mouseEvent.clientY - clickEvent.clientY;
-      if (!isDragging && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isDragging = true;
+      if (!isActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+        isActive = true;
       }
       if (isDraggingPlusPanel) {
         plusPanelElement.style.left = mouseEvent.clientX - offsetX + "px";
@@ -302,18 +304,18 @@ function initPlusPanel() {
         plusPanelElement.style.right = "auto";
       }
     };
-    const stopDraggingPlusPanel = () => {
+    const stopDraggingTools = () => {
       isDraggingPlusPanel = false;
       plusPanelElement.style.transition =
         "all 0.3s cubic-bezier(0.23, 1, 0.32, 1)";
       document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", stopDraggingPlusPanel);
+      document.removeEventListener("mouseup", stopDraggingTools);
     };
     document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", stopDraggingPlusPanel);
+    document.addEventListener("mouseup", stopDraggingTools);
   });
   plusPanelElement.addEventListener("click", (inputEvent) => {
-    if (isDragging) {
+    if (isActive) {
       inputEvent.stopImmediatePropagation();
     }
   });
@@ -332,25 +334,25 @@ function initSettingsPanel() {
   const minSettingsBtn = settingsPanelElement.querySelector("#minSettings");
   const settingsContent =
     settingsPanelElement.querySelector("#settingsContent");
-  let isSettingsHidden = false;
+  let isHidden = false;
   minSettingsBtn.onclick = (toggleEvent) => {
     toggleEvent.stopPropagation();
-    isSettingsHidden = !isSettingsHidden;
-    settingsContent.style.display = isSettingsHidden ? "none" : "block";
-    settingsPanelElement.style.height = isSettingsHidden ? "50px" : "auto";
-    minSettingsBtn.textContent = isSettingsHidden ? "+" : "−";
+    isHidden = !isHidden;
+    settingsContent.style.display = isHidden ? "none" : "block";
+    settingsPanelElement.style.height = isHidden ? "50px" : "auto";
+    minSettingsBtn.textContent = isHidden ? "+" : "−";
   };
   const toggleKeyInput = settingsPanelElement.querySelector("#toggleKeyInput");
-  toggleKeyInput.value = coreSharedState.pressedKey;
+  toggleKeyInput.value = state.activeKey;
   toggleKeyInput.addEventListener("keydown", (keyEvent) => {
     keyEvent.preventDefault();
-    coreSharedState.pressedKey = keyEvent.key;
-    toggleKeyInput.value = coreSharedState.pressedKey;
+    state.activeKey = keyEvent.key;
+    toggleKeyInput.value = state.activeKey;
   });
   let offsetX;
   let offsetY;
   let isDraggingSettingsPanel = false;
-  let isDragging = false;
+  let isActive = false;
   settingsPanelElement.addEventListener("mousedown", (clickEvent) => {
     if (
       clickEvent.target.tagName === "BUTTON" ||
@@ -360,7 +362,7 @@ function initSettingsPanel() {
       return;
     }
     isDraggingSettingsPanel = true;
-    isDragging = false;
+    isActive = false;
     offsetX =
       clickEvent.clientX - settingsPanelElement.getBoundingClientRect().left;
     offsetY =
@@ -369,8 +371,8 @@ function initSettingsPanel() {
     const handleMouseMove = (mouseEvent) => {
       const deltaX = mouseEvent.clientX - clickEvent.clientX;
       const deltaY = mouseEvent.clientY - clickEvent.clientY;
-      if (!isDragging && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isDragging = true;
+      if (!isActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+        isActive = true;
       }
       if (isDraggingSettingsPanel) {
         settingsPanelElement.style.left = mouseEvent.clientX - offsetX + "px";
@@ -379,18 +381,18 @@ function initSettingsPanel() {
         settingsPanelElement.style.right = "auto";
       }
     };
-    const stopDraggingSettingsPanel = () => {
+    const stopDraggingTools = () => {
       isDraggingSettingsPanel = false;
       settingsPanelElement.style.transition =
         "all 0.3s cubic-bezier(0.23, 1, 0.32, 1)";
       document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", stopDraggingSettingsPanel);
+      document.removeEventListener("mouseup", stopDraggingTools);
     };
     document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", stopDraggingSettingsPanel);
+    document.addEventListener("mouseup", stopDraggingTools);
   });
   settingsPanelElement.addEventListener("click", (event) => {
-    if (isDragging) {
+    if (isActive) {
       event.stopImmediatePropagation();
     }
   });

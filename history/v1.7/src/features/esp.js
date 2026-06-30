@@ -9,8 +9,9 @@ import {
 import {
   getEntityPosition,
   calculateDirection,
+  angle,
   getFirstAnimalPosition,
-  animalData,
+  playerData,
   state,
 } from "../core.js";
 import { showNotification } from "../ui/interaction.js";
@@ -29,6 +30,7 @@ window.espColors = {
 };
 window.espTrackedEntityId = null;
 window.espMode = "players";
+window.autoDodgeEnabled = false;
 
 function drawEspEntities(ctx, gameState, offsetX, offsetY, scale) {
   if (!gameState || gameState.error) {
@@ -218,11 +220,11 @@ function drawTrackedEntityIndicator(ctx, canvas, myPos, scale) {
   ctx.stroke();
   const rectWidth = 180;
   const rectHeight = 70;
-  const rectX = Math.min(
+  const boxX = Math.min(
     screenX + boxSize / 2 + 10,
     canvas.width - rectWidth - 5,
   );
-  const rectY = Math.max(
+  const boxY = Math.max(
     5,
     Math.min(screenY - rectHeight / 2, canvas.height - rectHeight - 5),
   );
@@ -230,12 +232,12 @@ function drawTrackedEntityIndicator(ctx, canvas, myPos, scale) {
   ctx.strokeStyle = "rgba(255,0,255," + pulseOpacity + ")";
   ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.roundRect(rectX, rectY, rectWidth, rectHeight, 4);
+  ctx.roundRect(boxX, boxY, rectWidth, rectHeight, 4);
   ctx.fill();
   ctx.stroke();
   ctx.fillStyle = "#ff00ff";
   ctx.font = "bold 12px monospace";
-  ctx.fillText("TRACKING", rectX + 8, rectY + 18);
+  ctx.fillText("TRACKING", boxX + 8, boxY + 18);
   ctx.fillStyle = "#ffffff";
   ctx.font = "11px monospace";
   ctx.fillText(
@@ -243,21 +245,21 @@ function drawTrackedEntityIndicator(ctx, canvas, myPos, scale) {
       0,
       18,
     ),
-    rectX + 8,
-    rectY + 34,
+    boxX + 8,
+    boxY + 34,
   );
   ctx.fillStyle = "#ff00ff";
   ctx.font = "bold 14px monospace";
-  ctx.fillText(Math.round(distance) + " units", rectX + 8, rectY + 52);
+  ctx.fillText(Math.round(distance) + " units", boxX + 8, boxY + 52);
   if (
     screenX < 0 ||
     screenX > canvas.width ||
     screenY < 0 ||
     screenY > canvas.height
   ) {
-    const angle_2 = Math.atan2(screenY - centerY, screenX - centerX);
-    const posX = centerX + Math.cos(angle_2) * (canvas.width / 2 - 40);
-    const posY = centerY + Math.sin(angle_2) * (canvas.height / 2 - 40);
+    const targetAngle = Math.atan2(screenY - centerY, screenX - centerX);
+    const posX = centerX + Math.cos(targetAngle) * (canvas.width / 2 - 40);
+    const posY = centerY + Math.sin(targetAngle) * (canvas.height / 2 - 40);
     ctx.fillStyle = "rgba(0,0,0,0.85)";
     ctx.beginPath();
     ctx.roundRect(posX - 40, posY - 15, 80, 30, 4);
@@ -266,14 +268,17 @@ function drawTrackedEntityIndicator(ctx, canvas, myPos, scale) {
     ctx.lineWidth = 1.5;
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(posX + Math.cos(angle_2) * 20, posY + Math.sin(angle_2) * 20);
-    ctx.lineTo(
-      posX - Math.cos(angle_2 - 0.5) * 10,
-      posY - Math.sin(angle_2 - 0.5) * 10,
+    ctx.moveTo(
+      posX + Math.cos(targetAngle) * 20,
+      posY + Math.sin(targetAngle) * 20,
     );
     ctx.lineTo(
-      posX - Math.cos(angle_2 + 0.5) * 10,
-      posY - Math.sin(angle_2 + 0.5) * 10,
+      posX - Math.cos(targetAngle - 0.5) * 10,
+      posY - Math.sin(targetAngle - 0.5) * 10,
+    );
+    ctx.lineTo(
+      posX - Math.cos(targetAngle + 0.5) * 10,
+      posY - Math.sin(targetAngle + 0.5) * 10,
     );
     ctx.closePath();
     ctx.fillStyle = "#ff00ff";
@@ -313,7 +318,7 @@ function renderEspOverlay() {
   drawRadar(ctx, canvas, entities);
   requestAnimationFrame(renderEspOverlay);
 }
-function clearTracking() {
+function toggleEsp() {
   window.espEnabled = !window.espEnabled;
   showNotification(window.espEnabled ? "ESP enabled" : "ESP disabled");
 }
@@ -329,20 +334,28 @@ function trackPlayer() {
     showNotification("No players nearby");
   }
 }
+function toggleEsp_2() {
+  window.espTrackedEntityId = null;
+  showNotification("Tracking cleared");
+}
+function toggleEsp_3() {
+  window.autoDodgeEnabled = false;
+  showNotification("Auto dodge disabled");
+}
 function toggleMinimapSize() {
-  if (!animalData || !animalData.minimap) {
+  if (!playerData || !playerData.minimap) {
     showNotification("Minimap not available");
     return;
   }
-  if (state.isMinimapSmall) {
-    animalData.minimap.scale.set(1);
-    animalData.minimap.pivot.set(0, 0);
-    state.isMinimapSmall = false;
+  if (state.isToggled_2) {
+    playerData.minimap.scale.set(1);
+    playerData.minimap.pivot.set(0, 0);
+    state.isToggled_2 = false;
     showNotification("Minimap restored");
   } else {
-    animalData.minimap.scale.set(0.5);
-    animalData.minimap.pivot.set(-70, -45);
-    state.isMinimapSmall = true;
+    playerData.minimap.scale.set(0.5);
+    playerData.minimap.pivot.set(-70, -45);
+    state.isToggled_2 = true;
     showNotification("Small minimap enabled");
   }
 }
@@ -351,7 +364,9 @@ export {
   drawEspEntities,
   drawTrackedEntityIndicator,
   renderEspOverlay,
-  clearTracking,
+  toggleEsp,
   trackPlayer,
+  toggleEsp_2,
+  toggleEsp_3,
   toggleMinimapSize,
 };

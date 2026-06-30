@@ -102,8 +102,8 @@ function applyTheme(themeName) {
     },
     ...savedThemes,
   };
-  const selectedTheme = defaultThemes[themeName] ? themeName : "grey";
-  const themeValue = defaultThemes[selectedTheme];
+  const myY = defaultThemes[themeName] ? themeName : "grey";
+  const themeValue = defaultThemes[myY];
   Object.entries({
     "--acc": themeValue.acc,
     "--acc-h": themeValue.accH,
@@ -118,7 +118,7 @@ function applyTheme(themeName) {
   }).forEach(([styleProperty, styleValue]) =>
     rootElement.style.setProperty(styleProperty, styleValue),
   );
-  localStorage.setItem("theme", selectedTheme);
+  localStorage.setItem("theme", myY);
 }
 function initBackground() {
   const backgroundUrl = localStorage.getItem("bgUrl") || "";

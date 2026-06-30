@@ -131,14 +131,14 @@ export async function generateModuleAssignments(
   const funcList = input.functions
     .map(
       (f) =>
-        `// FUNCTION: ${f.name}\n${f.code.length > 600 ? f.code.slice(0, 600) + "\n// ..." : f.code}`,
+        `// FUNCTION: ${f.name}\n${f.code.length > 200 ? f.code.slice(0, 200) + " // ..." : f.code}`,
     )
     .join("\n\n");
 
   const varList = input.variables
     .map(
       (v) =>
-        `// VARIABLE: ${v.name}\n${v.code.length > 300 ? v.code.slice(0, 300) + " // ..." : v.code}`,
+        `// VARIABLE: ${v.name}\n${v.code.length > 150 ? v.code.slice(0, 150) + " // ..." : v.code}`,
     )
     .join("\n");
 

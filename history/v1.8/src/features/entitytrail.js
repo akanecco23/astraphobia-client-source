@@ -1,23 +1,28 @@
 import {
+  startEntityTrail,
+  currentTime,
+  getFirstAnimalPosition,
+  state,
+} from "../core.js";
+import {
   getNearbyEntities,
   getZoomScale,
   getOrCreateOverlayCanvas,
 } from "../utils.js";
-import { startEntityTrail, getFirstAnimalPosition, state } from "../core.js";
 import { showNotification } from "../ui/interaction.js";
 import { refreshUI } from "../ui/panels.js";
 
-function stopMouseSimulation_2() {
-  if (state.trailInterval) {
-    clearInterval(state.trailInterval);
-    state.trailInterval = null;
+function stopEntityTrail_2() {
+  if (featuresentitytrailState.entityTrailInterval_3) {
+    clearInterval(featuresentitytrailState.entityTrailInterval_3);
+    featuresentitytrailState.entityTrailInterval_3 = null;
   }
 }
 function toggleEntityTrail() {
   if (window.entityTrailEnabled) {
     window.entityTrailEnabled = false;
     window.entityTrailTargetId = null;
-    stopMouseSimulation_2();
+    stopEntityTrail_2();
     window.entityTrailHistory = [];
     showNotification("Trail stopped");
     refreshUI();
@@ -82,18 +87,16 @@ function drawEntityTrail(ctx, canvas, originPos, zoomScale) {
     ctx.fill();
   }
   if (window.entityTrailHistory.length > 0) {
-    const lastTrailPosition =
+    const lastTrailPoint =
       window.entityTrailHistory[window.entityTrailHistory.length - 1];
-    const projectedX =
-      halfWidth + (lastTrailPosition.x - originPos.x) * zoomScale;
-    const projectedY =
-      halfHeight + (lastTrailPosition.y - originPos.y) * zoomScale;
+    const screenY = halfWidth + (lastTrailPoint.x - originPos.x) * zoomScale;
+    const screenY_2 = halfHeight + (lastTrailPoint.y - originPos.y) * zoomScale;
     ctx.fillStyle = "rgb(" + red + "," + green + "," + blue + ")";
     ctx.font = "bold 10px monospace";
     ctx.fillText(
       "TRAIL (" + window.entityTrailHistory.length + " pts)",
-      projectedX + 8,
-      projectedY - 8,
+      screenY + 8,
+      screenY_2 - 8,
     );
   }
 }
@@ -118,9 +121,9 @@ window.entityTrailHistory = [];
 window.entityTrailMaxLength = 200;
 window.entityTrailRecordInterval = 100;
 
-export {
-  stopMouseSimulation_2,
-  toggleEntityTrail,
-  drawEntityTrail,
-  renderOverlay,
+export const featuresentitytrailState = {
+  entityTrailInterval_2: null,
+  entityTrailInterval_3: null,
 };
+
+export { stopEntityTrail_2, toggleEntityTrail, drawEntityTrail, renderOverlay };

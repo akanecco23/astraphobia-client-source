@@ -9,26 +9,22 @@ import {
   calculateDirection,
   findEntityById,
   startEntityTrail,
-  clearTracking_2,
-  clearTracking_3,
   startAutoFarm,
   initGameHooks,
   initializeApp,
+  currentTime,
   angles,
   radius,
   offsetValue,
   gameInstance,
-  animalData,
-  settings,
-  isProcessed,
+  playerData,
+  isProcessed_4,
   dragState,
-  maxDistance,
-  maxDelta,
-  distanceThreshold,
+  tickInterval,
+  deltaThreshold,
   maxFailCount,
-  timeThreshold,
-  timeLimit,
-  randomAngle,
+  timeoutLimit,
+  angle,
   state,
 } from "./src/core.js";
 import {
@@ -67,26 +63,29 @@ import {
   getOrCreateOverlayCanvas,
 } from "./src/utils.js";
 import {
+  drawEsp,
+  drawTrackedEntity,
+  renderEspLoop,
+  toggleEsp,
+  trackPlayer,
+  toggleEsp_2,
+  toggleEsp_3,
+  toggleMinimapSize,
+} from "./src/features/esp.js";
+import {
+  stopEntityTrail_2,
+  toggleEntityTrail,
+  drawEntityTrail,
+  renderOverlay,
+  featuresentitytrailState,
+} from "./src/features/entitytrail.js";
+import {
   startCircularMovement,
-  stopMouseSimulation,
+  stopEntityTrail,
   toggleMouseSimulation,
   moveMouseSide,
   simulateClick,
 } from "./src/features/movement.js";
-import {
-  drawEsp,
-  drawTrackedEntity,
-  renderEspLoop,
-  clearTracking,
-  trackPlayer,
-  toggleMinimapSize,
-} from "./src/features/esp.js";
-import {
-  stopMouseSimulation_2,
-  toggleEntityTrail,
-  drawEntityTrail,
-  renderOverlay,
-} from "./src/features/entitytrail.js";
 import {
   updateLockOnTarget,
   toggleLock,

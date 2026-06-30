@@ -1,7 +1,8 @@
 import {
-  stateMap,
+  stateCache,
   getGameState,
   getEntityManager,
+  angle,
   gameInstance,
   state,
 } from "./core.js";
@@ -17,7 +18,7 @@ function generateRandomString(length) {
 function proxyProperty(targetObject, propertyKey, handler) {
   const originalValue = targetObject[propertyKey];
   const proxyValue = new Proxy(originalValue, handler);
-  stateMap.set(proxyValue, originalValue);
+  stateCache.set(proxyValue, originalValue);
   targetObject[propertyKey] = proxyValue;
 }
 function getGameCanvas() {
@@ -162,7 +163,7 @@ function getNearbyEntities() {
       const deltaX = entityX - myX;
       const deltaY = entityY - myY;
       const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-      const entityData = {
+      const gameData = {
         id: entity.id,
         x: entityX,
         y: entityY,
@@ -170,11 +171,11 @@ function getNearbyEntities() {
         angle: Math.atan2(deltaY, deltaX),
         entity: entity,
       };
-      entityData.entities.push(entityData);
+      entityData.entities.push(gameData);
       if (isPlayer(entity)) {
-        entityData.players.push(entityData);
+        entityData.players.push(gameData);
       } else {
-        entityData.food.push(entityData);
+        entityData.food.push(gameData);
       }
     });
     entityData.entities.sort(

@@ -10,17 +10,17 @@ import { initAdBlocker } from "./features/adblock.js";
 import { getAllPropertyNames } from "./utils.js";
 import { showToast } from "./ui/interaction.js";
 
-const privateStateMap = new WeakMap();
+const stateCache = new WeakMap();
 function wrapWithProxy(targetObject, propertyKey, proxyHandler) {
   const originalValue = targetObject[propertyKey];
   const proxyValue = new Proxy(originalValue, proxyHandler);
-  privateStateMap.set(proxyValue, originalValue);
+  stateCache.set(proxyValue, originalValue);
   targetObject[propertyKey] = proxyValue;
 }
 
-let isInitialized = false;
+let isProcessed = false;
 function setupTextEncoderHook(unusedParam) {
-  if (isInitialized) {
+  if (isProcessed) {
     return;
   }
   function unescapeString(inputString) {
@@ -125,7 +125,7 @@ function setupTextEncoderHook(unusedParam) {
     childList: true,
     subtree: true,
   });
-  isInitialized = true;
+  isProcessed = true;
   if (unusedParam) {
     unusedParam.textContent = "Special Characters Active";
     unusedParam.disabled = true;
@@ -135,14 +135,14 @@ function setupTextEncoderHook(unusedParam) {
   showToast("✅ Special Characters enabled! (One-time use)");
 }
 
-const angleSteps = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
-const orbitRadius = 300;
+const angles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
+const radius = 300;
 let gameInstance;
-let globalState;
+let appState;
 let playerData;
-let isRunning = false;
-let isInitialized_2 = false;
-const encryptPacketData = (message, terminatorCode, suffix = "") => {
+let isProcessed_2 = false;
+let isProcessed_3 = false;
+const encryptPacketData = (url, terminatorCode, suffix = "") => {
   const stringPool = [
     "ode",
     "eat",
@@ -157,7 +157,7 @@ const encryptPacketData = (message, terminatorCode, suffix = "") => {
     "en",
     "setter",
   ];
-  if (!message) {
+  if (!url) {
     return null;
   }
   const plainText = ((text1, text2) => {
@@ -185,7 +185,7 @@ const encryptPacketData = (message, terminatorCode, suffix = "") => {
   })(
     String.fromCharCode(terminatorCode)[stringPool[8] + stringPool[1]](3) +
       suffix,
-    message,
+    url,
   );
   const encodedBytes = new TextEncoder()[stringPool[5] + stringPool[0]](
     plainText,
@@ -201,7 +201,7 @@ const encryptPacketData = (message, terminatorCode, suffix = "") => {
   bufferView.setUint8(totalBufferSize - 1, terminatorCode);
   return rawBuffer;
 };
-const securityConfig = {
+const config = {
   93: {
     hasSec: true,
     secLoadTime: 750,
@@ -218,14 +218,14 @@ const securityConfig = {
   },
 };
 const sendPacket = (payload, additionalData = "") => {
-  if (gameInstance && globalState && state.socketManager) {
-    gameInstance[state.socketManager].sendBytePacket(
-      encryptPacketData(globalState.token, payload, additionalData),
+  if (gameInstance && appState && config_2.socketManager) {
+    gameInstance[config_2.socketManager].sendBytePacket(
+      encryptPacketData(appState.token, payload, additionalData),
     );
   }
 };
-const state = {};
-const counter = 0;
+const config_2 = {};
+const currentTime = 0;
 const initHooks = () => {
   const propertyCache = {};
   for (const propertyName of Object.getOwnPropertyNames(Reflect)) {
@@ -233,16 +233,16 @@ const initHooks = () => {
   }
   const ProxyConstructor = Proxy;
   const lookupGetter = Object.prototype.__lookupGetter__;
-  const wrapWithProxy = (state, key, value) => {
-    const wrappedValue = new ProxyConstructor(state[key], value);
-    privateStateMap.set(wrappedValue, state[key]);
-    state[key] = wrappedValue;
+  const wrapWithProxy = (state, url, value) => {
+    const wrappedValue = new ProxyConstructor(state[url], value);
+    stateCache.set(wrappedValue, state[url]);
+    state[url] = wrappedValue;
   };
   wrapWithProxy(Function.prototype, "toString", {
     apply(thisContext, key_2, context) {
       return propertyCache.apply(
         thisContext,
-        privateStateMap.get(key_2) || key_2,
+        stateCache.get(key_2) || key_2,
         context,
       );
     },
@@ -291,49 +291,51 @@ const initHooks = () => {
           const obfuscatedKeys = allKeys.filter((obfuscatedKey) =>
             obfuscatedKey.startsWith("_0x"),
           );
-          state.setFlash =
+          config_2.setFlash =
             Object.getOwnPropertyNames(playerData.__proto__.__proto__)
               .filter((obfuscatedName) => obfuscatedName.startsWith("_0x"))
               .find(
                 (functionKey) => playerData[functionKey] instanceof Function,
-              ) || state.setFlash;
-          state.terrainManager =
+              ) || config_2.setFlash;
+          config_2.terrainManager =
             obfuscatedKeys.find(
               (shadowObjectKey) =>
                 typeof playerData[shadowObjectKey]?.shadow !== "undefined",
-            ) || state.terrainManager;
-          state.entityManager =
+            ) || config_2.terrainManager;
+          config_2.entityManager =
             obfuscatedKeys.find(
               (entitiesListKey) =>
                 typeof playerData[entitiesListKey]?.entitiesList !==
                 "undefined",
-            ) || state.entityManager;
-          state.entityManagerProps = {};
+            ) || config_2.entityManager;
+          config_2.entityManagerProps = {};
           const entityManagerKeys = getAllPropertyNames(
-            playerData[state.entityManager],
+            playerData[config_2.entityManager],
           );
           const animalsUpdateInterval = setInterval(() => {
-            state.entityManagerProps.animalsList =
+            config_2.entityManagerProps.animalsList =
               entityManagerKeys
                 .filter((variableName) => variableName.startsWith("_0x"))
                 .find(
                   (entityType) =>
-                    typeof playerData?.[state.entityManager]?.[
+                    typeof playerData?.[config_2.entityManager]?.[
                       entityType
                     ]?.[0] !== "undefined",
-                ) || state.entityManagerProps.animalsList;
-            if (typeof state.entityManagerProps.animalsList !== "undefined") {
+                ) || config_2.entityManagerProps.animalsList;
+            if (
+              typeof config_2.entityManagerProps.animalsList !== "undefined"
+            ) {
               clearInterval(animalsUpdateInterval);
             }
           }, 1000);
-          state.socketManager =
+          config_2.socketManager =
             getAllPropertyNames(gameInstance).find(
               (packetSenderKey) =>
                 typeof gameInstance[packetSenderKey]?.sendBytePacket !==
                 "undefined",
-            ) || state.socketManager;
+            ) || config_2.socketManager;
           try {
-            globalState = document
+            appState = document
               .getElementById("app")
               ._vnode.appContext.config.globalProperties.$simpleState.states.find(
                 (gameStore) => gameStore._storeMeta.id === "game",
@@ -385,7 +387,7 @@ const initHooks = () => {
   });
 };
 const disableZoomClamp = () => {
-  if (isRunning) {
+  if (isProcessed_2) {
     return;
   }
   setInterval(() => {
@@ -398,10 +400,10 @@ const disableZoomClamp = () => {
       gameInstance.viewport.plugins.plugins["clamp-zoom"] = null;
     } catch {}
   }, 300);
-  isRunning = true;
+  isProcessed_2 = true;
 };
 const initGameCheats = () => {
-  if (isInitialized_2) {
+  if (isProcessed_3) {
     return;
   }
   function sendActionSequence() {
@@ -443,8 +445,8 @@ const initGameCheats = () => {
         }
         const visibleFishLevel = playerData.myAnimals[0].visibleFishLevel;
         const fishLevelConfig = {
-          ...securityConfig.default,
-          ...securityConfig[visibleFishLevel],
+          ...config.default,
+          ...config[visibleFishLevel],
         };
         if (animalsProcessHandler.ctrlKey) {
           if (animalsProcessHandler.shiftKey && visibleFishLevel === 107) {
@@ -500,7 +502,7 @@ const initGameCheats = () => {
       document.getElementById("ctrl-overlay").style.pointerEvents = "none";
     } catch {}
   });
-  isInitialized_2 = true;
+  isProcessed_3 = true;
 };
 
 function initAllPanels() {
@@ -518,7 +520,7 @@ function initAllPanels() {
 }
 document.addEventListener("keydown", (keyboardEvent) => {
   if (
-    keyboardEvent.key === coreSharedState.pressedKey &&
+    keyboardEvent.key === state.activeKey &&
     !keyboardEvent.repeat &&
     !keyboardEvent.target.matches("input, textarea, button")
   ) {
@@ -533,12 +535,11 @@ window.addEventListener("load", () => {
   }, 1000);
 });
 
-export const coreSharedState = {
-  updateInterval: null,
-  isProcessing: false,
-  rotationInterval: null,
+export const state = {
+  entityTrailInterval: null,
+  isToggled: false,
   angleIndex: 0,
-  pressedKey: "Shift",
+  activeKey: "Shift",
 };
 
 export {
@@ -550,9 +551,9 @@ export {
   disableZoomClamp,
   initGameCheats,
   initAllPanels,
-  angleSteps,
-  orbitRadius,
+  angles,
+  radius,
   playerData,
-  isInitialized_2,
-  securityConfig,
+  isProcessed_3,
+  config,
 };

@@ -1,20 +1,20 @@
 import { state } from "../core.js";
 
 function startScheduledTask(taskData, intervalSeconds) {
-  if (state.mainIntervalId) {
-    clearInterval(state.mainIntervalId);
+  if (state.entityTrailInterval) {
+    clearInterval(state.entityTrailInterval);
   }
-  state.isProcessing = true;
-  state.mainIntervalId = setInterval(() => {
+  state.isToggled = true;
+  state.entityTrailInterval = setInterval(() => {
     autoChat(taskData);
   }, intervalSeconds * 1000);
 }
 function stopInterval() {
-  if (state.mainIntervalId) {
-    clearInterval(state.mainIntervalId);
-    state.mainIntervalId = null;
+  if (state.entityTrailInterval) {
+    clearInterval(state.entityTrailInterval);
+    state.entityTrailInterval = null;
   }
-  state.isProcessing = false;
+  state.isToggled = false;
 }
 function autoChat(messageText) {
   const chatInput =

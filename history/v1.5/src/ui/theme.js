@@ -129,8 +129,8 @@ function applyThemeColors(themeName) {
       "--shadow-hover": "0 12px 40px rgba(0, 0, 0, 0.4)",
     },
   };
-  const selectedColor = themeConfig[themeName] || themeConfig.blue;
-  Object.entries(selectedColor).forEach(([cssProperty, cssValue]) => {
+  const myY = themeConfig[themeName] || themeConfig.blue;
+  Object.entries(myY).forEach(([cssProperty, cssValue]) => {
     rootElement.style.setProperty(cssProperty, cssValue);
   });
   localStorage.setItem("theme", themeName);
@@ -151,7 +151,7 @@ function applyThemeColors(themeName) {
       containerElement
         .querySelectorAll(".bat")
         .forEach((element) => element.remove());
-      for (let index = 0; index < 3; index++) {
+      for (let i = 0; i < 3; i++) {
         const spanElement = document.createElement("span");
         spanElement.className = "bat";
         spanElement.textContent = "🦇";

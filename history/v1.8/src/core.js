@@ -8,6 +8,11 @@ import {
   togglePanelsVisibility,
 } from "./ui/panels.js";
 import {
+  renderOverlay,
+  toggleEntityTrail,
+  featuresentitytrailState,
+} from "./features/entitytrail.js";
+import {
   calculateDistance,
   getNearbyEntities,
   getAllPropertyNames,
@@ -17,24 +22,24 @@ import {
   autoDodgeLoop,
   toggleLock,
 } from "./features/aimbot.js";
-import { renderOverlay, toggleEntityTrail } from "./features/entitytrail.js";
+import { renderEspLoop, trackPlayer, toggleEsp_2 } from "./features/esp.js";
 import { setupPatrolPoints, autoFarmLoop } from "./features/autofarm.js";
 import { applyTheme, initBackground, injectStyles } from "./ui/theme.js";
-import { renderEspLoop, trackPlayer } from "./features/esp.js";
 import { moveMouseSide } from "./features/movement.js";
 import { showNotification } from "./ui/interaction.js";
 import { initAdBlocker } from "./features/adblock.js";
 import { initRadarDrag } from "./ui/radar.js";
-const stateMap = new WeakMap();
+const stateCache = new WeakMap();
 function wrapWithProxy(targetObject, propertyKey, proxyHandler) {
   const originalValue = targetObject[propertyKey];
   const proxyValue = new Proxy(originalValue, proxyHandler);
-  stateMap.set(proxyValue, originalValue);
+  stateCache.set(proxyValue, originalValue);
   targetObject[propertyKey] = proxyValue;
 }
-let isFinished = false;
+let currentTime = 0;
+let isProcessed_2 = false;
 function interceptTextEncoder() {
-  if (isFinished) {
+  if (isProcessed_2) {
     return;
   }
   function unescapeString(inputString) {
@@ -124,7 +129,7 @@ function interceptTextEncoder() {
     } catch {}
     return Reflect.apply(originalEncode, this, inputArgs);
   };
-  const inputMaxLengthObserver = new MutationObserver(() => {
+  const observer = new MutationObserver(() => {
     document
       .querySelector(".play-game .el-input__inner")
       ?.setAttribute("maxlength", "80");
@@ -135,11 +140,11 @@ function interceptTextEncoder() {
       .querySelector(".chat-input input")
       ?.setAttribute("maxLength", "1000");
   });
-  inputMaxLengthObserver.observe(document.body, {
+  observer.observe(document.body, {
     childList: true,
     subtree: true,
   });
-  isFinished = true;
+  isProcessed_2 = true;
   showNotification("Special characters enabled");
 }
 const angles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
@@ -147,16 +152,16 @@ const radius = 300;
 const offsetValue = 400;
 let gameInstance;
 let appState;
-let animalData;
-const settings = {};
+let playerData;
+const config = {};
 function getGameState() {
   try {
-    if (animalData && animalData.myAnimals && animalData.myAnimals.length > 0) {
-      return animalData;
+    if (playerData && playerData.myAnimals && playerData.myAnimals.length > 0) {
+      return playerData;
     }
     const states = window.__ss?.states;
     if (!states) {
-      return animalData || null;
+      return playerData || null;
     }
     for (let i = 0; i < states.length; i++) {
       if (states[i]?.gameScene?.myAnimals) {
@@ -170,9 +175,9 @@ function getGameState() {
         }
       }
     }
-    return animalData || null;
+    return playerData || null;
   } catch (error) {
-    return animalData || null;
+    return playerData || null;
   }
 }
 function getEntityManager(gameState) {
@@ -185,8 +190,8 @@ function getEntityManager(gameState) {
   if (window.__cachedEM) {
     return window.__cachedEM;
   }
-  if (settings.entityManager) {
-    const entityManager = gameState[settings.entityManager];
+  if (config.entityManager) {
+    const entityManager = gameState[config.entityManager];
     if (entityManager) {
       window.__cachedEM = entityManager;
       return entityManager;
@@ -231,8 +236,8 @@ function getFirstAnimalPosition() {
     }
     const position = animal.position;
     return {
-      x: position._x !== undefined ? position._x : position.x,
-      y: position._y !== undefined ? position._y : position.y,
+      x: state.position._x !== undefined ? state.position._x : state.position.x,
+      y: state.position._y !== undefined ? state.position._y : state.position.y,
     };
   } catch (error) {
     return null;
@@ -316,21 +321,21 @@ function findEntityById(entityId) {
     return null;
   }
 }
-let isProcessed = false;
+let isProcessed_4 = false;
 function startEntityTrail() {
-  if (state.trailInterval) {
-    clearInterval(state.trailInterval);
-    state.trailInterval = null;
+  if (featuresentitytrailState.entityTrailInterval_3) {
+    clearInterval(featuresentitytrailState.entityTrailInterval_3);
+    featuresentitytrailState.entityTrailInterval_3 = null;
   }
-  state.trailInterval = setInterval(() => {
+  featuresentitytrailState.entityTrailInterval_3 = setInterval(() => {
     if (!window.entityTrailEnabled || !window.entityTrailTargetId) {
       return;
     }
     const targetEntityId = findEntityById(window.entityTrailTargetId);
     if (!targetEntityId) {
-      const gameState = getNearbyEntities();
-      if (gameState && gameState.players && gameState.players.length > 0) {
-        window.entityTrailTargetId = gameState.players[0].id;
+      const gameData = getNearbyEntities();
+      if (gameData && gameData.players && gameData.players.length > 0) {
+        window.entityTrailTargetId = gameData.players[0].id;
       }
       return;
     }
@@ -368,21 +373,11 @@ let dragState = {
   x: null,
   y: 20,
 };
-function clearTracking_2() {
-  window.espTrackedEntityId = null;
-  showNotification("Tracking cleared");
-}
-const maxDistance = 600;
-const maxDelta = 800;
-function clearTracking_3() {
-  window.autoDodgeEnabled = false;
-  showNotification("Auto dodge disabled");
-}
-const distanceThreshold = 400;
+const tickInterval = 600;
+const deltaThreshold = 800;
 const maxFailCount = 2;
-const timeThreshold = 20000;
-const timeLimit = 600;
-let randomAngle = 0;
+const timeoutLimit = 20000;
+let angle = 0;
 function startAutoFarm(farmMode) {
   window.autoFarmMode = farmMode || "nearest";
   window.autoFarmActive = true;
@@ -393,39 +388,39 @@ function startAutoFarm(farmMode) {
   window.autoFarmSkipIds.clear();
   window.autoFarmSkipAreas = [];
   window.autoFarmSkipClearTime = Date.now();
-  state.currentPosition_2 = null;
+  state.position_2 = null;
+  state.counter_3 = 0;
+  state.counter_4 = 0;
   state.counter_2 = 0;
-  state.lastValue2 = 0;
-  state.lastTimestamp_2 = 0;
   if (farmMode === "patrol") {
     setupPatrolPoints();
   }
   showNotification("Auto farm started (" + window.autoFarmMode + ")");
-  if (!state.isActive_2) {
-    state.isActive_2 = true;
+  if (!state.isToggled_3) {
+    state.isToggled_3 = true;
     autoFarmLoop();
   }
 }
-let isReady_2 = false;
+let isProcessed_6 = false;
 const initGameHooks = () => {
-  if (isReady_2) {
+  if (isProcessed_6) {
     return;
   }
-  isReady_2 = true;
+  isProcessed_6 = true;
   const cache = {};
   for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
     cache[propertyKey] = Reflect[propertyKey];
   }
   const ProxyConstructor = Proxy;
   const lookupGetter = Object.prototype.__lookupGetter__;
-  const wrapValue = (target, key, value) => {
-    const wrappedValue = new ProxyConstructor(target[key], value);
-    stateMap.set(wrappedValue, target[key]);
-    target[key] = wrappedValue;
+  const wrapValue = (target, url, value) => {
+    const wrappedValue = new ProxyConstructor(target[url], value);
+    stateCache.set(wrappedValue, target[url]);
+    target[url] = wrappedValue;
   };
   wrapValue(Function.prototype, "toString", {
     apply(thisArg, argsKey, context) {
-      return cache.apply(thisArg, stateMap.get(argsKey) || argsKey, context);
+      return cache.apply(thisArg, stateCache.get(argsKey) || argsKey, context);
     },
   });
   wrapValue(window, "Proxy", {
@@ -451,34 +446,34 @@ const initGameHooks = () => {
           }
         } catch {}
         if (extraParam[0] && extraParam[0].aboveBgPlatformsContainer != null) {
-          animalData = extraParam[0];
+          playerData = extraParam[0];
           gameInstance = extraParam[0].game;
           window.__cachedEM = null;
-          const allKeys = getAllPropertyNames(animalData);
+          const allKeys = getAllPropertyNames(playerData);
           const obfuscatedKeys = allKeys.filter((varName) =>
             varName.startsWith("_0x"),
           );
-          settings.setFlash =
-            Object.getOwnPropertyNames(animalData.__proto__.__proto__)
+          config.setFlash =
+            Object.getOwnPropertyNames(playerData.__proto__.__proto__)
               .filter((identifier) => identifier.startsWith("_0x"))
               .find(
-                (functionKey) => animalData[functionKey] instanceof Function,
-              ) || settings.setFlash;
-          settings.terrainManager =
+                (functionKey) => playerData[functionKey] instanceof Function,
+              ) || config.setFlash;
+          config.terrainManager =
             obfuscatedKeys.find(
               (shadowKey) =>
-                typeof animalData[shadowKey]?.shadow !== "undefined",
-            ) || settings.terrainManager;
-          settings.entityManager =
+                typeof playerData[shadowKey]?.shadow !== "undefined",
+            ) || config.terrainManager;
+          config.entityManager =
             obfuscatedKeys.find(
               (entitiesKey) =>
-                typeof animalData[entitiesKey]?.entitiesList !== "undefined",
-            ) || settings.entityManager;
-          settings.socketManager =
+                typeof playerData[entitiesKey]?.entitiesList !== "undefined",
+            ) || config.entityManager;
+          config.socketManager =
             getAllPropertyNames(gameInstance).find(
               (networkKey) =>
                 typeof gameInstance[networkKey]?.sendBytePacket !== "undefined",
-            ) || settings.socketManager;
+            ) || config.socketManager;
           try {
             appState = document
               .getElementById("app")
@@ -492,10 +487,10 @@ const initGameHooks = () => {
           } catch {}
           intervalId = setInterval(() => {
             try {
-              if (!animalData?.myAnimals?.[0]) {
+              if (!playerData?.myAnimals?.[0]) {
                 return;
               }
-              const firstAnimal = animalData.myAnimals[0];
+              const firstAnimal = playerData.myAnimals[0];
               if (firstAnimal.fadingTrail) {
                 wrapWithProxy(
                   Object.getPrototypeOf(firstAnimal.fadingTrail),
@@ -517,9 +512,9 @@ const initGameHooks = () => {
               clearInterval(intervalId);
             } catch {}
           }, 200);
-          if (state.lastTimestamp < Date.now() - 3000) {
+          if (lastTimestamp < Date.now() - 3000) {
             showNotification("Client loaded");
-            state.lastTimestamp = Date.now();
+            lastTimestamp = Date.now();
           }
         }
       } catch {}
@@ -527,12 +522,12 @@ const initGameHooks = () => {
     },
   });
 };
-let isEnabled_2 = false;
+let isProcessed_7 = false;
 function initializeApp() {
-  if (isEnabled_2) {
+  if (isProcessed_7) {
     return;
   }
-  isEnabled_2 = true;
+  isProcessed_7 = true;
   setTimeout(() => {
     injectStyles();
     applyTheme(localStorage.getItem("theme") || "grey");
@@ -547,9 +542,9 @@ function initializeApp() {
     initRadarDrag();
     renderEspLoop();
     renderOverlay();
-    isProcessed = true;
+    isProcessed_4 = true;
     updateLockOnTarget();
-    state.isReady = true;
+    state.isProcessed_5 = true;
     autoDodgeLoop();
   }, 1000);
 }
@@ -562,12 +557,12 @@ document.addEventListener(
     if (event.repeat) {
       return;
     }
-    if (event.key.toLowerCase() === state.currentKey.toLowerCase()) {
+    if (event.key.toLowerCase() === state.keyQ.toLowerCase()) {
       event.preventDefault();
       event.stopPropagation();
       moveMouseSide("left");
     }
-    if (event.key.toLowerCase() === state.currentKey_2.toLowerCase()) {
+    if (event.key.toLowerCase() === state.keyE.toLowerCase()) {
       event.preventDefault();
       event.stopPropagation();
       moveMouseSide("right");
@@ -624,12 +619,12 @@ document.addEventListener("keydown", (event_4) => {
   }
   if (event_4.key === "F4") {
     event_4.preventDefault();
-    clearTracking_2();
+    toggleEsp_2();
   }
 });
 document.addEventListener("keydown", (keyboardEvent) => {
   if (
-    keyboardEvent.key === state.pressedKey &&
+    keyboardEvent.key === state.activeKey &&
     !keyboardEvent.repeat &&
     !keyboardEvent.target.matches("input,textarea,button,select")
   ) {
@@ -644,32 +639,25 @@ window.addEventListener("load", () => {
   }, 1000);
 });
 export const state = {
-  previousValue: "",
-  lastTimestamp: 0,
-  isActive: false,
-  mainIntervalId: null,
-  isProcessing: false,
-  secondaryIntervalId: null,
-  currentIndex: 0,
-  currentKey: "q",
-  currentKey_2: "e",
-  isEnabled: false,
-  isMinimapSmall: false,
-  trailInterval: null,
-  isReady: false,
-  previousValue_2: 0,
-  currentPosition: null,
+  currentTrackId: "",
+  isProcessed: false,
+  entityTrailInterval: null,
+  isToggled: false,
+  angleIndex: 0,
+  keyQ: "q",
+  keyE: "e",
+  isProcessed_3: false,
+  isToggled_2: false,
+  isProcessed_5: false,
+  position: null,
   counter: 0,
-  lastValue: 0,
   dataList: [],
-  lastTimestamp_2: 0,
-  lastValue_2: 0,
-  isActive_2: false,
-  currentPosition_2: null,
   counter_2: 0,
-  lastValue2: 0,
-  lastValue3: 0,
-  pressedKey: "Shift",
+  isToggled_3: false,
+  position_2: null,
+  counter_3: 0,
+  counter_4: 0,
+  activeKey: "Shift",
 };
 export {
   wrapWithProxy,
@@ -682,24 +670,20 @@ export {
   calculateDirection,
   findEntityById,
   startEntityTrail,
-  clearTracking_2,
-  clearTracking_3,
   startAutoFarm,
   initGameHooks,
   initializeApp,
+  currentTime,
   angles,
   radius,
   offsetValue,
   gameInstance,
-  animalData,
-  settings,
-  isProcessed,
+  playerData,
+  isProcessed_4,
   dragState,
-  maxDistance,
-  maxDelta,
-  distanceThreshold,
+  tickInterval,
+  deltaThreshold,
   maxFailCount,
-  timeThreshold,
-  timeLimit,
-  randomAngle,
+  timeoutLimit,
+  angle,
 };

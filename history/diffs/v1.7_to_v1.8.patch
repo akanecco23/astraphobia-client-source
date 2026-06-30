@@ -2,7 +2,7 @@ Index: content.js
 ===================================================================
 --- content.js	v1.7
 +++ content.js	v1.8
-@@ -1,42 +1,43 @@
+@@ -1,23 +1,24 @@
  import {
 -  hookTextEncoder,
 +  wrapWithProxy,
@@ -15,35 +15,23 @@ Index: content.js
    calculateDirection,
 +  findEntityById,
    startEntityTrail,
-   clearTracking_2,
-   clearTracking_3,
    startAutoFarm,
 -  initAntiTamper,
 +  initGameHooks,
    initializeApp,
--  stateMap,
--  angleDegrees,
-+  angles,
+-  stateCache,
+   currentTime,
+   angles,
    radius,
    offsetValue,
    gameInstance,
-   animalData,
-   settings,
--  isEnabled,
-+  isProcessed,
+   playerData,
+-  config,
+   isProcessed_4,
    dragState,
-   maxDistance,
-   maxDelta,
--  proximityThreshold,
-+  distanceThreshold,
-   maxFailCount,
--  timeoutLimit,
-   timeThreshold,
-+  timeLimit,
-   randomAngle,
--  pressedKey,
-   state,
- } from "./src/core.js";
+   tickInterval,
+   deltaThreshold,
+@@ -29,10 +30,10 @@
  import {
    handleFarmFailure,
    isAreaSkipped,
@@ -56,7 +44,7 @@ Index: content.js
    simulateEvolveKey,
    detectAndHandleStuck,
    setupPatrolPoints,
-@@ -44,69 +45,66 @@
+@@ -40,35 +41,32 @@
    stopAutoFarm,
  } from "./src/features/autofarm.js";
  import {
@@ -91,47 +79,39 @@ Index: content.js
 -  drawEspEntities,
 -  drawTrackedEntityIndicator,
 -  renderEspOverlay,
--  clearTracking,
--  trackPlayer,
--  toggleMinimapSize,
--} from "./src/features/esp.js";
--import {
++  drawEsp,
++  drawTrackedEntity,
++  renderEspLoop,
+   toggleEsp,
+   trackPlayer,
+   toggleEsp_2,
+   toggleEsp_3,
+@@ -77,35 +75,35 @@
+ import {
+   stopEntityTrail_2,
+   toggleEntityTrail,
+   drawEntityTrail,
+-  renderOverlayLoop,
++  renderOverlay,
+   featuresentitytrailState,
+ } from "./src/features/entitytrail.js";
+ import {
    startCircularMovement,
-   stopMouseSimulation,
+   stopEntityTrail,
    toggleMouseSimulation,
 -  moveMouseToSide,
 +  moveMouseSide,
    simulateClick,
  } from "./src/features/movement.js";
  import {
--  updateLockOnTarget,
--  toggleLock,
+   updateLockOnTarget,
+   toggleLock,
 -  movePointerToTarget,
--  autoDodgeLoop,
--  enableAutoDodge,
--} from "./src/features/aimbot.js";
-+  drawEsp,
-+  drawTrackedEntity,
-+  renderEspLoop,
-+  clearTracking,
-+  trackPlayer,
-+  toggleMinimapSize,
-+} from "./src/features/esp.js";
- import {
-   stopMouseSimulation_2,
-   toggleEntityTrail,
-   drawEntityTrail,
--  renderOverlayLoop,
-+  renderOverlay,
- } from "./src/features/entitytrail.js";
- import {
-+  updateLockOnTarget,
-+  toggleLock,
 +  aimAtTarget,
-+  autoDodgeLoop,
-+  enableAutoDodge,
-+} from "./src/features/aimbot.js";
-+import {
+   autoDodgeLoop,
+   enableAutoDodge,
+ } from "./src/features/aimbot.js";
+ import {
    startScheduledTask,
    stopInterval,
 -  simulateChatInput,
@@ -169,7 +149,7 @@ Index: src/core.js
 ===================================================================
 --- src/core.js	v1.7
 +++ src/core.js	v1.8
-@@ -3,48 +3,49 @@
+@@ -3,39 +3,43 @@
    createVisionPanel,
    createCombatPanel,
    createAutomationPanel,
@@ -180,50 +160,54 @@ Index: src/core.js
  } from "./ui/panels.js";
  import {
 -  getEntityById,
++  renderOverlay,
++  toggleEntityTrail,
++  featuresentitytrailState,
++} from "./features/entitytrail.js";
++import {
    calculateDistance,
    getNearbyEntities,
 -  proxyProperty,
    getAllPropertyNames,
  } from "./utils.js";
  import {
+-  renderOverlayLoop,
+-  toggleEntityTrail,
+-  featuresentitytrailState,
+-} from "./features/entitytrail.js";
+-import {
    updateLockOnTarget,
    autoDodgeLoop,
    toggleLock,
  } from "./features/aimbot.js";
--import {
--  renderOverlayLoop,
--  toggleEntityTrail,
--} from "./features/entitytrail.js";
+-import { renderEspOverlay, trackPlayer, toggleEsp_2 } from "./features/esp.js";
 -import { setTheme, initHomeBackground, injectStyles } from "./ui/theme.js";
-+import { renderOverlay, toggleEntityTrail } from "./features/entitytrail.js";
++import { renderEspLoop, trackPlayer, toggleEsp_2 } from "./features/esp.js";
  import { setupPatrolPoints, autoFarmLoop } from "./features/autofarm.js";
--import { renderEspOverlay, trackPlayer } from "./features/esp.js";
 -import { moveMouseToSide } from "./features/movement.js";
 +import { applyTheme, initBackground, injectStyles } from "./ui/theme.js";
-+import { renderEspLoop, trackPlayer } from "./features/esp.js";
 +import { moveMouseSide } from "./features/movement.js";
  import { showNotification } from "./ui/interaction.js";
  import { initAdBlocker } from "./features/adblock.js";
 -import { initRadarDragging } from "./ui/radar.js";
--let stateMap = new WeakMap();
--let isActive = false;
--function hookTextEncoder() {
--  if (isActive) {
+-let stateCache = new WeakMap();
 +import { initRadarDrag } from "./ui/radar.js";
-+const stateMap = new WeakMap();
++const stateCache = new WeakMap();
 +function wrapWithProxy(targetObject, propertyKey, proxyHandler) {
 +  const originalValue = targetObject[propertyKey];
 +  const proxyValue = new Proxy(originalValue, proxyHandler);
-+  stateMap.set(proxyValue, originalValue);
++  stateCache.set(proxyValue, originalValue);
 +  targetObject[propertyKey] = proxyValue;
 +}
-+let isFinished = false;
+ let currentTime = 0;
+ let isProcessed_2 = false;
+-function hookTextEncoder() {
 +function interceptTextEncoder() {
-+  if (isFinished) {
+   if (isProcessed_2) {
      return;
    }
    function unescapeString(inputString) {
-     if (typeof inputString !== "string") {
+@@ -43,10 +47,10 @@
        return inputString;
      }
      return inputString.replace(
@@ -236,7 +220,7 @@ Index: src/core.js
              return "\\";
            case "n":
              return "\n";
-@@ -65,36 +66,36 @@
+@@ -67,36 +71,36 @@
            case "4":
            case "5":
            case "6":
@@ -283,7 +267,7 @@ Index: src/core.js
        const commandPatterns = [
          /^(\x14{3}\d+\|6\|)(.+)$/gm,
          /^(\x14{3}\d+\|8\|)(.+)$/gm,
-@@ -105,24 +106,24 @@
+@@ -107,24 +111,24 @@
          let patternIndex = 0;
          patternIndex < commandPatterns.length;
          patternIndex++
@@ -314,25 +298,10 @@ Index: src/core.js
 -    return Reflect.apply(originalEncode, this, inputData);
 +    return Reflect.apply(originalEncode, this, inputArgs);
    };
-   const inputMaxLengthObserver = new MutationObserver(() => {
+   const observer = new MutationObserver(() => {
      document
        .querySelector(".play-game .el-input__inner")
-@@ -137,12 +138,12 @@
-   inputMaxLengthObserver.observe(document.body, {
-     childList: true,
-     subtree: true,
-   });
--  isActive = true;
-+  isFinished = true;
-   showNotification("Special characters enabled");
- }
--const angleDegrees = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
-+const angles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
- const radius = 300;
- const offsetValue = 400;
- let gameInstance;
- let appState;
-@@ -204,18 +205,35 @@
+@@ -206,18 +210,35 @@
      }
    }
    return null;
@@ -358,27 +327,26 @@ Index: src/core.js
    try {
 -    const animal = getGameState();
 -    const position = animal?.myAnimals?.[0];
--    if (!position) {
+-    if (!state.position) {
 +    const animal = getFirstAnimal();
 +    if (!animal) {
        return null;
      }
 +    const position = animal.position;
      return {
--      x: position.position._x ?? position.position.x,
--      y: position.position._y ?? position.position.y,
-+      x: position._x !== undefined ? position._x : position.x,
-+      y: position._y !== undefined ? position._y : position.y,
+-      x: state.position.position._x ?? state.position.position.x,
+-      y: state.position.position._y ?? state.position.position.y,
++      x: state.position._x !== undefined ? state.position._x : state.position.x,
++      y: state.position._y !== undefined ? state.position._y : state.position.y,
      };
    } catch (error) {
      return null;
    }
-@@ -261,9 +279,45 @@
+@@ -263,8 +284,44 @@
      dirX: dirX,
      dirY: dirY,
    };
  }
--let isEnabled = false;
 +function findEntityById(entityId) {
 +  try {
 +    const rawState = getGameState();
@@ -415,70 +383,32 @@ Index: src/core.js
 +    return null;
 +  }
 +}
-+let isProcessed = false;
+ let isProcessed_4 = false;
  function startEntityTrail() {
-   if (state.trailInterval) {
-     clearInterval(state.trailInterval);
-     state.trailInterval = null;
-@@ -271,9 +325,9 @@
-   state.trailInterval = setInterval(() => {
+   if (featuresentitytrailState.entityTrailInterval_3) {
+     clearInterval(featuresentitytrailState.entityTrailInterval_3);
+@@ -273,9 +330,9 @@
+   featuresentitytrailState.entityTrailInterval_3 = setInterval(() => {
      if (!window.entityTrailEnabled || !window.entityTrailTargetId) {
        return;
      }
 -    const targetEntityId = getEntityById(window.entityTrailTargetId);
 +    const targetEntityId = findEntityById(window.entityTrailTargetId);
      if (!targetEntityId) {
-       const gameState = getNearbyEntities();
-       if (gameState && gameState.players && gameState.players.length > 0) {
-         window.entityTrailTargetId = gameState.players[0].id;
-@@ -323,12 +377,12 @@
- function clearTracking_3() {
-   window.autoDodgeEnabled = false;
-   showNotification("Auto dodge disabled");
- }
--const proximityThreshold = 400;
-+const distanceThreshold = 400;
- const maxFailCount = 2;
--const timeoutLimit = 20000;
--const timeThreshold = 600;
-+const timeThreshold = 20000;
-+const timeLimit = 600;
- let randomAngle = 0;
- function startAutoFarm(farmMode) {
-   window.autoFarmMode = farmMode || "nearest";
-   window.autoFarmActive = true;
-@@ -338,98 +392,93 @@
-   window.autoFarmTargetStartTime = 0;
-   window.autoFarmSkipIds.clear();
-   window.autoFarmSkipAreas = [];
-   window.autoFarmSkipClearTime = Date.now();
--  state.currentPosition = null;
-+  state.currentPosition_2 = null;
-   state.counter_2 = 0;
-+  state.lastValue2 = 0;
-   state.lastTimestamp_2 = 0;
--  state.previousTimestamp = 0;
-   if (farmMode === "patrol") {
-     setupPatrolPoints();
-   }
-   showNotification("Auto farm started (" + window.autoFarmMode + ")");
--  if (!state.isActive_3) {
--    state.isActive_3 = true;
-+  if (!state.isActive_2) {
-+    state.isActive_2 = true;
+       const gameData = getNearbyEntities();
+       if (gameData && gameData.players && gameData.players.length > 0) {
+         window.entityTrailTargetId = gameData.players[0].id;
+@@ -344,84 +401,79 @@
      autoFarmLoop();
    }
  }
--let isReady = false;
+ let isProcessed_6 = false;
 -const initAntiTamper = () => {
--  if (isReady) {
-+let isReady_2 = false;
 +const initGameHooks = () => {
-+  if (isReady_2) {
+   if (isProcessed_6) {
      return;
    }
--  isReady = true;
-+  isReady_2 = true;
+   isProcessed_6 = true;
    const cache = {};
 -  for (const reflectMethod of Object.getOwnPropertyNames(Reflect)) {
 -    cache[reflectMethod] = Reflect[reflectMethod];
@@ -488,25 +418,25 @@ Index: src/core.js
 -  const Proxy = Proxy;
 +  const ProxyConstructor = Proxy;
    const lookupGetter = Object.prototype.__lookupGetter__;
--  const wrapProperty = (target, key, value) => {
--    const instance = new Proxy(target[key], value);
--    stateMap.set(instance, target[key]);
--    target[key] = instance;
-+  const wrapValue = (target, key, value) => {
-+    const wrappedValue = new ProxyConstructor(target[key], value);
-+    stateMap.set(wrappedValue, target[key]);
-+    target[key] = wrappedValue;
+-  const wrapProperty = (target, url, value) => {
+-    const instance = new Proxy(target[url], value);
+-    stateCache.set(instance, target[url]);
+-    target[url] = instance;
++  const wrapValue = (target, url, value) => {
++    const wrappedValue = new ProxyConstructor(target[url], value);
++    stateCache.set(wrappedValue, target[url]);
++    target[url] = wrappedValue;
    };
 -  wrapProperty(Function.prototype, "toString", {
 -    apply(thisArg, argsKey, callContext) {
 -      return cache.apply(
 -        thisArg,
--        stateMap.get(argsKey) || argsKey,
+-        stateCache.get(argsKey) || argsKey,
 -        callContext,
 -      );
 +  wrapValue(Function.prototype, "toString", {
 +    apply(thisArg, argsKey, context) {
-+      return cache.apply(thisArg, stateMap.get(argsKey) || argsKey, context);
++      return cache.apply(thisArg, stateCache.get(argsKey) || argsKey, context);
      },
    });
 -  wrapProperty(window, "Proxy", {
@@ -541,58 +471,58 @@ Index: src/core.js
            }
          } catch {}
 -        if (extraArgs[0] && extraArgs[0].aboveBgPlatformsContainer != null) {
--          animalData = extraArgs[0];
+-          playerData = extraArgs[0];
 -          gameInstance = extraArgs[0].game;
 +        if (extraParam[0] && extraParam[0].aboveBgPlatformsContainer != null) {
-+          animalData = extraParam[0];
++          playerData = extraParam[0];
 +          gameInstance = extraParam[0].game;
            window.__cachedEM = null;
--          const propertyNames = getAllPropertyNames(animalData);
+-          const propertyNames = getAllPropertyNames(playerData);
 -          const obfuscatedPropertyNames = propertyNames.filter((varName) =>
-+          const allKeys = getAllPropertyNames(animalData);
++          const allKeys = getAllPropertyNames(playerData);
 +          const obfuscatedKeys = allKeys.filter((varName) =>
              varName.startsWith("_0x"),
            );
-           settings.setFlash =
-             Object.getOwnPropertyNames(animalData.__proto__.__proto__)
+           config.setFlash =
+             Object.getOwnPropertyNames(playerData.__proto__.__proto__)
 -              .filter((propName) => propName.startsWith("_0x"))
 +              .filter((identifier) => identifier.startsWith("_0x"))
                .find(
--                (methodName) => animalData[methodName] instanceof Function,
-+                (functionKey) => animalData[functionKey] instanceof Function,
-               ) || settings.setFlash;
-           settings.terrainManager =
+-                (methodName) => playerData[methodName] instanceof Function,
++                (functionKey) => playerData[functionKey] instanceof Function,
+               ) || config.setFlash;
+           config.terrainManager =
 -            obfuscatedPropertyNames.find(
 -              (shadowEntityKey) =>
--                typeof animalData[shadowEntityKey]?.shadow !== "undefined",
+-                typeof playerData[shadowEntityKey]?.shadow !== "undefined",
 +            obfuscatedKeys.find(
 +              (shadowKey) =>
-+                typeof animalData[shadowKey]?.shadow !== "undefined",
-             ) || settings.terrainManager;
-           settings.entityManager =
++                typeof playerData[shadowKey]?.shadow !== "undefined",
+             ) || config.terrainManager;
+           config.entityManager =
 -            obfuscatedPropertyNames.find(
 -              (entitiesListKey) =>
--                typeof animalData[entitiesListKey]?.entitiesList !==
+-                typeof playerData[entitiesListKey]?.entitiesList !==
 -                "undefined",
 +            obfuscatedKeys.find(
 +              (entitiesKey) =>
-+                typeof animalData[entitiesKey]?.entitiesList !== "undefined",
-             ) || settings.entityManager;
-           settings.socketManager =
++                typeof playerData[entitiesKey]?.entitiesList !== "undefined",
+             ) || config.entityManager;
+           config.socketManager =
              getAllPropertyNames(gameInstance).find(
 -              (networkClientKey) =>
 -                typeof gameInstance[networkClientKey]?.sendBytePacket !==
 -                "undefined",
 +              (networkKey) =>
 +                typeof gameInstance[networkKey]?.sendBytePacket !== "undefined",
-             ) || settings.socketManager;
+             ) || config.socketManager;
            try {
              appState = document
                .getElementById("app")
-@@ -447,9 +496,9 @@
+@@ -439,9 +491,9 @@
                  return;
                }
-               const firstAnimal = animalData.myAnimals[0];
+               const firstAnimal = playerData.myAnimals[0];
                if (firstAnimal.fadingTrail) {
 -                proxyProperty(
 +                wrapWithProxy(
@@ -600,16 +530,16 @@ Index: src/core.js
                    "enable",
                    {
                      apply() {},
-@@ -467,42 +516,41 @@
+@@ -459,15 +511,15 @@
                }
                clearInterval(intervalId);
              } catch {}
            }, 200);
 -          if (lastExecutionTime < Date.now() - 3000) {
-+          if (state.lastTimestamp < Date.now() - 3000) {
++          if (lastTimestamp < Date.now() - 3000) {
              showNotification("Client loaded");
 -            lastExecutionTime = Date.now();
-+            state.lastTimestamp = Date.now();
++            lastTimestamp = Date.now();
            }
          }
        } catch {}
@@ -618,13 +548,10 @@ Index: src/core.js
      },
    });
  };
--let pressedKey = "Shift";
- let isEnabled_2 = false;
- function initializeApp() {
-   if (isEnabled_2) {
-     return;
+ let isProcessed_7 = false;
+@@ -477,20 +529,20 @@
    }
-   isEnabled_2 = true;
+   isProcessed_7 = true;
    setTimeout(() => {
      injectStyles();
 -    setTheme(localStorage.getItem("theme") || "grey");
@@ -642,28 +569,22 @@ Index: src/core.js
 -    initRadarDragging();
 -    renderEspOverlay();
 -    renderOverlayLoop();
--    isEnabled = true;
 +    initRadarDrag();
 +    renderEspLoop();
 +    renderOverlay();
-+    isProcessed = true;
+     isProcessed_4 = true;
      updateLockOnTarget();
--    state.isActive_2 = true;
-+    state.isReady = true;
+     state.isProcessed_5 = true;
      autoDodgeLoop();
-   }, 1000);
- }
- document.addEventListener(
-@@ -516,14 +564,14 @@
+@@ -507,14 +559,14 @@
      }
-     if (event.key.toLowerCase() === state.currentKey.toLowerCase()) {
+     if (event.key.toLowerCase() === state.keyQ.toLowerCase()) {
        event.preventDefault();
        event.stopPropagation();
 -      moveMouseToSide("left");
 +      moveMouseSide("left");
      }
--    if (event.key.toLowerCase() === state.activeKey.toLowerCase()) {
-+    if (event.key.toLowerCase() === state.currentKey_2.toLowerCase()) {
+     if (event.key.toLowerCase() === state.keyE.toLowerCase()) {
        event.preventDefault();
        event.stopPropagation();
 -      moveMouseToSide("right");
@@ -672,7 +593,7 @@ Index: src/core.js
    },
    true,
  );
-@@ -552,14 +600,14 @@
+@@ -543,14 +595,14 @@
      if (event_3.repeat) {
        return;
      }
@@ -692,18 +613,7 @@ Index: src/core.js
        event_3.preventDefault();
        toggleEntityTrail();
      }
-@@ -580,9 +628,9 @@
-   }
- });
- document.addEventListener("keydown", (keyboardEvent) => {
-   if (
--    keyboardEvent.key === pressedKey &&
-+    keyboardEvent.key === state.pressedKey &&
-     !keyboardEvent.repeat &&
-     !keyboardEvent.target.matches("input,textarea,button,select")
-   ) {
-     keyboardEvent.preventDefault();
-@@ -590,66 +638,68 @@
+@@ -581,10 +633,10 @@
    }
  });
  window.addEventListener("load", () => {
@@ -715,49 +625,10 @@ Index: src/core.js
    }, 1000);
  });
  export const state = {
--  previousString: "",
--  previousValue: 0,
--  isInitialized: false,
--  updateIntervalId: null,
-+  previousValue: "",
-+  lastTimestamp: 0,
-+  isActive: false,
-+  mainIntervalId: null,
-   isProcessing: false,
--  animationIntervalId: null,
--  angleIndex: 0,
-+  secondaryIntervalId: null,
-+  currentIndex: 0,
-   currentKey: "q",
--  activeKey: "e",
--  isProcessed: false,
-+  currentKey_2: "e",
-+  isEnabled: false,
-   isMinimapSmall: false,
-   trailInterval: null,
--  isActive_2: false,
-+  isReady: false,
-   previousValue_2: 0,
--  lastPosition: null,
-+  currentPosition: null,
-   counter: 0,
--  lastTimestamp: 0,
--  dataBuffer: [],
--  previousTimestamp: 0,
-   lastValue: 0,
--  isActive_3: false,
--  currentPosition: null,
--  counter_2: 0,
-+  dataList: [],
-   lastTimestamp_2: 0,
--  lastOffset: 0,
-+  lastValue_2: 0,
-+  isActive_2: false,
-+  currentPosition_2: null,
-+  counter_2: 0,
-+  lastValue2: 0,
-+  lastValue3: 0,
-+  pressedKey: "Shift",
+   currentTrackId: "",
+@@ -607,26 +659,27 @@
+   counter_4: 0,
+   activeKey: "Shift",
  };
  export {
 -  hookTextEncoder,
@@ -771,53 +642,26 @@ Index: src/core.js
    calculateDirection,
 +  findEntityById,
    startEntityTrail,
-   clearTracking_2,
-   clearTracking_3,
    startAutoFarm,
 -  initAntiTamper,
 +  initGameHooks,
    initializeApp,
--  stateMap,
--  angleDegrees,
-+  angles,
+-  stateCache,
+   currentTime,
+   angles,
    radius,
    offsetValue,
    gameInstance,
-   animalData,
-   settings,
--  isEnabled,
-+  isProcessed,
+   playerData,
+-  config,
+   isProcessed_4,
    dragState,
-   maxDistance,
-   maxDelta,
--  proximityThreshold,
-+  distanceThreshold,
-   maxFailCount,
--  timeoutLimit,
-   timeThreshold,
-+  timeLimit,
-   randomAngle,
--  pressedKey,
- };
+   tickInterval,
+   deltaThreshold,
 Index: src/features/adblock.js
 ===================================================================
 --- src/features/adblock.js	v1.7
 +++ src/features/adblock.js	v1.8
-@@ -1,12 +1,12 @@
- import { showNotification } from "../ui/interaction.js";
- import { state } from "../core.js";
- 
- function initAdBlocker() {
--  if (state.isInitialized) {
-+  if (state.isActive) {
-     return;
-   }
--  state.isInitialized = true;
-+  state.isActive = true;
-   const adSelectors = [
-     "div.ad-block",
-     'a[href*="ad"]',
-     'iframe[src*="ads"], iframe[src*="googlead"]',
 @@ -17,11 +17,11 @@
      ".sidebar.left > div:not(.sidebar-content)",
      "div.sidebar.left > div:has(> iframe)",
@@ -827,8 +671,8 @@ Index: src/features/adblock.js
 -    adSelectors.forEach((targetSelector) => {
 -      document.querySelectorAll(targetSelector).forEach((targetElement) => {
 +  const hideElementsAndAdjustSidebar = () => {
-+    adSelectors.forEach((selector) => {
-+      document.querySelectorAll(selector).forEach((targetElement) => {
++    adSelectors.forEach((y) => {
++      document.querySelectorAll(y).forEach((targetElement) => {
          targetElement.style.display = "none";
          targetElement.style.opacity = "0";
          targetElement.style.pointerEvents = "none";
@@ -856,17 +700,16 @@ Index: src/features/aimbot.js
 ===================================================================
 --- src/features/aimbot.js	v1.7
 +++ src/features/aimbot.js	v1.8
-@@ -1,17 +1,17 @@
+@@ -1,7 +1,8 @@
  import {
    getFirstAnimalPosition,
    getEntityPosition,
--  isEnabled,
 +  findEntityById,
-+  isProcessed,
+   isProcessed_4,
+   angle,
    getGameState,
    getEntityManager,
-   maxDistance,
-   maxDelta,
+@@ -10,9 +11,8 @@
    state,
  } from "../core.js";
  import {
@@ -876,16 +719,7 @@ Index: src/features/aimbot.js
    isPlayer,
    calculateDistance,
  } from "../utils.js";
-@@ -21,17 +21,17 @@
- 
- window.autoDodgeEnabled = false;
- 
- function updateLockOnTarget() {
--  if (!isEnabled) {
-+  if (!isProcessed) {
-     return;
-   }
-   requestAnimationFrame(updateLockOnTarget);
+@@ -28,9 +28,9 @@
    if (!window.lockEnabled || !window.lockTargetId) {
      return;
    }
@@ -896,7 +730,7 @@ Index: src/features/aimbot.js
        showNotification("Lock target lost");
        window.lockTargetId = null;
        window.lockEnabled = false;
-@@ -42,15 +42,15 @@
+@@ -41,15 +41,15 @@
      const playerPos = getFirstAnimalPosition();
      if (!targetPos || !playerPos) {
        return;
@@ -917,7 +751,7 @@ Index: src/features/aimbot.js
      const diffY = targetPos.y - playerPos.y;
      const distance = Math.sqrt(diffX * diffX + diffY * diffY);
      let predictedX = targetPos.x;
-@@ -61,39 +61,39 @@
+@@ -60,34 +60,34 @@
        const predictionFactor = Math.min(distance / 800, 0.5);
        predictedX += velX * predictionFactor;
        predictedY += velY * predictionFactor;
@@ -947,15 +781,15 @@ Index: src/features/aimbot.js
 -    let offsetY = relativeY * smoothingFactor;
 -    const offsetDistance = Math.sqrt(offsetX * offsetX + offsetY * offsetY);
 -    if (offsetDistance > maxRadius) {
--      const scaleFactor = maxRadius / offsetDistance;
+-      const angle = maxRadius / offsetDistance;
 +    const maxOffset = Math.min(canvasRect.width, canvasRect.height) * 0.85;
 +    let offsetX = finalDiffX * smoothingFactor;
 +    let offsetY = finalDiffY * smoothingFactor;
 +    const offsetMagnitude = Math.sqrt(offsetX * offsetX + offsetY * offsetY);
 +    if (offsetMagnitude > maxOffset) {
-+      const scaleFactor = maxOffset / offsetMagnitude;
-       offsetX *= scaleFactor;
-       offsetY *= scaleFactor;
++      const angle = maxOffset / offsetMagnitude;
+       offsetX *= angle;
+       offsetY *= angle;
      }
 -    canvasElement.dispatchEvent(
 +    canvas.dispatchEvent(
@@ -968,13 +802,7 @@ Index: src/features/aimbot.js
          view: window,
        }),
      );
--  } catch (result) {}
-+  } catch (tempValue) {}
- }
- function toggleLock() {
-   if (window.lockEnabled && window.lockTargetId) {
-     window.lockEnabled = false;
-@@ -112,51 +112,49 @@
+@@ -111,51 +111,49 @@
      }
    }
    updateLockButtonUI();
@@ -1053,16 +881,7 @@ Index: src/features/aimbot.js
        clientX: finalX,
        clientY: finalY,
        bubbles: true,
-@@ -167,28 +165,28 @@
-     simulateClick(finalX, finalY);
-   }
- }
- function autoDodgeLoop() {
--  if (!state.isActive_2) {
-+  if (!state.isReady) {
-     return;
-   }
-   setTimeout(autoDodgeLoop, 80);
+@@ -176,20 +174,20 @@
    if (!window.autoDodgeEnabled) {
      return;
    }
@@ -1088,8 +907,8 @@ Index: src/features/aimbot.js
          !targetEntity ||
          targetEntity.id === myAnimal.id ||
          !isPlayer(targetEntity)
-@@ -206,10 +204,10 @@
-       if (targetX == null || targetY == null) {
+@@ -207,10 +205,10 @@
+       if (myY == null || posY == null) {
          return;
        }
        const distanceToTarget = calculateDistance(
@@ -1097,40 +916,23 @@ Index: src/features/aimbot.js
 -        localPlayer.y,
 +        playerPos.x,
 +        playerPos.y,
-         targetX,
-         targetY,
+         myY,
+         posY,
        );
-       if (distanceToTarget < maxDistance) {
-@@ -220,45 +218,45 @@
-         });
-       }
-     });
-     if (nearbyEntities.length === 0) {
--      state.lastPosition = null;
-+      state.currentPosition = null;
-       state.counter = 0;
--      state.dataBuffer = [];
-+      state.dataList = [];
-       return;
-     }
-     const now = Date.now();
+       if (distanceToTarget < tickInterval) {
+@@ -231,35 +229,35 @@
      let isDodging = false;
--    if (now - state.lastTimestamp > 600) {
--      state.lastTimestamp = now;
--      if (state.lastPosition) {
+     if (now - currentTime_3 > 600) {
+       currentTime_3 = now;
+       if (state.position) {
 -        const distFromLastPos = calculateDistance(
 -          localPlayer.x,
 -          localPlayer.y,
--          state.lastPosition.x,
--          state.lastPosition.y,
-+    if (now - state.lastValue > 600) {
-+      state.lastValue = now;
-+      if (state.currentPosition) {
 +        const moveDist = calculateDistance(
 +          playerPos.x,
 +          playerPos.y,
-+          state.currentPosition.x,
-+          state.currentPosition.y,
+           state.position.x,
+           state.position.y,
          );
 -        if (distFromLastPos < 20) {
 +        if (moveDist < 20) {
@@ -1138,14 +940,12 @@ Index: src/features/aimbot.js
            isDodging = true;
          } else {
            state.counter = 0;
--          state.dataBuffer = [];
-+          state.dataList = [];
+           state.dataList = [];
          }
        }
--      state.lastPosition = {
+       state.position = {
 -        x: localPlayer.x,
 -        y: localPlayer.y,
-+      state.currentPosition = {
 +        x: playerPos.x,
 +        y: playerPos.y,
        };
@@ -1160,22 +960,13 @@ Index: src/features/aimbot.js
 +      const deltaY = playerPos.y - sourceEntity.y;
        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
        if (distance > 0.01) {
--        const distanceRatio = (maxDistance - point.dist) / maxDistance;
-+        const distanceRatio = (maxDistance - sourceEntity.dist) / maxDistance;
+-        const distanceRatio = (tickInterval - point.dist) / tickInterval;
++        const distanceRatio = (tickInterval - sourceEntity.dist) / tickInterval;
          sumX += (deltaX / distance) * distanceRatio;
          sumY += (deltaY / distance) * distanceRatio;
        }
      });
-@@ -271,22 +269,22 @@
-     sumX /= magnitude;
-     sumY /= magnitude;
-     let angle = Math.atan2(sumY, sumX);
-     if (isDodging && state.counter >= 1) {
--      const presetAngles = [
-+      const angleConstants = [
-         Math.PI / 4,
-         -Math.PI / 4,
-         Math.PI / 2,
+@@ -280,9 +278,9 @@
          -Math.PI / 2,
          (Math.PI * 3) / 4,
          (-Math.PI * 3) / 4,
@@ -1183,17 +974,10 @@ Index: src/features/aimbot.js
 -      let targetAngle = angle;
 +      let currentAngle = angle;
        let maxProjection = -Infinity;
--      for (const angleOffset of presetAngles) {
-+      for (const angleOffset of angleConstants) {
+       for (const angleOffset of anglePresets) {
          const rotatedAngle = angle + angleOffset;
          if (
--          state.dataBuffer.some(
-+          state.dataList.some(
-             (angle) => Math.abs(angle - rotatedAngle) < 0.3,
-           ) &&
-           state.counter < 5
-         ) {
-@@ -294,53 +292,53 @@
+@@ -295,17 +293,17 @@
          }
          let projection = 0;
          nearbyEntities.forEach((entity) => {
@@ -1210,54 +994,27 @@ Index: src/features/aimbot.js
          }
        }
 -      angle = targetAngle;
--      state.dataBuffer.push(angle);
--      if (state.dataBuffer.length > 8) {
--        state.dataBuffer.shift();
 +      angle = currentAngle;
-+      state.dataList.push(angle);
-+      if (state.dataList.length > 8) {
-+        state.dataList.shift();
+       state.dataList.push(angle);
+       if (state.dataList.length > 8) {
+         state.dataList.shift();
        }
-       if (state.counter >= 5) {
-         angle += Math.random() > 0.5 ? Math.PI / 2 : -Math.PI / 2;
-         state.counter = 0;
--        state.dataBuffer = [];
-+        state.dataList = [];
-       }
-     }
--    const isThresholdExceeded = now - state.previousValue_2 > maxDelta;
--    if (isThresholdExceeded) {
-+    const isExceeded = now - state.previousValue_2 > maxDelta;
-+    if (isExceeded) {
-       state.previousValue_2 = now;
+@@ -318,11 +316,11 @@
+     const angle_2 = now - currentTime_2 > deltaThreshold;
+     if (angle_2) {
+       currentTime_2 = now;
      }
 -    movePointerToTarget(
 -      localPlayer.x + Math.cos(angle) * 2000,
 -      localPlayer.y + Math.sin(angle) * 2000,
--      isThresholdExceeded,
 +    aimAtTarget(
 +      playerPos.x + Math.cos(angle) * 2000,
 +      playerPos.y + Math.sin(angle) * 2000,
-+      isExceeded,
+       angle_2,
      );
--  } catch (temp) {}
-+  } catch (tempValue) {}
+   } catch (data) {}
  }
- function enableAutoDodge() {
-   window.autoDodgeEnabled = true;
--  state.lastPosition = null;
-+  state.currentPosition = null;
-   state.counter = 0;
--  state.dataBuffer = [];
--  if (!state.isActive_2) {
--    state.isActive_2 = true;
-+  state.dataList = [];
-+  if (!state.isReady) {
-+    state.isReady = true;
-     autoDodgeLoop();
-   }
-   showNotification("Auto dodge enabled");
- }
+@@ -340,8 +338,8 @@
  
  export {
    updateLockOnTarget,
@@ -1271,21 +1028,7 @@ Index: src/features/autofarm.js
 ===================================================================
 --- src/features/autofarm.js	v1.7
 +++ src/features/autofarm.js	v1.8
-@@ -1,20 +1,20 @@
- import {
-   radius,
--  proximityThreshold,
-+  distanceThreshold,
-   maxFailCount,
--  timeoutLimit,
-+  timeThreshold,
-   getGameState,
-   getEntityManager,
-   getFirstAnimalPosition,
-   randomAngle,
--  timeThreshold,
-+  timeLimit,
-   startAutoFarm,
+@@ -11,9 +11,9 @@
    state,
  } from "../core.js";
  import { calculateDistance, isPlayer, getGameCanvas } from "../utils.js";
@@ -1296,45 +1039,29 @@ Index: src/features/autofarm.js
  window.autoFarmActive = false;
  window.autoFarmMode = "nearest";
  window.autoFarmRange = 3000;
-@@ -36,13 +36,13 @@
- 
+@@ -37,9 +37,9 @@
+ const tickInterval_2 = 600;
  function handleFarmFailure(x, y) {
    const currentTime = Date.now();
    window.autoFarmSkipAreas = window.autoFarmSkipAreas.filter(
 -    (timeData) => currentTime - timeData.time < timeoutLimit,
-+    (currentTime) => currentTime - currentTime.time < timeThreshold,
++    (currentTime) => currentTime - currentTime.time < timeoutLimit,
    );
    let existingArea = window.autoFarmSkipAreas.find(
      (position) =>
--      calculateDistance(x, y, position.x, position.y) < proximityThreshold,
-+      calculateDistance(x, y, position.x, position.y) < distanceThreshold,
-   );
-   if (existingArea) {
-     existingArea.failCount++;
-     existingArea.time = currentTime;
-@@ -53,9 +53,9 @@
-   } else {
-     window.autoFarmSkipAreas.push({
-       x: x,
-       y: y,
--      radius: proximityThreshold,
-+      radius: distanceThreshold,
-       time: currentTime,
-       failCount: 1,
-       skipped: false,
-     });
-@@ -63,9 +63,9 @@
+       calculateDistance(x, y, state.position.x, state.position.y) <
+@@ -65,9 +65,9 @@
  }
  function isAreaSkipped(x, y) {
    const currentTime = Date.now();
    window.autoFarmSkipAreas = window.autoFarmSkipAreas.filter(
 -    (currentTime) => currentTime - currentTime.time < timeoutLimit,
-+    (timer) => currentTime - timer.time < timeThreshold,
++    (timer) => currentTime - timer.time < timeoutLimit,
    );
    return window.autoFarmSkipAreas.some(
      (cell) =>
        cell.skipped && calculateDistance(x, y, cell.x, cell.y) < cell.radius,
-@@ -135,27 +135,27 @@
+@@ -132,27 +132,27 @@
    } catch (error) {
      return null;
    }
@@ -1369,24 +1096,19 @@ Index: src/features/autofarm.js
          !targetEntity ||
          targetEntity.id === myAnimal.id ||
          window.autoFarmSkipIds.has(targetEntity.id)
-@@ -177,61 +177,66 @@
-         isAreaSkipped(targetX, targetY)
+@@ -174,61 +174,61 @@
+         isAreaSkipped(myY, posY)
        ) {
          return;
        }
--      const distanceToTarget = calculateDistance(myX, myY, targetX, targetY);
-+      const distanceToTarget = calculateDistance(
-+        myPosX,
-+        myPosY,
-+        targetX,
-+        targetY,
-+      );
+-      const distanceToTarget = calculateDistance(myX, myY, myY, posY);
++      const distanceToTarget = calculateDistance(myPosX, myPosY, myY, posY);
        if (distanceToTarget < farmRange) {
 -        farmables.push({
 +        targets.push({
            id: targetEntity.id,
-           x: targetX,
-           y: targetY,
+           x: myY,
+           y: posY,
            distance: distanceToTarget,
            entity: targetEntity,
          });
@@ -1457,22 +1179,22 @@ Index: src/features/autofarm.js
  function calculatePlayerAvoidanceVector() {
    if (!window.autoFarmAvoidPlayers) {
      return {
-@@ -276,24 +281,24 @@
+@@ -273,24 +273,24 @@
            : targetEntity.position?.y;
-       if (targetX == null || targetY == null) {
+       if (myY == null || posY == null) {
          return;
        }
 -      const distance = calculateDistance(
 +      const currentDistance = calculateDistance(
          playerPosition.x,
          playerPosition.y,
-         targetX,
-         targetY,
+         myY,
+         posY,
        );
 -      if (distance < window.autoFarmAvoidDistance) {
 +      if (currentDistance < window.autoFarmAvoidDistance) {
-         const deltaX = playerPosition.x - targetX;
-         const deltaY = playerPosition.y - targetY;
+         const deltaX = playerPosition.x - myY;
+         const deltaY = playerPosition.y - posY;
 -        const magnitude = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 +        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
          const avoidanceFactor =
@@ -1489,19 +1211,19 @@ Index: src/features/autofarm.js
        }
      });
    } catch (data) {}
-@@ -305,16 +310,16 @@
+@@ -303,16 +303,16 @@
  function simulateEvolveKey() {
    if (!window.autoFarmEvolve) {
      return;
    }
 -  const now = Date.now();
--  if (now - state.lastValue < 5000) {
+-  if (now - currentTime_4 < 5000) {
 +  const currentTime = Date.now();
-+  if (currentTime - state.lastValue_2 < 5000) {
++  if (currentTime - currentTime_4 < 5000) {
      return;
    }
--  state.lastValue = now;
-+  state.lastValue_2 = currentTime;
+-  currentTime_4 = now;
++  currentTime_4 = currentTime;
    const gameCanvas = getGameCanvas();
    const randomDigit = String(Math.floor(Math.random() * 9) + 1);
 -  const eventInit = {
@@ -1510,7 +1232,7 @@ Index: src/features/autofarm.js
      code: "Digit" + randomDigit,
      keyCode: randomDigit.charCodeAt(0),
      which: randomDigit.charCodeAt(0),
-@@ -325,30 +330,34 @@
+@@ -323,15 +323,19 @@
      if (!targetElement) {
        return;
      }
@@ -1531,30 +1253,10 @@ Index: src/features/autofarm.js
 +    } catch (data) {}
    });
  }
+ let currentTime_5 = 0;
  function detectAndHandleStuck(currentPos) {
-   const now = Date.now();
--  if (now - state.lastTimestamp_2 < 1500) {
-+  if (now - state.lastValue2 < 1500) {
-     return false;
-   }
--  state.lastTimestamp_2 = now;
--  if (state.currentPosition) {
-+  state.lastValue2 = now;
-+  if (state.currentPosition_2) {
-     if (
-       calculateDistance(
-         currentPos.x,
-         currentPos.y,
--        state.currentPosition.x,
--        state.currentPosition.y,
-+        state.currentPosition_2.x,
-+        state.currentPosition_2.y,
-       ) < 25
-     ) {
-       state.counter_2++;
-       if (state.counter_2 >= 1 && window.autoFarmCurrentTarget) {
-@@ -365,9 +374,9 @@
-         state.counter_2 = 0;
+@@ -364,9 +368,9 @@
+         state.counter_3 = 0;
          window.autoFarmCurrentTarget = null;
          window.autoFarmTargetStartTime = 0;
          const randomAngle = Math.random() * Math.PI * 2;
@@ -1564,24 +1266,9 @@ Index: src/features/autofarm.js
            currentPos.y + Math.sin(randomAngle) * 1500,
            true,
          );
-@@ -376,9 +385,9 @@
-     } else {
-       state.counter_2 = 0;
-     }
-   }
--  state.currentPosition = {
-+  state.currentPosition_2 = {
-     x: currentPos.x,
-     y: currentPos.y,
-   };
-   return false;
-@@ -399,20 +408,20 @@
-   window.autoFarmPatrolIndex = 0;
- }
- function autoFarmLoop() {
+@@ -401,17 +405,17 @@
    if (!window.autoFarmActive) {
--    state.isActive_3 = false;
-+    state.isActive_2 = false;
+     state.isToggled_3 = false;
      return;
    }
 -  const currentTime = Date.now();
@@ -1601,7 +1288,7 @@ Index: src/features/autofarm.js
      handleFarmFailure(
        window.autoFarmCurrentTarget.x,
        window.autoFarmCurrentTarget.y,
-@@ -423,172 +432,171 @@
+@@ -422,162 +426,162 @@
      setTimeout(autoFarmLoop, 100);
      return;
    }
@@ -1611,12 +1298,11 @@ Index: src/features/autofarm.js
 +    const player = getFirstAnimalPosition();
 +    if (!player) {
        window.autoFarmActive = false;
--      state.isActive_3 = false;
+       state.isToggled_3 = false;
 -      const farmBtn = document.getElementById("autoFarmBtn");
 -      if (farmBtn) {
 -        farmBtn.textContent = "Auto Farm";
 -        farmBtn.classList.remove("toggle-on");
-+      state.isActive_2 = false;
 +      const autoFarmBtnElement = document.getElementById("autoFarmBtn");
 +      if (autoFarmBtnElement) {
 +        autoFarmBtnElement.textContent = "Auto Farm";
@@ -1638,14 +1324,13 @@ Index: src/features/autofarm.js
        window.autoFarmAvoidPlayers
      ) {
 -      const useBoost =
--        window.autoFarmBoost &&
--        currentTime - state.previousTimestamp > timeThreshold;
+-        window.autoFarmBoost && currentTime - state.counter_2 > tickInterval_2;
 -      if (useBoost) {
--        state.previousTimestamp = currentTime;
+-        state.counter_2 = currentTime;
 +      const canBoost =
-+        window.autoFarmBoost && now - state.lastTimestamp_2 > timeLimit;
++        window.autoFarmBoost && now - state.counter_2 > tickInterval_2;
 +      if (canBoost) {
-+        state.lastTimestamp_2 = now;
++        state.counter_2 = now;
        }
 -      movePointerToTarget(
 -        target.x + playerOffset.x,
@@ -1688,7 +1373,7 @@ Index: src/features/autofarm.js
 -          window.autoFarmTargetStartTime = currentTime;
 +          window.autoFarmCurrentTarget = nearestTarget;
 +          window.autoFarmTargetStartTime = now;
-           state.counter_2 = 0;
+           state.counter_3 = 0;
          }
 -        if (nearest.distance < 40) {
 -          destX += (Math.random() - 0.5) * 80;
@@ -1700,17 +1385,17 @@ Index: src/features/autofarm.js
        } else {
          window.autoFarmCurrentTarget = null;
          window.autoFarmTargetStartTime = 0;
--        if (currentTime - state.lastOffset > 2500) {
-+        if (now - state.lastValue3 > 2500) {
-           randomAngle = Math.random() * Math.PI * 2;
--          state.lastOffset = currentTime;
-+          state.lastValue3 = now;
+-        if (currentTime - currentTime_5 > 2500) {
++        if (now - currentTime_5 > 2500) {
+           angle = Math.random() * Math.PI * 2;
+-          currentTime_5 = currentTime;
++          currentTime_5 = now;
          }
--        destX = target.x + Math.cos(randomAngle) * 1000;
--        destY = target.y + Math.sin(randomAngle) * 1000;
+-        destX = target.x + Math.cos(angle) * 1000;
+-        destY = target.y + Math.sin(angle) * 1000;
 -        minDist = 1000;
-+        targetX = player.x + Math.cos(randomAngle) * 1000;
-+        targetY = player.y + Math.sin(randomAngle) * 1000;
++        targetX = player.x + Math.cos(angle) * 1000;
++        targetY = player.y + Math.sin(angle) * 1000;
 +        minDistance = 1000;
        }
      } else if (window.autoFarmMode === "cluster") {
@@ -1731,36 +1416,40 @@ Index: src/features/autofarm.js
            foodSource.y,
          );
        } else {
-         const currentTarget = findClosestFarmableEntity();
-         if (currentTarget) {
--          destX = currentTarget.x;
--          destY = currentTarget.y;
--          minDist = currentTarget.distance;
-+          targetX = currentTarget.x;
-+          targetY = currentTarget.y;
-+          minDistance = currentTarget.distance;
+-        const targetEntity = findClosestFarmableEntity();
+-        if (targetEntity) {
+-          destX = targetEntity.x;
+-          destY = targetEntity.y;
+-          minDist = targetEntity.distance;
++        const selectedTarget = findClosestFarmableEntity();
++        if (selectedTarget) {
++          targetX = selectedTarget.x;
++          targetY = selectedTarget.y;
++          minDistance = selectedTarget.distance;
            if (
              !window.autoFarmCurrentTarget ||
-             window.autoFarmCurrentTarget.id !== currentTarget.id
+-            window.autoFarmCurrentTarget.id !== targetEntity.id
++            window.autoFarmCurrentTarget.id !== selectedTarget.id
            ) {
-             window.autoFarmCurrentTarget = currentTarget;
+-            window.autoFarmCurrentTarget = targetEntity;
 -            window.autoFarmTargetStartTime = currentTime;
++            window.autoFarmCurrentTarget = selectedTarget;
 +            window.autoFarmTargetStartTime = now;
            }
          } else {
            window.autoFarmCurrentTarget = null;
            window.autoFarmTargetStartTime = 0;
--          if (currentTime - state.lastOffset > 2500) {
-+          if (now - state.lastValue3 > 2500) {
-             randomAngle = Math.random() * Math.PI * 2;
--            state.lastOffset = currentTime;
-+            state.lastValue3 = now;
+-          if (currentTime - currentTime_5 > 2500) {
++          if (now - currentTime_5 > 2500) {
+             angle = Math.random() * Math.PI * 2;
+-            currentTime_5 = currentTime;
++            currentTime_5 = now;
            }
--          destX = target.x + Math.cos(randomAngle) * 1000;
--          destY = target.y + Math.sin(randomAngle) * 1000;
+-          destX = target.x + Math.cos(angle) * 1000;
+-          destY = target.y + Math.sin(angle) * 1000;
 -          minDist = 1000;
-+          targetX = player.x + Math.cos(randomAngle) * 1000;
-+          targetY = player.y + Math.sin(randomAngle) * 1000;
++          targetX = player.x + Math.cos(angle) * 1000;
++          targetY = player.y + Math.sin(angle) * 1000;
 +          minDistance = 1000;
          }
        }
@@ -1768,24 +1457,24 @@ Index: src/features/autofarm.js
        if (!window.autoFarmPatrolPoints.length) {
          setupPatrolPoints();
        }
--      const targetEntity = findClosestFarmableEntity(800);
--      if (targetEntity) {
--        destX = targetEntity.x;
--        destY = targetEntity.y;
--        minDist = targetEntity.distance;
-+      const selectedTarget = findClosestFarmableEntity(800);
-+      if (selectedTarget) {
-+        targetX = selectedTarget.x;
-+        targetY = selectedTarget.y;
-+        minDistance = selectedTarget.distance;
+-      const targetEntity_2 = findClosestFarmableEntity(800);
+-      if (targetEntity_2) {
+-        destX = targetEntity_2.x;
+-        destY = targetEntity_2.y;
+-        minDist = targetEntity_2.distance;
++      const selectedTarget_2 = findClosestFarmableEntity(800);
++      if (selectedTarget_2) {
++        targetX = selectedTarget_2.x;
++        targetY = selectedTarget_2.y;
++        minDistance = selectedTarget_2.distance;
          if (
            !window.autoFarmCurrentTarget ||
--          window.autoFarmCurrentTarget.id !== targetEntity.id
-+          window.autoFarmCurrentTarget.id !== selectedTarget.id
+-          window.autoFarmCurrentTarget.id !== targetEntity_2.id
++          window.autoFarmCurrentTarget.id !== selectedTarget_2.id
          ) {
--          window.autoFarmCurrentTarget = targetEntity;
+-          window.autoFarmCurrentTarget = targetEntity_2;
 -          window.autoFarmTargetStartTime = currentTime;
-+          window.autoFarmCurrentTarget = selectedTarget;
++          window.autoFarmCurrentTarget = selectedTarget_2;
 +          window.autoFarmTargetStartTime = now;
          }
        } else {
@@ -1818,33 +1507,23 @@ Index: src/features/autofarm.js
      }
 -    if (destX != null) {
 +    if (targetX != null) {
-       const shouldBoost =
+       const angle =
          window.autoFarmBoost &&
 -        minDist > 350 &&
--        currentTime - state.previousTimestamp > timeThreshold;
+-        currentTime - state.counter_2 > tickInterval_2;
 +        minDistance > 350 &&
-+        now - state.lastTimestamp_2 > timeLimit;
-       if (shouldBoost) {
--        state.previousTimestamp = currentTime;
-+        state.lastTimestamp_2 = now;
++        now - state.counter_2 > tickInterval_2;
+       if (angle) {
+-        state.counter_2 = currentTime;
++        state.counter_2 = now;
        }
--      movePointerToTarget(destX, destY, shouldBoost);
-+      aimAtTarget(targetX, targetY, shouldBoost);
+-      movePointerToTarget(destX, destY, angle);
++      aimAtTarget(targetX, targetY, angle);
      }
-   } catch (errorMessage) {
-     console.error("[AutoFarm]", errorMessage);
+   } catch (data) {
+     console.error("[AutoFarm]", data);
    }
-   setTimeout(autoFarmLoop, 60);
- }
- function stopAutoFarm() {
-   window.autoFarmActive = false;
--  state.isActive_3 = false;
-+  state.isActive_2 = false;
-   showNotification(
-     "Farm stopped. ~" +
-       window.autoFarmStats.collected +
-       " food in " +
-@@ -624,10 +632,10 @@
+@@ -622,10 +626,10 @@
  export {
    handleFarmFailure,
    isAreaSkipped,
@@ -1861,32 +1540,26 @@ Index: src/features/chat.js
 ===================================================================
 --- src/features/chat.js	v1.7
 +++ src/features/chat.js	v1.8
-@@ -1,24 +1,23 @@
+@@ -1,14 +1,13 @@
 -import { typeText } from "../ui/interaction.js";
  import { state } from "../core.js";
  
  function startScheduledTask(taskData, intervalSeconds) {
--  if (state.updateIntervalId) {
--    clearInterval(state.updateIntervalId);
-+  if (state.mainIntervalId) {
-+    clearInterval(state.mainIntervalId);
+   if (state.entityTrailInterval) {
+     clearInterval(state.entityTrailInterval);
    }
-   state.isProcessing = true;
--  state.updateIntervalId = setInterval(() => {
+   state.isToggled = true;
+   state.entityTrailInterval = setInterval(() => {
 -    simulateChatInput(taskData);
-+  state.mainIntervalId = setInterval(() => {
 +    typeAndSendMessage(taskData);
    }, intervalSeconds * 1000);
  }
  function stopInterval() {
--  if (state.updateIntervalId) {
--    clearInterval(state.updateIntervalId);
--    state.updateIntervalId = null;
-+  if (state.mainIntervalId) {
-+    clearInterval(state.mainIntervalId);
-+    state.mainIntervalId = null;
+   if (state.entityTrailInterval) {
+@@ -16,9 +15,9 @@
+     state.entityTrailInterval = null;
    }
-   state.isProcessing = false;
+   state.isToggled = false;
  }
 -function simulateChatInput(textToType) {
 +function typeAndSendMessage(textToType) {
@@ -1904,7 +1577,7 @@ Index: src/features/chat.js
 -    if (charIndex >= textToType.length) {
 +  let currentIndex = 0;
 +  const typeTextRecursive = () => {
-+    if (state.currentIndex >= textToType.length) {
++    if (currentIndex >= textToType.length) {
        const sendButton =
          document.querySelector(".chat-input button") ||
          document.querySelector('button[aria-label*="send" i]');
@@ -1915,7 +1588,7 @@ Index: src/features/chat.js
        return;
      }
 -    chatInput.value += textToType[charIndex];
-+    chatInput.value += textToType[state.currentIndex];
++    chatInput.value += textToType[currentIndex];
      chatInput.dispatchEvent(
        new InputEvent("input", {
          bubbles: true,
@@ -1923,7 +1596,7 @@ Index: src/features/chat.js
      );
 -    charIndex++;
 -    setTimeout(typeText, 25);
-+    state.currentIndex++;
++    currentIndex++;
 +    setTimeout(typeTextRecursive, 25);
    };
 -  typeText();
@@ -1936,16 +1609,18 @@ Index: src/features/entitytrail.js
 ===================================================================
 --- src/features/entitytrail.js	v1.7
 +++ src/features/entitytrail.js	v1.8
-@@ -1,7 +1,7 @@
+@@ -5,9 +5,9 @@
+   state,
+ } from "../core.js";
  import {
    getNearbyEntities,
 -  getZoomLevel,
 +  getZoomScale,
    getOrCreateOverlayCanvas,
  } from "../utils.js";
- import { startEntityTrail, getFirstAnimalPosition, state } from "../core.js";
  import { showNotification } from "../ui/interaction.js";
-@@ -41,73 +41,72 @@
+ import { refreshUI } from "../ui/panels.js";
+@@ -46,73 +46,70 @@
    startEntityTrail();
    showNotification("Tracing: " + targetPlayerName);
    refreshUI();
@@ -2008,24 +1683,19 @@ Index: src/features/entitytrail.js
      ctx.fill();
    }
    if (window.entityTrailHistory.length > 0) {
--    const lastTrailPoint =
-+    const lastTrailPosition =
+     const lastTrailPoint =
        window.entityTrailHistory[window.entityTrailHistory.length - 1];
--    const calculatedX = centerX + (lastTrailPoint.x - playerPos.x) * zoomScale;
--    const calculatedY = centerY + (lastTrailPoint.y - playerPos.y) * zoomScale;
+-    const screenY = centerX + (lastTrailPoint.x - playerPos.x) * zoomScale;
+-    const screenY_2 = centerY + (lastTrailPoint.y - playerPos.y) * zoomScale;
 -    ctx.fillStyle = "rgb(" + colorR + "," + colorG + "," + colorB + ")";
-+    const projectedX =
-+      halfWidth + (lastTrailPosition.x - originPos.x) * zoomScale;
-+    const projectedY =
-+      halfHeight + (lastTrailPosition.y - originPos.y) * zoomScale;
++    const screenY = halfWidth + (lastTrailPoint.x - originPos.x) * zoomScale;
++    const screenY_2 = halfHeight + (lastTrailPoint.y - originPos.y) * zoomScale;
 +    ctx.fillStyle = "rgb(" + red + "," + green + "," + blue + ")";
      ctx.font = "bold 10px monospace";
      ctx.fillText(
        "TRAIL (" + window.entityTrailHistory.length + " pts)",
--      calculatedX + 8,
--      calculatedY - 8,
-+      projectedX + 8,
-+      projectedY - 8,
+       screenY + 8,
+       screenY_2 - 8,
      );
    }
  }
@@ -2052,19 +1722,23 @@ Index: src/features/entitytrail.js
  window.entityTrailColor = {
    r: 255,
    g: 150,
-@@ -122,6 +121,6 @@
- export {
-   stopMouseSimulation_2,
-   toggleEntityTrail,
-   drawEntityTrail,
--  renderOverlayLoop,
-+  renderOverlay,
+@@ -128,10 +125,5 @@
+   entityTrailInterval_2: null,
+   entityTrailInterval_3: null,
  };
+ 
+-export {
+-  stopEntityTrail_2,
+-  toggleEntityTrail,
+-  drawEntityTrail,
+-  renderOverlayLoop,
+-};
++export { stopEntityTrail_2, toggleEntityTrail, drawEntityTrail, renderOverlay };
 Index: src/features/esp.js
 ===================================================================
 --- src/features/esp.js	v1.7
 +++ src/features/esp.js	v1.8
-@@ -1,19 +1,20 @@
+@@ -1,20 +1,21 @@
  import {
 -  isPlayer,
 -  getEntityById,
@@ -2078,8 +1752,9 @@ Index: src/features/esp.js
    getEntityPosition,
    calculateDirection,
 +  findEntityById,
+   angle,
    getFirstAnimalPosition,
-   animalData,
+   playerData,
    state,
  } from "../core.js";
 +import {
@@ -2093,10 +1768,10 @@ Index: src/features/esp.js
  import { drawRadar } from "../ui/radar.js";
  
  window.espEnabled = false;
-@@ -29,44 +30,55 @@
- };
+@@ -31,44 +32,55 @@
  window.espTrackedEntityId = null;
  window.espMode = "players";
+ window.autoDodgeEnabled = false;
  
 -function drawEspEntities(ctx, gameState, offsetX, offsetY, scale) {
 +function drawEsp(ctx, gameState, offsetX, offsetY, scale) {
@@ -2158,7 +1833,7 @@ Index: src/features/esp.js
        ctx.fillText(
          entity.entity?.name || "ID:" + entity.id,
          screenX - boxSize / 2,
-@@ -87,48 +99,48 @@
+@@ -89,48 +101,48 @@
        }
        if (window.lockEnabled && window.lockTargetId === entity.id) {
          ctx.strokeStyle = "#ff0000";
@@ -2218,7 +1893,7 @@ Index: src/features/esp.js
          ctx.fillText(
            Math.round(entity.distance).toString(),
            screenX + boxSize / 2 + 3,
-@@ -137,13 +149,13 @@
+@@ -139,13 +151,13 @@
        }
      }
    });
@@ -2234,7 +1909,7 @@ Index: src/features/esp.js
      return;
    }
    if (!isPlayer(trackedEntity)) {
-@@ -155,21 +167,21 @@
+@@ -157,21 +169,21 @@
      return;
    }
    const centerX = canvas.width / 2;
@@ -2261,7 +1936,7 @@ Index: src/features/esp.js
    ctx.moveTo(centerX, centerY);
    ctx.lineTo(screenX, screenY);
    ctx.strokeStyle = "rgba(255,0,255,0.6)";
-@@ -179,48 +191,48 @@
+@@ -181,48 +193,48 @@
    ctx.setLineDash([]);
    ctx.strokeStyle = "rgba(255,0,255," + pulseOpacity + ")";
    ctx.lineWidth = 3;
@@ -2319,14 +1994,14 @@ Index: src/features/esp.js
    ctx.stroke();
    const rectWidth = 180;
    const rectHeight = 70;
-   const rectX = Math.min(
+   const boxX = Math.min(
 -    screenX + boxSize / 2 + 10,
 +    screenX + markerSize / 2 + 10,
      canvas.width - rectWidth - 5,
    );
-   const rectY = Math.max(
+   const boxY = Math.max(
      5,
-@@ -284,35 +296,35 @@
+@@ -289,35 +301,35 @@
      ctx.fillText(Math.round(distance).toString(), posX, posY + 4);
      ctx.textAlign = "left";
    }
@@ -2379,10 +2054,10 @@ Index: src/features/esp.js
 +  drawRadar(ctx, espCanvas, crosshairPos);
 +  requestAnimationFrame(renderEspLoop);
  }
- function clearTracking() {
+ function toggleEsp() {
    window.espEnabled = !window.espEnabled;
    showNotification(window.espEnabled ? "ESP enabled" : "ESP disabled");
-@@ -347,11 +359,11 @@
+@@ -360,11 +372,11 @@
    }
  }
  
@@ -2393,60 +2068,15 @@ Index: src/features/esp.js
 +  drawEsp,
 +  drawTrackedEntity,
 +  renderEspLoop,
-   clearTracking,
+   toggleEsp,
    trackPlayer,
-   toggleMinimapSize,
- };
+   toggleEsp_2,
+   toggleEsp_3,
 Index: src/features/movement.js
 ===================================================================
 --- src/features/movement.js	v1.7
 +++ src/features/movement.js	v1.8
-@@ -1,19 +1,19 @@
--import { angleDegrees, radius, offsetValue, state } from "../core.js";
-+import { angles, radius, offsetValue, state } from "../core.js";
- import { showNotification } from "../ui/interaction.js";
- import { getGameCanvas } from "../utils.js";
- 
- function startCircularMovement() {
--  if (state.animationIntervalId) {
-+  if (state.secondaryIntervalId) {
-     return;
-   }
-   const canvas = getGameCanvas();
-   if (!canvas) {
-     showNotification("Canvas not found");
-     return;
-   }
--  state.animationIntervalId = setInterval(() => {
--    const angleDegrees = angleDegrees[state.angleIndex];
-+  state.secondaryIntervalId = setInterval(() => {
-+    const angleDegrees = angles[state.currentIndex];
-     const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
-     const offsetX = Math.round(radius * Math.sin(angleRadians));
-     const offsetY = Math.round(radius * Math.cos(angleRadians));
-     canvas.dispatchEvent(
-@@ -22,34 +22,34 @@
-         clientY: window.innerHeight / 2 + offsetY,
-         bubbles: true,
-       }),
-     );
--    state.angleIndex = (state.angleIndex + 1) % angleDegrees.length;
-+    state.currentIndex = (state.currentIndex + 1) % angles.length;
-   }, 15);
- }
- function stopMouseSimulation() {
--  if (state.animationIntervalId) {
--    clearInterval(state.animationIntervalId);
--    state.animationIntervalId = null;
-+  if (state.secondaryIntervalId) {
-+    clearInterval(state.secondaryIntervalId);
-+    state.secondaryIntervalId = null;
-   }
- }
- function toggleMouseSimulation() {
--  if (state.animationIntervalId) {
-+  if (state.secondaryIntervalId) {
-     stopMouseSimulation();
+@@ -39,18 +39,18 @@
    } else {
      startCircularMovement();
    }
@@ -2467,7 +2097,7 @@ Index: src/features/movement.js
      new MouseEvent("pointermove", {
        clientX: targetX,
        clientY: centerY,
-@@ -58,13 +58,13 @@
+@@ -59,13 +59,13 @@
      }),
    );
  }
@@ -2484,7 +2114,7 @@ Index: src/features/movement.js
        clientX: clientX,
        clientY: clientY,
        button: 0,
-@@ -73,9 +73,9 @@
+@@ -74,9 +74,9 @@
        view: window,
      }),
    );
@@ -2495,10 +2125,10 @@ Index: src/features/movement.js
          clientX: clientX,
          clientY: clientY,
          buttons: 0,
-@@ -89,7 +89,7 @@
+@@ -90,7 +90,7 @@
  export {
    startCircularMovement,
-   stopMouseSimulation,
+   stopEntityTrail,
    toggleMouseSimulation,
 -  moveMouseToSide,
 +  moveMouseSide,
@@ -2509,17 +2139,16 @@ Index: src/features/xray.js
 --- src/features/xray.js	v1.7
 +++ src/features/xray.js	v1.8
 @@ -1,38 +1,50 @@
--import { gameInstance, animalData, settings, state } from "../core.js";
-+import { gameInstance, animalData, state } from "../core.js";
+-import { gameInstance, playerData, config, state } from "../core.js";
++import { gameInstance, playerData, state } from "../core.js";
 +import { showNotification } from "../ui/interaction.js";
  
 -const initializeViewportHacks = () => {
--  if (state.isProcessed) {
 +const initializeAstraVision = () => {
-+  if (state.isEnabled) {
+   if (state.isProcessed_3) {
      return;
    }
-   if (!animalData) {
+   if (!playerData) {
 -    setTimeout(initializeViewportHacks, 500);
 +    setTimeout(initializeAstraVision, 500);
      return;
@@ -2535,30 +2164,30 @@ Index: src/features/xray.js
 -    } catch {}
 -  }, 300);
    try {
--    if (settings.setFlash) {
--      animalData[settings.setFlash] = () => {};
-+    if (animalData.terrainManager && animalData.terrainManager.shadow) {
-+      animalData.terrainManager.shadow.setShadowSize(1000000);
-+      animalData.terrainManager.shadow.setShadowSize = () => {};
+-    if (config.setFlash) {
+-      playerData[config.setFlash] = () => {};
++    if (playerData.terrainManager && playerData.terrainManager.shadow) {
++      playerData.terrainManager.shadow.setShadowSize(1000000);
++      playerData.terrainManager.shadow.setShadowSize = () => {};
 +    } else {
-+      for (let key1 in animalData) {
-+        if (animalData[key1] && animalData[key1].shadow) {
-+          animalData[key1].shadow.setShadowSize(1000000);
-+          animalData[key1].shadow.setShadowSize = () => {};
++      for (let key1 in playerData) {
++        if (playerData[key1] && playerData[key1].shadow) {
++          playerData[key1].shadow.setShadowSize(1000000);
++          playerData[key1].shadow.setShadowSize = () => {};
 +        }
 +      }
      }
--    if (settings.terrainManager) {
--      const terrainManager = animalData[settings.terrainManager];
+-    if (config.terrainManager) {
+-      const terrainManager = playerData[config.terrainManager];
 -      if (terrainManager?.shadow) {
 -        terrainManager.shadow.setShadowSize(1000000);
 -        terrainManager.shadow.setShadowSize = () => {};
-+    if (typeof animalData.setFlash === "function") {
-+      animalData.setFlash = () => {};
++    if (typeof playerData.setFlash === "function") {
++      playerData.setFlash = () => {};
 +    } else {
-+      for (let key2 of Object.getOwnPropertyNames(animalData.__proto__)) {
-+        if (key2.startsWith("_0x") && typeof animalData[key2] === "function") {
-+          animalData[key2] = () => {};
++      for (let key2 of Object.getOwnPropertyNames(playerData.__proto__)) {
++        if (key2.startsWith("_0x") && typeof playerData[key2] === "function") {
++          playerData[key2] = () => {};
 +        }
        }
      }
@@ -2573,12 +2202,11 @@ Index: src/features/xray.js
 +      } catch {}
 +    }, 300);
 +    showNotification("Astra-Vision active");
-   } catch (error) {
--    console.error(error);
-+    console.error("AstraVision Error:", error);
+   } catch (url) {
+-    console.error(url);
++    console.error("AstraVision Error:", url);
    }
--  state.isProcessed = true;
-+  state.isEnabled = true;
+   state.isProcessed_3 = true;
  };
  
 -export { initializeViewportHacks };
@@ -2587,27 +2215,16 @@ Index: src/ui/interaction.js
 ===================================================================
 --- src/ui/interaction.js	v1.7
 +++ src/ui/interaction.js	v1.8
-@@ -36,28 +36,28 @@
- }
- function showNotification(message) {
-   const currentTime = Date.now();
-   if (
--    message === state.previousString &&
--    currentTime - state.previousValue < 3000
-+    message === state.previousValue &&
-+    currentTime - state.lastTimestamp < 3000
-   ) {
+@@ -40,21 +40,21 @@
      return;
    }
--  state.previousString = message;
--  state.previousValue = currentTime;
+   state.currentTrackId = message;
+   currentTime = currentTime;
 -  const notificationElement = document.createElement("div");
 -  notificationElement.style.cssText =
 -    "\n      position: fixed; top: 16px; right: 16px;\n      background: #282828; color: #e0e0e0;\n      padding: 10px 16px; border-radius: 4px;\n      z-index: 10000000; font-size: 13px;\n      opacity: 0; transition: opacity 0.2s ease, transform 0.2s ease;\n      pointer-events: none; font-family: 'Segoe UI', system-ui, sans-serif;\n      border-left: 3px solid var(--acc, #888);\n      transform: translateX(20px);\n    ";
 -  notificationElement.textContent = message;
 -  document.body.appendChild(notificationElement);
-+  state.previousValue = message;
-+  state.lastTimestamp = currentTime;
 +  const notificationDiv = document.createElement("div");
 +  notificationDiv.style.cssText =
 +    "\n      position: fixed; top: 16px; right: 16px;\n      background: var(--notif-bg, #282828); color: var(--notif-text, #e0e0e0);\n      padding: 10px 16px; border-radius: 4px;\n      z-index: 10000000; font-size: 13px;\n      opacity: 0; transition: opacity 0.2s ease, transform 0.2s ease;\n      pointer-events: none; font-family: 'Segoe UI', system-ui, sans-serif;\n      border-left: 3px solid var(--notif-border, var(--acc, #888));\n      transform: translateX(20px);\n    ";
@@ -2634,18 +2251,17 @@ Index: src/ui/panels.js
 ===================================================================
 --- src/ui/panels.js	v1.7
 +++ src/ui/panels.js	v1.8
-@@ -1,19 +1,18 @@
+@@ -6,47 +6,48 @@
+   toggleEsp_3,
+ } from "../features/esp.js";
  import {
    radius,
 -  hookTextEncoder,
--  pressedKey,
-+  interceptTextEncoder,
-   clearTracking_2,
 -  initAntiTamper,
++  interceptTextEncoder,
 +  initGameHooks,
-   clearTracking_3,
    startAutoFarm,
-   settings,
++  angle,
    state,
  } from "../core.js";
  import {
@@ -2654,12 +2270,8 @@ Index: src/ui/panels.js
 -  simulateChatInput,
 +  typeAndSendMessage,
  } from "../features/chat.js";
- import {
-   clearTracking,
-   trackPlayer,
-@@ -21,33 +20,33 @@
- } from "../features/esp.js";
  import { setupPatrolPoints, stopAutoFarm } from "../features/autofarm.js";
+ import { featuresentitytrailState } from "../features/entitytrail.js";
  import { toggleLock, enableAutoDodge } from "../features/aimbot.js";
  import { toggleMouseSimulation } from "../features/movement.js";
 -import { initializeViewportHacks } from "../features/xray.js";
@@ -2703,7 +2315,7 @@ Index: src/ui/panels.js
      if (inputCode === "HappyHalloween9" || inputCode === "TrickOrTreat9") {
        localStorage.setItem("halloweenUnlocked", "true");
        showNotification("Halloween theme unlocked");
-@@ -60,15 +59,15 @@
+@@ -59,15 +60,15 @@
        }, 500);
        showNotification("Invalid code");
      }
@@ -2721,7 +2333,7 @@ Index: src/ui/panels.js
    });
    codeInput.focus();
  }
-@@ -92,19 +91,19 @@
+@@ -91,19 +92,19 @@
      hasMoved = false;
      offsetX = event.clientX - element.getBoundingClientRect().left;
      offsetY = event.clientY - element.getBoundingClientRect().top;
@@ -2746,21 +2358,7 @@ Index: src/ui/panels.js
          element.style.right = "auto";
        }
      };
-@@ -131,102 +130,103 @@
-   toolsPanel.innerHTML =
-     '\n      <div class="ast-header"><span class="ast-header-title">Astraphobia Client</span><button class="ast-header-min" id="mainMin">−</button></div>\n      <div class="ast-body" id="mainBody">\n        <span class="ast-section-label">Chat</span>\n        <textarea class="ast-textarea" id="chatMsg" placeholder="Message..." rows="2"></textarea>\n        <button class="ast-btn" id="sendBtn">Send Chat</button>\n        <div class="ast-row" style="margin-top:4px;">\n          <input class="ast-input" type="number" id="delayInput" min="1" max="300" value="10" style="width:50px;text-align:center;">\n          <span style="font-size:11px;color:#888;">sec</span>\n          <button class="ast-btn" id="autoChatBtn" style="flex:1;margin-bottom:0;">Auto Chat</button>\n        </div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Tools</span>\n        <button class="ast-btn" id="patchBtn">Special Characters</button>\n        <button class="ast-btn" id="spoofBtn">Spoof Username</button>\n        <button class="ast-btn" id="spinBtn">Auto Spin</button>\n        <div class="ast-key-row"><span>Spin key</span><input class="ast-key-capture" id="spinKeyInput" type="text" placeholder="..." readonly></div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Turn Controls</span>\n        <div class="ast-key-row">\n          <span>Turn Left</span>\n          <input class="ast-key-capture" id="turnLeftKeyInput" type="text" value="Q" readonly>\n        </div>\n        <div class="ast-key-row">\n          <span>Turn Right</span>\n          <input class="ast-key-capture" id="turnRightKeyInput" type="text" value="E" readonly>\n        </div>\n        <div class="ast-credits">Made by Astraphobia</div>\n      </div>';
-   document.body.appendChild(toolsPanel);
-   const mainBody = toolsPanel.querySelector("#mainBody");
--  let isVisible = false;
-+  let isHidden = false;
-   toolsPanel.querySelector("#mainMin").onclick = (toggleEvent) => {
-     toggleEvent.stopPropagation();
--    isVisible = !isVisible;
--    mainBody.style.display = isVisible ? "none" : "block";
--    toolsPanel.querySelector("#mainMin").textContent = isVisible ? "+" : "−";
-+    isHidden = !isHidden;
-+    mainBody.style.display = isHidden ? "none" : "block";
-+    toolsPanel.querySelector("#mainMin").textContent = isHidden ? "+" : "−";
+@@ -140,76 +141,77 @@
    };
    toolsPanel.querySelector("#sendBtn").onclick = () => {
      const chatMessage = toolsPanel.querySelector("#chatMsg").value;
@@ -2769,13 +2367,13 @@ Index: src/ui/panels.js
 +      typeAndSendMessage(chatMessage);
      }
    };
--  const autoChatButton = toolsPanel.querySelector("#autoChatBtn");
--  autoChatButton.onclick = () => {
+-  const spinButton = toolsPanel.querySelector("#autoChatBtn");
+-  spinButton.onclick = () => {
 -    const chatMessage_2 = toolsPanel.querySelector("#chatMsg").value;
 -    const delay = parseInt(toolsPanel.querySelector("#delayInput").value) || 10;
 -    if (!chatMessage_2) {
-+  const autoChatBtn = toolsPanel.querySelector("#autoChatBtn");
-+  autoChatBtn.onclick = () => {
++  const spinBtn = toolsPanel.querySelector("#autoChatBtn");
++  spinBtn.onclick = () => {
 +    const chatInputContent = toolsPanel.querySelector("#chatMsg").value;
 +    const messageDelay =
 +      parseInt(toolsPanel.querySelector("#delayInput").value) || 10;
@@ -2783,19 +2381,19 @@ Index: src/ui/panels.js
        showNotification("Enter a message first");
        return;
      }
-     if (state.isProcessing) {
+     if (state.isToggled) {
        stopInterval();
--      autoChatButton.textContent = "Auto Chat";
--      autoChatButton.classList.remove("toggle-on");
-+      autoChatBtn.textContent = "Auto Chat";
-+      autoChatBtn.classList.remove("toggle-on");
+-      spinButton.textContent = "Auto Chat";
+-      spinButton.classList.remove("toggle-on");
++      spinBtn.textContent = "Auto Chat";
++      spinBtn.classList.remove("toggle-on");
      } else {
 -      startScheduledTask(chatMessage_2, delay);
--      autoChatButton.textContent = "Stop Chat";
--      autoChatButton.classList.add("toggle-on");
+-      spinButton.textContent = "Stop Chat";
+-      spinButton.classList.add("toggle-on");
 +      startScheduledTask(chatInputContent, messageDelay);
-+      autoChatBtn.textContent = "Stop Chat";
-+      autoChatBtn.classList.add("toggle-on");
++      spinBtn.textContent = "Stop Chat";
++      spinBtn.classList.add("toggle-on");
      }
    };
 -  const patchButton = toolsPanel.querySelector("#patchBtn");
@@ -2824,106 +2422,99 @@ Index: src/ui/panels.js
        showNotification("No name input found");
      }
    };
--  const spinButton = toolsPanel.querySelector("#spinBtn");
--  spinButton.onclick = () => {
-+  const spinBtn = toolsPanel.querySelector("#spinBtn");
-+  spinBtn.onclick = () => {
+-  const spinButton_2 = toolsPanel.querySelector("#spinBtn");
+-  spinButton_2.onclick = () => {
++  const spinBtn_2 = toolsPanel.querySelector("#spinBtn");
++  spinBtn_2.onclick = () => {
      toggleMouseSimulation();
--    spinButton.textContent = state.animationIntervalId
--      ? "Stop Spin"
--      : "Auto Spin";
--    spinButton.classList.toggle("toggle-on", !!state.animationIntervalId);
-+    spinBtn.textContent = state.secondaryIntervalId ? "Stop Spin" : "Auto Spin";
-+    spinBtn.classList.toggle("toggle-on", !!state.secondaryIntervalId);
+-    spinButton_2.textContent = featuresentitytrailState.entityTrailInterval_2
++    spinBtn_2.textContent = featuresentitytrailState.entityTrailInterval_2
+       ? "Stop Spin"
+       : "Auto Spin";
+-    spinButton_2.classList.toggle(
++    spinBtn_2.classList.toggle(
+       "toggle-on",
+       !!featuresentitytrailState.entityTrailInterval_2,
+     );
    };
-   const spinKeyInput = toolsPanel.querySelector("#spinKeyInput");
--  let pressedKey = null;
--  spinKeyInput.addEventListener("keydown", (keydownEvent) => {
+   const turnRightKeyInput = toolsPanel.querySelector("#spinKeyInput");
+   let lastPressedKey = null;
+-  turnRightKeyInput.addEventListener("keydown", (keydownEvent) => {
 -    keydownEvent.preventDefault();
--    pressedKey = keydownEvent.code || keydownEvent.key;
--    spinKeyInput.value = pressedKey.replace("Key", "").toUpperCase();
-+  let lastKey = null;
-+  spinKeyInput.addEventListener("keydown", (keyboardEvent) => {
+-    lastPressedKey = keydownEvent.code || keydownEvent.key;
++  turnRightKeyInput.addEventListener("keydown", (keyboardEvent) => {
 +    keyboardEvent.preventDefault();
-+    lastKey = keyboardEvent.code || keyboardEvent.key;
-+    spinKeyInput.value = lastKey.replace("Key", "").toUpperCase();
++    lastPressedKey = keyboardEvent.code || keyboardEvent.key;
+     turnRightKeyInput.value = lastPressedKey.replace("Key", "").toUpperCase();
    });
 -  document.addEventListener("keydown", (keyupEvent) => {
 +  document.addEventListener("keydown", (shortcutEvent) => {
      if (
--      pressedKey &&
--      keyupEvent.code === pressedKey &&
+       lastPressedKey &&
+-      keyupEvent.code === lastPressedKey &&
 -      !keyupEvent.target.matches("input,textarea,button,select")
-+      lastKey &&
-+      shortcutEvent.code === lastKey &&
++      shortcutEvent.code === lastPressedKey &&
 +      !shortcutEvent.target.matches("input,textarea,button,select")
      ) {
 -      keyupEvent.preventDefault();
 +      shortcutEvent.preventDefault();
        toggleMouseSimulation();
--      spinButton.textContent = state.animationIntervalId
-+      spinBtn.textContent = state.secondaryIntervalId
+-      spinButton_2.textContent = featuresentitytrailState.entityTrailInterval_2
++      spinBtn_2.textContent = featuresentitytrailState.entityTrailInterval_2
          ? "Stop Spin"
          : "Auto Spin";
--      spinButton.classList.toggle("toggle-on", !!state.animationIntervalId);
-+      spinBtn.classList.toggle("toggle-on", !!state.secondaryIntervalId);
+-      spinButton_2.classList.toggle(
++      spinBtn_2.classList.toggle(
+         "toggle-on",
+         !!featuresentitytrailState.entityTrailInterval_2,
+       );
      }
-   });
-   const turnLeftKeyInput = toolsPanel.querySelector("#turnLeftKeyInput");
-   const turnRightKeyInput = toolsPanel.querySelector("#turnRightKeyInput");
-   turnLeftKeyInput.value = state.currentKey.toUpperCase();
--  turnRightKeyInput.value = state.activeKey.toUpperCase();
--  turnLeftKeyInput.addEventListener("keydown", (event) => {
+@@ -217,21 +219,23 @@
+   const turnRightKeyInput_2 = toolsPanel.querySelector("#turnLeftKeyInput");
+   const turnRightKeyInput_3 = toolsPanel.querySelector("#turnRightKeyInput");
+   turnRightKeyInput_2.value = state.keyQ.toUpperCase();
+   turnRightKeyInput_3.value = state.keyE.toUpperCase();
+-  turnRightKeyInput_2.addEventListener("keydown", (event) => {
 -    event.preventDefault();
 -    event.stopPropagation();
--    state.currentKey = event.key;
-+  turnRightKeyInput.value = state.currentKey_2.toUpperCase();
-+  turnLeftKeyInput.addEventListener("keydown", (contextMenuEvent) => {
+-    state.keyQ = event.key;
++  turnRightKeyInput_2.addEventListener("keydown", (contextMenuEvent) => {
 +    contextMenuEvent.preventDefault();
 +    contextMenuEvent.stopPropagation();
-+    state.currentKey = contextMenuEvent.key;
-     turnLeftKeyInput.value =
++    state.keyQ = contextMenuEvent.key;
+     turnRightKeyInput_2.value =
 -      event.key.length === 1 ? event.key.toUpperCase() : event.key;
 +      contextMenuEvent.key.length === 1
 +        ? contextMenuEvent.key.toUpperCase()
 +        : contextMenuEvent.key;
    });
--  turnRightKeyInput.addEventListener("keydown", (event_2) => {
+-  turnRightKeyInput_3.addEventListener("keydown", (event_2) => {
 -    event_2.preventDefault();
 -    event_2.stopPropagation();
--    state.activeKey = event_2.key;
-+  turnRightKeyInput.addEventListener("keydown", (dragEvent) => {
+-    state.keyE = event_2.key;
++  turnRightKeyInput_3.addEventListener("keydown", (dragEvent) => {
 +    dragEvent.preventDefault();
 +    dragEvent.stopPropagation();
-+    state.currentKey_2 = dragEvent.key;
-     turnRightKeyInput.value =
++    state.keyE = dragEvent.key;
+     turnRightKeyInput_3.value =
 -      event_2.key.length === 1 ? event_2.key.toUpperCase() : event_2.key;
 +      dragEvent.key.length === 1 ? dragEvent.key.toUpperCase() : dragEvent.key;
    });
    makeDraggable(toolsPanel);
    return toolsPanel;
  }
-@@ -237,37 +237,37 @@
-   visionPanel.style.cssText = "top:20px;right:20px;width:230px;";
-   visionPanel.innerHTML =
+@@ -244,33 +248,33 @@
      '\n      <div class="ast-header"><span class="ast-header-title">Astraphobia Client</span><button class="ast-header-min" id="visionMin">−</button></div>\n      <div class="ast-body" id="visionBody">\n        <span class="ast-section-label">Vision</span>\n        <button class="ast-btn patched" id="thresherBtn" disabled>Thresher Boost (Patched)</button>\n        <button class="ast-btn" id="astraVisionBtn">Astra-Vision</button>\n        <button class="ast-btn" id="smallMinimapBtn">Small Minimap</button>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">ESP</span>\n        <button class="ast-btn" id="espBtn">ESP</button>\n        <select class="ast-select" id="espModeSelect"><option value="players">Players</option><option value="food">Food</option></select>\n        <button class="ast-btn" id="trackNearestBtn">Track Nearest (F3)</button>\n        <button class="ast-btn" id="untrackBtn">Untrack (F4)</button>\n        <div class="ast-sep"></div>\n        <button class="ast-btn" id="espColorsToggleBtn" style="display:flex;align-items:center;justify-content:space-between;">\n          <span style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-sec,#888);">ESP Colors</span>\n          <span id="espColorsArrow" style="color:var(--text-sec,#888);font-size:12px;">▼</span>\n        </button>\n        <div id="espColorsSection" style="display:none;">\n          <div class="ast-key-row"><span>Close (&lt;500)</span><input type="color" id="espColorClose" value="#ff0000" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Medium (&lt;1500)</span><input type="color" id="espColorMedium" value="#ffff00" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Far (&lt;3000)</span><input type="color" id="espColorFar" value="#00ffff" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Very Far</span><input type="color" id="espColorVeryFar" value="#00ff00" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Tracked</span><input type="color" id="espColorTracked" value="#ff00ff" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Food Close</span><input type="color" id="espColorFoodClose" value="#00ff00" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Food Medium</span><input type="color" id="espColorFoodMedium" value="#88ff88" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Food Far</span><input type="color" id="espColorFoodFar" value="#44cc44" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n        </div>\n      </div>';
    document.body.appendChild(visionPanel);
--  const visionBody = visionPanel.querySelector("#visionBody");
--  let isVisionVisible = false;
+   const espColorsSection = visionPanel.querySelector("#visionBody");
+   let isHidden = false;
 -  visionPanel.querySelector("#visionMin").onclick = (clickEvent) => {
 -    clickEvent.stopPropagation();
--    isVisionVisible = !isVisionVisible;
--    visionBody.style.display = isVisionVisible ? "none" : "block";
--    visionPanel.querySelector("#visionMin").textContent = isVisionVisible
-+  const visionBodyElement = visionPanel.querySelector("#visionBody");
-+  let isVisionHidden = false;
 +  visionPanel.querySelector("#visionMin").onclick = (toggleEvent) => {
 +    toggleEvent.stopPropagation();
-+    isVisionHidden = !isVisionHidden;
-+    visionBodyElement.style.display = isVisionHidden ? "none" : "block";
-+    visionPanel.querySelector("#visionMin").textContent = isVisionHidden
-       ? "+"
-       : "−";
+     isHidden = !isHidden;
+     espColorsSection.style.display = isHidden ? "none" : "block";
+     visionPanel.querySelector("#visionMin").textContent = isHidden ? "+" : "−";
    };
 -  visionPanel.querySelector("#thresherBtn").onclick = (submitEvent) => {
 -    submitEvent.preventDefault();
@@ -2933,8 +2524,7 @@ Index: src/ui/panels.js
    };
    const astraVisionBtn = visionPanel.querySelector("#astraVisionBtn");
    astraVisionBtn.onclick = () => {
--    if (state.isProcessed) {
-+    if (state.isEnabled) {
+     if (state.isProcessed_3) {
        showNotification("Already active");
        return;
      }
@@ -2946,16 +2536,16 @@ Index: src/ui/panels.js
      astraVisionBtn.classList.add("toggle-on");
      astraVisionBtn.disabled = true;
    };
-   const smallMinimapBtn = visionPanel.querySelector("#smallMinimapBtn");
-   smallMinimapBtn.onclick = () => {
+   const espBtn = visionPanel.querySelector("#smallMinimapBtn");
+   espBtn.onclick = () => {
 -    initAntiTamper();
 +    initGameHooks();
      toggleMinimapSize();
-     smallMinimapBtn.textContent = state.isMinimapSmall
-       ? "Minimap: Small"
-       : "Small Minimap";
-@@ -280,11 +280,11 @@
-     espBtn.classList.toggle("toggle-on", window.espEnabled);
+     espBtn.textContent = state.isToggled_2 ? "Minimap: Small" : "Small Minimap";
+     espBtn.classList.toggle("toggle-on", state.isToggled_2);
+   };
+@@ -281,11 +285,11 @@
+     espBtn_2.classList.toggle("toggle-on", window.espEnabled);
    };
    const espModeSelect = visionPanel.querySelector("#espModeSelect");
    espModeSelect.value = window.espMode || "players";
@@ -2967,9 +2557,9 @@ Index: src/ui/panels.js
 +    showNotification("ESP: " + espModeEvent.target.value);
    };
    visionPanel.querySelector("#trackNearestBtn").onclick = () => trackPlayer();
-   visionPanel.querySelector("#untrackBtn").onclick = () => clearTracking_2();
+   visionPanel.querySelector("#untrackBtn").onclick = () => toggleEsp_2();
    const espColorsToggleBtn = visionPanel.querySelector("#espColorsToggleBtn");
-@@ -338,16 +338,14 @@
+@@ -339,16 +343,14 @@
    const lockButton = combatPanel.querySelector("#lockBtn");
    lockButton.onclick = () => toggleLock();
    const lockKeyInput = combatPanel.querySelector("#lockKeyInput");
@@ -2991,7 +2581,7 @@ Index: src/ui/panels.js
    const trailColorPicker = combatPanel.querySelector("#trailColorPicker");
    trailColorPicker.addEventListener("input", (colorChangeEvent) => {
      const colorValue = colorChangeEvent.target.value;
-@@ -358,16 +356,16 @@
+@@ -359,16 +361,16 @@
      };
    });
    const traceKeyInput = combatPanel.querySelector("#traceKeyInput");
@@ -3015,7 +2605,7 @@ Index: src/ui/panels.js
    makeDraggable(combatPanel);
    return combatPanel;
  }
-@@ -376,18 +374,19 @@
+@@ -377,18 +379,19 @@
    automationPanel.id = "automation-panel";
    automationPanel.className = "ast-panel";
    automationPanel.style.cssText = "bottom:20px;left:260px;width:230px;";
@@ -3043,7 +2633,7 @@ Index: src/ui/panels.js
    const autoDodgeButton = automationPanel.querySelector("#autoDodgeBtn");
    autoDodgeButton.onclick = () => {
      if (window.autoDodgeEnabled) {
-@@ -413,29 +412,50 @@
+@@ -414,29 +417,50 @@
        autoFarmButton.textContent = "Stop Farm (F5)";
        autoFarmButton.classList.add("toggle-on");
      }
@@ -3061,50 +2651,50 @@ Index: src/ui/panels.js
 +      showNotification("Farm: " + farmModeChangeEvent.target.value);
      }
    };
-   const farmBoostToggle = automationPanel.querySelector("#farmBoostToggle");
-   const farmEvolveToggle = automationPanel.querySelector("#farmEvolveToggle");
-   const farmAvoidToggle = automationPanel.querySelector("#farmAvoidToggle");
-   farmBoostToggle.checked = window.autoFarmBoost;
-   farmEvolveToggle.checked = window.autoFarmEvolve;
-   farmAvoidToggle.checked = window.autoFarmAvoidPlayers;
--  farmBoostToggle.onchange = (boostEvent) =>
+   const farmAvoidToggle = automationPanel.querySelector("#farmBoostToggle");
+   const farmAvoidToggle_2 = automationPanel.querySelector("#farmEvolveToggle");
+   const farmAvoidToggle_3 = automationPanel.querySelector("#farmAvoidToggle");
+   farmAvoidToggle.checked = window.autoFarmBoost;
+   farmAvoidToggle_2.checked = window.autoFarmEvolve;
+   farmAvoidToggle_3.checked = window.autoFarmAvoidPlayers;
+-  farmAvoidToggle.onchange = (boostEvent) =>
 -    (window.autoFarmBoost = boostEvent.target.checked);
--  farmEvolveToggle.onchange = (evolveEvent) =>
+-  farmAvoidToggle_2.onchange = (evolveEvent) =>
 -    (window.autoFarmEvolve = evolveEvent.target.checked);
--  farmAvoidToggle.onchange = (avoidPlayersEvent) =>
+-  farmAvoidToggle_3.onchange = (avoidPlayersEvent) =>
 -    (window.autoFarmAvoidPlayers = avoidPlayersEvent.target.checked);
-+  const farmBoostLabel = farmBoostToggle.nextElementSibling;
++  const farmBoostLabel = farmAvoidToggle.nextElementSibling;
 +  farmBoostLabel.addEventListener("click", (farmOptionEvent1) => {
 +    farmOptionEvent1.stopPropagation();
-+    farmBoostToggle.checked = !farmBoostToggle.checked;
-+    window.autoFarmBoost = farmBoostToggle.checked;
++    farmAvoidToggle.checked = !farmAvoidToggle.checked;
++    window.autoFarmBoost = farmAvoidToggle.checked;
 +    showNotification(
-+      farmBoostToggle.checked ? "Farm boost ON" : "Farm boost OFF",
++      farmAvoidToggle.checked ? "Farm boost ON" : "Farm boost OFF",
 +    );
 +  });
-+  const farmEvolveLabel = farmEvolveToggle.nextElementSibling;
++  const farmEvolveLabel = farmAvoidToggle_2.nextElementSibling;
 +  farmEvolveLabel.addEventListener("click", (farmOptionEvent2) => {
 +    farmOptionEvent2.stopPropagation();
-+    farmEvolveToggle.checked = !farmEvolveToggle.checked;
-+    window.autoFarmEvolve = farmEvolveToggle.checked;
++    farmAvoidToggle_2.checked = !farmAvoidToggle_2.checked;
++    window.autoFarmEvolve = farmAvoidToggle_2.checked;
 +    showNotification(
-+      farmEvolveToggle.checked ? "Auto evolve ON" : "Auto evolve OFF",
++      farmAvoidToggle_2.checked ? "Auto evolve ON" : "Auto evolve OFF",
 +    );
 +  });
-+  const farmAvoidLabel = farmAvoidToggle.nextElementSibling;
++  const farmAvoidLabel = farmAvoidToggle_3.nextElementSibling;
 +  farmAvoidLabel.addEventListener("click", (farmOptionEvent3) => {
 +    farmOptionEvent3.stopPropagation();
-+    farmAvoidToggle.checked = !farmAvoidToggle.checked;
-+    window.autoFarmAvoidPlayers = farmAvoidToggle.checked;
++    farmAvoidToggle_3.checked = !farmAvoidToggle_3.checked;
++    window.autoFarmAvoidPlayers = farmAvoidToggle_3.checked;
 +    showNotification(
-+      farmAvoidToggle.checked ? "Avoid players ON" : "Avoid players OFF",
++      farmAvoidToggle_3.checked ? "Avoid players ON" : "Avoid players OFF",
 +    );
 +  });
    makeDraggable(automationPanel);
    return automationPanel;
  }
  function createSettingsPanel() {
-@@ -443,24 +463,25 @@
+@@ -444,18 +468,19 @@
    settingsPanel.id = "settings-panel";
    settingsPanel.className = "ast-panel";
    settingsPanel.style.cssText = "top:20px;left:20px;width:220px;";
@@ -3112,37 +2702,30 @@ Index: src/ui/panels.js
 -    '\n      <div class="ast-header"><span class="ast-header-title">Settings</span><button class="ast-header-min" id="settingsMin">−</button></div>\n      <div class="ast-body" id="settingsBody">\n        <div class="ast-key-row"><span>Toggle UI</span><input class="ast-key-capture" id="toggleKeyInput" type="text" value="SHIFT" readonly></div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Background</span>\n        <div class="ast-row"><input class="ast-input" type="text" id="bgUrl" placeholder="Image URL..." style="flex:1;"><button class="ast-btn" id="applyBg" style="width:auto;padding:6px 10px;margin:0;">Set</button></div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Theme</span>\n        <select class="ast-select" id="themeSelect">\n          <option value="grey">Grey</option><option value="blue">Blue</option><option value="red">Red</option>\n          <option value="green">Green</option><option value="pink">Pink</option><option value="starwars">Star Wars</option>\n          <option value="kfc">KFC</option><option value="halloween">Halloween 🔒</option>\n        </select>\n      </div>';
 +    '\n      <div class="ast-header"><span class="ast-header-title">Settings</span><button class="ast-header-min" id="settingsMin">−</button></div>\n      <div class="ast-body" id="settingsBody">\n        <div class="ast-key-row"><span>Toggle UI</span><input class="ast-key-capture" id="toggleKeyInput" type="text" value="SHIFT" readonly></div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Background</span>\n        <div class="ast-row"><input class="ast-input" type="text" id="bgUrl" placeholder="Image URL..." style="flex:1;"><button class="ast-btn" id="applyBg" style="width:auto;padding:6px 10px;margin:0;">Set</button></div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Theme</span>\n        <select class="ast-select" id="themeSelect">\n          <option value="grey">Grey</option><option value="blue">Blue</option><option value="red">Red</option>\n          <option value="green">Green</option><option value="pink">Pink</option><option value="starwars">Star Wars</option>\n          <option value="kfc">KFC</option><option value="halloween">Halloween 🔒</option>\n        </select>\n        <div class="ast-sep"></div>\n        <button class="ast-btn" id="customThemeToggleBtn" style="display:flex;align-items:center;justify-content:space-between;">\n          <span style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-sec,#888);">Create Theme</span>\n          <span id="customThemeArrow" style="color:var(--text-sec,#888);font-size:12px;">▼</span>\n        </button>\n        <div id="customThemeSection" style="display:none;padding-top:4px;">\n          <input class="ast-input" type="text" id="customThemeName" placeholder="Theme name..." style="width:100%;box-sizing:border-box;margin-bottom:4px;">\n<div class="ast-key-row"><span>Accent</span><input type="color" id="ctAcc" value="#888888" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n<div class="ast-key-row"><span>Background</span><input type="color" id="ctBg" value="#1a1a1a" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n<div class="ast-key-row"><span>Panel</span><input type="color" id="ctPanel" value="#242424" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n<button class="ast-btn" id="saveCustomTheme" style="margin-top:4px;">Save Theme</button>\n        </div>\n        <div class="ast-sep"></div>\n        <button class="ast-btn" id="myThemesToggleBtn" style="display:flex;align-items:center;justify-content:space-between;">\n          <span style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-sec,#888);">My Themes</span>\n          <span id="myThemesArrow" style="color:var(--text-sec,#888);font-size:12px;">▼</span>\n        </button>\n        <div id="myThemesSection" style="display:none;padding-top:4px;">\n          <div id="customThemeList"></div>\n          <div id="noThemesMsg" style="font-size:11px;color:#555;text-align:center;padding:8px 0;">No custom themes yet</div>\n        </div>\n      </div>';
    document.body.appendChild(settingsPanel);
-   const settingsBody = settingsPanel.querySelector("#settingsBody");
+-  const settingsBody = settingsPanel.querySelector("#settingsBody");
 -  let isSettingsMinimized = false;
-+  let isSettingsHidden = false;
++  const myThemesSection = settingsPanel.querySelector("#settingsBody");
++  let isHidden = false;
    settingsPanel.querySelector("#settingsMin").onclick = (event) => {
      event.stopPropagation();
 -    isSettingsMinimized = !isSettingsMinimized;
 -    settingsBody.style.display = isSettingsMinimized ? "none" : "block";
 -    settingsPanel.querySelector("#settingsMin").textContent =
 -      isSettingsMinimized ? "+" : "−";
-+    isSettingsHidden = !isSettingsHidden;
-+    settingsBody.style.display = isSettingsHidden ? "none" : "block";
-+    settingsPanel.querySelector("#settingsMin").textContent = isSettingsHidden
++    isHidden = !isHidden;
++    myThemesSection.style.display = isHidden ? "none" : "block";
++    settingsPanel.querySelector("#settingsMin").textContent = isHidden
 +      ? "+"
 +      : "−";
    };
    const toggleKeyInput = settingsPanel.querySelector("#toggleKeyInput");
--  toggleKeyInput.value = pressedKey.toUpperCase();
-+  toggleKeyInput.value = state.pressedKey.toUpperCase();
+   toggleKeyInput.value = state.activeKey.toUpperCase();
    toggleKeyInput.addEventListener("keydown", (keyboardEvent) => {
-     keyboardEvent.preventDefault();
--    pressedKey = keyboardEvent.key;
-+    state.pressedKey = keyboardEvent.key;
-     toggleKeyInput.value =
-       keyboardEvent.key.length === 1
-         ? keyboardEvent.key.toUpperCase()
-         : keyboardEvent.key;
-@@ -473,47 +494,193 @@
+@@ -474,47 +499,191 @@
        showNotification("Enter a URL");
        return;
      }
-     localStorage.setItem("bgUrl", backgroundUrl);
+     localStorage.setItem("bgUrl", bgUrl);
 -    initHomeBackground();
 +    initBackground();
      showNotification("Background applied");
@@ -3150,9 +2733,9 @@ Index: src/ui/panels.js
 -  const themeSelectElement = settingsPanel.querySelector("#themeSelect");
 -  themeSelectElement.value = localStorage.getItem("theme") || "grey";
 -  themeSelectElement.onchange = (themeEvent) => {
--    const selectedTheme = themeEvent.target.value;
+-    const myY = themeEvent.target.value;
 +  const themeSelect = settingsPanel.querySelector("#themeSelect");
-+  const currentTheme = localStorage.getItem("theme") || "grey";
++  const angle = localStorage.getItem("theme") || "grey";
 +  const customThemes = JSON.parse(localStorage.getItem("customThemes") || "{}");
 +  const presetThemes = [
 +    "grey",
@@ -3165,14 +2748,12 @@ Index: src/ui/panels.js
 +    "halloween",
 +  ];
 +  themeSelect.value =
-+    presetThemes.includes(currentTheme) || customThemes[currentTheme]
-+      ? currentTheme
-+      : "grey";
++    presetThemes.includes(angle) || customThemes[angle] ? angle : "grey";
 +  themeSelect.onchange = (themeChangeEvent) => {
-+    const selectedTheme = themeChangeEvent.target.value;
-     if (selectedTheme === "halloween") {
--      showHalloweenCodeModal((currentTheme) => {
--        if (currentTheme) {
++    const myY = themeChangeEvent.target.value;
+     if (myY === "halloween") {
+-      showHalloweenCodeModal((myY) => {
+-        if (myY) {
 -          setTheme("halloween");
 +      showHalloweenModal((isHalloween) => {
 +        if (isHalloween) {
@@ -3184,9 +2765,9 @@ Index: src/ui/panels.js
          }
        });
      } else {
--      setTheme(selectedTheme);
-+      applyTheme(selectedTheme);
-       showNotification("Theme: " + selectedTheme);
+-      setTheme(myY);
++      applyTheme(myY);
+       showNotification("Theme: " + myY);
      }
    };
 +  const renderCustomThemes = () => {
@@ -3199,33 +2780,33 @@ Index: src/ui/panels.js
 +    customThemeList.innerHTML = "";
 +    noThemesMessage.style.display =
 +      customThemeKeys.length === 0 ? "block" : "none";
-+    customThemeKeys.forEach((selectedTheme) => {
++    customThemeKeys.forEach((myY) => {
 +      const themeElement = document.createElement("div");
 +      themeElement.style.cssText = "display:flex;gap:4px;margin-bottom:3px;";
-+      const isThemeActive = localStorage.getItem("theme") === selectedTheme;
++      const isThemeActive = localStorage.getItem("theme") === myY;
 +      themeElement.innerHTML =
 +        '\n          <button class="ast-btn' +
 +        (isThemeActive ? " toggle-on" : "") +
 +        '" style="flex:1;margin:0;">' +
-+        selectedTheme +
++        myY +
 +        '</button>\n          <button class="ast-btn" style="width:32px;margin:0;text-align:center;color:#f44336;">✕</button>';
 +      themeElement.querySelectorAll("button")[0].onclick = () => {
-+        applyTheme(selectedTheme);
-+        showNotification("Theme: " + selectedTheme);
++        applyTheme(myY);
++        showNotification("Theme: " + myY);
 +        renderCustomThemes();
 +      };
 +      themeElement.querySelectorAll("button")[1].onclick = () => {
 +        const customThemes = JSON.parse(
 +          localStorage.getItem("customThemes") || "{}",
 +        );
-+        delete customThemes[selectedTheme];
++        delete customThemes[myY];
 +        localStorage.setItem("customThemes", JSON.stringify(customThemes));
-+        if (localStorage.getItem("theme") === selectedTheme) {
++        if (localStorage.getItem("theme") === myY) {
 +          applyTheme("grey");
 +          themeSelect.value = "grey";
 +          showNotification("Theme reset to Grey");
 +        } else {
-+          showNotification("Deleted: " + selectedTheme);
++          showNotification("Deleted: " + myY);
 +        }
 +        renderCustomThemes();
 +      };
@@ -3296,26 +2877,26 @@ Index: src/ui/panels.js
 +    renderCustomThemes();
 +    showNotification("Theme saved: " + customThemeName);
 +  };
-+  const customThemeToggleBtn = settingsPanel.querySelector(
++  const myThemesToggleBtn = settingsPanel.querySelector(
 +    "#customThemeToggleBtn",
 +  );
-+  const customThemeSection = settingsPanel.querySelector("#customThemeSection");
-+  const customThemeArrow = settingsPanel.querySelector("#customThemeArrow");
-+  let isCustomThemeVisible = false;
-+  customThemeToggleBtn.onclick = () => {
-+    isCustomThemeVisible = !isCustomThemeVisible;
-+    customThemeSection.style.display = isCustomThemeVisible ? "block" : "none";
-+    customThemeArrow.textContent = isCustomThemeVisible ? "▲" : "▼";
-+  };
-+  const myThemesToggleBtn = settingsPanel.querySelector("#myThemesToggleBtn");
-+  const myThemesSection = settingsPanel.querySelector("#myThemesSection");
-+  const myThemesArrow = settingsPanel.querySelector("#myThemesArrow");
-+  let isThemesSectionVisible = false;
++  const myThemesSection_2 = settingsPanel.querySelector("#customThemeSection");
++  const myThemesArrow = settingsPanel.querySelector("#customThemeArrow");
++  let isHidden_2 = false;
 +  myThemesToggleBtn.onclick = () => {
-+    isThemesSectionVisible = !isThemesSectionVisible;
-+    myThemesSection.style.display = isThemesSectionVisible ? "block" : "none";
-+    myThemesArrow.textContent = isThemesSectionVisible ? "▲" : "▼";
-+    if (isThemesSectionVisible) {
++    isHidden_2 = !isHidden_2;
++    myThemesSection_2.style.display = isHidden_2 ? "block" : "none";
++    myThemesArrow.textContent = isHidden_2 ? "▲" : "▼";
++  };
++  const myThemesToggleBtn_2 = settingsPanel.querySelector("#myThemesToggleBtn");
++  const myThemesSection_3 = settingsPanel.querySelector("#myThemesSection");
++  const myThemesArrow_2 = settingsPanel.querySelector("#myThemesArrow");
++  let isHidden_3 = false;
++  myThemesToggleBtn_2.onclick = () => {
++    isHidden_3 = !isHidden_3;
++    myThemesSection_3.style.display = isHidden_3 ? "block" : "none";
++    myThemesArrow_2.textContent = isHidden_3 ? "▲" : "▼";
++    if (isHidden_3) {
 +      renderCustomThemes();
 +    }
 +  };
@@ -3348,7 +2929,7 @@ Index: src/ui/panels.js
        : "−";
    };
    makeDraggable(updatePanel);
-@@ -527,29 +694,29 @@
+@@ -528,29 +697,29 @@
      "automation-panel",
      "update-history",
      "settings-panel",
@@ -3454,7 +3035,7 @@ Index: src/ui/radar.js
        espColor =
          target.distance < 500
            ? window.espColors.close
-@@ -99,69 +104,69 @@
+@@ -99,45 +104,45 @@
              ? window.espColors.medium
              : target.distance < 3000
                ? window.espColors.far
@@ -3490,59 +3071,35 @@ Index: src/ui/radar.js
 +    if (targetId) {
 +      const targetEntity = getEntityPosition(targetId);
        if (targetEntity) {
--        const deltaX = targetEntity.x - gameState.myPos.x;
--        const deltaY = targetEntity.y - gameState.myPos.y;
--        const drawX = Math.max(
-+        const offsetX = targetEntity.x - gameState.myPos.x;
-+        const offsetY = targetEntity.y - gameState.myPos.y;
-+        const renderX = Math.max(
+-        const deltaY = targetEntity.x - gameState.myPos.x;
+-        const deltaY_2 = targetEntity.y - gameState.myPos.y;
++        const offsetY = targetEntity.x - gameState.myPos.x;
++        const offsetY_2 = targetEntity.y - gameState.myPos.y;
+         const drawY = Math.max(
            radarX + 2,
            Math.min(
              radarX + radarSize - 2,
--            radarX + radarSize / 2 + deltaX * radarScale,
-+            radarX + radarSize / 2 + offsetX * radarScale,
+-            radarX + radarSize / 2 + deltaY * radarScale,
++            radarX + radarSize / 2 + offsetY * radarScale,
            ),
          );
--        const drawY = Math.max(
-+        const renderY = Math.max(
+         const drawY_2 = Math.max(
            radarY + 2,
            Math.min(
              radarY + radarSize - 2,
--            radarY + radarSize / 2 + deltaY * radarScale,
-+            radarY + radarSize / 2 + offsetY * radarScale,
+-            radarY + radarSize / 2 + deltaY_2 * radarScale,
++            radarY + radarSize / 2 + offsetY_2 * radarScale,
            ),
          );
--        const opacity = Math.sin(Date.now() / 200) * 0.3 + 0.7;
--        const { r: colorR, g: colorG, b: colorB } = window.entityTrailColor;
--        const rgbString = colorR + "," + colorG + "," + colorB;
--        ctx.strokeStyle = "rgba(" + rgbString + "," + opacity + ")";
-+        const alpha = Math.sin(Date.now() / 200) * 0.3 + 0.7;
-+        const { r: red, g: green, b: blue } = window.entityTrailColor;
-+        const rgbString = red + "," + green + "," + blue;
-+        ctx.strokeStyle = "rgba(" + rgbString + "," + alpha + ")";
-         ctx.lineWidth = 2;
-         ctx.beginPath();
--        ctx.arc(drawX, drawY, 7, 0, Math.PI * 2);
-+        ctx.arc(renderX, renderY, 7, 0, Math.PI * 2);
-         ctx.stroke();
--        ctx.strokeStyle = "rgba(" + rgbString + "," + opacity * 0.5 + ")";
-+        ctx.strokeStyle = "rgba(" + rgbString + "," + alpha * 0.5 + ")";
-         ctx.lineWidth = 4;
-         ctx.beginPath();
--        ctx.arc(drawX, drawY, 10, 0, Math.PI * 2);
-+        ctx.arc(renderX, renderY, 10, 0, Math.PI * 2);
-         ctx.stroke();
-         ctx.fillStyle = "rgb(" + rgbString + ")";
-         ctx.beginPath();
--        ctx.arc(drawX, drawY, 3, 0, Math.PI * 2);
-+        ctx.arc(renderX, renderY, 3, 0, Math.PI * 2);
-         ctx.fill();
+         const alpha = Math.sin(Date.now() / 200) * 0.3 + 0.7;
+         const { r: red, g: blue, b: blue_2 } = window.entityTrailColor;
+@@ -159,9 +164,9 @@
          if (window.entityTrailHistory.length > 1) {
-           ctx.strokeStyle = "rgba(" + rgbString + ",0.3)";
+           ctx.strokeStyle = "rgba(" + rgbValue + ",0.3)";
            ctx.lineWidth = 1;
            ctx.beginPath();
 -          window.entityTrailHistory.forEach((entity, entityIndex) => {
-+          window.entityTrailHistory.forEach((entity, index) => {
++          window.entityTrailHistory.forEach((entity, i) => {
              const drawX = Math.max(
                radarX + 2,
                Math.min(
@@ -3553,7 +3110,7 @@ Index: src/ui/radar.js
                ),
              );
 -            if (entityIndex === 0) {
-+            if (index === 0) {
++            if (i === 0) {
                ctx.moveTo(drawX, drawY);
              } else {
                ctx.lineTo(drawX, drawY);
@@ -3663,8 +3220,8 @@ Index: src/ui/theme.js
 +    ...savedThemes,
    };
 -  const themeColor = themeColors[themeName] || themeColors.grey;
-+  const selectedTheme = defaultThemes[themeName] ? themeName : "grey";
-+  const themeValue = defaultThemes[selectedTheme];
++  const myY = defaultThemes[themeName] ? themeName : "grey";
++  const themeValue = defaultThemes[myY];
    Object.entries({
 -    "--acc": themeColor.acc,
 -    "--acc-h": themeColor.accH,
@@ -3692,7 +3249,7 @@ Index: src/ui/theme.js
 +    rootElement.style.setProperty(styleProperty, styleValue),
    );
 -  localStorage.setItem("theme", themeName);
-+  localStorage.setItem("theme", selectedTheme);
++  localStorage.setItem("theme", myY);
  }
 -function initHomeBackground() {
 +function initBackground() {
@@ -3736,17 +3293,17 @@ Index: src/utils.js
 +++ src/utils.js	v1.8
 @@ -1,8 +1,10 @@
  import {
--  stateMap,
+-  stateCache,
    getGameState,
    getEntityManager,
 +  getFirstAnimal,
 +  getFirstAnimalPosition,
 +  getEntityPosition,
+   angle,
    gameInstance,
    state,
  } from "./core.js";
- 
-@@ -13,14 +15,8 @@
+@@ -14,14 +16,8 @@
      resultString += String.fromCodePoint(randomCodePoint);
    }
    return resultString;
@@ -3754,14 +3311,14 @@ Index: src/utils.js
 -function proxyProperty(targetObject, propertyKey, handler) {
 -  const originalValue = targetObject[propertyKey];
 -  const proxyValue = new Proxy(originalValue, handler);
--  stateMap.set(proxyValue, originalValue);
+-  stateCache.set(proxyValue, originalValue);
 -  targetObject[propertyKey] = proxyValue;
 -}
  function getGameCanvas() {
    return (
      document.querySelector("#gameCanvas") ||
      document.querySelector("canvas") ||
-@@ -68,147 +64,100 @@
+@@ -69,147 +65,100 @@
      return true;
    }
    return false;
@@ -3876,7 +3433,7 @@ Index: src/utils.js
 -      const deltaX = entityX - myX;
 -      const deltaY = entityY - myY;
 -      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
--      const entityData = {
+-      const gameData = {
 +      const pos = getEntityPosition(entity);
 +      if (!pos || pos.x == null || pos.y == null) {
 +        continue;
@@ -3895,13 +3452,13 @@ Index: src/utils.js
 +        angle: Math.atan2(dy, dx),
          entity: entity,
        };
--      entityData.entities.push(entityData);
+-      entityData.entities.push(gameData);
 +      entityData.entities.push(entityInfo);
        if (isPlayer(entity)) {
--        entityData.players.push(entityData);
+-        entityData.players.push(gameData);
 +        entityData.players.push(entityInfo);
        } else {
--        entityData.food.push(entityData);
+-        entityData.food.push(gameData);
 +        entityData.food.push(entityInfo);
        }
 -    });
@@ -3967,7 +3524,7 @@ Index: src/utils.js
  function getOrCreateOverlayCanvas(canvasId, zIndex) {
    let overlayCanvas = document.getElementById(canvasId);
    if (!overlayCanvas) {
-@@ -243,15 +192,12 @@
+@@ -244,15 +193,12 @@
  }
  
  export {

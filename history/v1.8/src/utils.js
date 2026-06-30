@@ -4,6 +4,7 @@ import {
   getFirstAnimal,
   getFirstAnimalPosition,
   getEntityPosition,
+  angle,
   gameInstance,
   state,
 } from "./core.js";

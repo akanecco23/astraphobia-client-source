@@ -23,7 +23,7 @@ import {
   offsetValue,
   gameInstance,
   playerData,
-  isLoaded,
+  isProcessed_6,
   dragState,
   maxDistance,
   deltaThreshold,
@@ -80,7 +80,7 @@ import {
 } from "./src/ui/panels.js";
 import {
   startMouseSimulation,
-  stopMouseSimulation,
+  stopEntityTrail,
   toggleMouseSimulation,
   simulatePointerMove,
   simulateClick,
@@ -92,9 +92,16 @@ import {
   renderEspLoop,
   toggleEsp,
   trackPlayer,
-  clearTracking,
+  toggleEsp_2,
+  toggleEsp_3,
   toggleMinimapSize,
 } from "./src/features/esp.js";
+import {
+  stopEntityTrail_2,
+  toggleEntityTrail,
+  drawEntityTrail,
+  featuresentitytrailState,
+} from "./src/features/entitytrail.js";
 import {
   generateRandomString,
   getGameCanvas,
@@ -107,13 +114,7 @@ import {
   toggleLock,
   autoDodgeLoop,
   enableAutoDodge,
-  disableAutoDodge,
 } from "./src/features/aimbot.js";
-import {
-  stopEntityTrail,
-  toggleEntityTrail,
-  drawEntityTrail,
-} from "./src/features/entitytrail.js";
 import {
   simulateTyping,
   showNotification,

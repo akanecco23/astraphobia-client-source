@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Astraphobia Client",
-  "version": "1.1",
-  "description": "ASTRAPHOBIA CLIENT ON TOP EZZZZZZZZZ",
+  "version": "1.9",
+  "description": "Enjoy v1.9! I put a lot of hard work into this. Astraphobia Client On Top.",
   "author": "Astraphobia",
   "content_scripts": [
     {

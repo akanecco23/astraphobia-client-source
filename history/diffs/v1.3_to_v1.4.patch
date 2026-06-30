@@ -2,7 +2,7 @@ Index: content.js
 ===================================================================
 --- content.js	v1.3
 +++ content.js	v1.4
-@@ -1,44 +1,44 @@
+@@ -1,11 +1,12 @@
  import {
 -  wrapWithProxy,
 -  hookTextEncoder,
@@ -15,19 +15,11 @@ Index: content.js
    disableGameRestrictions,
 +  setupToolsPanel,
    initializePanels,
--  angles,
--  radius,
--  game,
--  player,
--  isActive,
-+  rotationAngles,
-+  orbitRadius,
-+  gameInstance,
-+  playerData,
-+  isReady,
-   securitySettings,
--  coreSharedState,
-+  state,
+   angles,
+   radius,
+   gameInstance,
+@@ -15,31 +16,30 @@
+   state,
  } from "./src/core.js";
  import {
    initControlOverlay,
@@ -40,7 +32,7 @@ Index: content.js
  } from "./src/ui/panels.js";
  import {
 +  startAntiAfkMouseMovement,
-+  stopMouseSimulation,
++  stopEntityTrail,
 +  toggleMouseSimulation,
 +} from "./src/features/movement.js";
 +import {
@@ -49,7 +41,7 @@ Index: content.js
    getAllPropertyNames,
  } from "./src/utils.js";
  import {
--  stopMouseSimulation,
+-  stopEntityTrail,
 -  toggleMouseSimulation,
 -} from "./src/features/movement.js";
 -import {
@@ -58,6 +50,7 @@ Index: content.js
    autoChat,
  } from "./src/features/chat.js";
  import { simulateTyping, showNotification } from "./src/ui/interaction.js";
+ import { featuresentitytrailState } from "./src/features/entitytrail.js";
 +import { initBackgroundImage, setTheme } from "./src/ui/theme.js";
  import { handleAnimalAction } from "./src/features/autofarm.js";
 -import { startAntiAfk } from "./src/features/antidetection.js";
@@ -82,7 +75,7 @@ Index: src/core.js
 ===================================================================
 --- src/core.js	v1.3
 +++ src/core.js	v1.4
-@@ -1,27 +1,28 @@
+@@ -1,27 +1,29 @@
  import {
    initControlOverlay,
 -  createUpdateHistoryPanel,
@@ -96,28 +89,29 @@ Index: src/core.js
 +import { startScheduledTask, stopInterval, autoChat } from "./features/chat.js";
 +import { showNotification, simulateTyping } from "./ui/interaction.js";
 +import { getAllPropertyNames, generateRandomString } from "./utils.js";
++import { featuresentitytrailState } from "./features/entitytrail.js";
 +import { toggleMouseSimulation } from "./features/movement.js";
  import { initAdBlocker } from "./features/adblock.js";
  import { initBackgroundImage } from "./ui/theme.js";
 -import { getAllPropertyNames } from "./utils.js";
  
- const stateMap = new WeakMap();
+ const stateCache = new WeakMap();
 -function wrapWithProxy(targetObject, propertyKey, proxyHandler) {
 +function wrapPropertyWithProxy(targetObject, propertyKey, proxyHandler) {
    const originalValue = targetObject[propertyKey];
    const proxyValue = new Proxy(originalValue, proxyHandler);
-   stateMap.set(proxyValue, originalValue);
+   stateCache.set(proxyValue, originalValue);
    targetObject[propertyKey] = proxyValue;
  }
  
- let isInitialized = false;
+ let isProcessed = false;
 -function hookTextEncoder(config) {
 +function initPacketInterceptor(config) {
-   if (isInitialized) {
+   if (isProcessed) {
      return;
    }
    function unescapeString(inputString) {
-@@ -29,10 +30,10 @@
+@@ -29,10 +31,10 @@
        return inputString;
      }
      return inputString.replace(
@@ -130,7 +124,7 @@ Index: src/core.js
              return "\\";
            case "n":
              return "\n";
-@@ -53,9 +54,9 @@
+@@ -53,9 +55,9 @@
            case "4":
            case "5":
            case "6":
@@ -141,7 +135,7 @@ Index: src/core.js
              if (hexValue1 != null) {
                return String.fromCharCode(Number.parseInt(hexValue1, 16) || 0);
              }
-@@ -64,53 +65,53 @@
+@@ -64,53 +66,53 @@
              }
              if (hexValue3 != null) {
                const codePoint = Number.parseInt(hexValue3, 16) || 0;
@@ -211,39 +205,26 @@ Index: src/core.js
    const inputMaxLengthObserver = new MutationObserver(() => {
      document
        .querySelector(".play-game .el-input__inner")
-@@ -135,17 +136,17 @@
-   }
-   showNotification("✅ Special Characters enabled! (One-time use)");
- }
- 
--const angles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
--const radius = 300;
--let game;
--let appState;
--let player;
--let isActive = false;
-+const rotationAngles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
-+const orbitRadius = 300;
-+let gameInstance;
-+let globalState;
-+let playerData;
-+let isReady = false;
+@@ -142,10 +144,10 @@
+ let appState;
+ let playerData;
+ let isProcessed_2 = false;
  
 -const encryptPacketData = (inputData, checksumByte, suffix = "") => {
 -  const stringTable = [
-+const encryptPacketData = (message, byteValue, suffix = "") => {
++const encryptPacketData = (url, byteValue, suffix = "") => {
 +  const stringPool = [
      "ode",
      "eat",
      "fr",
      "bite",
-@@ -157,52 +158,49 @@
+@@ -157,52 +159,49 @@
      "L",
      "en",
      "setter",
    ];
 -  if (!inputData) {
-+  if (!message) {
++  if (!url) {
      return null;
    }
 -  const plainText = ((plainText, keyText) => {
@@ -290,7 +271,7 @@ Index: src/core.js
 -      suffix,
 -    inputData,
 +    String.fromCharCode(byteValue)[stringPool[8] + stringPool[1]](3) + suffix,
-+    message,
++    url,
    );
 -  const encodedBytes = new TextEncoder()[stringTable[5] + stringTable[0]](
 +  const encodedText = new TextEncoder()[stringPool[5] + stringPool[0]](
@@ -313,28 +294,25 @@ Index: src/core.js
 +  dataView.setUint8(totalBufferSize - 1, byteValue);
 +  return buffer;
  };
- const securitySettings = {
+ const config = {
    107: {
      hasSec: true,
-@@ -214,210 +212,354 @@
+@@ -214,95 +213,87 @@
      secLoadTime: 500,
      hasScaling: false,
    },
  };
 -const sendPacket = (payload, additionalData = "") => {
--  if (game && appState && state.socketManager) {
--    game[state.socketManager].sendBytePacket(
--      encryptPacketData(appState.token._value, payload, additionalData),
 +const sendPacket = (payload, metadata = "") => {
-+  if (gameInstance && globalState && stateCache.socketManager) {
-+    gameInstance[stateCache.socketManager].sendBytePacket(
-+      encryptPacketData(globalState.token._value, payload, metadata),
+   if (gameInstance && appState && config_2.socketManager) {
+     gameInstance[config_2.socketManager].sendBytePacket(
+-      encryptPacketData(appState.token._value, payload, additionalData),
++      encryptPacketData(appState.token._value, payload, metadata),
      );
    }
  };
--const state = {};
-+const stateCache = {};
- const counter = 0;
+ const config_2 = {};
+ const currentTime = 0;
 -const initHooks = () => {
 +const setupProxyHooks = () => {
    const propertyCache = {};
@@ -355,9 +333,9 @@ Index: src/core.js
 +      contextMap[contextKey],
 +      contextValue,
      );
--    stateMap.set(propertyInstance, targetObject[propertyKey]);
+-    stateCache.set(propertyInstance, targetObject[propertyKey]);
 -    targetObject[propertyKey] = propertyInstance;
-+    stateMap.set(contextInstance, contextMap[contextKey]);
++    stateCache.set(contextInstance, contextMap[contextKey]);
 +    contextMap[contextKey] = contextInstance;
    };
 -  createPropertyProxy(Function.prototype, "toString", {
@@ -366,9 +344,9 @@ Index: src/core.js
 +    apply(thisArg, propertyKey, applyParams) {
        return propertyCache.apply(
 -        thisContext,
--        stateMap.get(propertyKey_2) || propertyKey_2,
+-        stateCache.get(propertyKey_2) || propertyKey_2,
          thisArg,
-+        stateMap.get(propertyKey) || propertyKey,
++        stateCache.get(propertyKey) || propertyKey,
 +        applyParams,
        );
      },
@@ -390,8 +368,8 @@ Index: src/core.js
 -      return functionResult;
 +  wrapWithProxy(ProxyConstructor, "revocable", {
 +    apply(context, args, options) {
-+      const result = propertyCache.apply(context, args, options);
-+      return result;
++      const data = propertyCache.apply(context, args, options);
++      return data;
      },
    });
 -  let lastTimestamp = 0;
@@ -424,92 +402,72 @@ Index: src/core.js
 +          callOptions[0] &&
 +          callOptions[0].aboveBgPlatformsContainer != null
          ) {
--          player = functionContext2[0];
--          game = functionContext2[0].game;
--          const allKeys = getAllPropertyNames(player);
--          const obfuscatedKeys = allKeys.filter((varName) =>
--            varName.startsWith("_0x"),
+-          playerData = functionContext2[0];
+-          gameInstance = functionContext2[0].game;
 +          playerData = callOptions[0];
 +          gameInstance = callOptions[0].game;
-+          const allKeys = getAllPropertyNames(playerData);
+           const allKeys = getAllPropertyNames(playerData);
+-          const obfuscatedKeys = allKeys.filter((varName) =>
+-            varName.startsWith("_0x"),
 +          const obfuscatedKeys = allKeys.filter((obfuscatedVarName) =>
 +            obfuscatedVarName.startsWith("_0x"),
            );
--          state.setFlash =
--            Object.getOwnPropertyNames(player.__proto__.__proto__)
+           config_2.setFlash =
+             Object.getOwnPropertyNames(playerData.__proto__.__proto__)
 -              .filter((propName) => propName.startsWith("_0x"))
--              .find((methodName) => player[methodName] instanceof Function) ||
--            state.setFlash;
--          state.terrainManager =
-+          stateCache.setFlash =
-+            Object.getOwnPropertyNames(playerData.__proto__.__proto__)
 +              .filter((obfuscatedPropName) =>
 +                obfuscatedPropName.startsWith("_0x"),
 +              )
-+              .find(
+               .find(
+-                (methodName) => playerData[methodName] instanceof Function,
 +                (functionKey) => playerData[functionKey] instanceof Function,
-+              ) || stateCache.setFlash;
-+          stateCache.terrainManager =
+               ) || config_2.setFlash;
+           config_2.terrainManager =
              obfuscatedKeys.find(
--              (shadowKey) => typeof player[shadowKey]?.shadow !== "undefined",
--            ) || state.terrainManager;
--          state.entityManager =
+-              (shadowKey) =>
+-                typeof playerData[shadowKey]?.shadow !== "undefined",
 +              (shadowObjectKey) =>
 +                typeof playerData[shadowObjectKey]?.shadow !== "undefined",
-+            ) || stateCache.terrainManager;
-+          stateCache.entityManager =
+             ) || config_2.terrainManager;
+           config_2.entityManager =
              obfuscatedKeys.find(
                (entitiesListKey) =>
--                typeof player[entitiesListKey]?.entitiesList !== "undefined",
--            ) || state.entityManager;
--          state.entityManagerProps = {};
-+                typeof playerData[entitiesListKey]?.entitiesList !==
-+                "undefined",
-+            ) || stateCache.entityManager;
-+          stateCache.entityManagerProps = {};
+@@ -312,28 +303,28 @@
+           config_2.entityManagerProps = {};
            const entityManagerKeys = getAllPropertyNames(
--            player[state.entityManager],
-+            playerData[stateCache.entityManager],
+             playerData[config_2.entityManager],
            );
 -          const animalsUpdateInterval = setInterval(() => {
--            state.entityManagerProps.animalsList =
 +          const animalsListInterval = setInterval(() => {
-+            stateCache.entityManagerProps.animalsList =
+             config_2.entityManagerProps.animalsList =
                entityManagerKeys
                  .filter((variableName) => variableName.startsWith("_0x"))
                  .find(
 -                  (entityKey) =>
--                    typeof player?.[state.entityManager]?.[entityKey]?.[0] !==
--                    "undefined",
--                ) || state.entityManagerProps.animalsList;
--            if (typeof state.entityManagerProps.animalsList !== "undefined") {
--              clearInterval(animalsUpdateInterval);
 +                  (entityName) =>
-+                    typeof playerData?.[stateCache.entityManager]?.[
+                     typeof playerData?.[config_2.entityManager]?.[
+-                      entityKey
 +                      entityName
-+                    ]?.[0] !== "undefined",
-+                ) || stateCache.entityManagerProps.animalsList;
-+            if (
-+              typeof stateCache.entityManagerProps.animalsList !== "undefined"
-+            ) {
+                     ]?.[0] !== "undefined",
+                 ) || config_2.entityManagerProps.animalsList;
+             if (
+               typeof config_2.entityManagerProps.animalsList !== "undefined"
+             ) {
+-              clearInterval(animalsUpdateInterval);
 +              clearInterval(animalsListInterval);
              }
            }, 1000);
--          state.socketManager =
--            getAllPropertyNames(game).find(
+           config_2.socketManager =
+             getAllPropertyNames(gameInstance).find(
 -              (packetSenderKey) =>
--                typeof game[packetSenderKey]?.sendBytePacket !== "undefined",
--            ) || state.socketManager;
-+          stateCache.socketManager =
-+            getAllPropertyNames(gameInstance).find(
+-                typeof gameInstance[packetSenderKey]?.sendBytePacket !==
 +              (networkClientKey) =>
 +                typeof gameInstance[networkClientKey]?.sendBytePacket !==
-+                "undefined",
-+            ) || stateCache.socketManager;
+                 "undefined",
+             ) || config_2.socketManager;
            try {
--            appState = document
-+            globalState = document
-               .getElementById("app")
+             appState = document
+@@ -341,49 +332,45 @@
                ._vnode.appContext.config.globalProperties.$simpleState.states.find(
                  (gameStore) => gameStore._storeMeta.id === "game",
                );
@@ -523,11 +481,10 @@ Index: src/core.js
 -          myAnimalsUpdateInterval = setInterval(() => {
 +          myAnimalsInterval = setInterval(() => {
              try {
--              if (!player?.myAnimals?.[0]) {
-+              if (!playerData?.myAnimals?.[0]) {
+               if (!playerData?.myAnimals?.[0]) {
                  return;
                }
--              const myAnimal = player.myAnimals[0];
+-              const myAnimal = playerData.myAnimals[0];
 -              if (myAnimal.fadingTrail) {
 +              const firstAnimal = playerData.myAnimals[0];
 +              if (firstAnimal.fadingTrail) {
@@ -573,48 +530,17 @@ Index: src/core.js
    });
  };
  const disableGameRestrictions = () => {
--  if (isActive) {
-+  if (isReady) {
-     return;
-   }
--  if (!player) {
-+  if (!playerData) {
-     setTimeout(disableGameRestrictions, 500);
-     return;
-   }
-   setInterval(() => {
-     try {
--      game.viewport.clampZoom({
-+      gameInstance.viewport.clampZoom({
-         minWidth: 0,
-         maxWidth: 10000000,
-       });
--      game.viewport.plugins.plugins.clamp = null;
--      game.viewport.plugins.plugins["clamp-zoom"] = null;
-+      gameInstance.viewport.plugins.plugins.clamp = null;
-+      gameInstance.viewport.plugins.plugins["clamp-zoom"] = null;
-     } catch {}
-   }, 300);
-   try {
--    if (state.setFlash) {
--      player[state.setFlash] = () => {};
-+    if (stateCache.setFlash) {
-+      playerData[stateCache.setFlash] = () => {};
-     }
--    if (state.terrainManager) {
--      const terrainManager = player[state.terrainManager];
-+    if (stateCache.terrainManager) {
-+      const terrainManager = playerData[stateCache.terrainManager];
-       if (terrainManager && terrainManager.shadow) {
+@@ -414,17 +401,166 @@
          terrainManager.shadow.setShadowSize(1000000);
          terrainManager.shadow.setShadowSize = () => {};
        }
      }
-   } catch (error) {
-     console.error(error);
+-  } catch (url) {
+-    console.error(url);
++  } catch (url_2) {
++    console.error(url_2);
    }
--  isActive = true;
-+  isReady = true;
+   isProcessed_2 = true;
  };
 +function setupToolsPanel() {
 +  const toolsStyle = document.createElement("style");
@@ -645,10 +571,10 @@ Index: src/core.js
 +      autoChat(chatMessage);
 +    }
 +  };
-+  const patchButton = container.querySelector("#patchBtn");
-+  patchButton.onclick = () => initPacketInterceptor(patchButton);
-+  const spoofButton = container.querySelector("#spoofBtn");
-+  spoofButton.onclick = () => {
++  const spoofButton = container.querySelector("#patchBtn");
++  spoofButton.onclick = () => initPacketInterceptor(spoofButton);
++  const spoofButton_2 = container.querySelector("#spoofBtn");
++  spoofButton_2.onclick = () => {
 +    const randomValue = generateRandomString(8);
 +    if (simulateTyping(".play-game .el-input__inner", randomValue)) {
 +      showNotification("Spoofed name!");
@@ -658,47 +584,47 @@ Index: src/core.js
 +      showNotification("No name input found! Enable special characters first.");
 +    }
 +  };
-+  const spinButton = container.querySelector("#spinBtn");
-+  spinButton.onclick = () => {
++  const autoChatButton = container.querySelector("#spinBtn");
++  autoChatButton.onclick = () => {
 +    toggleMouseSimulation();
-+    if (state.animationIntervalId) {
-+      spinButton.textContent = "Disable Auto Spin";
-+      spinButton.style.color = "var(--accent)";
-+      spinButton.style.opacity = "0.6";
++    if (featuresentitytrailState.entityTrailInterval_2) {
++      autoChatButton.textContent = "Disable Auto Spin";
++      autoChatButton.style.color = "var(--accent)";
++      autoChatButton.style.opacity = "0.6";
 +    } else {
-+      spinButton.textContent = "Enable Auto Spin";
-+      spinButton.style.color = "var(--accent)";
-+      spinButton.style.opacity = "1";
++      autoChatButton.textContent = "Enable Auto Spin";
++      autoChatButton.style.color = "var(--accent)";
++      autoChatButton.style.opacity = "1";
 +    }
 +  };
 +  const spinKeyInput = container.querySelector("#spinKeyInput");
-+  let pressedKey = null;
++  let lastPressedKey = null;
 +  spinKeyInput.addEventListener("keydown", (keyboardEvent) => {
 +    keyboardEvent.preventDefault();
-+    pressedKey = keyboardEvent.code || keyboardEvent.key;
-+    spinKeyInput.value = pressedKey.replace("Key", "").toLowerCase();
++    lastPressedKey = keyboardEvent.code || keyboardEvent.key;
++    spinKeyInput.value = lastPressedKey.replace("Key", "").toLowerCase();
 +  });
 +  document.addEventListener("keydown", (keyboardEvent_2) => {
 +    if (
-+      pressedKey &&
-+      keyboardEvent_2.code === pressedKey &&
++      lastPressedKey &&
++      keyboardEvent_2.code === lastPressedKey &&
 +      !keyboardEvent_2.target.matches("input, textarea, button")
 +    ) {
 +      keyboardEvent_2.preventDefault();
 +      toggleMouseSimulation();
-+      if (state.animationIntervalId) {
-+        spinButton.textContent = "Disable Auto Spin";
-+        spinButton.style.color = "var(--accent)";
-+        spinButton.style.opacity = "0.6";
++      if (featuresentitytrailState.entityTrailInterval_2) {
++        autoChatButton.textContent = "Disable Auto Spin";
++        autoChatButton.style.color = "var(--accent)";
++        autoChatButton.style.opacity = "0.6";
 +      } else {
-+        spinButton.textContent = "Enable Auto Spin";
-+        spinButton.style.color = "var(--accent)";
-+        spinButton.style.opacity = "1";
++        autoChatButton.textContent = "Enable Auto Spin";
++        autoChatButton.style.color = "var(--accent)";
++        autoChatButton.style.opacity = "1";
 +      }
 +    }
 +  });
-+  const autoChatButton = container.querySelector("#autoChatBtn");
-+  autoChatButton.onclick = () => {
++  const autoChatButton_2 = container.querySelector("#autoChatBtn");
++  autoChatButton_2.onclick = () => {
 +    const chatMessage_2 = container.querySelector("#chatMsg").value;
 +    const delayInput = container.querySelector("#delayInput");
 +    const delayValue = parseInt(delayInput.value) || 10;
@@ -706,22 +632,22 @@ Index: src/core.js
 +      showNotification("⚠️ Enter a message first!");
 +      return;
 +    }
-+    if (state.isProcessing) {
++    if (state.isToggled) {
 +      stopInterval();
-+      autoChatButton.textContent = "Enable Auto Chat";
-+      autoChatButton.style.color = "var(--accent)";
-+      autoChatButton.style.opacity = "1";
++      autoChatButton_2.textContent = "Enable Auto Chat";
++      autoChatButton_2.style.color = "var(--accent)";
++      autoChatButton_2.style.opacity = "1";
 +    } else {
 +      startScheduledTask(chatMessage_2, delayValue);
-+      autoChatButton.textContent = "Disable Auto Chat";
-+      autoChatButton.style.color = "var(--accent)";
-+      autoChatButton.style.opacity = "0.6";
++      autoChatButton_2.textContent = "Disable Auto Chat";
++      autoChatButton_2.style.color = "var(--accent)";
++      autoChatButton_2.style.opacity = "0.6";
 +    }
 +  };
 +  let offsetX;
 +  let offsetY;
 +  let isActive = false;
-+  let isDragging = false;
++  let isActive_2 = false;
 +  container.addEventListener("mousedown", (clickEvent) => {
 +    if (
 +      clickEvent.target.tagName === "BUTTON" ||
@@ -732,15 +658,15 @@ Index: src/core.js
 +      return;
 +    }
 +    isActive = true;
-+    isDragging = false;
++    isActive_2 = false;
 +    offsetX = clickEvent.clientX - container.getBoundingClientRect().left;
 +    offsetY = clickEvent.clientY - container.getBoundingClientRect().top;
 +    container.style.transition = "none";
 +    const handleMouseMove = (mouseEvent) => {
 +      const deltaX = mouseEvent.clientX - clickEvent.clientX;
 +      const deltaY = mouseEvent.clientY - clickEvent.clientY;
-+      if (!isDragging && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-+        isDragging = true;
++      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
++        isActive_2 = true;
 +      }
 +      if (isActive) {
 +        container.style.left = mouseEvent.clientX - offsetX + "px";
@@ -759,7 +685,7 @@ Index: src/core.js
 +    document.addEventListener("mouseup", handleMouseUp);
 +  });
 +  container.addEventListener("click", (event) => {
-+    if (isDragging) {
++    if (isActive_2) {
 +      event.stopImmediatePropagation();
 +    }
 +  });
@@ -775,18 +701,7 @@ Index: src/core.js
    const plusPanelElement = injectPlusPanelStyles();
    initBackgroundImage();
    initAdBlocker();
-@@ -429,9 +571,9 @@
-   };
- }
- document.addEventListener("keydown", (event) => {
-   if (
--    event.key === coreSharedState.currentKey &&
-+    event.key === state.currentKey &&
-     !event.repeat &&
-     !event.target.matches("input, textarea, button")
-   ) {
-     event.preventDefault();
-@@ -439,35 +581,36 @@
+@@ -446,9 +582,9 @@
    }
  });
  window.addEventListener("load", () => {
@@ -797,19 +712,8 @@ Index: src/core.js
      initBackgroundImage();
    }, 1000);
  });
- 
--export const coreSharedState = {
--  updateInterval: null,
-+export const state = {
-+  mainIntervalId: null,
-   isProcessing: false,
--  animationInterval: null,
-+  animationIntervalId: null,
-   angleIndex: 0,
-   isInitialized_2: false,
--  isActive_2: false,
-+  isProcessing_2: false,
-   currentKey: "Shift",
+@@ -461,14 +597,15 @@
+   activeKey: "Shift",
  };
  
  export {
@@ -824,18 +728,9 @@ Index: src/core.js
    disableGameRestrictions,
 +  setupToolsPanel,
    initializePanels,
--  angles,
--  radius,
--  game,
--  player,
--  isActive,
-+  rotationAngles,
-+  orbitRadius,
-+  gameInstance,
-+  playerData,
-+  isReady,
-   securitySettings,
- };
+   angles,
+   radius,
+   gameInstance,
 Index: src/features/adblock.js
 ===================================================================
 --- src/features/adblock.js	v1.3
@@ -845,8 +740,8 @@ Index: src/features/adblock.js
      'div.sidebar.left > div:has(> a[href*="doubleclick"]',
    ];
    const removeAds = () => {
--    adSelectors.forEach((selector) => {
--      document.querySelectorAll(selector).forEach((targetElement) => {
+-    adSelectors.forEach((y) => {
+-      document.querySelectorAll(y).forEach((targetElement) => {
 +    adSelectors.forEach((cssSelector) => {
 +      document.querySelectorAll(cssSelector).forEach((targetElement) => {
          targetElement.style.display = "none !important";
@@ -858,12 +753,13 @@ Index: src/features/antidetection.js
 --- src/features/antidetection.js	v1.3
 +++ src/features/antidetection.js	v1.4
 @@ -1,31 +0,0 @@
--import { angles, radius, coreSharedState } from "../core.js";
+-import { featuresentitytrailState } from "./entitytrail.js";
 -import { showNotification } from "../ui/interaction.js";
+-import { angles, radius, state } from "../core.js";
 -import { getGameCanvas } from "../utils.js";
 -
 -function startAntiAfk() {
--  if (coreSharedState.animationInterval) {
+-  if (featuresentitytrailState.entityTrailInterval_2) {
 -    return;
 -  }
 -  const gameCanvas = getGameCanvas();
@@ -871,8 +767,8 @@ Index: src/features/antidetection.js
 -    showNotification("Game canvas not found!");
 -    return;
 -  }
--  coreSharedState.animationInterval = setInterval(() => {
--    const angleDegrees = angles[coreSharedState.angleIndex];
+-  featuresentitytrailState.entityTrailInterval_2 = setInterval(() => {
+-    const angleDegrees = angles[state.angleIndex];
 -    const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
 -    const offsetX = Math.round(radius * Math.sin(angleRadians));
 -    const offsetY = Math.round(radius * Math.cos(angleRadians));
@@ -883,76 +779,19 @@ Index: src/features/antidetection.js
 -        bubbles: true,
 -      }),
 -    );
--    coreSharedState.angleIndex =
--      (coreSharedState.angleIndex + 1) % angles.length;
+-    state.angleIndex = (state.angleIndex + 1) % angles.length;
 -  }, 15);
 -}
 -
 -export { startAntiAfk };
-Index: src/features/autofarm.js
-===================================================================
---- src/features/autofarm.js	v1.3
-+++ src/features/autofarm.js	v1.4
-@@ -1,24 +1,19 @@
--import {
--  player,
--  securitySettings,
--  sendPacket,
--  coreSharedState,
--} from "../core.js";
-+import { playerData, securitySettings, sendPacket, state } from "../core.js";
- 
- const handleAnimalAction = (currentValue) => {
-   const id1 = 1;
-   const id4 = 4;
-   const id5 = 5;
-   try {
-     const fishLevelConfig = {
-       ...securitySettings.default,
--      ...(securitySettings[player?.myAnimals?.[0]?.visibleFishLevel] || {}),
-+      ...(securitySettings[playerData?.myAnimals?.[0]?.visibleFishLevel] || {}),
-     };
--    if (currentValue < (player?.myAnimals?.[0]?._standing ? 40 : 100)) {
-+    if (currentValue < (playerData?.myAnimals?.[0]?._standing ? 40 : 100)) {
-       return sendPacket(id1);
-     }
--    if (player?.myAnimals?.[0]?._standing) {
-+    if (playerData?.myAnimals?.[0]?._standing) {
-       return sendPacket(id5, currentValue);
-     }
-     if (fishLevelConfig.hasScaling) {
-       return sendPacket(id5, currentValue);
 Index: src/features/chat.js
 ===================================================================
 --- src/features/chat.js	v1.3
 +++ src/features/chat.js	v1.4
-@@ -1,23 +1,23 @@
--import { coreSharedState } from "../core.js";
-+import { state } from "../core.js";
- 
- function startScheduledTask(taskData, intervalSeconds) {
--  if (coreSharedState.updateInterval) {
--    clearInterval(coreSharedState.updateInterval);
-+  if (state.mainIntervalId) {
-+    clearInterval(state.mainIntervalId);
+@@ -15,9 +15,9 @@
+     state.entityTrailInterval = null;
    }
--  coreSharedState.isProcessing = true;
--  coreSharedState.updateInterval = setInterval(() => {
-+  state.isProcessing = true;
-+  state.mainIntervalId = setInterval(() => {
-     autoChat(taskData);
-   }, intervalSeconds * 1000);
- }
- function stopInterval() {
--  if (coreSharedState.updateInterval) {
--    clearInterval(coreSharedState.updateInterval);
--    coreSharedState.updateInterval = null;
-+  if (state.mainIntervalId) {
-+    clearInterval(state.mainIntervalId);
-+    state.mainIntervalId = null;
-   }
--  coreSharedState.isProcessing = false;
-+  state.isProcessing = false;
+   state.isToggled = false;
  }
 -function autoChat(textToType) {
 +function autoChat(messageText) {
@@ -982,54 +821,19 @@ Index: src/features/chat.js
        new InputEvent("input", {
          bubbles: true,
        }),
-Index: src/features/esp.js
-===================================================================
---- src/features/esp.js	v1.3
-+++ src/features/esp.js	v1.4
-@@ -1,21 +1,21 @@
- import { showNotification } from "../ui/interaction.js";
--import { player, coreSharedState } from "../core.js";
-+import { playerData, state } from "../core.js";
- 
- function toggleMinimapSize() {
--  if (!player || !player.minimap) {
-+  if (!playerData || !playerData.minimap) {
-     showNotification("Minimap not available yet!");
-     return;
-   }
--  if (coreSharedState.isActive_2) {
--    player.minimap.scale.set(1);
--    player.minimap.pivot.set(0, 0);
--    coreSharedState.isActive_2 = false;
-+  if (state.isProcessing_2) {
-+    playerData.minimap.scale.set(1);
-+    playerData.minimap.pivot.set(0, 0);
-+    state.isProcessing_2 = false;
-     showNotification("🗺️ Minimap restored to normal!");
-   } else {
--    player.minimap.scale.set(0.5);
--    player.minimap.pivot.set(-70, -45);
--    coreSharedState.isActive_2 = true;
-+    playerData.minimap.scale.set(0.5);
-+    playerData.minimap.pivot.set(-70, -45);
-+    state.isProcessing_2 = true;
-     showNotification("🗺️ Small Minimap enabled!");
-   }
- }
- 
 Index: src/features/movement.js
 ===================================================================
 --- src/features/movement.js	v1.3
 +++ src/features/movement.js	v1.4
-@@ -1,18 +1,47 @@
+@@ -1,7 +1,33 @@
+ import { featuresentitytrailState } from "./entitytrail.js";
 -import { startAntiAfk } from "./antidetection.js";
--import { coreSharedState } from "../core.js";
-+import { rotationAngles, orbitRadius, state } from "../core.js";
 +import { showNotification } from "../ui/interaction.js";
++import { angles, radius, state } from "../core.js";
 +import { getGameCanvas } from "../utils.js";
  
 +function startAntiAfkMouseMovement() {
-+  if (state.animationIntervalId) {
++  if (featuresentitytrailState.entityTrailInterval_2) {
 +    return;
 +  }
 +  const gameCanvas = getGameCanvas();
@@ -1037,11 +841,11 @@ Index: src/features/movement.js
 +    showNotification("Game canvas not found!");
 +    return;
 +  }
-+  state.animationIntervalId = setInterval(() => {
-+    const angleDegrees = rotationAngles[state.angleIndex];
++  featuresentitytrailState.entityTrailInterval_2 = setInterval(() => {
++    const angleDegrees = angles[state.angleIndex];
 +    const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
-+    const offsetX = Math.round(orbitRadius * Math.sin(angleRadians));
-+    const offsetY = Math.round(orbitRadius * Math.cos(angleRadians));
++    const offsetX = Math.round(radius * Math.sin(angleRadians));
++    const offsetY = Math.round(radius * Math.cos(angleRadians));
 +    gameCanvas.dispatchEvent(
 +      new MouseEvent("pointermove", {
 +        clientX: window.innerWidth / 2 + offsetX,
@@ -1049,41 +853,32 @@ Index: src/features/movement.js
 +        bubbles: true,
 +      }),
 +    );
-+    state.angleIndex = (state.angleIndex + 1) % rotationAngles.length;
++    state.angleIndex = (state.angleIndex + 1) % angles.length;
 +  }, 15);
 +}
- function stopMouseSimulation() {
--  if (coreSharedState.animationInterval) {
--    clearInterval(coreSharedState.animationInterval);
--    coreSharedState.animationInterval = null;
-+  if (state.animationIntervalId) {
-+    clearInterval(state.animationIntervalId);
-+    state.animationIntervalId = null;
-   }
- }
+ function stopEntityTrail() {
+   if (featuresentitytrailState.entityTrailInterval_2) {
+     clearInterval(featuresentitytrailState.entityTrailInterval_2);
+     featuresentitytrailState.entityTrailInterval_2 = null;
+@@ -10,9 +36,9 @@
  function toggleMouseSimulation() {
--  if (coreSharedState.animationInterval) {
-+  if (state.animationIntervalId) {
-     stopMouseSimulation();
+   if (featuresentitytrailState.entityTrailInterval_2) {
+     stopEntityTrail();
    } else {
 -    startAntiAfk();
 +    startAntiAfkMouseMovement();
    }
  }
  
--export { stopMouseSimulation, toggleMouseSimulation };
-+export {
-+  startAntiAfkMouseMovement,
-+  stopMouseSimulation,
-+  toggleMouseSimulation,
-+};
+-export { stopEntityTrail, toggleMouseSimulation };
++export { startAntiAfkMouseMovement, stopEntityTrail, toggleMouseSimulation };
 Index: src/ui/interaction.js
 ===================================================================
 --- src/ui/interaction.js	v1.3
 +++ src/ui/interaction.js	v1.4
-@@ -1,45 +1,43 @@
--import { radius, coreSharedState } from "../core.js";
--
+@@ -1,45 +1,45 @@
+ import { radius, state } from "../core.js";
+ 
 -function simulateTyping(selector, textToType) {
 -  const inputElement = document.querySelector(selector);
 -  if (!inputElement) {
@@ -1147,28 +942,24 @@ Index: src/ui/panels.js
 ===================================================================
 --- src/ui/panels.js	v1.3
 +++ src/ui/panels.js	v1.4
-@@ -1,28 +1,20 @@
- import {
--  game,
--  player,
-+  gameInstance,
-+  playerData,
-   securitySettings,
--  radius,
+@@ -2,25 +2,17 @@
+   gameInstance,
+   playerData,
+   config,
+   radius,
 -  hookTextEncoder,
--  isActive,
+   isProcessed_2,
 -  initHooks,
-+  isReady,
 +  setupProxyHooks,
    disableGameRestrictions,
--  coreSharedState,
-+  state,
+   state,
  } from "../core.js";
 -import {
 -  startScheduledTask,
 -  stopInterval,
 -  autoChat,
 -} from "../features/chat.js";
+-import { featuresentitytrailState } from "../features/entitytrail.js";
 -import { simulateTyping, showNotification } from "./interaction.js";
 -import { toggleMouseSimulation } from "../features/movement.js";
  import { handleAnimalAction } from "../features/autofarm.js";
@@ -1177,14 +968,10 @@ Index: src/ui/panels.js
 +import { showNotification } from "./interaction.js";
 +import { setTheme } from "./theme.js";
  
+ let isProcessed_3 = false;
  const initControlOverlay = () => {
--  if (coreSharedState.isInitialized_2) {
-+  if (state.isInitialized_2) {
-     return;
-   }
-   function sendActionSequence() {
-     try {
-@@ -42,11 +34,11 @@
+   if (isProcessed_3) {
+@@ -44,11 +36,11 @@
      try {
        document.getElementById("ctrl-overlay").remove();
      } catch {}
@@ -1199,7 +986,7 @@ Index: src/ui/panels.js
      overlayDiv.outerHTML =
        '<div id="ctrl-overlay" style="width: 100%;height: 100%;position: absolute;display: block;z-index:10000;pointer-events:none;"></div>';
      document
-@@ -55,57 +47,57 @@
+@@ -57,57 +49,57 @@
    }
    createControlOverlay();
    window.addEventListener(
@@ -1207,16 +994,14 @@ Index: src/ui/panels.js
 -    (myAnimalsHandler) => {
 +    (callbackParam) => {
        try {
--        if (!player?.myAnimals?.[0]) {
-+        if (!playerData?.myAnimals?.[0]) {
+         if (!playerData?.myAnimals?.[0]) {
            return;
          }
--        const visibleFishLevel = player.myAnimals[0].visibleFishLevel;
+         const visibleFishLevel = playerData.myAnimals[0].visibleFishLevel;
 -        const fishSettings = {
-+        const visibleFishLevel = playerData.myAnimals[0].visibleFishLevel;
 +        const fishLevelConfig = {
-           ...securitySettings.default,
-           ...securitySettings[visibleFishLevel],
+           ...config.default,
+           ...config[visibleFishLevel],
          };
 -        if (myAnimalsHandler.ctrlKey) {
 -          if (myAnimalsHandler.shiftKey && visibleFishLevel === 107) {
@@ -1228,23 +1013,21 @@ Index: src/ui/panels.js
 -            myAnimalsHandler.shiftKey &&
 +            callbackParam.shiftKey &&
              visibleFishLevel !== 101 &&
--            player.myAnimals[0]._standing
-+            playerData.myAnimals[0]._standing
+             playerData.myAnimals[0]._standing
            ) {
              handleAnimalAction(
                Math.floor(Math.random() * 1647483648) + 500000000,
              );
              return;
            } else {
--            let keyMap = Object.getOwnPropertyNames(game)
--              .map((clientKey) => game[clientKey])
+-            let keyMap = Object.getOwnPropertyNames(gameInstance)
++            let keyMapping = Object.getOwnPropertyNames(gameInstance)
+               .map((clientKey) => gameInstance[clientKey])
 -              .find((inputMap) => inputMap.keys instanceof Array);
 -            if (keyMap) {
 -              keyMap.pointerDown = true;
 -              keyMap.pressElapsed = Infinity;
 -              keyMap.setPointerDown(false);
-+            let keyMapping = Object.getOwnPropertyNames(gameInstance)
-+              .map((clientKey) => gameInstance[clientKey])
 +              .find((keyCollection) => keyCollection.keys instanceof Array);
 +            if (keyMapping) {
 +              keyMapping.pointerDown = true;
@@ -1255,8 +1038,7 @@ Index: src/ui/panels.js
 -        } else if (myAnimalsHandler.altKey) {
 +        } else if (callbackParam.altKey) {
            handleAnimalAction(
--            player?.myAnimals?.[0]?._standing
-+            playerData?.myAnimals?.[0]?._standing
+             playerData?.myAnimals?.[0]?._standing
                ? 41
 -              : Math.floor(fishSettings.secLoadTime / 2),
 +              : Math.floor(fishLevelConfig.secLoadTime / 2),
@@ -1277,13 +1059,10 @@ Index: src/ui/panels.js
          }
        } catch {}
      },
-@@ -115,50 +107,50 @@
-     try {
-       document.getElementById("ctrl-overlay").style.pointerEvents = "none";
+@@ -119,27 +111,27 @@
      } catch {}
    });
--  coreSharedState.isInitialized_2 = true;
-+  state.isInitialized_2 = true;
+   isProcessed_3 = true;
  };
 -function createUpdateHistoryPanel() {
 +function setupUpdateHistory() {
@@ -1302,56 +1081,30 @@ Index: src/ui/panels.js
 -  const historyContentElement = historyPanel.querySelector("#historyContent");
 +  const minHistBtn = historyPanel.querySelector("#minHist");
 +  const historyContent = historyPanel.querySelector("#historyContent");
-   let isHistoryHidden = false;
+   let isHidden = false;
 -  minHistElement.onclick = (toggleEvent) => {
 -    toggleEvent.stopPropagation();
 +  minHistBtn.onclick = (event) => {
 +    event.stopPropagation();
-     isHistoryHidden = !isHistoryHidden;
--    historyContentElement.style.display = isHistoryHidden ? "none" : "block";
-+    historyContent.style.display = isHistoryHidden ? "none" : "block";
-     historyPanel.style.height = isHistoryHidden ? "60px" : "auto";
--    minHistElement.textContent = isHistoryHidden ? "+" : "−";
-+    minHistBtn.textContent = isHistoryHidden ? "+" : "−";
+     isHidden = !isHidden;
+-    historyContentElement.style.display = isHidden ? "none" : "block";
++    historyContent.style.display = isHidden ? "none" : "block";
+     historyPanel.style.height = isHidden ? "60px" : "auto";
+-    minHistElement.textContent = isHidden ? "+" : "−";
++    minHistBtn.textContent = isHidden ? "+" : "−";
    };
    let offsetX;
    let offsetY;
-   let isDragging = false;
--  let isResizing = false;
-+  let isActive = false;
-   historyPanel.addEventListener("mousedown", (clickEvent) => {
-     if (
-       ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(clickEvent.target.tagName)
-     ) {
-       return;
-     }
-     isDragging = true;
--    isResizing = false;
-+    isActive = false;
-     offsetX = clickEvent.clientX - historyPanel.getBoundingClientRect().left;
-     offsetY = clickEvent.clientY - historyPanel.getBoundingClientRect().top;
-     historyPanel.style.transition = "none";
-     const handleMouseMove = (mouseEvent) => {
-       const deltaX = mouseEvent.clientX - clickEvent.clientX;
-       const deltaY = mouseEvent.clientY - clickEvent.clientY;
--      if (!isResizing && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
--        isResizing = true;
-+      if (!isActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-+        isActive = true;
-       }
-       if (isDragging) {
-         historyPanel.style.left = mouseEvent.clientX - offsetX + "px";
-         historyPanel.style.top = mouseEvent.clientY - offsetY + "px";
-@@ -174,162 +166,19 @@
+   let isActive = false;
+@@ -176,162 +168,19 @@
      };
      document.addEventListener("mousemove", handleMouseMove);
      document.addEventListener("mouseup", handleMouseUp);
    });
 -  historyPanel.addEventListener("click", (interceptEvent) => {
--    if (isResizing) {
--      interceptEvent.stopImmediatePropagation();
 +  historyPanel.addEventListener("click", (inputEvent) => {
-+    if (isActive) {
+     if (isActive_2) {
+-      interceptEvent.stopImmediatePropagation();
 +      inputEvent.stopImmediatePropagation();
      }
    });
@@ -1386,10 +1139,10 @@ Index: src/ui/panels.js
 -      autoChat(chatMessage);
 -    }
 -  };
--  const patchButton = container.querySelector("#patchBtn");
--  patchButton.onclick = () => hookTextEncoder(patchButton);
--  const spoofButton = container.querySelector("#spoofBtn");
--  spoofButton.onclick = () => {
+-  const spoofButton = container.querySelector("#patchBtn");
+-  spoofButton.onclick = () => hookTextEncoder(spoofButton);
+-  const spoofButton_2 = container.querySelector("#spoofBtn");
+-  spoofButton_2.onclick = () => {
 -    const maxLength = generateRandomString(8);
 -    if (simulateTyping(".play-game .el-input__inner", maxLength)) {
 -      showNotification("Spoofed name!");
@@ -1399,43 +1152,43 @@ Index: src/ui/panels.js
 -      showNotification("No name input found! Enable special characters first.");
 -    }
 -  };
--  const spinButton = container.querySelector("#spinBtn");
--  spinButton.onclick = () => {
+-  const autoChatButton = container.querySelector("#spinBtn");
+-  autoChatButton.onclick = () => {
 -    toggleMouseSimulation();
--    if (coreSharedState.animationInterval) {
--      spinButton.textContent = "Disable Auto Spin";
--      spinButton.style.color = "#27ae60";
+-    if (featuresentitytrailState.entityTrailInterval_2) {
+-      autoChatButton.textContent = "Disable Auto Spin";
+-      autoChatButton.style.color = "#27ae60";
 -    } else {
--      spinButton.textContent = "Enable Auto Spin";
--      spinButton.style.color = "var(--accent)";
+-      autoChatButton.textContent = "Enable Auto Spin";
+-      autoChatButton.style.color = "var(--accent)";
 -    }
 -  };
 -  const spinKeyInput = container.querySelector("#spinKeyInput");
--  let lastKeyCode = null;
+-  let lastPressedKey = null;
 -  spinKeyInput.addEventListener("keydown", (event) => {
 -    event.preventDefault();
--    lastKeyCode = event.code || event.key;
--    spinKeyInput.value = lastKeyCode.replace("Key", "").toLowerCase();
+-    lastPressedKey = event.code || event.key;
+-    spinKeyInput.value = lastPressedKey.replace("Key", "").toLowerCase();
 -  });
 -  document.addEventListener("keydown", (keyEvent) => {
 -    if (
--      lastKeyCode &&
--      keyEvent.code === lastKeyCode &&
+-      lastPressedKey &&
+-      keyEvent.code === lastPressedKey &&
 -      !keyEvent.target.matches("input, textarea, button")
 -    ) {
 -      keyEvent.preventDefault();
 -      toggleMouseSimulation();
--      if (coreSharedState.animationInterval) {
--        spinButton.textContent = "Disable Auto Spin";
--        spinButton.style.color = "#27ae60";
+-      if (featuresentitytrailState.entityTrailInterval_2) {
+-        autoChatButton.textContent = "Disable Auto Spin";
+-        autoChatButton.style.color = "#27ae60";
 -      } else {
--        spinButton.textContent = "Enable Auto Spin";
--        spinButton.style.color = "var(--accent)";
+-        autoChatButton.textContent = "Enable Auto Spin";
+-        autoChatButton.style.color = "var(--accent)";
 -      }
 -    }
 -  });
--  const autoChatButton = container.querySelector("#autoChatBtn");
--  autoChatButton.onclick = () => {
+-  const autoChatButton_2 = container.querySelector("#autoChatBtn");
+-  autoChatButton_2.onclick = () => {
 -    const chatMessageValue = container.querySelector("#chatMsg").value;
 -    const delayInput = container.querySelector("#delayInput");
 -    const delayValue = parseInt(delayInput.value) || 10;
@@ -1443,20 +1196,20 @@ Index: src/ui/panels.js
 -      showNotification("⚠️ Enter a message first!");
 -      return;
 -    }
--    if (coreSharedState.isProcessing) {
+-    if (state.isToggled) {
 -      stopInterval();
--      autoChatButton.textContent = "Enable Auto Chat";
--      autoChatButton.style.color = "var(--accent)";
+-      autoChatButton_2.textContent = "Enable Auto Chat";
+-      autoChatButton_2.style.color = "var(--accent)";
 -    } else {
 -      startScheduledTask(chatMessageValue, delayValue);
--      autoChatButton.textContent = "Disable Auto Chat";
--      autoChatButton.style.color = "#27ae60";
+-      autoChatButton_2.textContent = "Disable Auto Chat";
+-      autoChatButton_2.style.color = "#27ae60";
 -    }
 -  };
 -  let offsetX;
 -  let offsetY;
--  let isDragging = false;
--  let isEnabled = false;
+-  let isActive = false;
+-  let isActive_2 = false;
 -  container.addEventListener("mousedown", (clickEvent) => {
 -    if (
 -      clickEvent.target.tagName === "BUTTON" ||
@@ -1466,18 +1219,18 @@ Index: src/ui/panels.js
 -    ) {
 -      return;
 -    }
--    isDragging = true;
--    isEnabled = false;
+-    isActive = true;
+-    isActive_2 = false;
 -    offsetX = clickEvent.clientX - container.getBoundingClientRect().left;
 -    offsetY = clickEvent.clientY - container.getBoundingClientRect().top;
 -    container.style.transition = "none";
 -    const handleMouseMove = (mouseEvent) => {
 -      const deltaX = mouseEvent.clientX - clickEvent.clientX;
 -      const deltaY = mouseEvent.clientY - clickEvent.clientY;
--      if (!isEnabled && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
--        isEnabled = true;
+-      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+-        isActive_2 = true;
 -      }
--      if (isDragging) {
+-      if (isActive) {
 -        container.style.left = mouseEvent.clientX - offsetX + "px";
 -        container.style.top = mouseEvent.clientY - offsetY + "px";
 -        container.style.bottom = "auto";
@@ -1485,7 +1238,7 @@ Index: src/ui/panels.js
 -      }
 -    };
 -    const handleMouseUp = () => {
--      isDragging = false;
+-      isActive = false;
 -      container.style.transition = "all 0.3s ease";
 -      document.removeEventListener("mousemove", handleMouseMove);
 -      document.removeEventListener("mouseup", handleMouseUp);
@@ -1494,7 +1247,7 @@ Index: src/ui/panels.js
 -    document.addEventListener("mouseup", handleMouseUp);
 -  });
 -  container.addEventListener("click", (eventToStop) => {
--    if (isEnabled) {
+-    if (isActive_2) {
 -      eventToStop.stopImmediatePropagation();
 -    }
 -  });
@@ -1506,53 +1259,46 @@ Index: src/ui/panels.js
 -    "\n      #plus-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n      }\n      #plus-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #plus-panel textarea {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 8px;\n        padding: 10px;\n        transition: all 0.2s ease;\n        font-size: 13px;\n      }\n      #plus-panel textarea:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);\n      }\n      #plus-panel input[type=\"number\"] {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 60px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #plus-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        position: relative;\n        overflow: hidden;\n        width: 100%;\n        margin-bottom: 10px;\n      }\n      #plus-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #plus-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #plus-panel button:hover:not(:disabled) {\n        background: rgba(45, 45, 75, 1);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);\n        color: var(--accent-hover);\n      }\n      #plus-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #plus-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n    ";
 +    "\n      #plus-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n      }\n      #plus-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #plus-panel textarea {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 8px;\n        padding: 10px;\n        transition: all 0.2s ease;\n        font-size: 13px;\n      }\n      #plus-panel textarea:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);\n      }\n      #plus-panel input[type=\"number\"] {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 60px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #plus-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        position: relative;\n        overflow: hidden;\n        width: 100%;\n        margin-bottom: 10px;\n      }\n      #plus-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #plus-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #plus-panel button:hover:not(:disabled) {\n        background: var(--hover-bg);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2);\n        color: var(--accent-hover);\n      }\n      #plus-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #plus-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n    ";
    document.head.appendChild(styleElement);
-   const uiContainer = document.createElement("div");
-   uiContainer.id = "plus-panel";
-   uiContainer.style.position = "fixed";
-@@ -349,48 +198,52 @@
-     '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        ASTRAPHOBIA CLIENT+\n      </div>\n      <div id="plusContent">\n        <button id="thresherBtn">Enable Thresher Super Boost(ctrl + shift and click)(minumum required 2 boost)</button>\n        <button id="astraVisionBtn">Enable Astra-Vision (no-zoom limit, no ink flash or deep darkness)</button>\n        <button id="smallMinimapBtn">Enable Small Minimap</button>\n      </div>\n    ';
-   document.body.appendChild(uiContainer);
-   const thresherButton = uiContainer.querySelector("#thresherBtn");
-   thresherButton.onclick = () => {
--    if (coreSharedState.isInitialized_2) {
-+    if (state.isInitialized_2) {
+   const container = document.createElement("div");
+   container.id = "plus-panel";
+   container.style.position = "fixed";
+@@ -355,42 +204,46 @@
+     if (isProcessed_3) {
        showNotification("Thresher Super Boost is already active!");
        return;
      }
 -    initHooks();
 +    setupProxyHooks();
-     thresherButton.textContent = "Thresher Super Boost Active";
--    thresherButton.style.color = "#27ae60";
-+    thresherButton.style.color = "var(--accent)";
-+    thresherButton.style.opacity = "0.6";
-     thresherButton.disabled = true;
+     astraVisionButton.textContent = "Thresher Super Boost Active";
+-    astraVisionButton.style.color = "#27ae60";
++    astraVisionButton.style.color = "var(--accent)";
++    astraVisionButton.style.opacity = "0.6";
+     astraVisionButton.disabled = true;
    };
-   const astraVisionButton = uiContainer.querySelector("#astraVisionBtn");
-   astraVisionButton.onclick = () => {
--    if (isActive) {
-+    if (isReady) {
+   const astraVisionButton_2 = container.querySelector("#astraVisionBtn");
+   astraVisionButton_2.onclick = () => {
+     if (isProcessed_2) {
        showNotification("Astra-Vision already enabled!");
        return;
      }
 -    initHooks();
 +    setupProxyHooks();
      disableGameRestrictions();
-     astraVisionButton.textContent = "Astra-Vision Active";
--    astraVisionButton.style.color = "#27ae60";
-+    astraVisionButton.style.color = "var(--accent)";
-+    astraVisionButton.style.opacity = "0.6";
-     astraVisionButton.disabled = true;
+     astraVisionButton_2.textContent = "Astra-Vision Active";
+-    astraVisionButton_2.style.color = "#27ae60";
++    astraVisionButton_2.style.color = "var(--accent)";
++    astraVisionButton_2.style.opacity = "0.6";
+     astraVisionButton_2.disabled = true;
      showNotification(
        "👁️ Astra-Vision enabled! (zoom-limit unlocked, no ink-flash or deep darkness effects)",
      );
    };
-   const smallMinimapButton = uiContainer.querySelector("#smallMinimapBtn");
+   const smallMinimapButton = container.querySelector("#smallMinimapBtn");
    smallMinimapButton.onclick = () => {
 -    initHooks();
 +    setupProxyHooks();
      toggleMinimapSize();
--    if (coreSharedState.isActive_2) {
-+    if (state.isProcessing_2) {
+     if (state.isToggled_2) {
        smallMinimapButton.textContent = "Disable Small Minimap";
 -      smallMinimapButton.style.color = "#27ae60";
 +      smallMinimapButton.style.color = "var(--accent)";
@@ -1565,64 +1311,38 @@ Index: src/ui/panels.js
    };
 -  let offsetX;
 -  let offsetY;
--  let isDragging = false;
 +  let relativeX;
 +  let relativeY;
    let isActive = false;
-+  let isEnabled = false;
-   uiContainer.addEventListener("mousedown", (event) => {
+   let isActive_2 = false;
+   container.addEventListener("mousedown", (event) => {
      if (
-       event.target.tagName === "BUTTON" ||
-       event.target.tagName === "TEXTAREA" ||
-@@ -398,55 +251,55 @@
-       event.target.classList.contains("credits")
-     ) {
+@@ -402,20 +255,20 @@
        return;
      }
--    isDragging = true;
--    isActive = false;
--    offsetX = event.clientX - uiContainer.getBoundingClientRect().left;
--    offsetY = event.clientY - uiContainer.getBoundingClientRect().top;
-+    isActive = true;
-+    isEnabled = false;
-+    relativeX = event.clientX - uiContainer.getBoundingClientRect().left;
-+    relativeY = event.clientY - uiContainer.getBoundingClientRect().top;
-     uiContainer.style.transition = "none";
+     isActive = true;
+     isActive_2 = false;
+-    offsetX = event.clientX - container.getBoundingClientRect().left;
+-    offsetY = event.clientY - container.getBoundingClientRect().top;
++    relativeX = event.clientX - container.getBoundingClientRect().left;
++    relativeY = event.clientY - container.getBoundingClientRect().top;
+     container.style.transition = "none";
      const handleMouseMove = (mouseEvent) => {
        const deltaX = mouseEvent.clientX - event.clientX;
        const deltaY = mouseEvent.clientY - event.clientY;
--      if (!isActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
--        isActive = true;
-+      if (!isEnabled && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-+        isEnabled = true;
+       if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+         isActive_2 = true;
        }
--      if (isDragging) {
--        uiContainer.style.left = mouseEvent.clientX - offsetX + "px";
--        uiContainer.style.top = mouseEvent.clientY - offsetY + "px";
-+      if (isActive) {
-+        uiContainer.style.left = mouseEvent.clientX - relativeX + "px";
-+        uiContainer.style.top = mouseEvent.clientY - relativeY + "px";
-         uiContainer.style.bottom = "auto";
-         uiContainer.style.right = "auto";
+       if (isActive) {
+-        container.style.left = mouseEvent.clientX - offsetX + "px";
+-        container.style.top = mouseEvent.clientY - offsetY + "px";
++        container.style.left = mouseEvent.clientX - relativeX + "px";
++        container.style.top = mouseEvent.clientY - relativeY + "px";
+         container.style.bottom = "auto";
+         container.style.right = "auto";
        }
      };
-     const handleMouseUp = () => {
--      isDragging = false;
-+      isActive = false;
-       uiContainer.style.transition = "all 0.3s ease";
-       document.removeEventListener("mousemove", handleMouseMove);
-       document.removeEventListener("mouseup", handleMouseUp);
-     };
-     document.addEventListener("mousemove", handleMouseMove);
-     document.addEventListener("mouseup", handleMouseUp);
-   });
-   uiContainer.addEventListener("click", (event_2) => {
--    if (isActive) {
-+    if (isEnabled) {
-       event_2.stopImmediatePropagation();
-     }
-   });
-   return uiContainer;
+@@ -437,14 +290,14 @@
  }
  function injectSettingsStyles() {
    const styleElement = document.createElement("style");
@@ -1630,56 +1350,46 @@ Index: src/ui/panels.js
 -    "\n      #settings-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n        position: fixed;\n        top: 20px;\n        left: 20px;\n        color: var(--text-primary);\n        padding: 16px;\n        font-size: 14px;\n        z-index: 99999;\n        user-select: none;\n        width: 240px;\n        text-align: center;\n        cursor: move;\n        overflow: hidden;\n      }\n      #settings-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #settings-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        width: 100%;\n        margin-bottom: 10px;\n        position: relative;\n        overflow: hidden;\n      }\n      #settings-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #settings-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #settings-panel button:hover:not(:disabled) {\n        background: rgba(45, 45, 75, 1);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);\n        color: var(--accent-hover);\n      }\n      #settings-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #settings-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #settings-panel .keybind-set, #settings-panel .bg-set {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        margin-bottom: 10px;\n        font-size: 12px;\n      }\n      #settings-panel .keybind-set label, #settings-panel .bg-set label {\n        color: var(--text-primary);\n      }\n      #settings-panel #toggleKeyInput, #settings-panel #bgUrl {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #settings-panel #toggleKeyInput {\n        width: 80px;\n      }\n      #settings-panel #bgUrl {\n        width: 120px;\n      }\n      #settings-panel .section-header {\n        font-weight: bold;\n        color: var(--accent);\n        margin: 12px 0 6px 0;\n        font-size: 13px;\n      }\n    ";
 +    "\n      #settings-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n        position: fixed;\n        top: 20px;\n        left: 20px;\n        color: var(--text-primary);\n        padding: 16px;\n        font-size: 14px;\n        z-index: 99999;\n        user-select: none;\n        width: 240px;\n        text-align: center;\n        cursor: move;\n        overflow: hidden;\n      }\n      #settings-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #settings-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        width: 100%;\n        margin-bottom: 10px;\n        position: relative;\n        overflow: hidden;\n      }\n      #settings-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #settings-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #settings-panel button:hover:not(:disabled) {\n        background: var(--hover-bg);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2);\n        color: var(--accent-hover);\n      }\n      #settings-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #settings-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #settings-panel .keybind-set, #settings-panel .bg-set {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        margin-bottom: 10px;\n        font-size: 12px;\n      }\n      #settings-panel .keybind-set label, #settings-panel .bg-set label {\n        color: var(--text-primary);\n      }\n      #settings-panel #toggleKeyInput, #settings-panel #bgUrl {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #settings-panel #toggleKeyInput {\n        width: 80px;\n      }\n      #settings-panel #bgUrl {\n        width: 120px;\n      }\n      #settings-panel .section-header {\n        font-weight: bold;\n        color: var(--accent);\n        margin: 12px 0 6px 0;\n        font-size: 13px;\n      }\n      #settings-panel select {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 100%;\n        margin-bottom: 10px;\n        transition: all 0.2s ease;\n      }\n      #settings-panel select:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);\n      }\n    ";
    document.head.appendChild(styleElement);
--  const mainContainer = document.createElement("div");
--  mainContainer.id = "settings-panel";
--  mainContainer.innerHTML =
+   const container = document.createElement("div");
+   container.id = "settings-panel";
+   container.innerHTML =
 -    '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        SETTINGS\n      </div>\n      <div id="settingsContent">\n        <div class="keybind-set">\n          <label for="toggleKeyInput">Toggle Client:</label>\n          <input type="text" id="toggleKeyInput" placeholder="PRESS" readonly>\n        </div>\n        <div class="section-header">Custom Background</div>\n        <div class="bg-set">\n          <label for="bgUrl">BG URL:</label>\n          <input type="text" id="bgUrl" placeholder="Image/GIF URL">\n        </div>\n        <button id="applyBg">Apply Custom Background</button>\n      </div>\n    ';
--  document.body.appendChild(mainContainer);
--  const bgUrlInput = mainContainer.querySelector("#bgUrl");
-+  const container = document.createElement("div");
-+  container.id = "settings-panel";
-+  container.innerHTML =
 +    '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        SETTINGS\n      </div>\n      <div id="settingsContent">\n        <div class="keybind-set">\n          <label for="toggleKeyInput">Toggle Client:</label>\n          <input type="text" id="toggleKeyInput" placeholder="PRESS" readonly>\n        </div>\n        <div class="section-header">Custom Background</div>\n        <div class="bg-set">\n          <label for="bgUrl">BG URL:</label>\n          <input type="text" id="bgUrl" placeholder="Image/GIF URL">\n        </div>\n        <button id="applyBg">Apply Custom Background</button>\n        <div class="section-header">Themes</div>\n        <select id="themeSelect">\n          <option value="blue">Blue (Default)</option>\n          <option value="red">Red</option>\n          <option value="green">Green</option>\n        </select>\n      </div>\n    ';
-+  document.body.appendChild(container);
-+  const bgUrlInput = container.querySelector("#bgUrl");
+   document.body.appendChild(container);
+   const bgUrlInput = container.querySelector("#bgUrl");
    bgUrlInput.value = localStorage.getItem("bgUrl") || "";
--  const applyBgButton = mainContainer.querySelector("#applyBg");
-+  const applyBgButton = container.querySelector("#applyBg");
-   applyBgButton.onclick = () => {
-     const backgroundUrl = bgUrlInput.value.trim();
-     if (backgroundUrl === "") {
-       showNotification("Enter a URL first!");
-@@ -473,60 +326,68 @@
+   const applyBgButton = container.querySelector("#applyBg");
+@@ -475,35 +328,43 @@
        updateBackgroundImage();
      }
      showNotification("Custom Background applied!");
    };
--  const toggleKeyInputButton = mainContainer.querySelector("#toggleKeyInput");
--  toggleKeyInputButton.value = coreSharedState.currentKey;
+-  const toggleKeyInputButton = container.querySelector("#toggleKeyInput");
+-  toggleKeyInputButton.value = state.activeKey;
 -  toggleKeyInputButton.addEventListener("keydown", (event) => {
 -    event.preventDefault();
--    coreSharedState.currentKey = event.key;
--    toggleKeyInputButton.value = coreSharedState.currentKey;
+-    state.activeKey = event.key;
+-    toggleKeyInputButton.value = state.activeKey;
 +  const themeSelect = container.querySelector("#themeSelect");
-+  const currentTheme = localStorage.getItem("theme") || "blue";
-+  themeSelect.value = currentTheme;
-+  setTheme(currentTheme);
++  const angle = localStorage.getItem("theme") || "blue";
++  themeSelect.value = angle;
++  setTheme(angle);
 +  themeSelect.onchange = (themeChangeEvent) => {
 +    setTheme(themeChangeEvent.target.value);
 +    showNotification("Theme changed to " + themeChangeEvent.target.value);
 +  };
 +  const toggleKeyInput = container.querySelector("#toggleKeyInput");
-+  toggleKeyInput.value = state.currentKey;
++  toggleKeyInput.value = state.activeKey;
 +  toggleKeyInput.addEventListener("keydown", (keyboardEvent) => {
 +    keyboardEvent.preventDefault();
-+    state.currentKey = keyboardEvent.key;
-+    toggleKeyInput.value = state.currentKey;
++    state.activeKey = keyboardEvent.key;
++    toggleKeyInput.value = state.activeKey;
    });
    let offsetX;
    let offsetY;
-   let isDragging = false;
-   let isToggled = false;
--  mainContainer.addEventListener("mousedown", (event_2) => {
+   let isActive = false;
+   let isActive_2 = false;
+-  container.addEventListener("mousedown", (event_2) => {
 +  container.addEventListener("mousedown", (uiEvent) => {
      if (
 -      event_2.target.tagName === "BUTTON" ||
@@ -1691,57 +1401,37 @@ Index: src/ui/panels.js
      ) {
        return;
      }
-     isDragging = true;
-     isToggled = false;
--    offsetX = event_2.clientX - mainContainer.getBoundingClientRect().left;
--    offsetY = event_2.clientY - mainContainer.getBoundingClientRect().top;
--    mainContainer.style.transition = "none";
+     isActive = true;
+     isActive_2 = false;
+-    offsetX = event_2.clientX - container.getBoundingClientRect().left;
+-    offsetY = event_2.clientY - container.getBoundingClientRect().top;
 +    offsetX = uiEvent.clientX - container.getBoundingClientRect().left;
 +    offsetY = uiEvent.clientY - container.getBoundingClientRect().top;
-+    container.style.transition = "none";
+     container.style.transition = "none";
      const handleMouseMove = (mouseEvent) => {
 -      const deltaX = mouseEvent.clientX - event_2.clientX;
 -      const deltaY = mouseEvent.clientY - event_2.clientY;
 +      const deltaX = mouseEvent.clientX - uiEvent.clientX;
 +      const deltaY = mouseEvent.clientY - uiEvent.clientY;
-       if (!isToggled && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-         isToggled = true;
+       if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+         isActive_2 = true;
        }
-       if (isDragging) {
--        mainContainer.style.left = mouseEvent.clientX - offsetX + "px";
--        mainContainer.style.top = mouseEvent.clientY - offsetY + "px";
--        mainContainer.style.bottom = "auto";
--        mainContainer.style.right = "auto";
-+        container.style.left = mouseEvent.clientX - offsetX + "px";
-+        container.style.top = mouseEvent.clientY - offsetY + "px";
-+        container.style.bottom = "auto";
-+        container.style.right = "auto";
-       }
-     };
-     const handleMouseUp = () => {
-       isDragging = false;
--      mainContainer.style.transition = "all 0.3s ease";
-+      container.style.transition = "all 0.3s ease";
-       document.removeEventListener("mousemove", handleMouseMove);
-       document.removeEventListener("mouseup", handleMouseUp);
+       if (isActive) {
+@@ -521,11 +382,11 @@
      };
      document.addEventListener("mousemove", handleMouseMove);
      document.addEventListener("mouseup", handleMouseUp);
    });
--  mainContainer.addEventListener("click", (event_3) => {
+-  container.addEventListener("click", (event_3) => {
 +  container.addEventListener("click", (interceptedEvent) => {
-     if (isToggled) {
+     if (isActive_2) {
 -      event_3.stopImmediatePropagation();
 +      interceptedEvent.stopImmediatePropagation();
      }
    });
--  return mainContainer;
-+  return container;
+   return container;
  }
- function togglePanels() {
-   const deepToolsPanel = document.getElementById("deep-tools-panel");
-   const updateHistoryPanel = document.getElementById("update-history");
-@@ -541,10 +402,9 @@
+@@ -543,10 +404,9 @@
  }
  
  export {

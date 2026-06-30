@@ -14,8 +14,8 @@ function initAdBlocker() {
     'div.sidebar.left > div:has(> a[href*="doubleclick"]',
   ];
   const removeAds = () => {
-    adSelectors.forEach((selector) => {
-      document.querySelectorAll(selector).forEach((targetElement) => {
+    adSelectors.forEach((y) => {
+      document.querySelectorAll(y).forEach((targetElement) => {
         targetElement.style.display = "none !important";
         targetElement.style.opacity = "0 !important";
         targetElement.style.pointerEvents = "none !important";

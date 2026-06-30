@@ -8,21 +8,22 @@ import {
 import { startScheduledTask, stopInterval, autoChat } from "./features/chat.js";
 import { showNotification, simulateTyping } from "./ui/interaction.js";
 import { getAllPropertyNames, generateRandomString } from "./utils.js";
+import { featuresentitytrailState } from "./features/entitytrail.js";
 import { toggleMouseSimulation } from "./features/movement.js";
 import { initAdBlocker } from "./features/adblock.js";
 import { initBackgroundImage } from "./ui/theme.js";
 
-const stateMap = new WeakMap();
+const stateCache = new WeakMap();
 function wrapPropertyWithProxy(targetObject, propertyKey, proxyHandler) {
   const originalValue = targetObject[propertyKey];
   const proxyValue = new Proxy(originalValue, proxyHandler);
-  stateMap.set(proxyValue, originalValue);
+  stateCache.set(proxyValue, originalValue);
   targetObject[propertyKey] = proxyValue;
 }
 
-let isInitialized = false;
+let isProcessed = false;
 function initPacketInterceptor(config) {
-  if (isInitialized) {
+  if (isProcessed) {
     return;
   }
   function unescapeString(inputString) {
@@ -127,7 +128,7 @@ function initPacketInterceptor(config) {
     childList: true,
     subtree: true,
   });
-  isInitialized = true;
+  isProcessed = true;
   if (config) {
     config.textContent = "Special Characters Active";
     config.disabled = true;
@@ -137,14 +138,14 @@ function initPacketInterceptor(config) {
   showNotification("✅ Special Characters enabled! (One-time use)");
 }
 
-const rotationAngles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
-const orbitRadius = 300;
+const angles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
+const radius = 300;
 let gameInstance;
-let globalState;
+let appState;
 let playerData;
-let isReady = false;
+let isProcessed_2 = false;
 
-const encryptPacketData = (message, byteValue, suffix = "") => {
+const encryptPacketData = (url, byteValue, suffix = "") => {
   const stringPool = [
     "ode",
     "eat",
@@ -159,7 +160,7 @@ const encryptPacketData = (message, byteValue, suffix = "") => {
     "en",
     "setter",
   ];
-  if (!message) {
+  if (!url) {
     return null;
   }
   const plainText = ((firstText, secondText) => {
@@ -188,7 +189,7 @@ const encryptPacketData = (message, byteValue, suffix = "") => {
     return btoa(String.fromCharCode(...byteBuffer));
   })(
     String.fromCharCode(byteValue)[stringPool[8] + stringPool[1]](3) + suffix,
-    message,
+    url,
   );
   const encodedText = new TextEncoder()[stringPool[5] + stringPool[0]](
     plainText,
@@ -201,7 +202,7 @@ const encryptPacketData = (message, byteValue, suffix = "") => {
   dataView.setUint8(totalBufferSize - 1, byteValue);
   return buffer;
 };
-const securitySettings = {
+const config = {
   107: {
     hasSec: true,
     secLoadTime: 750,
@@ -214,14 +215,14 @@ const securitySettings = {
   },
 };
 const sendPacket = (payload, metadata = "") => {
-  if (gameInstance && globalState && stateCache.socketManager) {
-    gameInstance[stateCache.socketManager].sendBytePacket(
-      encryptPacketData(globalState.token._value, payload, metadata),
+  if (gameInstance && appState && config_2.socketManager) {
+    gameInstance[config_2.socketManager].sendBytePacket(
+      encryptPacketData(appState.token._value, payload, metadata),
     );
   }
 };
-const stateCache = {};
-const counter = 0;
+const config_2 = {};
+const currentTime = 0;
 const setupProxyHooks = () => {
   const propertyCache = {};
   for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
@@ -234,14 +235,14 @@ const setupProxyHooks = () => {
       contextMap[contextKey],
       contextValue,
     );
-    stateMap.set(contextInstance, contextMap[contextKey]);
+    stateCache.set(contextInstance, contextMap[contextKey]);
     contextMap[contextKey] = contextInstance;
   };
   wrapWithProxy(Function.prototype, "toString", {
     apply(thisArg, propertyKey, applyParams) {
       return propertyCache.apply(
         thisArg,
-        stateMap.get(propertyKey) || propertyKey,
+        stateCache.get(propertyKey) || propertyKey,
         applyParams,
       );
     },
@@ -254,8 +255,8 @@ const setupProxyHooks = () => {
   });
   wrapWithProxy(ProxyConstructor, "revocable", {
     apply(context, args, options) {
-      const result = propertyCache.apply(context, args, options);
-      return result;
+      const data = propertyCache.apply(context, args, options);
+      return data;
     },
   });
   let lastExecutionTime = 0;
@@ -280,53 +281,53 @@ const setupProxyHooks = () => {
           const obfuscatedKeys = allKeys.filter((obfuscatedVarName) =>
             obfuscatedVarName.startsWith("_0x"),
           );
-          stateCache.setFlash =
+          config_2.setFlash =
             Object.getOwnPropertyNames(playerData.__proto__.__proto__)
               .filter((obfuscatedPropName) =>
                 obfuscatedPropName.startsWith("_0x"),
               )
               .find(
                 (functionKey) => playerData[functionKey] instanceof Function,
-              ) || stateCache.setFlash;
-          stateCache.terrainManager =
+              ) || config_2.setFlash;
+          config_2.terrainManager =
             obfuscatedKeys.find(
               (shadowObjectKey) =>
                 typeof playerData[shadowObjectKey]?.shadow !== "undefined",
-            ) || stateCache.terrainManager;
-          stateCache.entityManager =
+            ) || config_2.terrainManager;
+          config_2.entityManager =
             obfuscatedKeys.find(
               (entitiesListKey) =>
                 typeof playerData[entitiesListKey]?.entitiesList !==
                 "undefined",
-            ) || stateCache.entityManager;
-          stateCache.entityManagerProps = {};
+            ) || config_2.entityManager;
+          config_2.entityManagerProps = {};
           const entityManagerKeys = getAllPropertyNames(
-            playerData[stateCache.entityManager],
+            playerData[config_2.entityManager],
           );
           const animalsListInterval = setInterval(() => {
-            stateCache.entityManagerProps.animalsList =
+            config_2.entityManagerProps.animalsList =
               entityManagerKeys
                 .filter((variableName) => variableName.startsWith("_0x"))
                 .find(
                   (entityName) =>
-                    typeof playerData?.[stateCache.entityManager]?.[
+                    typeof playerData?.[config_2.entityManager]?.[
                       entityName
                     ]?.[0] !== "undefined",
-                ) || stateCache.entityManagerProps.animalsList;
+                ) || config_2.entityManagerProps.animalsList;
             if (
-              typeof stateCache.entityManagerProps.animalsList !== "undefined"
+              typeof config_2.entityManagerProps.animalsList !== "undefined"
             ) {
               clearInterval(animalsListInterval);
             }
           }, 1000);
-          stateCache.socketManager =
+          config_2.socketManager =
             getAllPropertyNames(gameInstance).find(
               (networkClientKey) =>
                 typeof gameInstance[networkClientKey]?.sendBytePacket !==
                 "undefined",
-            ) || stateCache.socketManager;
+            ) || config_2.socketManager;
           try {
-            globalState = document
+            appState = document
               .getElementById("app")
               ._vnode.appContext.config.globalProperties.$simpleState.states.find(
                 (gameStore) => gameStore._storeMeta.id === "game",
@@ -373,7 +374,7 @@ const setupProxyHooks = () => {
   });
 };
 const disableGameRestrictions = () => {
-  if (isReady) {
+  if (isProcessed_2) {
     return;
   }
   if (!playerData) {
@@ -391,20 +392,20 @@ const disableGameRestrictions = () => {
     } catch {}
   }, 300);
   try {
-    if (stateCache.setFlash) {
-      playerData[stateCache.setFlash] = () => {};
+    if (config_2.setFlash) {
+      playerData[config_2.setFlash] = () => {};
     }
-    if (stateCache.terrainManager) {
-      const terrainManager = playerData[stateCache.terrainManager];
+    if (config_2.terrainManager) {
+      const terrainManager = playerData[config_2.terrainManager];
       if (terrainManager && terrainManager.shadow) {
         terrainManager.shadow.setShadowSize(1000000);
         terrainManager.shadow.setShadowSize = () => {};
       }
     }
-  } catch (error) {
-    console.error(error);
+  } catch (url_2) {
+    console.error(url_2);
   }
-  isReady = true;
+  isProcessed_2 = true;
 };
 function setupToolsPanel() {
   const toolsStyle = document.createElement("style");
@@ -435,10 +436,10 @@ function setupToolsPanel() {
       autoChat(chatMessage);
     }
   };
-  const patchButton = container.querySelector("#patchBtn");
-  patchButton.onclick = () => initPacketInterceptor(patchButton);
-  const spoofButton = container.querySelector("#spoofBtn");
-  spoofButton.onclick = () => {
+  const spoofButton = container.querySelector("#patchBtn");
+  spoofButton.onclick = () => initPacketInterceptor(spoofButton);
+  const spoofButton_2 = container.querySelector("#spoofBtn");
+  spoofButton_2.onclick = () => {
     const randomValue = generateRandomString(8);
     if (simulateTyping(".play-game .el-input__inner", randomValue)) {
       showNotification("Spoofed name!");
@@ -448,47 +449,47 @@ function setupToolsPanel() {
       showNotification("No name input found! Enable special characters first.");
     }
   };
-  const spinButton = container.querySelector("#spinBtn");
-  spinButton.onclick = () => {
+  const autoChatButton = container.querySelector("#spinBtn");
+  autoChatButton.onclick = () => {
     toggleMouseSimulation();
-    if (state.animationIntervalId) {
-      spinButton.textContent = "Disable Auto Spin";
-      spinButton.style.color = "var(--accent)";
-      spinButton.style.opacity = "0.6";
+    if (featuresentitytrailState.entityTrailInterval_2) {
+      autoChatButton.textContent = "Disable Auto Spin";
+      autoChatButton.style.color = "var(--accent)";
+      autoChatButton.style.opacity = "0.6";
     } else {
-      spinButton.textContent = "Enable Auto Spin";
-      spinButton.style.color = "var(--accent)";
-      spinButton.style.opacity = "1";
+      autoChatButton.textContent = "Enable Auto Spin";
+      autoChatButton.style.color = "var(--accent)";
+      autoChatButton.style.opacity = "1";
     }
   };
   const spinKeyInput = container.querySelector("#spinKeyInput");
-  let pressedKey = null;
+  let lastPressedKey = null;
   spinKeyInput.addEventListener("keydown", (keyboardEvent) => {
     keyboardEvent.preventDefault();
-    pressedKey = keyboardEvent.code || keyboardEvent.key;
-    spinKeyInput.value = pressedKey.replace("Key", "").toLowerCase();
+    lastPressedKey = keyboardEvent.code || keyboardEvent.key;
+    spinKeyInput.value = lastPressedKey.replace("Key", "").toLowerCase();
   });
   document.addEventListener("keydown", (keyboardEvent_2) => {
     if (
-      pressedKey &&
-      keyboardEvent_2.code === pressedKey &&
+      lastPressedKey &&
+      keyboardEvent_2.code === lastPressedKey &&
       !keyboardEvent_2.target.matches("input, textarea, button")
     ) {
       keyboardEvent_2.preventDefault();
       toggleMouseSimulation();
-      if (state.animationIntervalId) {
-        spinButton.textContent = "Disable Auto Spin";
-        spinButton.style.color = "var(--accent)";
-        spinButton.style.opacity = "0.6";
+      if (featuresentitytrailState.entityTrailInterval_2) {
+        autoChatButton.textContent = "Disable Auto Spin";
+        autoChatButton.style.color = "var(--accent)";
+        autoChatButton.style.opacity = "0.6";
       } else {
-        spinButton.textContent = "Enable Auto Spin";
-        spinButton.style.color = "var(--accent)";
-        spinButton.style.opacity = "1";
+        autoChatButton.textContent = "Enable Auto Spin";
+        autoChatButton.style.color = "var(--accent)";
+        autoChatButton.style.opacity = "1";
       }
     }
   });
-  const autoChatButton = container.querySelector("#autoChatBtn");
-  autoChatButton.onclick = () => {
+  const autoChatButton_2 = container.querySelector("#autoChatBtn");
+  autoChatButton_2.onclick = () => {
     const chatMessage_2 = container.querySelector("#chatMsg").value;
     const delayInput = container.querySelector("#delayInput");
     const delayValue = parseInt(delayInput.value) || 10;
@@ -496,22 +497,22 @@ function setupToolsPanel() {
       showNotification("⚠️ Enter a message first!");
       return;
     }
-    if (state.isProcessing) {
+    if (state.isToggled) {
       stopInterval();
-      autoChatButton.textContent = "Enable Auto Chat";
-      autoChatButton.style.color = "var(--accent)";
-      autoChatButton.style.opacity = "1";
+      autoChatButton_2.textContent = "Enable Auto Chat";
+      autoChatButton_2.style.color = "var(--accent)";
+      autoChatButton_2.style.opacity = "1";
     } else {
       startScheduledTask(chatMessage_2, delayValue);
-      autoChatButton.textContent = "Disable Auto Chat";
-      autoChatButton.style.color = "var(--accent)";
-      autoChatButton.style.opacity = "0.6";
+      autoChatButton_2.textContent = "Disable Auto Chat";
+      autoChatButton_2.style.color = "var(--accent)";
+      autoChatButton_2.style.opacity = "0.6";
     }
   };
   let offsetX;
   let offsetY;
   let isActive = false;
-  let isDragging = false;
+  let isActive_2 = false;
   container.addEventListener("mousedown", (clickEvent) => {
     if (
       clickEvent.target.tagName === "BUTTON" ||
@@ -522,15 +523,15 @@ function setupToolsPanel() {
       return;
     }
     isActive = true;
-    isDragging = false;
+    isActive_2 = false;
     offsetX = clickEvent.clientX - container.getBoundingClientRect().left;
     offsetY = clickEvent.clientY - container.getBoundingClientRect().top;
     container.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
       const deltaX = mouseEvent.clientX - clickEvent.clientX;
       const deltaY = mouseEvent.clientY - clickEvent.clientY;
-      if (!isDragging && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isDragging = true;
+      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+        isActive_2 = true;
       }
       if (isActive) {
         container.style.left = mouseEvent.clientX - offsetX + "px";
@@ -549,7 +550,7 @@ function setupToolsPanel() {
     document.addEventListener("mouseup", handleMouseUp);
   });
   container.addEventListener("click", (event) => {
-    if (isDragging) {
+    if (isActive_2) {
       event.stopImmediatePropagation();
     }
   });
@@ -572,7 +573,7 @@ function initializePanels() {
 }
 document.addEventListener("keydown", (event) => {
   if (
-    event.key === state.currentKey &&
+    event.key === state.activeKey &&
     !event.repeat &&
     !event.target.matches("input, textarea, button")
   ) {
@@ -589,13 +590,11 @@ window.addEventListener("load", () => {
 });
 
 export const state = {
-  mainIntervalId: null,
-  isProcessing: false,
-  animationIntervalId: null,
+  entityTrailInterval: null,
+  isToggled: false,
   angleIndex: 0,
-  isInitialized_2: false,
-  isProcessing_2: false,
-  currentKey: "Shift",
+  isToggled_2: false,
+  activeKey: "Shift",
 };
 
 export {
@@ -607,10 +606,10 @@ export {
   disableGameRestrictions,
   setupToolsPanel,
   initializePanels,
-  rotationAngles,
-  orbitRadius,
+  angles,
+  radius,
   gameInstance,
   playerData,
-  isReady,
-  securitySettings,
+  isProcessed_2,
+  config,
 };

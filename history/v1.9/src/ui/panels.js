@@ -14,14 +14,16 @@ import {
   playerData,
   initAntiDetection,
   startAutoFarm,
+  angle,
   musicPlaylist,
   state,
 } from "../core.js";
 import {
   toggleEsp,
   trackPlayer,
-  clearTracking,
+  toggleEsp_2,
   toggleMinimapSize,
+  toggleEsp_3,
 } from "../features/esp.js";
 import {
   startScheduledTask,
@@ -29,16 +31,13 @@ import {
   simulateChatInput,
 } from "../features/chat.js";
 import {
-  toggleLock,
-  enableAutoDodge,
-  disableAutoDodge,
-} from "../features/aimbot.js";
-import {
   showNotification,
   simulateTyping,
   initNameAutofill,
 } from "./interaction.js";
 import { setupPatrolPoints, stopAutoFarm } from "../features/autofarm.js";
+import { featuresentitytrailState } from "../features/entitytrail.js";
+import { toggleLock, enableAutoDodge } from "../features/aimbot.js";
 import { toggleMouseSimulation } from "../features/movement.js";
 import { applyTheme, initBackgroundImage } from "./theme.js";
 import { activateAstraVision } from "../features/xray.js";
@@ -152,14 +151,12 @@ function createToolsPanel() {
     '\n      <div class="ast-header"><span class="ast-header-title">Astraphobia Client</span><button class="ast-header-min" id="mainMin">−</button></div>\n      <div class="ast-body" id="mainBody">\n                    <span class="ast-section-label">Autofill Name</span>\n        <div class="ast-row" style="margin-bottom:6px;">\n          <input class="ast-input" type="text" id="savedNameDisplay" placeholder="Enter name..." style="flex:1;">\n          <button class="ast-btn" id="setNameBtn" style="width:40px;padding:6px 5px;margin:0;flex-shrink:0;text-align:center;">Set</button>\n          <button class="ast-btn" id="clearNameBtn" style="width:30px;padding:6px 5px;margin:0;flex-shrink:0;text-align:center;">✕</button>\n        </div>\n        <span class="ast-section-label">Chat</span>\n        <textarea class="ast-textarea" id="chatMsg" placeholder="Message..." rows="2"></textarea>\n        <button class="ast-btn" id="sendBtn">Send Chat</button>\n        <div class="ast-row" style="margin-top:4px;">\n          <input class="ast-input" type="number" id="delayInput" min="1" max="300" value="10" style="width:50px;text-align:center;">\n          <span style="font-size:11px;color:#888;">sec</span>\n          <button class="ast-btn" id="autoChatBtn" style="flex:1;margin-bottom:0;">Auto Chat</button>\n        </div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Tools</span>\n        <button class="ast-btn" id="patchBtn">Special Characters</button>\n        <button class="ast-btn" id="spoofBtn">Spoof Username</button>\n        <button class="ast-btn" id="spinBtn">Auto Spin</button>\n        <div class="ast-key-row"><span>Spin key</span><input class="ast-key-capture" id="spinKeyInput" type="text" placeholder="..." readonly></div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Turn Controls</span>\n        <div class="ast-key-row">\n          <span>Turn Left</span>\n          <input class="ast-key-capture" id="turnLeftKeyInput" type="text" value="Q" readonly>\n        </div>\n        <div class="ast-key-row">\n          <span>Turn Right</span>\n          <input class="ast-key-capture" id="turnRightKeyInput" type="text" value="E" readonly>\n        </div>\n        <div class="ast-credits">Made by Astraphobia</div>\n      </div>';
   document.body.appendChild(toolsPanel);
   const mainBody = toolsPanel.querySelector("#mainBody");
-  let isMenuVisible = false;
+  let isHidden = false;
   toolsPanel.querySelector("#mainMin").onclick = (event) => {
     event.stopPropagation();
-    isMenuVisible = !isMenuVisible;
-    mainBody.style.display = isMenuVisible ? "none" : "block";
-    toolsPanel.querySelector("#mainMin").textContent = isMenuVisible
-      ? "+"
-      : "−";
+    isHidden = !isHidden;
+    mainBody.style.display = isHidden ? "none" : "block";
+    toolsPanel.querySelector("#mainMin").textContent = isHidden ? "+" : "−";
   };
   toolsPanel.querySelector("#sendBtn").onclick = () => {
     const chatMessage = toolsPanel.querySelector("#chatMsg").value;
@@ -167,8 +164,8 @@ function createToolsPanel() {
       simulateChatInput(chatMessage);
     }
   };
-  const autoChatBtn = toolsPanel.querySelector("#autoChatBtn");
-  autoChatBtn.onclick = () => {
+  const spinBtn = toolsPanel.querySelector("#autoChatBtn");
+  spinBtn.onclick = () => {
     const messageText = toolsPanel.querySelector("#chatMsg").value;
     const delayValue =
       parseInt(toolsPanel.querySelector("#delayInput").value) || 10;
@@ -176,14 +173,14 @@ function createToolsPanel() {
       showNotification("Enter a message first");
       return;
     }
-    if (state.isLooping) {
+    if (state.isToggled_2) {
       stopInterval();
-      autoChatBtn.textContent = "Auto Chat";
-      autoChatBtn.classList.remove("toggle-on");
+      spinBtn.textContent = "Auto Chat";
+      spinBtn.classList.remove("toggle-on");
     } else {
       startScheduledTask(messageText, delayValue);
-      autoChatBtn.textContent = "Stop Chat";
-      autoChatBtn.classList.add("toggle-on");
+      spinBtn.textContent = "Stop Chat";
+      spinBtn.classList.add("toggle-on");
     }
   };
   const patchBtn = toolsPanel.querySelector("#patchBtn");
@@ -203,18 +200,23 @@ function createToolsPanel() {
       showNotification("No name input found");
     }
   };
-  const spinBtn = toolsPanel.querySelector("#spinBtn");
-  spinBtn.onclick = () => {
+  const spinBtn_2 = toolsPanel.querySelector("#spinBtn");
+  spinBtn_2.onclick = () => {
     toggleMouseSimulation();
-    spinBtn.textContent = state.animationInterval ? "Stop Spin" : "Auto Spin";
-    spinBtn.classList.toggle("toggle-on", !!state.animationInterval);
+    spinBtn_2.textContent = featuresentitytrailState.entityTrailInterval_2
+      ? "Stop Spin"
+      : "Auto Spin";
+    spinBtn_2.classList.toggle(
+      "toggle-on",
+      !!featuresentitytrailState.entityTrailInterval_2,
+    );
   };
-  const spinKeyInput = toolsPanel.querySelector("#spinKeyInput");
+  const turnRightKeyInput = toolsPanel.querySelector("#spinKeyInput");
   let lastPressedKey = null;
-  spinKeyInput.addEventListener("keydown", (keydownEvent) => {
+  turnRightKeyInput.addEventListener("keydown", (keydownEvent) => {
     keydownEvent.preventDefault();
     lastPressedKey = keydownEvent.code || keydownEvent.key;
-    spinKeyInput.value = lastPressedKey.replace("Key", "").toUpperCase();
+    turnRightKeyInput.value = lastPressedKey.replace("Key", "").toUpperCase();
   });
   document.addEventListener("keydown", (keyupEvent) => {
     if (
@@ -224,53 +226,58 @@ function createToolsPanel() {
     ) {
       keyupEvent.preventDefault();
       toggleMouseSimulation();
-      spinBtn.textContent = state.animationInterval ? "Stop Spin" : "Auto Spin";
-      spinBtn.classList.toggle("toggle-on", !!state.animationInterval);
+      spinBtn_2.textContent = featuresentitytrailState.entityTrailInterval_2
+        ? "Stop Spin"
+        : "Auto Spin";
+      spinBtn_2.classList.toggle(
+        "toggle-on",
+        !!featuresentitytrailState.entityTrailInterval_2,
+      );
     }
   });
-  const turnLeftKeyInput = toolsPanel.querySelector("#turnLeftKeyInput");
-  const turnRightKeyInput = toolsPanel.querySelector("#turnRightKeyInput");
-  turnLeftKeyInput.value = state.keyQ.toUpperCase();
-  turnRightKeyInput.value = state.keyE.toUpperCase();
-  turnLeftKeyInput.addEventListener("keydown", (clickEvent) => {
+  const turnRightKeyInput_2 = toolsPanel.querySelector("#turnLeftKeyInput");
+  const turnRightKeyInput_3 = toolsPanel.querySelector("#turnRightKeyInput");
+  turnRightKeyInput_2.value = state.keyQ.toUpperCase();
+  turnRightKeyInput_3.value = state.keyE.toUpperCase();
+  turnRightKeyInput_2.addEventListener("keydown", (clickEvent) => {
     clickEvent.preventDefault();
     clickEvent.stopPropagation();
     state.keyQ = clickEvent.key;
-    turnLeftKeyInput.value =
+    turnRightKeyInput_2.value =
       clickEvent.key.length === 1
         ? clickEvent.key.toUpperCase()
         : clickEvent.key;
   });
-  turnRightKeyInput.addEventListener("keydown", (contextEvent) => {
+  turnRightKeyInput_3.addEventListener("keydown", (contextEvent) => {
     contextEvent.preventDefault();
     contextEvent.stopPropagation();
     state.keyE = contextEvent.key;
-    turnRightKeyInput.value =
+    turnRightKeyInput_3.value =
       contextEvent.key.length === 1
         ? contextEvent.key.toUpperCase()
         : contextEvent.key;
   });
   const savedNameDisplay = toolsPanel.querySelector("#savedNameDisplay");
-  const setNameBtn = toolsPanel.querySelector("#setNameBtn");
-  const clearNameBtn = toolsPanel.querySelector("#clearNameBtn");
+  const clearNameBtn = toolsPanel.querySelector("#setNameBtn");
+  const clearNameBtn_2 = toolsPanel.querySelector("#clearNameBtn");
   if (savedNameDisplay) {
     savedNameDisplay.value = localStorage.getItem("autofill_name") || "";
   }
-  if (setNameBtn) {
-    setNameBtn.onclick = () => {
+  if (clearNameBtn) {
+    clearNameBtn.onclick = () => {
       const autofillName = savedNameDisplay.value.trim();
       if (autofillName) {
         localStorage.setItem("autofill_name", autofillName);
-        state.isMuted = false;
+        state.isToggled = false;
         initNameAutofill();
         showNotification("Name saved: " + autofillName);
       }
     };
   }
-  if (clearNameBtn) {
-    clearNameBtn.onclick = () => {
+  if (clearNameBtn_2) {
+    clearNameBtn_2.onclick = () => {
       localStorage.removeItem("autofill_name");
-      state.isMuted = false;
+      state.isToggled = false;
       if (savedNameDisplay) {
         savedNameDisplay.value = "";
       }
@@ -288,15 +295,13 @@ function createVisionPanel() {
   visionPanel.innerHTML =
     '\n      <div class="ast-header"><span class="ast-header-title">Astraphobia Client</span><button class="ast-header-min" id="visionMin">−</button></div>\n      <div class="ast-body" id="visionBody">\n        <span class="ast-section-label">Vision</span>\n        <button class="ast-btn patched" id="thresherBtn" disabled>Thresher Boost (Patched)</button>\n        <button class="ast-btn" id="astraVisionBtn">Astra-Vision</button>\n        <button class="ast-btn" id="smallMinimapBtn">Small Minimap</button>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">ESP</span>\n        <button class="ast-btn" id="espBtn">ESP</button>\n        <select class="ast-select" id="espModeSelect"><option value="players">Players</option><option value="food">Food</option></select>\n        <button class="ast-btn" id="trackNearestBtn">Track Nearest (F3)</button>\n        <button class="ast-btn" id="untrackBtn">Untrack (F4)</button>\n        <div class="ast-sep"></div>\n        <button class="ast-btn" id="espColorsToggleBtn" style="display:flex;align-items:center;justify-content:space-between;">\n          <span style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-sec,#888);">ESP Colors</span>\n          <span id="espColorsArrow" style="color:var(--text-sec,#888);font-size:12px;">▼</span>\n        </button>\n        <div id="espColorsSection" style="display:none;">\n          <div class="ast-key-row"><span>Close (&lt;500)</span><input type="color" id="espColorClose" value="#ff0000" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Medium (&lt;1500)</span><input type="color" id="espColorMedium" value="#ffff00" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Far (&lt;3000)</span><input type="color" id="espColorFar" value="#00ffff" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Very Far</span><input type="color" id="espColorVeryFar" value="#00ff00" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Tracked</span><input type="color" id="espColorTracked" value="#ff00ff" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Food Close</span><input type="color" id="espColorFoodClose" value="#00ff00" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Food Medium</span><input type="color" id="espColorFoodMedium" value="#88ff88" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Food Far</span><input type="color" id="espColorFoodFar" value="#44cc44" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n        </div>\n      </div>';
   document.body.appendChild(visionPanel);
-  const visionBody = visionPanel.querySelector("#visionBody");
-  let isVisionHidden = false;
+  const espColorsSection = visionPanel.querySelector("#visionBody");
+  let isHidden = false;
   visionPanel.querySelector("#visionMin").onclick = (toggleEvent) => {
     toggleEvent.stopPropagation();
-    isVisionHidden = !isVisionHidden;
-    visionBody.style.display = isVisionHidden ? "none" : "block";
-    visionPanel.querySelector("#visionMin").textContent = isVisionHidden
-      ? "+"
-      : "−";
+    isHidden = !isHidden;
+    espColorsSection.style.display = isHidden ? "none" : "block";
+    visionPanel.querySelector("#visionMin").textContent = isHidden ? "+" : "−";
   };
   visionPanel.querySelector("#thresherBtn").onclick = (preventEvent) => {
     preventEvent.preventDefault();
@@ -304,7 +309,7 @@ function createVisionPanel() {
   };
   const astraVisionBtn = visionPanel.querySelector("#astraVisionBtn");
   astraVisionBtn.onclick = () => {
-    if (state.isEnabled) {
+    if (state.isProcessed_5) {
       showNotification("Already active");
       return;
     }
@@ -324,8 +329,8 @@ function createVisionPanel() {
     astraVisionBtn.classList.add("toggle-on");
     astraVisionBtn.disabled = true;
   };
-  const smallMinimapBtn = visionPanel.querySelector("#smallMinimapBtn");
-  smallMinimapBtn.onclick = () => {
+  const espBtn = visionPanel.querySelector("#smallMinimapBtn");
+  espBtn.onclick = () => {
     initAntiDetection();
     if (!playerData) {
       showNotification("Not in game yet");
@@ -336,16 +341,14 @@ function createVisionPanel() {
       return;
     }
     toggleMinimapSize();
-    smallMinimapBtn.textContent = state.isMinimapSmall
-      ? "Minimap: Small"
-      : "Small Minimap";
-    smallMinimapBtn.classList.toggle("toggle-on", state.isMinimapSmall);
+    espBtn.textContent = state.isToggled_3 ? "Minimap: Small" : "Small Minimap";
+    espBtn.classList.toggle("toggle-on", state.isToggled_3);
   };
-  const espBtn = visionPanel.querySelector("#espBtn");
-  espBtn.onclick = () => {
+  const espBtn_2 = visionPanel.querySelector("#espBtn");
+  espBtn_2.onclick = () => {
     toggleEsp();
-    espBtn.textContent = window.espEnabled ? "ESP ✓" : "ESP";
-    espBtn.classList.toggle("toggle-on", window.espEnabled);
+    espBtn_2.textContent = window.espEnabled ? "ESP ✓" : "ESP";
+    espBtn_2.classList.toggle("toggle-on", window.espEnabled);
   };
   const espModeSelect = visionPanel.querySelector("#espModeSelect");
   espModeSelect.value = window.espMode || "players";
@@ -354,17 +357,17 @@ function createVisionPanel() {
     showNotification("ESP: " + changeEvent.target.value);
   };
   visionPanel.querySelector("#trackNearestBtn").onclick = () => trackPlayer();
-  visionPanel.querySelector("#untrackBtn").onclick = () => clearTracking();
+  visionPanel.querySelector("#untrackBtn").onclick = () => toggleEsp_2();
   const espColorsToggleBtn = visionPanel.querySelector("#espColorsToggleBtn");
-  const espColorsSection = visionPanel.querySelector("#espColorsSection");
+  const espColorsSection_2 = visionPanel.querySelector("#espColorsSection");
   const espColorsArrow = visionPanel.querySelector("#espColorsArrow");
-  let isEspColorsVisible = false;
+  let isHidden_2 = false;
   espColorsToggleBtn.onclick = () => {
-    isEspColorsVisible = !isEspColorsVisible;
-    espColorsSection.style.display = isEspColorsVisible ? "block" : "none";
-    espColorsArrow.textContent = isEspColorsVisible ? "▲" : "▼";
+    isHidden_2 = !isHidden_2;
+    espColorsSection_2.style.display = isHidden_2 ? "block" : "none";
+    espColorsArrow.textContent = isHidden_2 ? "▲" : "▼";
   };
-  const espColorConfig = {
+  const eventInit = {
     espColorClose: "close",
     espColorMedium: "medium",
     espColorFar: "far",
@@ -374,7 +377,7 @@ function createVisionPanel() {
     espColorFoodMedium: "foodMedium",
     espColorFoodFar: "foodFar",
   };
-  Object.entries(espColorConfig).forEach(([elementId, colorKey]) => {
+  Object.entries(eventInit).forEach(([elementId, colorKey]) => {
     const element = visionPanel.querySelector("#" + elementId);
     if (element) {
       element.addEventListener("input", (event) => {
@@ -459,7 +462,7 @@ function createAutomationPanel() {
   const autoDodgeButton = automationPanel.querySelector("#autoDodgeBtn");
   autoDodgeButton.onclick = () => {
     if (window.autoDodgeEnabled) {
-      disableAutoDodge();
+      toggleEsp_3();
       autoDodgeButton.textContent = "Auto Dodge";
       autoDodgeButton.classList.remove("toggle-on");
     } else {
@@ -491,37 +494,37 @@ function createAutomationPanel() {
       showNotification("Farm: " + farmModeChangeEvent.target.value);
     }
   };
-  const farmBoostToggle = automationPanel.querySelector("#farmBoostToggle");
-  const farmEvolveToggle = automationPanel.querySelector("#farmEvolveToggle");
-  const farmAvoidToggle = automationPanel.querySelector("#farmAvoidToggle");
-  farmBoostToggle.checked = window.autoFarmBoost;
-  farmEvolveToggle.checked = window.autoFarmEvolve;
-  farmAvoidToggle.checked = window.autoFarmAvoidPlayers;
-  const farmBoostLabel = farmBoostToggle.nextElementSibling;
+  const farmAvoidToggle = automationPanel.querySelector("#farmBoostToggle");
+  const farmAvoidToggle_2 = automationPanel.querySelector("#farmEvolveToggle");
+  const farmAvoidToggle_3 = automationPanel.querySelector("#farmAvoidToggle");
+  farmAvoidToggle.checked = window.autoFarmBoost;
+  farmAvoidToggle_2.checked = window.autoFarmEvolve;
+  farmAvoidToggle_3.checked = window.autoFarmAvoidPlayers;
+  const farmBoostLabel = farmAvoidToggle.nextElementSibling;
   farmBoostLabel.addEventListener("click", (autoFarmToggleEvent) => {
     autoFarmToggleEvent.stopPropagation();
-    farmBoostToggle.checked = !farmBoostToggle.checked;
-    window.autoFarmBoost = farmBoostToggle.checked;
+    farmAvoidToggle.checked = !farmAvoidToggle.checked;
+    window.autoFarmBoost = farmAvoidToggle.checked;
     showNotification(
-      farmBoostToggle.checked ? "Farm boost ON" : "Farm boost OFF",
+      farmAvoidToggle.checked ? "Farm boost ON" : "Farm boost OFF",
     );
   });
-  const farmEvolveLabel = farmEvolveToggle.nextElementSibling;
+  const farmEvolveLabel = farmAvoidToggle_2.nextElementSibling;
   farmEvolveLabel.addEventListener("click", (settingToggleEvent) => {
     settingToggleEvent.stopPropagation();
-    farmEvolveToggle.checked = !farmEvolveToggle.checked;
-    window.autoFarmEvolve = farmEvolveToggle.checked;
+    farmAvoidToggle_2.checked = !farmAvoidToggle_2.checked;
+    window.autoFarmEvolve = farmAvoidToggle_2.checked;
     showNotification(
-      farmEvolveToggle.checked ? "Auto evolve ON" : "Auto evolve OFF",
+      farmAvoidToggle_2.checked ? "Auto evolve ON" : "Auto evolve OFF",
     );
   });
-  const farmAvoidLabel = farmAvoidToggle.nextElementSibling;
+  const farmAvoidLabel = farmAvoidToggle_3.nextElementSibling;
   farmAvoidLabel.addEventListener("click", (optionToggleEvent) => {
     optionToggleEvent.stopPropagation();
-    farmAvoidToggle.checked = !farmAvoidToggle.checked;
-    window.autoFarmAvoidPlayers = farmAvoidToggle.checked;
+    farmAvoidToggle_3.checked = !farmAvoidToggle_3.checked;
+    window.autoFarmAvoidPlayers = farmAvoidToggle_3.checked;
     showNotification(
-      farmAvoidToggle.checked ? "Avoid players ON" : "Avoid players OFF",
+      farmAvoidToggle_3.checked ? "Avoid players ON" : "Avoid players OFF",
     );
   });
   makeDraggable(automationPanel);
@@ -535,13 +538,13 @@ function createSettingsPanel() {
   settingsPanel.innerHTML =
     '\n      <div class="ast-header"><span class="ast-header-title">Settings</span><button class="ast-header-min" id="settingsMin">−</button></div>\n      <div class="ast-body" id="settingsBody">\n        <div class="ast-key-row"><span>Toggle UI</span><input class="ast-key-capture" id="toggleKeyInput" type="text" value="SHIFT" readonly></div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Background</span>\n        <div class="ast-row"><input class="ast-input" type="text" id="bgUrl" placeholder="Image URL..." style="flex:1;"><button class="ast-btn" id="applyBg" style="width:auto;padding:6px 10px;margin:0;">Set</button></div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Theme</span>\n        <select class="ast-select" id="themeSelect">\n          <option value="grey">Grey</option><option value="blue">Blue</option><option value="red">Red</option>\n          <option value="green">Green</option><option value="pink">Pink</option><option value="starwars">Star Wars</option>\n          <option value="kfc">KFC</option><option value="halloween">Halloween 🔒</option>\n        </select>\n        <div class="ast-sep"></div>\n        <button class="ast-btn" id="customThemeToggleBtn" style="display:flex;align-items:center;justify-content:space-between;">\n          <span style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-sec,#888);">Create Theme</span>\n          <span id="customThemeArrow" style="color:var(--text-sec,#888);font-size:12px;">▼</span>\n        </button>\n        <div id="customThemeSection" style="display:none;padding-top:4px;">\n          <input class="ast-input" type="text" id="customThemeName" placeholder="Theme name..." style="width:100%;box-sizing:border-box;margin-bottom:4px;">\n<div class="ast-key-row"><span>Accent</span><input type="color" id="ctAcc" value="#888888" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n<div class="ast-key-row"><span>Background</span><input type="color" id="ctBg" value="#1a1a1a" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n<div class="ast-key-row"><span>Panel</span><input type="color" id="ctPanel" value="#242424" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n<button class="ast-btn" id="saveCustomTheme" style="margin-top:4px;">Save Theme</button>\n        </div>\n        <div class="ast-sep"></div>\n        <button class="ast-btn" id="myThemesToggleBtn" style="display:flex;align-items:center;justify-content:space-between;">\n          <span style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-sec,#888);">My Themes</span>\n          <span id="myThemesArrow" style="color:var(--text-sec,#888);font-size:12px;">▼</span>\n        </button>\n        <div id="myThemesSection" style="display:none;padding-top:4px;">\n          <div id="customThemeList"></div>\n          <div id="noThemesMsg" style="font-size:11px;color:#555;text-align:center;padding:8px 0;">No custom themes yet</div>\n        </div>\n      </div>';
   document.body.appendChild(settingsPanel);
-  const settingsBody = settingsPanel.querySelector("#settingsBody");
-  let isSettingsExpanded = false;
+  const themesSection = settingsPanel.querySelector("#settingsBody");
+  let isHidden = false;
   settingsPanel.querySelector("#settingsMin").onclick = (toggleEvent) => {
     toggleEvent.stopPropagation();
-    isSettingsExpanded = !isSettingsExpanded;
-    settingsBody.style.display = isSettingsExpanded ? "none" : "block";
-    settingsPanel.querySelector("#settingsMin").textContent = isSettingsExpanded
+    isHidden = !isHidden;
+    themesSection.style.display = isHidden ? "none" : "block";
+    settingsPanel.querySelector("#settingsMin").textContent = isHidden
       ? "+"
       : "−";
   };
@@ -556,17 +559,17 @@ function createSettingsPanel() {
   const bgUrlInput = settingsPanel.querySelector("#bgUrl");
   bgUrlInput.value = localStorage.getItem("bgUrl") || "";
   settingsPanel.querySelector("#applyBg").onclick = () => {
-    const backgroundUrl = bgUrlInput.value.trim();
-    if (!backgroundUrl) {
+    const bgUrl = bgUrlInput.value.trim();
+    if (!bgUrl) {
       showNotification("Enter a URL");
       return;
     }
-    localStorage.setItem("bgUrl", backgroundUrl);
+    localStorage.setItem("bgUrl", bgUrl);
     initBackgroundImage();
     showNotification("Background applied");
   };
   const themeSelectElement = settingsPanel.querySelector("#themeSelect");
-  const currentTheme = localStorage.getItem("theme") || "grey";
+  const angle = localStorage.getItem("theme") || "grey";
   const customThemes = JSON.parse(localStorage.getItem("customThemes") || "{}");
   const presetThemes = [
     "grey",
@@ -579,12 +582,10 @@ function createSettingsPanel() {
     "halloween",
   ];
   themeSelectElement.value =
-    presetThemes.includes(currentTheme) || customThemes[currentTheme]
-      ? currentTheme
-      : "grey";
+    presetThemes.includes(angle) || customThemes[angle] ? angle : "grey";
   themeSelectElement.onchange = (themeChangeEvent) => {
-    const selectedTheme = themeChangeEvent.target.value;
-    if (selectedTheme === "halloween") {
+    const myY = themeChangeEvent.target.value;
+    if (myY === "halloween") {
       showHalloweenCodeModal((isHalloweenTheme) => {
         if (isHalloweenTheme) {
           applyTheme("halloween");
@@ -594,8 +595,8 @@ function createSettingsPanel() {
         }
       });
     } else {
-      applyTheme(selectedTheme);
-      showNotification("Theme: " + selectedTheme);
+      applyTheme(myY);
+      showNotification("Theme: " + myY);
     }
   };
   const renderCustomThemes = () => {
@@ -609,33 +610,33 @@ function createSettingsPanel() {
     customThemeListElement.innerHTML = "";
     noThemesMsgElement.style.display =
       customThemeKeys.length === 0 ? "block" : "none";
-    customThemeKeys.forEach((themeName) => {
+    customThemeKeys.forEach((url) => {
       const themeDiv = document.createElement("div");
       themeDiv.style.cssText = "display:flex;gap:4px;margin-bottom:3px;";
-      const isThemeActive = localStorage.getItem("theme") === themeName;
+      const isThemeActive = localStorage.getItem("theme") === url;
       themeDiv.innerHTML =
         '\n          <button class="ast-btn' +
         (isThemeActive ? " toggle-on" : "") +
         '" style="flex:1;margin:0;">' +
-        themeName +
+        url +
         '</button>\n          <button class="ast-btn" style="width:32px;margin:0;text-align:center;color:#f44336;">✕</button>';
       themeDiv.querySelectorAll("button")[0].onclick = () => {
-        applyTheme(themeName);
-        showNotification("Theme: " + themeName);
+        applyTheme(url);
+        showNotification("Theme: " + url);
         renderCustomThemes();
       };
       themeDiv.querySelectorAll("button")[1].onclick = () => {
         const customThemes = JSON.parse(
           localStorage.getItem("customThemes") || "{}",
         );
-        delete customThemes[themeName];
+        delete customThemes[url];
         localStorage.setItem("customThemes", JSON.stringify(customThemes));
-        if (localStorage.getItem("theme") === themeName) {
+        if (localStorage.getItem("theme") === url) {
           applyTheme("grey");
           themeSelectElement.value = "grey";
           showNotification("Theme reset to Grey");
         } else {
-          showNotification("Deleted: " + themeName);
+          showNotification("Deleted: " + url);
         }
         renderCustomThemes();
       };
@@ -706,26 +707,26 @@ function createSettingsPanel() {
     renderCustomThemes();
     showNotification("Theme saved: " + inputThemeName);
   };
-  const customThemeToggleBtn = settingsPanel.querySelector(
+  const myThemesToggleBtn = settingsPanel.querySelector(
     "#customThemeToggleBtn",
   );
-  const customThemeSection = settingsPanel.querySelector("#customThemeSection");
-  const customThemeArrow = settingsPanel.querySelector("#customThemeArrow");
-  let isMyThemesExpanded = false;
-  customThemeToggleBtn.onclick = () => {
-    isMyThemesExpanded = !isMyThemesExpanded;
-    customThemeSection.style.display = isMyThemesExpanded ? "block" : "none";
-    customThemeArrow.textContent = isMyThemesExpanded ? "▲" : "▼";
-  };
-  const myThemesToggleBtn = settingsPanel.querySelector("#myThemesToggleBtn");
-  const themesSection = settingsPanel.querySelector("#myThemesSection");
-  const themesArrow = settingsPanel.querySelector("#myThemesArrow");
-  let isThemesExpanded = false;
+  const themesSection_2 = settingsPanel.querySelector("#customThemeSection");
+  const themesArrow = settingsPanel.querySelector("#customThemeArrow");
+  let isHidden_2 = false;
   myThemesToggleBtn.onclick = () => {
-    isThemesExpanded = !isThemesExpanded;
-    themesSection.style.display = isThemesExpanded ? "block" : "none";
-    themesArrow.textContent = isThemesExpanded ? "▲" : "▼";
-    if (isThemesExpanded) {
+    isHidden_2 = !isHidden_2;
+    themesSection_2.style.display = isHidden_2 ? "block" : "none";
+    themesArrow.textContent = isHidden_2 ? "▲" : "▼";
+  };
+  const myThemesToggleBtn_2 = settingsPanel.querySelector("#myThemesToggleBtn");
+  const themesSection_3 = settingsPanel.querySelector("#myThemesSection");
+  const themesArrow_2 = settingsPanel.querySelector("#myThemesArrow");
+  let isHidden_3 = false;
+  myThemesToggleBtn_2.onclick = () => {
+    isHidden_3 = !isHidden_3;
+    themesSection_3.style.display = isHidden_3 ? "block" : "none";
+    themesArrow_2.textContent = isHidden_3 ? "▲" : "▼";
+    if (isHidden_3) {
       renderCustomThemes();
     }
   };
@@ -741,14 +742,12 @@ function createMusicPanel() {
     '\n      <div class="ast-header"><span class="ast-header-title">Music Player</span><button class="ast-header-min" id="musicMin">−</button></div>\n      <div class="ast-body" id="musicBody">\n        <div id="musicTrackName" style="font-size:11px;color:var(--acc,#888);text-align:center;padding:4px 2px 8px 2px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">No tracks</div>\n\n        <div style="display:flex;gap:4px;justify-content:center;margin-bottom:8px;flex-wrap:wrap;">\n          <button class="ast-btn" id="musicPrevBtn" style="width:48px;margin:0;text-align:center;padding:6px 4px;">Prev</button>\n          <button class="ast-btn" id="musicPlayBtn" style="width:48px;margin:0;text-align:center;padding:6px 4px;">Play</button>\n          <button class="ast-btn" id="musicStopBtn" style="width:48px;margin:0;text-align:center;padding:6px 4px;">Stop</button>\n          <button class="ast-btn" id="musicNextBtn" style="width:48px;margin:0;text-align:center;padding:6px 4px;">Next</button>\n        </div>\n\n        <div style="display:flex;gap:4px;justify-content:center;margin-bottom:8px;">\n          <button class="ast-btn" id="musicLoopBtn" style="width:70px;margin:0;text-align:center;padding:6px 4px;">Loop</button>\n          <button class="ast-btn" id="musicShuffleBtn" style="width:70px;margin:0;text-align:center;padding:6px 4px;">Shuffle</button>\n        </div>\n\n        <div class="ast-key-row" style="margin-bottom:6px;">\n          <span>Volume</span>\n          <input type="range" id="musicVolume" min="0" max="1" step="0.05" value="0.5" style="width:120px;accent-color:var(--acc,#888);">\n        </div>\n\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Add Track</span>\n        <input class="ast-input" type="text" id="musicUrlInput" placeholder="Audio or YouTube URL..." style="width:100%;box-sizing:border-box;margin-bottom:4px;">\n        <input class="ast-input" type="text" id="musicNameInput" placeholder="Track name (optional)" style="width:100%;box-sizing:border-box;margin-bottom:4px;">\n        <button class="ast-btn" id="musicAddBtn">Add Track</button>\n\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Playlist</span>\n        <div id="musicTrackList" style="max-height:150px;overflow-y:auto;"></div>\n      </div>';
   document.body.appendChild(musicPanel);
   const musicBody = musicPanel.querySelector("#musicBody");
-  let isMusicHidden = false;
+  let isHidden = false;
   musicPanel.querySelector("#musicMin").onclick = (event) => {
     event.stopPropagation();
-    isMusicHidden = !isMusicHidden;
-    musicBody.style.display = isMusicHidden ? "none" : "block";
-    musicPanel.querySelector("#musicMin").textContent = isMusicHidden
-      ? "+"
-      : "−";
+    isHidden = !isHidden;
+    musicBody.style.display = isHidden ? "none" : "block";
+    musicPanel.querySelector("#musicMin").textContent = isHidden ? "+" : "−";
   };
   musicPanel.querySelector("#musicPrevBtn").onclick = () => playPrevious();
   musicPanel.querySelector("#musicStopBtn").onclick = () => stopPlayback();
@@ -765,25 +764,31 @@ function createMusicPanel() {
       resumePlayback();
     }
   };
-  const musicLoopButton = musicPanel.querySelector("#musicLoopBtn");
-  musicLoopButton.classList.toggle("toggle-on", state.isMusicLoopEnabled);
-  musicLoopButton.onclick = () => {
-    state.isMusicLoopEnabled = !state.isMusicLoopEnabled;
-    localStorage.setItem("musicLoop", state.isMusicLoopEnabled);
-    musicLoopButton.classList.toggle("toggle-on", state.isMusicLoopEnabled);
-    showNotification(state.isMusicLoopEnabled ? "Loop ON" : "Loop OFF");
-  };
-  const musicShuffleButton = musicPanel.querySelector("#musicShuffleBtn");
+  const musicShuffleButton = musicPanel.querySelector("#musicLoopBtn");
   musicShuffleButton.classList.toggle("toggle-on", state.isMusicShuffleEnabled);
   musicShuffleButton.onclick = () => {
     state.isMusicShuffleEnabled = !state.isMusicShuffleEnabled;
-    localStorage.setItem("musicShuffle", state.isMusicShuffleEnabled);
+    localStorage.setItem("musicLoop", state.isMusicShuffleEnabled);
     musicShuffleButton.classList.toggle(
       "toggle-on",
       state.isMusicShuffleEnabled,
     );
+    showNotification(state.isMusicShuffleEnabled ? "Loop ON" : "Loop OFF");
+  };
+  const musicShuffleButton_2 = musicPanel.querySelector("#musicShuffleBtn");
+  musicShuffleButton_2.classList.toggle(
+    "toggle-on",
+    state.isMusicShuffleEnabled_2,
+  );
+  musicShuffleButton_2.onclick = () => {
+    state.isMusicShuffleEnabled_2 = !state.isMusicShuffleEnabled_2;
+    localStorage.setItem("musicShuffle", state.isMusicShuffleEnabled_2);
+    musicShuffleButton_2.classList.toggle(
+      "toggle-on",
+      state.isMusicShuffleEnabled_2,
+    );
     showNotification(
-      state.isMusicShuffleEnabled ? "Shuffle ON" : "Shuffle OFF",
+      state.isMusicShuffleEnabled_2 ? "Shuffle ON" : "Shuffle OFF",
     );
   };
   const musicVolumeControl = musicPanel.querySelector("#musicVolume");

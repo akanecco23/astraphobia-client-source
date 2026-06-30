@@ -1,4 +1,4 @@
-import { radius, coreSharedState } from "../core.js";
+import { radius, state } from "../core.js";
 
 function applyTheme(themeName) {
   const rootElement = document.documentElement;

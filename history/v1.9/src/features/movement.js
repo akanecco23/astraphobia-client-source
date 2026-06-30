@@ -5,11 +5,12 @@ import {
   getFirstAnimalPosition,
   state,
 } from "../core.js";
+import { featuresentitytrailState } from "./entitytrail.js";
 import { showNotification } from "../ui/interaction.js";
 import { getGameCanvas } from "../utils.js";
 
 function startMouseSimulation() {
-  if (state.animationInterval) {
+  if (featuresentitytrailState.entityTrailInterval_2) {
     return;
   }
   const canvas = getGameCanvas();
@@ -17,7 +18,7 @@ function startMouseSimulation() {
     showNotification("Canvas not found");
     return;
   }
-  state.animationInterval = setInterval(() => {
+  featuresentitytrailState.entityTrailInterval_2 = setInterval(() => {
     const angleDegrees = angles[state.angleIndex];
     const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
     const offsetX = Math.round(radius * Math.sin(angleRadians));
@@ -32,15 +33,15 @@ function startMouseSimulation() {
     state.angleIndex = (state.angleIndex + 1) % angles.length;
   }, 15);
 }
-function stopMouseSimulation() {
-  if (state.animationInterval) {
-    clearInterval(state.animationInterval);
-    state.animationInterval = null;
+function stopEntityTrail() {
+  if (featuresentitytrailState.entityTrailInterval_2) {
+    clearInterval(featuresentitytrailState.entityTrailInterval_2);
+    featuresentitytrailState.entityTrailInterval_2 = null;
   }
 }
 function toggleMouseSimulation() {
-  if (state.animationInterval) {
-    stopMouseSimulation();
+  if (featuresentitytrailState.entityTrailInterval_2) {
+    stopEntityTrail();
   } else {
     startMouseSimulation();
   }
@@ -146,7 +147,7 @@ function moveAndClickTarget(targetX, targetY, shouldClick) {
 
 export {
   startMouseSimulation,
-  stopMouseSimulation,
+  stopEntityTrail,
   toggleMouseSimulation,
   simulatePointerMove,
   simulateClick,

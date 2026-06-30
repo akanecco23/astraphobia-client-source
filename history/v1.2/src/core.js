@@ -10,17 +10,17 @@ import { showNotification } from "./ui/interaction.js";
 import { initAdBlocker } from "./features/adblock.js";
 import { getAllPropertyNames } from "./utils.js";
 
-const stateMap = new WeakMap();
+const stateCache = new WeakMap();
 function wrapWithProxy(targetObject, propertyKey, proxyHandler) {
   const originalValue = targetObject[propertyKey];
   const proxyInstance = new Proxy(originalValue, proxyHandler);
-  stateMap.set(proxyInstance, originalValue);
+  stateCache.set(proxyInstance, originalValue);
   targetObject[propertyKey] = proxyInstance;
 }
 
-let isStarted = false;
+let isProcessed = false;
 function initNetworkHook(config) {
-  if (isStarted) {
+  if (isProcessed) {
     return;
   }
   function unescapeString(inputString) {
@@ -127,7 +127,7 @@ function initNetworkHook(config) {
     childList: true,
     subtree: true,
   });
-  isStarted = true;
+  isProcessed = true;
   if (config) {
     config.textContent = "Special Characters Active";
     config.disabled = true;
@@ -140,10 +140,10 @@ function initNetworkHook(config) {
 const angles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
 const radius = 300;
 let gameInstance;
-let globalState;
-let userData;
-let isInitialized = false;
-let isInitialized_2 = false;
+let appState;
+let playerData;
+let isProcessed_2 = false;
+let isProcessed_3 = false;
 const encryptPacketData = (options, charCode, suffix = "") => {
   const stringTable = [
     "ode",
@@ -170,11 +170,11 @@ const encryptPacketData = (options, charCode, suffix = "") => {
     const outputBuffer = new Uint8Array(
       encodedInput["l" + stringTable[4] + stringTable[6].slice(0, 2)],
     );
-    for (let index = 0; index < encodedInput.length; index++) {
-      outputBuffer[index] =
-        encodedInput[index] ^
+    for (let i = 0; i < encodedInput.length; i++) {
+      outputBuffer[i] =
+        encodedInput[i] ^
         encodedKey[
-          index %
+          i %
             encodedKey[
               "" +
                 stringTable[9].toLowerCase() +
@@ -203,7 +203,7 @@ const encryptPacketData = (options, charCode, suffix = "") => {
   dataView.setUint8(totalBufferSize - 1, charCode);
   return arrayBuffer;
 };
-const securityConfigs = {
+const config = {
   107: {
     hasSec: true,
     secLoadTime: 750,
@@ -216,14 +216,14 @@ const securityConfigs = {
   },
 };
 const sendPacket = (payload, extraData = "") => {
-  if (gameInstance && globalState && state.socketManager) {
-    gameInstance[state.socketManager].sendBytePacket(
-      encryptPacketData(globalState.token._value, payload, extraData),
+  if (gameInstance && appState && config_2.socketManager) {
+    gameInstance[config_2.socketManager].sendBytePacket(
+      encryptPacketData(appState.token._value, payload, extraData),
     );
   }
 };
-const state = {};
-const counter = 0;
+const config_2 = {};
+const currentTime = 0;
 const setupAntiDetection = () => {
   const storage = {};
   for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
@@ -233,14 +233,14 @@ const setupAntiDetection = () => {
   const lookupGetter = Object.prototype.__lookupGetter__;
   const wrapWithProxy = (dataStore, storeIndex, storeValue) => {
     const processedValue = new ProxyClass(dataStore[storeIndex], storeValue);
-    stateMap.set(processedValue, dataStore[storeIndex]);
+    stateCache.set(processedValue, dataStore[storeIndex]);
     dataStore[storeIndex] = processedValue;
   };
   wrapWithProxy(Function.prototype, "toString", {
     apply(context, functionKey, applyArgs) {
       return storage.apply(
         context,
-        stateMap.get(functionKey) || functionKey,
+        stateCache.get(functionKey) || functionKey,
         applyArgs,
       );
     },
@@ -270,52 +270,57 @@ const setupAntiDetection = () => {
           }
         } catch {}
         if (applyArgs3[0] && applyArgs3[0].aboveBgPlatformsContainer != null) {
-          userData = applyArgs3[0];
+          playerData = applyArgs3[0];
           gameInstance = applyArgs3[0].game;
-          const allKeys = getAllPropertyNames(userData);
+          const allKeys = getAllPropertyNames(playerData);
           const obfuscatedKeys = allKeys.filter((obfuscatedVarName) =>
             obfuscatedVarName.startsWith("_0x"),
           );
-          state.setFlash =
-            Object.getOwnPropertyNames(userData.__proto__.__proto__)
+          config_2.setFlash =
+            Object.getOwnPropertyNames(playerData.__proto__.__proto__)
               .filter((targetVarName) => targetVarName.startsWith("_0x"))
-              .find((methodName) => userData[methodName] instanceof Function) ||
-            state.setFlash;
-          state.terrainManager =
+              .find(
+                (methodName) => playerData[methodName] instanceof Function,
+              ) || config_2.setFlash;
+          config_2.terrainManager =
             obfuscatedKeys.find(
               (shadowEntityKey) =>
-                typeof userData[shadowEntityKey]?.shadow !== "undefined",
-            ) || state.terrainManager;
-          state.entityManager =
+                typeof playerData[shadowEntityKey]?.shadow !== "undefined",
+            ) || config_2.terrainManager;
+          config_2.entityManager =
             obfuscatedKeys.find(
               (entitiesListKey) =>
-                typeof userData[entitiesListKey]?.entitiesList !== "undefined",
-            ) || state.entityManager;
-          state.entityManagerProps = {};
+                typeof playerData[entitiesListKey]?.entitiesList !==
+                "undefined",
+            ) || config_2.entityManager;
+          config_2.entityManagerProps = {};
           const entityManagerKeys = getAllPropertyNames(
-            userData[state.entityManager],
+            playerData[config_2.entityManager],
           );
           const animalsUpdateInterval = setInterval(() => {
-            state.entityManagerProps.animalsList =
+            config_2.entityManagerProps.animalsList =
               entityManagerKeys
                 .filter((variableName) => variableName.startsWith("_0x"))
                 .find(
                   (entityKey) =>
-                    typeof userData?.[state.entityManager]?.[entityKey]?.[0] !==
-                    "undefined",
-                ) || state.entityManagerProps.animalsList;
-            if (typeof state.entityManagerProps.animalsList !== "undefined") {
+                    typeof playerData?.[config_2.entityManager]?.[
+                      entityKey
+                    ]?.[0] !== "undefined",
+                ) || config_2.entityManagerProps.animalsList;
+            if (
+              typeof config_2.entityManagerProps.animalsList !== "undefined"
+            ) {
               clearInterval(animalsUpdateInterval);
             }
           }, 1000);
-          state.socketManager =
+          config_2.socketManager =
             getAllPropertyNames(gameInstance).find(
               (networkServiceKey) =>
                 typeof gameInstance[networkServiceKey]?.sendBytePacket !==
                 "undefined",
-            ) || state.socketManager;
+            ) || config_2.socketManager;
           try {
-            globalState = document
+            appState = document
               .getElementById("app")
               ._vnode.appContext.config.globalProperties.$simpleState.states.find(
                 (gameStore) => gameStore._storeMeta.id === "game",
@@ -327,10 +332,10 @@ const setupAntiDetection = () => {
           } catch {}
           animalsCheckInterval = setInterval(() => {
             try {
-              if (!userData?.myAnimals?.[0]) {
+              if (!playerData?.myAnimals?.[0]) {
                 return;
               }
-              const myAnimal = userData.myAnimals[0];
+              const myAnimal = playerData.myAnimals[0];
               if (myAnimal.fadingTrail) {
                 const fadingTrailPrototype = Object.getPrototypeOf(
                   myAnimal.fadingTrail,
@@ -362,10 +367,10 @@ const setupAntiDetection = () => {
   });
 };
 const applyGameHacks = () => {
-  if (isInitialized) {
+  if (isProcessed_2) {
     return;
   }
-  if (!userData) {
+  if (!playerData) {
     setTimeout(applyGameHacks, 500);
     return;
   }
@@ -380,23 +385,23 @@ const applyGameHacks = () => {
     } catch {}
   }, 300);
   try {
-    if (state.setFlash) {
-      userData[state.setFlash] = () => {};
+    if (config_2.setFlash) {
+      playerData[config_2.setFlash] = () => {};
     }
-    if (state.terrainManager) {
-      const terrainManager = userData[state.terrainManager];
+    if (config_2.terrainManager) {
+      const terrainManager = playerData[config_2.terrainManager];
       if (terrainManager && terrainManager.shadow) {
         terrainManager.shadow.setShadowSize(1000000);
         terrainManager.shadow.setShadowSize = () => {};
       }
     }
-  } catch (error) {
-    console.error(error);
+  } catch (url) {
+    console.error(url);
   }
-  isInitialized = true;
+  isProcessed_2 = true;
 };
 const initMod = () => {
-  if (isInitialized_2) {
+  if (isProcessed_3) {
     return;
   }
   function sendActionSequence() {
@@ -433,13 +438,13 @@ const initMod = () => {
     "click",
     (animalsProcessHandler) => {
       try {
-        if (!userData?.myAnimals?.[0]) {
+        if (!playerData?.myAnimals?.[0]) {
           return;
         }
-        const visibleFishLevel = userData.myAnimals[0].visibleFishLevel;
+        const visibleFishLevel = playerData.myAnimals[0].visibleFishLevel;
         const fishLevelConfig = {
-          ...securityConfigs.default,
-          ...securityConfigs[visibleFishLevel],
+          ...config.default,
+          ...config[visibleFishLevel],
         };
         if (animalsProcessHandler.ctrlKey) {
           if (animalsProcessHandler.shiftKey && visibleFishLevel === 107) {
@@ -448,7 +453,7 @@ const initMod = () => {
           } else if (
             animalsProcessHandler.shiftKey &&
             visibleFishLevel !== 101 &&
-            userData.myAnimals[0]._standing
+            playerData.myAnimals[0]._standing
           ) {
             handleAnimalAction(
               Math.floor(Math.random() * 1647483648) + 500000000,
@@ -466,7 +471,7 @@ const initMod = () => {
           }
         } else if (animalsProcessHandler.altKey) {
           handleAnimalAction(
-            userData?.myAnimals?.[0]?._standing
+            playerData?.myAnimals?.[0]?._standing
               ? 41
               : Math.floor(fishLevelConfig.secLoadTime / 2),
           );
@@ -491,7 +496,7 @@ const initMod = () => {
       document.getElementById("ctrl-overlay").style.pointerEvents = "none";
     } catch {}
   });
-  isInitialized_2 = true;
+  isProcessed_3 = true;
 };
 
 function initializePanels() {
@@ -510,7 +515,7 @@ function initializePanels() {
 }
 document.addEventListener("keydown", (event) => {
   if (
-    event.key === coreSharedState.pressedKey &&
+    event.key === state.activeKey &&
     !event.repeat &&
     !event.target.matches("input, textarea, button")
   ) {
@@ -526,12 +531,11 @@ window.addEventListener("load", () => {
   }, 1000);
 });
 
-export const coreSharedState = {
-  mainInterval: null,
-  isActive: false,
-  animationInterval: null,
+export const state = {
+  entityTrailInterval: null,
+  isToggled: false,
   angleIndex: 0,
-  pressedKey: "Shift",
+  activeKey: "Shift",
 };
 
 export {
@@ -545,8 +549,8 @@ export {
   initializePanels,
   angles,
   radius,
-  userData,
-  isInitialized,
-  isInitialized_2,
-  securityConfigs,
+  playerData,
+  isProcessed_2,
+  isProcessed_3,
+  config,
 };

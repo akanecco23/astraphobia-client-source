@@ -123,41 +123,41 @@ function drawRadar(ctx, canvas, gameState) {
     if (targetEntityId) {
       const targetEntity = getEntityPosition(targetEntityId);
       if (targetEntity) {
-        const deltaX = targetEntity.x - gameState.myPos.x;
-        const deltaY = targetEntity.y - gameState.myPos.y;
-        const drawX = Math.max(
+        const deltaY = targetEntity.x - gameState.myPos.x;
+        const deltaY_2 = targetEntity.y - gameState.myPos.y;
+        const drawY = Math.max(
           radarX + 2,
           Math.min(
             radarX + radarSize - 2,
-            radarX + radarSize / 2 + deltaX * radarScale,
+            radarX + radarSize / 2 + deltaY * radarScale,
           ),
         );
-        const drawY = Math.max(
+        const drawY_2 = Math.max(
           radarY + 2,
           Math.min(
             radarY + radarSize - 2,
-            radarY + radarSize / 2 + deltaY * radarScale,
+            radarY + radarSize / 2 + deltaY_2 * radarScale,
           ),
         );
-        const opacity = Math.sin(Date.now() / 200) * 0.3 + 0.7;
-        const { r: colorR, g: colorG, b: colorB } = window.entityTrailColor;
-        const rgbString = colorR + "," + colorG + "," + colorB;
-        ctx.strokeStyle = "rgba(" + rgbString + "," + opacity + ")";
+        const alpha = Math.sin(Date.now() / 200) * 0.3 + 0.7;
+        const { r: red, g: blue, b: blue_2 } = window.entityTrailColor;
+        const rgbValue = red + "," + blue + "," + blue_2;
+        ctx.strokeStyle = "rgba(" + rgbValue + "," + alpha + ")";
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(drawX, drawY, 7, 0, Math.PI * 2);
+        ctx.arc(drawY, drawY_2, 7, 0, Math.PI * 2);
         ctx.stroke();
-        ctx.strokeStyle = "rgba(" + rgbString + "," + opacity * 0.5 + ")";
+        ctx.strokeStyle = "rgba(" + rgbValue + "," + alpha * 0.5 + ")";
         ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.arc(drawX, drawY, 10, 0, Math.PI * 2);
+        ctx.arc(drawY, drawY_2, 10, 0, Math.PI * 2);
         ctx.stroke();
-        ctx.fillStyle = "rgb(" + rgbString + ")";
+        ctx.fillStyle = "rgb(" + rgbValue + ")";
         ctx.beginPath();
-        ctx.arc(drawX, drawY, 3, 0, Math.PI * 2);
+        ctx.arc(drawY, drawY_2, 3, 0, Math.PI * 2);
         ctx.fill();
         if (window.entityTrailHistory.length > 1) {
-          ctx.strokeStyle = "rgba(" + rgbString + ",0.3)";
+          ctx.strokeStyle = "rgba(" + rgbValue + ",0.3)";
           ctx.lineWidth = 1;
           ctx.beginPath();
           window.entityTrailHistory.forEach((entity, entityIndex) => {

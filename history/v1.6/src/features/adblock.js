@@ -1,11 +1,11 @@
 import { showToast } from "../ui/interaction.js";
-import { coreSharedState } from "../core.js";
+import { state } from "../core.js";
 
 function initAdBlocker() {
-  if (coreSharedState.isInitialized) {
+  if (state.isProcessed) {
     return;
   }
-  coreSharedState.isInitialized = true;
+  state.isProcessed = true;
   const adSelectors = [
     "div.ad-block",
     'a[href*="ad"]',

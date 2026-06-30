@@ -3,6 +3,10 @@ import {
   extractVarUsages,
   groupVariablesByFunction,
   isObfuscated,
+  computeVariableRoleFingerprint,
+  computeSimilarity,
+  computeFunctionDNA,
+  isReservedWord,
 } from "./ast-utils.js";
 import type {
   VariableInfo,
@@ -43,8 +47,10 @@ function makeAutoName(v: VariableInfo, autoNames: Set<string>): string {
     prefix = "calc";
   if (fp.hasLoops) prefix = "iter";
 
-  const base =
-    Math.abs(hashStr(v.key || `${v.scope}::${v.originalName}`)) % 65536;
+  // Use fingerprint hash as seed for stability across versions.
+  // Falls back to key hash if fingerprint is unavailable.
+  const seed = v.fingerprintHash || v.key || `${v.scope}::${v.originalName}`;
+  const base = Math.abs(hashStr(seed)) % 65536;
   let name = `${prefix}_${base.toString(16)}`;
   if (!autoNames.has(name)) {
     autoNames.add(name);
@@ -108,6 +114,8 @@ export async function renameVariables(
   >();
   const unmatchedGroups: FunctionGroup[] = [];
 
+  const SIMILARITY_THRESHOLD = 0.85;
+
   for (const [funcKey, group] of funcGroups) {
     if (!group.funcVar?.fingerprintHash) {
       unmatchedGroups.push(group);
@@ -125,6 +133,26 @@ export async function renameVariables(
       });
       continue;
     }
+
+    // Phase 0: Try exact DNA matching (most stable across versions)
+    const dna = computeFunctionDNA(group.funcVar.fingerprint);
+    const dnaMatch = mapping.getFunctionByDNA(dna);
+    if (dnaMatch) {
+      const mapKey = Object.keys(mapping.data.functions).find(
+        (k) => mapping.data.functions[k]?.name === dnaMatch,
+      );
+      const entry = mapKey ? mapping.data.functions[mapKey] : undefined;
+      if (entry) {
+        matchedFunctions.set(funcKey, {
+          resolvedName: dnaMatch,
+          entry,
+          confidence: 1.0,
+        });
+        log("info", `  DNA-matched ${funcKey} -> ${dnaMatch}`);
+        continue;
+      }
+    }
+
     let bestMatch: {
       resolvedName: string;
       entry: FunctionMappingEntry;
@@ -132,18 +160,135 @@ export async function renameVariables(
     } | null = null;
     for (const [resolvedName, fpEntry] of Object.entries(fpIndex)) {
       if (!fpEntry.fingerprintHash) continue;
-      if (fpEntry.fingerprintHash !== group.funcVar.fingerprintHash) continue;
-      const mapKey = Object.keys(mapping.data.functions).find(
-        (k) => mapping.data.functions[k]?.name === resolvedName,
+
+      // Try exact hash match first
+      if (fpEntry.fingerprintHash === group.funcVar.fingerprintHash) {
+        const mapKey = Object.keys(mapping.data.functions).find(
+          (k) => mapping.data.functions[k]?.name === resolvedName,
+        );
+        const entry = mapKey ? mapping.data.functions[mapKey] : undefined;
+        if (entry) {
+          bestMatch = { resolvedName, entry, confidence: 1.0 };
+          break;
+        }
+      }
+
+      // Fall back to fuzzy similarity match
+      const similarity = computeSimilarity(
+        group.funcVar.fingerprint,
+        fpEntry.fingerprint,
       );
-      const entry = mapKey ? mapping.data.functions[mapKey] : undefined;
-      if (entry) {
-        bestMatch = { resolvedName, entry, confidence: 1.0 };
-        break;
+      if (
+        similarity >= SIMILARITY_THRESHOLD &&
+        similarity > (bestMatch?.confidence ?? 0)
+      ) {
+        const mapKey = Object.keys(mapping.data.functions).find(
+          (k) => mapping.data.functions[k]?.name === resolvedName,
+        );
+        const entry = mapKey ? mapping.data.functions[mapKey] : undefined;
+        if (entry) {
+          bestMatch = { resolvedName, entry, confidence: similarity };
+        }
       }
     }
-    if (bestMatch) matchedFunctions.set(funcKey, bestMatch);
-    else unmatchedGroups.push(group);
+    if (bestMatch) {
+      matchedFunctions.set(funcKey, bestMatch);
+      continue;
+    }
+
+    // Phase 0.5: Multi-signal fallback matching when overall fingerprint
+    // similarity is below threshold. Uses individual stable signals:
+    // param count, called functions, property accesses, string literals.
+    let multiSignalBest: {
+      resolvedName: string;
+      entry: FunctionMappingEntry;
+      score: number;
+    } | null = null;
+    for (const [resolvedName, fpEntry] of Object.entries(fpIndex)) {
+      if (!fpEntry.fingerprintHash) continue;
+
+      let signals = 0;
+      let totalSignals = 0;
+
+      // Signal 1: param count (very stable)
+      totalSignals++;
+      if (
+        (group.funcVar.fingerprint.paramCount ?? 0) ===
+        (fpEntry.fingerprint.paramCount ?? 0)
+      )
+        signals++;
+
+      // Signal 2: called functions overlap
+      totalSignals++;
+      const curCalls = new Set(group.funcVar.fingerprint.calledFunctions ?? []);
+      const fpCalls = new Set(fpEntry.fingerprint.calledFunctions ?? []);
+      const callIntersection = [...curCalls].filter((c) =>
+        fpCalls.has(c),
+      ).length;
+      const callUnion = new Set([...curCalls, ...fpCalls]).size;
+      if (callUnion > 0 && callIntersection / callUnion >= 0.5) signals++;
+
+      // Signal 3: property accesses overlap
+      totalSignals++;
+      const curProps = new Set(
+        group.funcVar.fingerprint.propertyAccesses ?? [],
+      );
+      const fpProps = new Set(fpEntry.fingerprint.propertyAccesses ?? []);
+      const propIntersection = [...curProps].filter((p) =>
+        fpProps.has(p),
+      ).length;
+      const propUnion = new Set([...curProps, ...fpProps]).size;
+      if (propUnion > 0 && propIntersection / propUnion >= 0.4) signals++;
+
+      // Signal 4: string literals overlap
+      totalSignals++;
+      const curStrs = new Set(group.funcVar.fingerprint.stringLiterals ?? []);
+      const fpStrs = new Set(fpEntry.fingerprint.stringLiterals ?? []);
+      const strIntersection = [...curStrs].filter((s) => fpStrs.has(s)).length;
+      const strUnion = new Set([...curStrs, ...fpStrs]).size;
+      if (strUnion > 0 && strIntersection / strUnion >= 0.4) signals++;
+
+      // Signal 5: hasLoops / hasConditionals / hasTryCatch pattern
+      totalSignals++;
+      const patternSignals = [
+        "hasLoops",
+        "hasConditionals",
+        "hasTryCatch",
+      ] as const;
+      let patternMatches = 0;
+      for (const p of patternSignals) {
+        if (
+          (group.funcVar.fingerprint[p] ?? false) ===
+          (fpEntry.fingerprint[p] ?? false)
+        )
+          patternMatches++;
+      }
+      if (patternMatches >= 2) signals++;
+
+      const score = totalSignals > 0 ? signals / totalSignals : 0;
+      if (score >= 0.6 && score > (multiSignalBest?.score ?? 0)) {
+        const mapKey = Object.keys(mapping.data.functions).find(
+          (k) => mapping.data.functions[k]?.name === resolvedName,
+        );
+        const entry = mapKey ? mapping.data.functions[mapKey] : undefined;
+        if (entry) {
+          multiSignalBest = { resolvedName, entry, score };
+        }
+      }
+    }
+    if (multiSignalBest) {
+      log(
+        "info",
+        `  Multi-signal matched ${funcKey} -> ${multiSignalBest.resolvedName} (score: ${multiSignalBest.score.toFixed(2)})`,
+      );
+      matchedFunctions.set(funcKey, {
+        resolvedName: multiSignalBest.resolvedName,
+        entry: multiSignalBest.entry,
+        confidence: multiSignalBest.score,
+      });
+    } else {
+      unmatchedGroups.push(group);
+    }
   }
 
   log("info", `Fingerprint matched ${matchedFunctions.size} functions`);
@@ -171,6 +316,9 @@ export async function renameVariables(
       ...match.entry,
       fingerprintHash: group.funcVar.fingerprintHash,
     });
+    // Persist DNA for exact matching in future versions
+    const dna = computeFunctionDNA(group.funcVar.fingerprint);
+    mapping.setFunctionDNA(dna, match.resolvedName);
   }
   mapping.save();
 
@@ -213,7 +361,11 @@ export async function renameVariables(
         const funcNewName = suggested[f.originalName];
         if (!funcNewName) continue;
 
-        const funcResolvedName = claimName(funcKey, funcNewName);
+        // Canonicalize: if a semantically similar name exists, reuse it
+        const canonicalName = mapping.canonicalize
+          ? mapping.canonicalize(funcNewName)
+          : funcNewName;
+        const funcResolvedName = claimName(funcKey, canonicalName);
         resolved[funcKey] = funcResolvedName;
 
         const paramNames: string[] = [];
@@ -248,9 +400,13 @@ export async function renameVariables(
           name: funcResolvedName,
           module: "",
           fingerprintHash: group.funcVar.fingerprintHash,
+          fingerprint: group.funcVar.fingerprint,
           params: paramNames,
           locals: localNames,
         });
+        // Persist DNA for exact matching in future versions
+        const dna = computeFunctionDNA(group.funcVar.fingerprint);
+        mapping.setFunctionDNA(dna, funcResolvedName);
         log("info", `  LLM renamed ${f.originalName} -> ${funcResolvedName}`);
       }
       saveAfterBatch();
@@ -284,11 +440,96 @@ export async function renameVariables(
       name,
       module: "",
       fingerprintHash: group.funcVar.fingerprintHash,
+      fingerprint: group.funcVar.fingerprint,
       params: [],
       locals: [],
     });
   }
   mapping.save();
+
+  // Phase 0.5: Match module-level variables by structural role fingerprint.
+  const moduleLevelVars = variables.filter(
+    (v) =>
+      !resolved[v.key] &&
+      v.scope === "global" &&
+      v.type !== "function_declaration" &&
+      v.type !== "function_variable",
+  );
+  for (const v of moduleLevelVars) {
+    const matchedName = tryMatchVariableByFingerprint(v, code, "module");
+    if (matchedName) {
+      resolved[v.key] = claimName(v.key, matchedName);
+    }
+  }
+  mapping.save();
+
+  // Variable role fingerprint matching: identify semantically equivalent
+  // variables across versions by their structural usage patterns.
+  function tryMatchVariableByFingerprint(
+    varInfo: VariableInfo,
+    funcCode: string,
+    funcFingerprintHash: string,
+  ): string | undefined {
+    try {
+      const roleFp = computeVariableRoleFingerprint(
+        funcCode,
+        varInfo.originalName,
+      );
+      const existing = mapping.getVariableByRoleFingerprint(
+        funcFingerprintHash,
+        roleFp,
+      );
+      if (existing) {
+        // Strip any accumulated _N suffix so claimName handles dedup cleanly
+        const cleanName = existing.name.replace(/(?:_\d+)+$/, "");
+        log(
+          "info",
+          `  Role-fingerprint matched ${varInfo.originalName} -> ${cleanName}`,
+        );
+        return cleanName;
+      }
+    } catch (e) {
+      log(
+        "warn",
+        `  Failed to compute role fingerprint: ${(e as Error).message}`,
+      );
+    }
+    return undefined;
+  }
+
+  // Phase 0: Match variables by structural role fingerprint before
+  // falling back to cached names or LLM.
+  for (const [funcKey, group] of funcGroups) {
+    const funcVar = group.funcVar;
+    if (!funcVar?.fingerprintHash) continue;
+
+    // Find the function code for fingerprinting
+    const funcCode = funcVar.code || "";
+
+    for (const param of group.params) {
+      if (resolved[param.key]) continue;
+      const matchedName = tryMatchVariableByFingerprint(
+        param,
+        funcCode,
+        funcVar.fingerprintHash,
+      );
+      if (matchedName) {
+        resolved[param.key] = claimName(param.key, matchedName);
+      }
+    }
+
+    for (const local of group.locals) {
+      if (resolved[local.key]) continue;
+      const matchedName = tryMatchVariableByFingerprint(
+        local,
+        funcCode,
+        funcVar.fingerprintHash,
+      );
+      if (matchedName) {
+        resolved[local.key] = claimName(local.key, matchedName);
+      }
+    }
+  }
 
   // Phase 1: Reuse existing LLM/cached variable names from the mapping.
   // Strip any old auto-name entries so Phase 2 can re-attempt them.
@@ -378,7 +619,11 @@ export async function renameVariables(
       for (const v of unnamedVars) {
         const newName = newMappings[v.originalName];
         if (newName) {
-          resolved[v.key] = claimName(v.key, newName);
+          // Canonicalize: merge semantically similar names
+          const canonicalName = mapping.canonicalize
+            ? mapping.canonicalize(newName)
+            : newName;
+          resolved[v.key] = claimName(v.key, canonicalName);
           mapping.data.variables[v.key] = {
             name: resolved[v.key]!,
             module: mapping.data.variables[v.key]?.module ?? "core",
@@ -419,6 +664,86 @@ export async function renameVariables(
       };
     }
   }
+  mapping.save();
+
+  // Save role fingerprints for all resolved variables so future
+  // versions can match them structurally.
+  for (const [funcKey, group] of funcGroups) {
+    const funcVar = group.funcVar;
+    if (!funcVar?.fingerprintHash) continue;
+    const funcCode = funcVar.code || "";
+
+    for (const param of group.params) {
+      if (!resolved[param.key]) continue;
+      try {
+        const roleFp = computeVariableRoleFingerprint(
+          funcCode,
+          param.originalName,
+        );
+        mapping.setVariableRoleFingerprint(
+          funcVar.fingerprintHash,
+          roleFp.hash,
+          {
+            name: resolved[param.key]!,
+            module: mapping.data.variables[param.key]?.module ?? "core",
+            roleFingerprint: roleFp,
+          },
+        );
+      } catch {
+        /* ignore fingerprint computation errors */
+      }
+    }
+
+    for (const local of group.locals) {
+      if (!resolved[local.key]) continue;
+      try {
+        const roleFp = computeVariableRoleFingerprint(
+          funcCode,
+          local.originalName,
+        );
+        mapping.setVariableRoleFingerprint(
+          funcVar.fingerprintHash,
+          roleFp.hash,
+          {
+            name: resolved[local.key]!,
+            module: mapping.data.variables[local.key]?.module ?? "core",
+            roleFingerprint: roleFp,
+          },
+        );
+      } catch {
+        /* ignore fingerprint computation errors */
+      }
+    }
+  }
+  // Save role fingerprints for module-level variables so future
+  // versions can match them structurally.
+  const moduleLevelVarsToPersist = variables.filter(
+    (v) =>
+      v.scope === "global" &&
+      v.type !== "function_declaration" &&
+      v.type !== "function_variable",
+  );
+  for (const v of moduleLevelVarsToPersist) {
+    if (!resolved[v.key]) continue;
+    try {
+      const roleFp = computeVariableRoleFingerprint(code, v.originalName);
+      mapping.setVariableRoleFingerprint("module", roleFp.hash, {
+        name: resolved[v.key]!,
+        module: mapping.data.variables[v.key]?.module ?? "core",
+        roleFingerprint: roleFp,
+      });
+    } catch {
+      /* ignore fingerprint computation errors */
+    }
+  }
+  // Filter out any mappings that would rename to a reserved word
+  for (const [key, name] of Object.entries(resolved)) {
+    if (isReservedWord(name)) {
+      log("warn", `Filtering out reserved word rename: ${key} -> ${name}`);
+      delete resolved[key];
+    }
+  }
+
   mapping.save();
 
   return { resolved };

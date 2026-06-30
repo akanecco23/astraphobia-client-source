@@ -1,15 +1,16 @@
 import {
-  angleSteps,
+  angles,
   radius,
   offsetValue,
   getFirstAnimalPosition,
-  coreSharedState,
+  state,
 } from "../core.js";
+import { featuresentitytrailState } from "./entitytrail.js";
 import { showToast } from "../ui/interaction.js";
 import { getGameCanvas } from "../utils.js";
 
 function startCircularMovement() {
-  if (coreSharedState.animationInterval) {
+  if (featuresentitytrailState.entityTrailInterval_2) {
     return;
   }
   const canvas = getGameCanvas();
@@ -17,8 +18,8 @@ function startCircularMovement() {
     showToast("Canvas not found");
     return;
   }
-  coreSharedState.animationInterval = setInterval(() => {
-    const angleDegrees = angleSteps[coreSharedState.currentIndex];
+  featuresentitytrailState.entityTrailInterval_2 = setInterval(() => {
+    const angleDegrees = angles[state.angleIndex];
     const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
     const offsetX = Math.round(radius * Math.sin(angleRadians));
     const offsetY = Math.round(radius * Math.cos(angleRadians));
@@ -29,19 +30,18 @@ function startCircularMovement() {
         bubbles: true,
       }),
     );
-    coreSharedState.currentIndex =
-      (coreSharedState.currentIndex + 1) % angleSteps.length;
+    state.angleIndex = (state.angleIndex + 1) % angles.length;
   }, 15);
 }
-function stopMouseSimulation() {
-  if (coreSharedState.animationInterval) {
-    clearInterval(coreSharedState.animationInterval);
-    coreSharedState.animationInterval = null;
+function stopEntityTrail() {
+  if (featuresentitytrailState.entityTrailInterval_2) {
+    clearInterval(featuresentitytrailState.entityTrailInterval_2);
+    featuresentitytrailState.entityTrailInterval_2 = null;
   }
 }
 function toggleMouseSimulation() {
-  if (coreSharedState.animationInterval) {
-    stopMouseSimulation();
+  if (featuresentitytrailState.entityTrailInterval_2) {
+    stopEntityTrail();
   } else {
     startCircularMovement();
   }
@@ -147,7 +147,7 @@ function simulateMoveAndClick(targetX, targetY, shouldClick) {
 
 export {
   startCircularMovement,
-  stopMouseSimulation,
+  stopEntityTrail,
   toggleMouseSimulation,
   moveMouseToSide,
   simulateClick,

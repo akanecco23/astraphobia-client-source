@@ -5,13 +5,13 @@ import {
   sendPacket,
   initializeAntiTamper,
   disableGameRestrictions,
-  angleSteps,
+  angles,
   radius,
   gameInstance,
   playerData,
-  isReady,
-  securityConfigs,
-  coreSharedState,
+  isProcessed_2,
+  config,
+  state,
 } from "./src/core.js";
 import {
   createHalloweenModal,
@@ -33,7 +33,7 @@ import {
   setBlueTheme,
 } from "./src/ui/theme.js";
 import {
-  stopMouseSimulation,
+  stopEntityTrail,
   toggleMouseSimulation,
 } from "./src/features/movement.js";
 import {
@@ -42,6 +42,7 @@ import {
   autoChat,
 } from "./src/features/chat.js";
 import { simulateTyping, showNotification } from "./src/ui/interaction.js";
+import { featuresentitytrailState } from "./src/features/entitytrail.js";
 import { handleAnimalAction } from "./src/features/autofarm.js";
 import { startAntiAfk } from "./src/features/antidetection.js";
 import { initAdBlocker } from "./src/features/adblock.js";

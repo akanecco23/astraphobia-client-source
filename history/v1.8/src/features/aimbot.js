@@ -2,11 +2,12 @@ import {
   getFirstAnimalPosition,
   getEntityPosition,
   findEntityById,
-  isProcessed,
+  isProcessed_4,
+  angle,
   getGameState,
   getEntityManager,
-  maxDistance,
-  maxDelta,
+  tickInterval,
+  deltaThreshold,
   state,
 } from "../core.js";
 import {
@@ -19,10 +20,8 @@ import { showNotification } from "../ui/interaction.js";
 import { updateLockButtonUI } from "../ui/radar.js";
 import { simulateClick } from "./movement.js";
 
-window.autoDodgeEnabled = false;
-
 function updateLockOnTarget() {
-  if (!isProcessed) {
+  if (!isProcessed_4) {
     return;
   }
   requestAnimationFrame(updateLockOnTarget);
@@ -80,9 +79,9 @@ function updateLockOnTarget() {
     let offsetY = finalDiffY * smoothingFactor;
     const offsetMagnitude = Math.sqrt(offsetX * offsetX + offsetY * offsetY);
     if (offsetMagnitude > maxOffset) {
-      const scaleFactor = maxOffset / offsetMagnitude;
-      offsetX *= scaleFactor;
-      offsetY *= scaleFactor;
+      const angle = maxOffset / offsetMagnitude;
+      offsetX *= angle;
+      offsetY *= angle;
     }
     canvas.dispatchEvent(
       new MouseEvent("pointermove", {
@@ -92,7 +91,7 @@ function updateLockOnTarget() {
         view: window,
       }),
     );
-  } catch (tempValue) {}
+  } catch (data) {}
 }
 function toggleLock() {
   if (window.lockEnabled && window.lockTargetId) {
@@ -165,8 +164,10 @@ function aimAtTarget(targetX, targetY, shouldClick) {
     simulateClick(finalX, finalY);
   }
 }
+let currentTime_2 = 0;
+let currentTime_3 = 0;
 function autoDodgeLoop() {
-  if (!state.isReady) {
+  if (!state.isProcessed_5) {
     return;
   }
   setTimeout(autoDodgeLoop, 80);
@@ -193,47 +194,47 @@ function autoDodgeLoop() {
       ) {
         return;
       }
-      const targetX =
+      const myY =
         targetEntity.position?._x !== undefined
           ? targetEntity.position._x
           : targetEntity.position?.x;
-      const targetY =
+      const posY =
         targetEntity.position?._y !== undefined
           ? targetEntity.position._y
           : targetEntity.position?.y;
-      if (targetX == null || targetY == null) {
+      if (myY == null || posY == null) {
         return;
       }
       const distanceToTarget = calculateDistance(
         playerPos.x,
         playerPos.y,
-        targetX,
-        targetY,
+        myY,
+        posY,
       );
-      if (distanceToTarget < maxDistance) {
+      if (distanceToTarget < tickInterval) {
         nearbyEntities.push({
-          x: targetX,
-          y: targetY,
+          x: myY,
+          y: posY,
           dist: distanceToTarget,
         });
       }
     });
     if (nearbyEntities.length === 0) {
-      state.currentPosition = null;
+      state.position = null;
       state.counter = 0;
       state.dataList = [];
       return;
     }
     const now = Date.now();
     let isDodging = false;
-    if (now - state.lastValue > 600) {
-      state.lastValue = now;
-      if (state.currentPosition) {
+    if (now - currentTime_3 > 600) {
+      currentTime_3 = now;
+      if (state.position) {
         const moveDist = calculateDistance(
           playerPos.x,
           playerPos.y,
-          state.currentPosition.x,
-          state.currentPosition.y,
+          state.position.x,
+          state.position.y,
         );
         if (moveDist < 20) {
           state.counter++;
@@ -243,7 +244,7 @@ function autoDodgeLoop() {
           state.dataList = [];
         }
       }
-      state.currentPosition = {
+      state.position = {
         x: playerPos.x,
         y: playerPos.y,
       };
@@ -255,7 +256,7 @@ function autoDodgeLoop() {
       const deltaY = playerPos.y - sourceEntity.y;
       const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
       if (distance > 0.01) {
-        const distanceRatio = (maxDistance - sourceEntity.dist) / maxDistance;
+        const distanceRatio = (tickInterval - sourceEntity.dist) / tickInterval;
         sumX += (deltaX / distance) * distanceRatio;
         sumY += (deltaY / distance) * distanceRatio;
       }
@@ -270,7 +271,7 @@ function autoDodgeLoop() {
     sumY /= magnitude;
     let angle = Math.atan2(sumY, sumX);
     if (isDodging && state.counter >= 1) {
-      const angleConstants = [
+      const anglePresets = [
         Math.PI / 4,
         -Math.PI / 4,
         Math.PI / 2,
@@ -280,11 +281,11 @@ function autoDodgeLoop() {
       ];
       let currentAngle = angle;
       let maxProjection = -Infinity;
-      for (const angleOffset of angleConstants) {
+      for (const angleOffset of anglePresets) {
         const rotatedAngle = angle + angleOffset;
         if (
           state.dataList.some(
-            (angle) => Math.abs(angle - rotatedAngle) < 0.3,
+            (myY_2) => Math.abs(myY_2 - rotatedAngle) < 0.3,
           ) &&
           state.counter < 5
         ) {
@@ -312,24 +313,24 @@ function autoDodgeLoop() {
         state.dataList = [];
       }
     }
-    const isExceeded = now - state.previousValue_2 > maxDelta;
-    if (isExceeded) {
-      state.previousValue_2 = now;
+    const angle_2 = now - currentTime_2 > deltaThreshold;
+    if (angle_2) {
+      currentTime_2 = now;
     }
     aimAtTarget(
       playerPos.x + Math.cos(angle) * 2000,
       playerPos.y + Math.sin(angle) * 2000,
-      isExceeded,
+      angle_2,
     );
-  } catch (tempValue) {}
+  } catch (data) {}
 }
 function enableAutoDodge() {
   window.autoDodgeEnabled = true;
-  state.currentPosition = null;
+  state.position = null;
   state.counter = 0;
   state.dataList = [];
-  if (!state.isReady) {
-    state.isReady = true;
+  if (!state.isProcessed_5) {
+    state.isProcessed_5 = true;
     autoDodgeLoop();
   }
   showNotification("Auto dodge enabled");

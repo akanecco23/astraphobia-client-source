@@ -1,32 +1,32 @@
-import { gameInstance, animalData, state } from "../core.js";
+import { gameInstance, playerData, state } from "../core.js";
 import { showNotification } from "../ui/interaction.js";
 
 const initializeAstraVision = () => {
-  if (state.isEnabled) {
+  if (state.isProcessed_3) {
     return;
   }
-  if (!animalData) {
+  if (!playerData) {
     setTimeout(initializeAstraVision, 500);
     return;
   }
   try {
-    if (animalData.terrainManager && animalData.terrainManager.shadow) {
-      animalData.terrainManager.shadow.setShadowSize(1000000);
-      animalData.terrainManager.shadow.setShadowSize = () => {};
+    if (playerData.terrainManager && playerData.terrainManager.shadow) {
+      playerData.terrainManager.shadow.setShadowSize(1000000);
+      playerData.terrainManager.shadow.setShadowSize = () => {};
     } else {
-      for (let key1 in animalData) {
-        if (animalData[key1] && animalData[key1].shadow) {
-          animalData[key1].shadow.setShadowSize(1000000);
-          animalData[key1].shadow.setShadowSize = () => {};
+      for (let key1 in playerData) {
+        if (playerData[key1] && playerData[key1].shadow) {
+          playerData[key1].shadow.setShadowSize(1000000);
+          playerData[key1].shadow.setShadowSize = () => {};
         }
       }
     }
-    if (typeof animalData.setFlash === "function") {
-      animalData.setFlash = () => {};
+    if (typeof playerData.setFlash === "function") {
+      playerData.setFlash = () => {};
     } else {
-      for (let key2 of Object.getOwnPropertyNames(animalData.__proto__)) {
-        if (key2.startsWith("_0x") && typeof animalData[key2] === "function") {
-          animalData[key2] = () => {};
+      for (let key2 of Object.getOwnPropertyNames(playerData.__proto__)) {
+        if (key2.startsWith("_0x") && typeof playerData[key2] === "function") {
+          playerData[key2] = () => {};
         }
       }
     }
@@ -41,10 +41,10 @@ const initializeAstraVision = () => {
       } catch {}
     }, 300);
     showNotification("Astra-Vision active");
-  } catch (error) {
-    console.error("AstraVision Error:", error);
+  } catch (url) {
+    console.error("AstraVision Error:", url);
   }
-  state.isEnabled = true;
+  state.isProcessed_3 = true;
 };
 
 export { initializeAstraVision };
