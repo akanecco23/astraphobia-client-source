@@ -87,24 +87,38 @@ export async function renameVariables(
   function claimName(key: string, name: string): string {
     const scope = getScopeFromKey(key);
     const isGlobal = scope === "global";
+    // Strip any existing suffix chains (numeric or alphanumeric) before claiming
+    const baseName = name.replace(/(?:_[a-zA-Z0-9]{1,4})+$/, "");
     if (isGlobal) {
-      if (usedGlobalNames.has(name)) {
-        let c = 2;
-        while (usedGlobalNames.has(`${name}_${c}`)) c++;
-        name = `${name}_${c}`;
+      if (usedGlobalNames.has(baseName)) {
+        // Stable disambiguation: hash of key → avoids _2, _3 churn
+        const suffix = Math.abs(hashStr(key)).toString(36).slice(0, 3);
+        const disambiguated = `${baseName}_${suffix}`;
+        log(
+          "warn",
+          `Global name collision: ${baseName} already used, using ${disambiguated} for ${key}`,
+        );
+        usedGlobalNames.add(disambiguated);
+        return disambiguated;
       }
-      usedGlobalNames.add(name);
-      return name;
+      usedGlobalNames.add(baseName);
+      return baseName;
     }
     if (!scopedNames.has(scope)) scopedNames.set(scope, new Set());
     const names = scopedNames.get(scope)!;
-    if (names.has(name)) {
-      let c = 2;
-      while (names.has(`${name}_${c}`)) c++;
-      name = `${name}_${c}`;
+    if (names.has(baseName)) {
+      // Stable disambiguation: hash of key → avoids _2, _3 churn
+      const suffix = Math.abs(hashStr(key)).toString(36).slice(0, 3);
+      const disambiguated = `${baseName}_${suffix}`;
+      log(
+        "warn",
+        `Scoped name collision in ${scope}: ${baseName} already used, using ${disambiguated} for ${key}`,
+      );
+      names.add(disambiguated);
+      return disambiguated;
     }
-    names.add(name);
-    return name;
+    names.add(baseName);
+    return baseName;
   }
 
   const fpIndex = mapping.getFunctionFingerprintIndex();
@@ -480,8 +494,8 @@ export async function renameVariables(
         roleFp,
       );
       if (existing) {
-        // Strip any accumulated _N suffix so claimName handles dedup cleanly
-        const cleanName = existing.name.replace(/(?:_\d+)+$/, "");
+        // Strip any accumulated suffix so claimName handles dedup cleanly
+        const cleanName = existing.name.replace(/(?:_[a-zA-Z0-9]{1,4})+$/, "");
         log(
           "info",
           `  Role-fingerprint matched ${varInfo.originalName} -> ${cleanName}`,
@@ -561,6 +575,41 @@ export async function renameVariables(
   }
   mapping.save();
 
+  // Phase 1.5: Broad cross-version role fingerprint matching.
+  // Before falling back to LLM, search ALL stored fingerprints with a
+  // relaxed threshold to catch variables whose role changed slightly.
+  for (const v of variables) {
+    if (resolved[v.key]) continue;
+    if (v.type === "function_declaration" || v.type === "function_variable")
+      continue;
+
+    try {
+      const roleFp = computeVariableRoleFingerprint(code, v.originalName);
+      const broadMatch = mapping.findVariableByRoleFingerprintBroad(roleFp);
+      if (broadMatch) {
+        const cleanName = broadMatch.name.replace(
+          /(?:_[a-zA-Z0-9]{1,4})+$/,
+          "",
+        );
+        log(
+          "info",
+          `  Broad role-fingerprint matched ${v.originalName} -> ${cleanName}`,
+        );
+        resolved[v.key] = claimName(v.key, cleanName);
+        mapping.data.variables[v.key] = {
+          name: resolved[v.key]!,
+          module: mapping.data.variables[v.key]?.module ?? "core",
+        };
+      }
+    } catch (e) {
+      log(
+        "warn",
+        `  Failed to compute role fingerprint for broad match: ${(e as Error).message}`,
+      );
+    }
+  }
+  mapping.save();
+
   // Phase 2: LLM names anything still unresolved (uses declaration + usages).
   if (llmConfig.enabled) {
     const llm = new LLMClient(llmConfig);
@@ -606,7 +655,15 @@ export async function renameVariables(
                 : v.code || `var ${v.originalName};`,
             usages: (usages.get(v.originalName) ?? []).slice(0, 4),
           }));
-          const suggested = await llm.renameVarBatchWithContext(inputs);
+          // Collect already-used names in this scope to avoid duplicates
+          const scope = batch[0]?.scope ?? "global";
+          const alreadyUsed = scopedNames.has(scope)
+            ? [...scopedNames.get(scope)!]
+            : [];
+          const suggested = await llm.renameVarBatchWithContext(
+            inputs,
+            alreadyUsed,
+          );
           for (const [obf, newName] of Object.entries(suggested)) {
             if (isAutoName(newName)) continue;
             if (obf === newName) continue;
@@ -615,6 +672,38 @@ export async function renameVariables(
         },
         llmConfig.concurrency,
       );
+
+      // Post-LLM: detect and resolve duplicate names within the same scope.
+      // Build scope -> proposedName -> variable[] map.
+      const scopeNameMap = new Map<string, Map<string, typeof unnamedVars>>();
+      for (const v of unnamedVars) {
+        const newName = newMappings[v.originalName];
+        if (!newName) continue;
+        if (!scopeNameMap.has(v.scope)) scopeNameMap.set(v.scope, new Map());
+        const nameMap = scopeNameMap.get(v.scope)!;
+        if (!nameMap.has(newName)) nameMap.set(newName, []);
+        nameMap.get(newName)!.push(v);
+      }
+      for (const [scope, nameMap] of scopeNameMap) {
+        for (const [newName, vars] of nameMap) {
+          if (vars.length <= 1) continue;
+          log(
+            "warn",
+            `Duplicate LLM name "${newName}" in scope ${scope} for ${vars.length} variables: ${vars.map((v) => v.originalName).join(", ")}`,
+          );
+          // Keep the first variable with the original name, disambiguate the rest.
+          for (let i = 1; i < vars.length; i++) {
+            const v = vars[i]!;
+            const suffix = Math.abs(hashStr(v.key)).toString(36).slice(0, 3);
+            const disambiguated = `${newName}_${suffix}`;
+            log(
+              "warn",
+              `  Disambiguated ${v.originalName} -> ${disambiguated}`,
+            );
+            newMappings[v.originalName] = disambiguated;
+          }
+        }
+      }
 
       for (const v of unnamedVars) {
         const newName = newMappings[v.originalName];

@@ -10,7 +10,7 @@ import {
   radius,
   gameInstance,
   playerData,
-  isProcessed_2,
+  isProcessed_qlz,
   config,
   state,
 } from "./src/core.js";

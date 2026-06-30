@@ -21,9 +21,9 @@ import {
 import {
   toggleEsp,
   trackPlayer,
-  toggleEsp_2,
+  toggleEsp_s2u,
   toggleMinimapSize,
-  toggleEsp_3,
+  toggleEsp_qmn,
 } from "../features/esp.js";
 import {
   startScheduledTask,
@@ -136,9 +136,9 @@ function makeDraggable(element) {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   });
-  element.addEventListener("click", (event_2) => {
+  element.addEventListener("click", (event_faj) => {
     if (hasMoved) {
-      event_2.stopImmediatePropagation();
+      event_faj.stopImmediatePropagation();
     }
   });
 }
@@ -173,7 +173,7 @@ function createToolsPanel() {
       showNotification("Enter a message first");
       return;
     }
-    if (state.isToggled_2) {
+    if (state.isToggled_t9m) {
       stopInterval();
       spinBtn.textContent = "Auto Chat";
       spinBtn.classList.remove("toggle-on");
@@ -200,15 +200,15 @@ function createToolsPanel() {
       showNotification("No name input found");
     }
   };
-  const spinBtn_2 = toolsPanel.querySelector("#spinBtn");
-  spinBtn_2.onclick = () => {
+  const spinBtn_whx = toolsPanel.querySelector("#spinBtn");
+  spinBtn_whx.onclick = () => {
     toggleMouseSimulation();
-    spinBtn_2.textContent = featuresentitytrailState.entityTrailInterval_2
+    spinBtn_whx.textContent = featuresentitytrailState.entityTrailInterval_tbp
       ? "Stop Spin"
       : "Auto Spin";
-    spinBtn_2.classList.toggle(
+    spinBtn_whx.classList.toggle(
       "toggle-on",
-      !!featuresentitytrailState.entityTrailInterval_2,
+      !!featuresentitytrailState.entityTrailInterval_tbp,
     );
   };
   const turnRightKeyInput = toolsPanel.querySelector("#spinKeyInput");
@@ -226,40 +226,40 @@ function createToolsPanel() {
     ) {
       keyupEvent.preventDefault();
       toggleMouseSimulation();
-      spinBtn_2.textContent = featuresentitytrailState.entityTrailInterval_2
+      spinBtn_whx.textContent = featuresentitytrailState.entityTrailInterval_tbp
         ? "Stop Spin"
         : "Auto Spin";
-      spinBtn_2.classList.toggle(
+      spinBtn_whx.classList.toggle(
         "toggle-on",
-        !!featuresentitytrailState.entityTrailInterval_2,
+        !!featuresentitytrailState.entityTrailInterval_tbp,
       );
     }
   });
-  const turnRightKeyInput_2 = toolsPanel.querySelector("#turnLeftKeyInput");
-  const turnRightKeyInput_3 = toolsPanel.querySelector("#turnRightKeyInput");
-  turnRightKeyInput_2.value = state.keyQ.toUpperCase();
-  turnRightKeyInput_3.value = state.keyE.toUpperCase();
-  turnRightKeyInput_2.addEventListener("keydown", (clickEvent) => {
+  const turnRightKeyInput_txu = toolsPanel.querySelector("#turnLeftKeyInput");
+  const turnRightKeyInput_v44 = toolsPanel.querySelector("#turnRightKeyInput");
+  turnRightKeyInput_txu.value = state.keyQ.toUpperCase();
+  turnRightKeyInput_v44.value = state.keyE.toUpperCase();
+  turnRightKeyInput_txu.addEventListener("keydown", (clickEvent) => {
     clickEvent.preventDefault();
     clickEvent.stopPropagation();
     state.keyQ = clickEvent.key;
-    turnRightKeyInput_2.value =
+    turnRightKeyInput_txu.value =
       clickEvent.key.length === 1
         ? clickEvent.key.toUpperCase()
         : clickEvent.key;
   });
-  turnRightKeyInput_3.addEventListener("keydown", (contextEvent) => {
+  turnRightKeyInput_v44.addEventListener("keydown", (contextEvent) => {
     contextEvent.preventDefault();
     contextEvent.stopPropagation();
     state.keyE = contextEvent.key;
-    turnRightKeyInput_3.value =
+    turnRightKeyInput_v44.value =
       contextEvent.key.length === 1
         ? contextEvent.key.toUpperCase()
         : contextEvent.key;
   });
   const savedNameDisplay = toolsPanel.querySelector("#savedNameDisplay");
   const clearNameBtn = toolsPanel.querySelector("#setNameBtn");
-  const clearNameBtn_2 = toolsPanel.querySelector("#clearNameBtn");
+  const clearNameBtn_vna = toolsPanel.querySelector("#clearNameBtn");
   if (savedNameDisplay) {
     savedNameDisplay.value = localStorage.getItem("autofill_name") || "";
   }
@@ -274,8 +274,8 @@ function createToolsPanel() {
       }
     };
   }
-  if (clearNameBtn_2) {
-    clearNameBtn_2.onclick = () => {
+  if (clearNameBtn_vna) {
+    clearNameBtn_vna.onclick = () => {
       localStorage.removeItem("autofill_name");
       state.isToggled = false;
       if (savedNameDisplay) {
@@ -309,7 +309,7 @@ function createVisionPanel() {
   };
   const astraVisionBtn = visionPanel.querySelector("#astraVisionBtn");
   astraVisionBtn.onclick = () => {
-    if (state.isProcessed_5) {
+    if (state.isProcessed_skw) {
       showNotification("Already active");
       return;
     }
@@ -341,14 +341,16 @@ function createVisionPanel() {
       return;
     }
     toggleMinimapSize();
-    espBtn.textContent = state.isToggled_3 ? "Minimap: Small" : "Small Minimap";
-    espBtn.classList.toggle("toggle-on", state.isToggled_3);
+    espBtn.textContent = state.isToggled_s33
+      ? "Minimap: Small"
+      : "Small Minimap";
+    espBtn.classList.toggle("toggle-on", state.isToggled_s33);
   };
-  const espBtn_2 = visionPanel.querySelector("#espBtn");
-  espBtn_2.onclick = () => {
+  const espBtn_7zb = visionPanel.querySelector("#espBtn");
+  espBtn_7zb.onclick = () => {
     toggleEsp();
-    espBtn_2.textContent = window.espEnabled ? "ESP ✓" : "ESP";
-    espBtn_2.classList.toggle("toggle-on", window.espEnabled);
+    espBtn_7zb.textContent = window.espEnabled ? "ESP ✓" : "ESP";
+    espBtn_7zb.classList.toggle("toggle-on", window.espEnabled);
   };
   const espModeSelect = visionPanel.querySelector("#espModeSelect");
   espModeSelect.value = window.espMode || "players";
@@ -357,15 +359,15 @@ function createVisionPanel() {
     showNotification("ESP: " + changeEvent.target.value);
   };
   visionPanel.querySelector("#trackNearestBtn").onclick = () => trackPlayer();
-  visionPanel.querySelector("#untrackBtn").onclick = () => toggleEsp_2();
+  visionPanel.querySelector("#untrackBtn").onclick = () => toggleEsp_s2u();
   const espColorsToggleBtn = visionPanel.querySelector("#espColorsToggleBtn");
-  const espColorsSection_2 = visionPanel.querySelector("#espColorsSection");
+  const espColorsSection_7jd = visionPanel.querySelector("#espColorsSection");
   const espColorsArrow = visionPanel.querySelector("#espColorsArrow");
-  let isHidden_2 = false;
+  let isHidden_80g = false;
   espColorsToggleBtn.onclick = () => {
-    isHidden_2 = !isHidden_2;
-    espColorsSection_2.style.display = isHidden_2 ? "block" : "none";
-    espColorsArrow.textContent = isHidden_2 ? "▲" : "▼";
+    isHidden_80g = !isHidden_80g;
+    espColorsSection_7jd.style.display = isHidden_80g ? "block" : "none";
+    espColorsArrow.textContent = isHidden_80g ? "▲" : "▼";
   };
   const eventInit = {
     espColorClose: "close",
@@ -462,7 +464,7 @@ function createAutomationPanel() {
   const autoDodgeButton = automationPanel.querySelector("#autoDodgeBtn");
   autoDodgeButton.onclick = () => {
     if (window.autoDodgeEnabled) {
-      toggleEsp_3();
+      toggleEsp_qmn();
       autoDodgeButton.textContent = "Auto Dodge";
       autoDodgeButton.classList.remove("toggle-on");
     } else {
@@ -495,11 +497,12 @@ function createAutomationPanel() {
     }
   };
   const farmAvoidToggle = automationPanel.querySelector("#farmBoostToggle");
-  const farmAvoidToggle_2 = automationPanel.querySelector("#farmEvolveToggle");
-  const farmAvoidToggle_3 = automationPanel.querySelector("#farmAvoidToggle");
+  const farmAvoidToggle_7tw =
+    automationPanel.querySelector("#farmEvolveToggle");
+  const farmAvoidToggle_17s = automationPanel.querySelector("#farmAvoidToggle");
   farmAvoidToggle.checked = window.autoFarmBoost;
-  farmAvoidToggle_2.checked = window.autoFarmEvolve;
-  farmAvoidToggle_3.checked = window.autoFarmAvoidPlayers;
+  farmAvoidToggle_7tw.checked = window.autoFarmEvolve;
+  farmAvoidToggle_17s.checked = window.autoFarmAvoidPlayers;
   const farmBoostLabel = farmAvoidToggle.nextElementSibling;
   farmBoostLabel.addEventListener("click", (autoFarmToggleEvent) => {
     autoFarmToggleEvent.stopPropagation();
@@ -509,22 +512,22 @@ function createAutomationPanel() {
       farmAvoidToggle.checked ? "Farm boost ON" : "Farm boost OFF",
     );
   });
-  const farmEvolveLabel = farmAvoidToggle_2.nextElementSibling;
+  const farmEvolveLabel = farmAvoidToggle_7tw.nextElementSibling;
   farmEvolveLabel.addEventListener("click", (settingToggleEvent) => {
     settingToggleEvent.stopPropagation();
-    farmAvoidToggle_2.checked = !farmAvoidToggle_2.checked;
-    window.autoFarmEvolve = farmAvoidToggle_2.checked;
+    farmAvoidToggle_7tw.checked = !farmAvoidToggle_7tw.checked;
+    window.autoFarmEvolve = farmAvoidToggle_7tw.checked;
     showNotification(
-      farmAvoidToggle_2.checked ? "Auto evolve ON" : "Auto evolve OFF",
+      farmAvoidToggle_7tw.checked ? "Auto evolve ON" : "Auto evolve OFF",
     );
   });
-  const farmAvoidLabel = farmAvoidToggle_3.nextElementSibling;
+  const farmAvoidLabel = farmAvoidToggle_17s.nextElementSibling;
   farmAvoidLabel.addEventListener("click", (optionToggleEvent) => {
     optionToggleEvent.stopPropagation();
-    farmAvoidToggle_3.checked = !farmAvoidToggle_3.checked;
-    window.autoFarmAvoidPlayers = farmAvoidToggle_3.checked;
+    farmAvoidToggle_17s.checked = !farmAvoidToggle_17s.checked;
+    window.autoFarmAvoidPlayers = farmAvoidToggle_17s.checked;
     showNotification(
-      farmAvoidToggle_3.checked ? "Avoid players ON" : "Avoid players OFF",
+      farmAvoidToggle_17s.checked ? "Avoid players ON" : "Avoid players OFF",
     );
   });
   makeDraggable(automationPanel);
@@ -710,23 +713,24 @@ function createSettingsPanel() {
   const myThemesToggleBtn = settingsPanel.querySelector(
     "#customThemeToggleBtn",
   );
-  const themesSection_2 = settingsPanel.querySelector("#customThemeSection");
+  const themesSection_umt = settingsPanel.querySelector("#customThemeSection");
   const themesArrow = settingsPanel.querySelector("#customThemeArrow");
-  let isHidden_2 = false;
+  let isHidden_szh = false;
   myThemesToggleBtn.onclick = () => {
-    isHidden_2 = !isHidden_2;
-    themesSection_2.style.display = isHidden_2 ? "block" : "none";
-    themesArrow.textContent = isHidden_2 ? "▲" : "▼";
+    isHidden_szh = !isHidden_szh;
+    themesSection_umt.style.display = isHidden_szh ? "block" : "none";
+    themesArrow.textContent = isHidden_szh ? "▲" : "▼";
   };
-  const myThemesToggleBtn_2 = settingsPanel.querySelector("#myThemesToggleBtn");
-  const themesSection_3 = settingsPanel.querySelector("#myThemesSection");
-  const themesArrow_2 = settingsPanel.querySelector("#myThemesArrow");
-  let isHidden_3 = false;
-  myThemesToggleBtn_2.onclick = () => {
-    isHidden_3 = !isHidden_3;
-    themesSection_3.style.display = isHidden_3 ? "block" : "none";
-    themesArrow_2.textContent = isHidden_3 ? "▲" : "▼";
-    if (isHidden_3) {
+  const myThemesToggleBtn_tfy =
+    settingsPanel.querySelector("#myThemesToggleBtn");
+  const themesSection_tod = settingsPanel.querySelector("#myThemesSection");
+  const themesArrow_ssg = settingsPanel.querySelector("#myThemesArrow");
+  let isHidden_si9 = false;
+  myThemesToggleBtn_tfy.onclick = () => {
+    isHidden_si9 = !isHidden_si9;
+    themesSection_tod.style.display = isHidden_si9 ? "block" : "none";
+    themesArrow_ssg.textContent = isHidden_si9 ? "▲" : "▼";
+    if (isHidden_si9) {
       renderCustomThemes();
     }
   };
@@ -775,20 +779,20 @@ function createMusicPanel() {
     );
     showNotification(state.isMusicShuffleEnabled ? "Loop ON" : "Loop OFF");
   };
-  const musicShuffleButton_2 = musicPanel.querySelector("#musicShuffleBtn");
-  musicShuffleButton_2.classList.toggle(
+  const musicShuffleButton_pm1 = musicPanel.querySelector("#musicShuffleBtn");
+  musicShuffleButton_pm1.classList.toggle(
     "toggle-on",
-    state.isMusicShuffleEnabled_2,
+    state.isMusicShuffleEnabled_rdv,
   );
-  musicShuffleButton_2.onclick = () => {
-    state.isMusicShuffleEnabled_2 = !state.isMusicShuffleEnabled_2;
-    localStorage.setItem("musicShuffle", state.isMusicShuffleEnabled_2);
-    musicShuffleButton_2.classList.toggle(
+  musicShuffleButton_pm1.onclick = () => {
+    state.isMusicShuffleEnabled_rdv = !state.isMusicShuffleEnabled_rdv;
+    localStorage.setItem("musicShuffle", state.isMusicShuffleEnabled_rdv);
+    musicShuffleButton_pm1.classList.toggle(
       "toggle-on",
-      state.isMusicShuffleEnabled_2,
+      state.isMusicShuffleEnabled_rdv,
     );
     showNotification(
-      state.isMusicShuffleEnabled_2 ? "Shuffle ON" : "Shuffle OFF",
+      state.isMusicShuffleEnabled_rdv ? "Shuffle ON" : "Shuffle OFF",
     );
   };
   const musicVolumeControl = musicPanel.querySelector("#musicVolume");

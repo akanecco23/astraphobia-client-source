@@ -1,5 +1,5 @@
 export const featuresentitytrailState = {
-  entityTrailInterval_2: null,
+  entityTrailInterval_qn3: null,
 };
 
 export {};

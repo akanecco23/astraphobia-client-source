@@ -1,7 +1,7 @@
 import {
   getFirstAnimalPosition,
   getEntityPosition,
-  isProcessed_4,
+  isProcessed_l68,
   angle,
   getGameState,
   getEntityManager,
@@ -21,7 +21,7 @@ import { updateLockButtonUI } from "../ui/radar.js";
 import { simulateClick } from "./movement.js";
 
 function updateLockOnTarget() {
-  if (!isProcessed_4) {
+  if (!isProcessed_l68) {
     return;
   }
   requestAnimationFrame(updateLockOnTarget);
@@ -166,10 +166,10 @@ function movePointerToTarget(targetX, targetY, shouldClick) {
     simulateClick(finalX, finalY);
   }
 }
-let currentTime_2 = 0;
-let currentTime_3 = 0;
+let currentTime_iij = 0;
+let currentTime_sbn = 0;
 function autoDodgeLoop() {
-  if (!state.isProcessed_5) {
+  if (!state.isProcessed_rdv) {
     return;
   }
   setTimeout(autoDodgeLoop, 80);
@@ -229,8 +229,8 @@ function autoDodgeLoop() {
     }
     const now = Date.now();
     let isDodging = false;
-    if (now - currentTime_3 > 600) {
-      currentTime_3 = now;
+    if (now - currentTime_sbn > 600) {
+      currentTime_sbn = now;
       if (state.position) {
         const distFromLastPos = calculateDistance(
           localPlayer.x,
@@ -287,7 +287,7 @@ function autoDodgeLoop() {
         const rotatedAngle = angle + angleOffset;
         if (
           state.dataList.some(
-            (myY_2) => Math.abs(myY_2 - rotatedAngle) < 0.3,
+            (myY_7x0) => Math.abs(myY_7x0 - rotatedAngle) < 0.3,
           ) &&
           state.counter < 5
         ) {
@@ -315,14 +315,14 @@ function autoDodgeLoop() {
         state.dataList = [];
       }
     }
-    const angle_2 = now - currentTime_2 > deltaThreshold;
-    if (angle_2) {
-      currentTime_2 = now;
+    const angle_qxb = now - currentTime_iij > deltaThreshold;
+    if (angle_qxb) {
+      currentTime_iij = now;
     }
     movePointerToTarget(
       localPlayer.x + Math.cos(angle) * 2000,
       localPlayer.y + Math.sin(angle) * 2000,
-      angle_2,
+      angle_qxb,
     );
   } catch (data) {}
 }
@@ -331,8 +331,8 @@ function enableAutoDodge() {
   state.position = null;
   state.counter = 0;
   state.dataList = [];
-  if (!state.isProcessed_5) {
-    state.isProcessed_5 = true;
+  if (!state.isProcessed_rdv) {
+    state.isProcessed_rdv = true;
     autoDodgeLoop();
   }
   showNotification("Auto dodge enabled");

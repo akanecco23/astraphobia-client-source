@@ -33,8 +33,8 @@ window.autoFarmSkipIds = new Set();
 window.autoFarmSkipClearTime = 0;
 window.autoFarmSkipAreas = [];
 
-const offsetValue_2 = 400;
-const tickInterval_2 = 600;
+const offsetValue_qn6 = 400;
+const tickInterval_st4 = 600;
 function handleFarmFailure(x, y) {
   const currentTime = Date.now();
   window.autoFarmSkipAreas = window.autoFarmSkipAreas.filter(
@@ -43,7 +43,7 @@ function handleFarmFailure(x, y) {
   let existingArea = window.autoFarmSkipAreas.find(
     (position) =>
       calculateDistance(x, y, state.position.x, state.position.y) <
-      offsetValue_2,
+      offsetValue_qn6,
   );
   if (existingArea) {
     existingArea.failCount++;
@@ -56,7 +56,7 @@ function handleFarmFailure(x, y) {
     window.autoFarmSkipAreas.push({
       x: x,
       y: y,
-      radius: offsetValue_2,
+      radius: offsetValue_qn6,
       time: currentTime,
       failCount: 1,
       skipped: false,
@@ -299,16 +299,16 @@ function calculatePlayerAvoidanceVector() {
     y: avoidY,
   };
 }
-let currentTime_4 = 0;
+let currentTime_r3o = 0;
 function simulateEvolveKey() {
   if (!window.autoFarmEvolve) {
     return;
   }
   const currentTime = Date.now();
-  if (currentTime - currentTime_4 < 5000) {
+  if (currentTime - currentTime_r3o < 5000) {
     return;
   }
-  currentTime_4 = currentTime;
+  currentTime_r3o = currentTime;
   const gameCanvas = getGameCanvas();
   const randomDigit = String(Math.floor(Math.random() * 9) + 1);
   const keyboardEventOptions = {
@@ -337,24 +337,24 @@ function simulateEvolveKey() {
     } catch (data) {}
   });
 }
-let currentTime_5 = 0;
+let currentTime_sz8 = 0;
 function detectAndHandleStuck(currentPos) {
   const now = Date.now();
-  if (now - state.counter_4 < 1500) {
+  if (now - state.counter_rlc < 1500) {
     return false;
   }
-  state.counter_4 = now;
-  if (state.position_2) {
+  state.counter_rlc = now;
+  if (state.position_r79) {
     if (
       calculateDistance(
         currentPos.x,
         currentPos.y,
-        state.position_2.x,
-        state.position_2.y,
+        state.position_r79.x,
+        state.position_r79.y,
       ) < 25
     ) {
-      state.counter_3++;
-      if (state.counter_3 >= 1 && window.autoFarmCurrentTarget) {
+      state.counter_ss2++;
+      if (state.counter_ss2 >= 1 && window.autoFarmCurrentTarget) {
         handleFarmFailure(
           window.autoFarmCurrentTarget.x,
           window.autoFarmCurrentTarget.y,
@@ -362,10 +362,10 @@ function detectAndHandleStuck(currentPos) {
         window.autoFarmSkipIds.add(window.autoFarmCurrentTarget.id);
         window.autoFarmCurrentTarget = null;
         window.autoFarmTargetStartTime = 0;
-        state.counter_3 = 0;
+        state.counter_ss2 = 0;
       }
-      if (state.counter_3 >= 2) {
-        state.counter_3 = 0;
+      if (state.counter_ss2 >= 2) {
+        state.counter_ss2 = 0;
         window.autoFarmCurrentTarget = null;
         window.autoFarmTargetStartTime = 0;
         const randomAngle = Math.random() * Math.PI * 2;
@@ -377,10 +377,10 @@ function detectAndHandleStuck(currentPos) {
         return true;
       }
     } else {
-      state.counter_3 = 0;
+      state.counter_ss2 = 0;
     }
   }
-  state.position_2 = {
+  state.position_r79 = {
     x: currentPos.x,
     y: currentPos.y,
   };
@@ -403,7 +403,7 @@ function setupPatrolPoints() {
 }
 function autoFarmLoop() {
   if (!window.autoFarmActive) {
-    state.isToggled_3 = false;
+    state.isToggled_suc = false;
     return;
   }
   const now = Date.now();
@@ -430,7 +430,7 @@ function autoFarmLoop() {
     const player = getFirstAnimalPosition();
     if (!player) {
       window.autoFarmActive = false;
-      state.isToggled_3 = false;
+      state.isToggled_suc = false;
       const autoFarmBtnElement = document.getElementById("autoFarmBtn");
       if (autoFarmBtnElement) {
         autoFarmBtnElement.textContent = "Auto Farm";
@@ -451,9 +451,9 @@ function autoFarmLoop() {
       window.autoFarmAvoidPlayers
     ) {
       const canBoost =
-        window.autoFarmBoost && now - state.counter_2 > tickInterval_2;
+        window.autoFarmBoost && now - state.counter_ta8 > tickInterval_st4;
       if (canBoost) {
-        state.counter_2 = now;
+        state.counter_ta8 = now;
       }
       aimAtTarget(
         player.x + playerOffset.x,
@@ -481,7 +481,7 @@ function autoFarmLoop() {
           }
           window.autoFarmCurrentTarget = nearestTarget;
           window.autoFarmTargetStartTime = now;
-          state.counter_3 = 0;
+          state.counter_ss2 = 0;
         }
         if (nearestTarget.distance < 40) {
           targetX += (Math.random() - 0.5) * 80;
@@ -490,9 +490,9 @@ function autoFarmLoop() {
       } else {
         window.autoFarmCurrentTarget = null;
         window.autoFarmTargetStartTime = 0;
-        if (now - currentTime_5 > 2500) {
+        if (now - currentTime_sz8 > 2500) {
           angle = Math.random() * Math.PI * 2;
-          currentTime_5 = now;
+          currentTime_sz8 = now;
         }
         targetX = player.x + Math.cos(angle) * 1000;
         targetY = player.y + Math.sin(angle) * 1000;
@@ -525,9 +525,9 @@ function autoFarmLoop() {
         } else {
           window.autoFarmCurrentTarget = null;
           window.autoFarmTargetStartTime = 0;
-          if (now - currentTime_5 > 2500) {
+          if (now - currentTime_sz8 > 2500) {
             angle = Math.random() * Math.PI * 2;
-            currentTime_5 = now;
+            currentTime_sz8 = now;
           }
           targetX = player.x + Math.cos(angle) * 1000;
           targetY = player.y + Math.sin(angle) * 1000;
@@ -538,16 +538,16 @@ function autoFarmLoop() {
       if (!window.autoFarmPatrolPoints.length) {
         setupPatrolPoints();
       }
-      const selectedTarget_2 = findClosestFarmableEntity(800);
-      if (selectedTarget_2) {
-        targetX = selectedTarget_2.x;
-        targetY = selectedTarget_2.y;
-        minDistance = selectedTarget_2.distance;
+      const selectedTarget_1m3 = findClosestFarmableEntity(800);
+      if (selectedTarget_1m3) {
+        targetX = selectedTarget_1m3.x;
+        targetY = selectedTarget_1m3.y;
+        minDistance = selectedTarget_1m3.distance;
         if (
           !window.autoFarmCurrentTarget ||
-          window.autoFarmCurrentTarget.id !== selectedTarget_2.id
+          window.autoFarmCurrentTarget.id !== selectedTarget_1m3.id
         ) {
-          window.autoFarmCurrentTarget = selectedTarget_2;
+          window.autoFarmCurrentTarget = selectedTarget_1m3;
           window.autoFarmTargetStartTime = now;
         }
       } else {
@@ -576,9 +576,9 @@ function autoFarmLoop() {
       const angle =
         window.autoFarmBoost &&
         minDistance > 350 &&
-        now - state.counter_2 > tickInterval_2;
+        now - state.counter_ta8 > tickInterval_st4;
       if (angle) {
-        state.counter_2 = now;
+        state.counter_ta8 = now;
       }
       aimAtTarget(targetX, targetY, angle);
     }
@@ -589,7 +589,7 @@ function autoFarmLoop() {
 }
 function stopAutoFarm() {
   window.autoFarmActive = false;
-  state.isToggled_3 = false;
+  state.isToggled_suc = false;
   showNotification(
     "Farm stopped. ~" +
       window.autoFarmStats.collected +
@@ -598,12 +598,12 @@ function stopAutoFarm() {
       "s",
   );
 }
-document.addEventListener("keydown", (event_5) => {
-  if (event_5.target.matches("input,textarea,select")) {
+document.addEventListener("keydown", (event_6s3) => {
+  if (event_6s3.target.matches("input,textarea,select")) {
     return;
   }
-  if (event_5.key === "F5") {
-    event_5.preventDefault();
+  if (event_6s3.key === "F5") {
+    event_6s3.preventDefault();
     if (window.autoFarmActive) {
       stopAutoFarm();
       const farmBtn = document.getElementById("autoFarmBtn");
@@ -614,10 +614,10 @@ document.addEventListener("keydown", (event_5) => {
     } else {
       const farmModeSelect = document.getElementById("farmModeSelect");
       startAutoFarm(farmModeSelect ? farmModeSelect.value : "nearest");
-      const autoFarmButton_2 = document.getElementById("autoFarmBtn");
-      if (autoFarmButton_2) {
-        autoFarmButton_2.textContent = "Stop Farm";
-        autoFarmButton_2.classList.add("toggle-on");
+      const autoFarmButton = document.getElementById("autoFarmBtn");
+      if (autoFarmButton) {
+        autoFarmButton.textContent = "Stop Farm";
+        autoFarmButton.classList.add("toggle-on");
       }
     }
   }

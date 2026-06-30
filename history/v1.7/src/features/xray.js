@@ -1,7 +1,7 @@
 import { gameInstance, playerData, config, state } from "../core.js";
 
 const initializeViewportHacks = () => {
-  if (state.isProcessed_3) {
+  if (state.isProcessed_rnh) {
     return;
   }
   if (!playerData) {
@@ -32,7 +32,7 @@ const initializeViewportHacks = () => {
   } catch (url) {
     console.error(url);
   }
-  state.isProcessed_3 = true;
+  state.isProcessed_rnh = true;
 };
 
 export { initializeViewportHacks };

@@ -18,7 +18,7 @@ Index: content.js
 +  getEntityPosition,
 +  calculateDirection,
 +  findEntityById,
-+  isAreaSkipped_2,
++  isAreaSkipped_sc8,
 +  initAutoFarm,
 +  initializeAntiDetection,
 +  initializeViewportSettings,
@@ -29,8 +29,8 @@ Index: content.js
 +  offsetValue,
    gameInstance,
    playerData,
--  isProcessed_2,
-+  isProcessed_3,
+-  isProcessed_run,
++  isProcessed_skx,
    config,
 +  dragState,
 +  tickInterval,
@@ -63,6 +63,17 @@ Index: content.js
 +  stopAutoFarm,
 +} from "./src/features/autofarm.js";
 +import {
++  createEspOverlay,
++  drawEsp,
++  drawTrackedEntity,
++  renderEspLoop,
++  toggleEsp,
++  trackPlayer,
++  toggleEsp_sdk,
++  toggleEsp_sl9,
++  toggleMinimapSize,
++} from "./src/features/esp.js";
++import {
 +  showHalloweenModal,
 +  makeDraggable,
 +  createToolsPanel,
@@ -72,17 +83,6 @@ Index: content.js
 +  toggleUiVisibility,
  } from "./src/ui/panels.js";
  import {
-+  createEspOverlay,
-+  drawEsp,
-+  drawTrackedEntity,
-+  renderEspLoop,
-+  toggleEsp,
-+  trackPlayer,
-+  toggleEsp_2,
-+  toggleEsp_3,
-+  toggleMinimapSize,
-+} from "./src/features/esp.js";
-+import {
    generateRandomString,
    getGameCanvas,
    getAllPropertyNames,
@@ -159,7 +159,7 @@ Index: src/core.js
 +  generatePatrolPoints,
 +  startAutoFarmLoop,
 +} from "./features/autofarm.js";
-+import { renderEspLoop, trackPlayer, toggleEsp_2 } from "./features/esp.js";
++import { renderEspLoop, trackPlayer, toggleEsp_sdk } from "./features/esp.js";
 +import { applyTheme, initBackground, injectStyles } from "./ui/theme.js";
 +import { showToast, restoreUIInteractivity } from "./ui/interaction.js";
 +import { calculateDistance, getAllPropertyNames } from "./utils.js";
@@ -186,9 +186,9 @@ Index: src/core.js
 -function initInterceptor(config) {
 -  if (isProcessed) {
 +let currentTime = 0;
-+let isProcessed_2 = false;
++let isProcessed_ln9 = false;
 +function hookTextEncoder() {
-+  if (isProcessed_2) {
++  if (isProcessed_ln9) {
      return;
    }
    function unescapeString(inputString) {
@@ -287,7 +287,7 @@ Index: src/core.js
 -    config.style.cursor = "not-allowed";
 -  }
 -  showNotification("✅ Special Characters enabled! (One-time use)");
-+  isProcessed_2 = true;
++  isProcessed_ln9 = true;
 +  showToast("Special characters enabled");
  }
 -
@@ -297,7 +297,7 @@ Index: src/core.js
  let gameInstance;
  let appState;
  let playerData;
--let isProcessed_2 = false;
+-let isProcessed_run = false;
 -
 -const encryptPacketData = (isActive, charCode, suffix = "") => {
 -  const stringTable = [
@@ -315,7 +315,7 @@ Index: src/core.js
 -    "setter",
 -  ];
 -  if (!isActive) {
-+let isProcessed_3 = false;
++let isProcessed_skx = false;
 +const config = {};
 +function getGameState() {
 +  try {
@@ -501,7 +501,7 @@ Index: src/core.js
 +const deltaThreshold = 800;
 +const maxFailCount = 2;
 +const timeoutLimit = 20000;
-+function isAreaSkipped_2(x, y) {
++function isAreaSkipped_sc8(x, y) {
 +  const currentTime = Date.now();
 +  window.autoFarmSkipAreas = window.autoFarmSkipAreas.filter(
 +    (timerState) => currentTime - timerState.time < timeoutLimit,
@@ -537,8 +537,8 @@ Index: src/core.js
 -  },
 -};
 -const sendPacket = (payload, additionalData = "") => {
--  if (gameInstance && appState && config_2.socketManager) {
--    gameInstance[config_2.socketManager].sendBytePacket(
+-  if (gameInstance && appState && config_rk6.socketManager) {
+-    gameInstance[config_rk6.socketManager].sendBytePacket(
 -      encryptPacketData(appState.token._value, payload, additionalData),
 -    );
 +}
@@ -553,27 +553,27 @@ Index: src/core.js
 +  window.autoFarmSkipIds.clear();
 +  window.autoFarmSkipAreas = [];
 +  window.autoFarmSkipClearTime = Date.now();
-+  state.position_2 = null;
-+  state.counter_3 = 0;
-+  state.counter_4 = 0;
-+  state.counter_2 = 0;
++  state.position_t9s = null;
++  state.counter_sm3 = 0;
++  state.counter_tkq = 0;
++  state.counter_agp = 0;
 +  if (farmMode === "patrol") {
 +    generatePatrolPoints();
    }
 -};
--const config_2 = {};
+-const config_rk6 = {};
 -const currentTime = 0;
 -const initializeAntiTamper = () => {
 -  const storage = {};
 +  showToast("Auto farm started (" + window.autoFarmMode + ")");
 +  startAutoFarmLoop();
 +}
-+let isProcessed_5 = false;
++let isProcessed_k73 = false;
 +const initializeAntiDetection = () => {
-+  if (isProcessed_5) {
++  if (isProcessed_k73) {
 +    return;
 +  }
-+  isProcessed_5 = true;
++  isProcessed_k73 = true;
 +  const cache = {};
    for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
 -    storage[propertyKey] = Reflect[propertyKey];
@@ -655,7 +655,7 @@ Index: src/core.js
 +          const obfuscatedProperties = allProperties.filter((varName) =>
 +            varName.startsWith("_0x"),
            );
--          config_2.setFlash =
+-          config_rk6.setFlash =
 +          config.setFlash =
              Object.getOwnPropertyNames(playerData.__proto__.__proto__)
 -              .filter((obfuscatedPropName) =>
@@ -664,39 +664,39 @@ Index: src/core.js
 +              .filter((propName) => propName.startsWith("_0x"))
                .find(
 -                (methodName) => playerData[methodName] instanceof Function,
--              ) || config_2.setFlash;
--          config_2.terrainManager =
+-              ) || config_rk6.setFlash;
+-          config_rk6.terrainManager =
 -            obfuscatedKeys.find(
 -              (shadowEntityKey) =>
 -                typeof playerData[shadowEntityKey]?.shadow !== "undefined",
--            ) || config_2.terrainManager;
--          config_2.entityManager =
+-            ) || config_rk6.terrainManager;
+-          config_rk6.entityManager =
 -            obfuscatedKeys.find(
 -              (entitiesListKey) =>
 -                typeof playerData[entitiesListKey]?.entitiesList !==
 -                "undefined",
--            ) || config_2.entityManager;
--          config_2.entityManagerProps = {};
+-            ) || config_rk6.entityManager;
+-          config_rk6.entityManagerProps = {};
 -          const entityManagerKeys = getAllPropertyNames(
--            playerData[config_2.entityManager],
+-            playerData[config_rk6.entityManager],
 -          );
 -          const animalsUpdateInterval = setInterval(() => {
--            config_2.entityManagerProps.animalsList =
+-            config_rk6.entityManagerProps.animalsList =
 -              entityManagerKeys
 -                .filter((variableName) => variableName.startsWith("_0x"))
 -                .find(
 -                  (entityName) =>
--                    typeof playerData?.[config_2.entityManager]?.[
+-                    typeof playerData?.[config_rk6.entityManager]?.[
 -                      entityName
 -                    ]?.[0] !== "undefined",
--                ) || config_2.entityManagerProps.animalsList;
+-                ) || config_rk6.entityManagerProps.animalsList;
 -            if (
--              typeof config_2.entityManagerProps.animalsList !== "undefined"
+-              typeof config_rk6.entityManagerProps.animalsList !== "undefined"
 -            ) {
 -              clearInterval(animalsUpdateInterval);
 -            }
 -          }, 1000);
--          config_2.socketManager =
+-          config_rk6.socketManager =
 +                (functionKey) => playerData[functionKey] instanceof Function,
 +              ) || config.setFlash;
 +          config.terrainManager =
@@ -714,7 +714,7 @@ Index: src/core.js
 -              (networkClientKey) =>
 -                typeof gameInstance[networkClientKey]?.sendBytePacket !==
 -                "undefined",
--            ) || config_2.socketManager;
+-            ) || config_rk6.socketManager;
 +              (networkKey) =>
 +                typeof gameInstance[networkKey]?.sendBytePacket !== "undefined",
 +            ) || config.socketManager;
@@ -787,9 +787,9 @@ Index: src/core.js
    });
  };
 -const disableGameRestrictions = () => {
--  if (isProcessed_2) {
+-  if (isProcessed_run) {
 +const initializeViewportSettings = () => {
-+  if (isProcessed_3) {
++  if (isProcessed_skx) {
      return;
    }
    if (!playerData) {
@@ -804,13 +804,13 @@ Index: src/core.js
      } catch {}
    }, 300);
    try {
--    if (config_2.setFlash) {
--      playerData[config_2.setFlash] = () => {};
+-    if (config_rk6.setFlash) {
+-      playerData[config_rk6.setFlash] = () => {};
 +    if (config.setFlash) {
 +      playerData[config.setFlash] = () => {};
      }
--    if (config_2.terrainManager) {
--      const terrainManager = playerData[config_2.terrainManager];
+-    if (config_rk6.terrainManager) {
+-      const terrainManager = playerData[config_rk6.terrainManager];
 -      if (terrainManager && terrainManager.shadow) {
 +    if (config.terrainManager) {
 +      const terrainManager = playerData[config.terrainManager];
@@ -822,17 +822,17 @@ Index: src/core.js
    } catch (url) {
      console.error(url);
    }
--  isProcessed_2 = true;
-+  isProcessed_3 = true;
+-  isProcessed_run = true;
++  isProcessed_skx = true;
  };
 -
 -document.addEventListener("keydown", (keyboardEvent) => {
-+let isProcessed_6 = false;
++let isProcessed_sby = false;
 +function initializeClient() {
-+  if (isProcessed_6) {
++  if (isProcessed_sby) {
 +    return;
 +  }
-+  isProcessed_6 = true;
++  isProcessed_sby = true;
 +  setTimeout(() => {
 +    injectStyles();
 +    const myY = localStorage.getItem("theme") || "grey";
@@ -846,7 +846,7 @@ Index: src/core.js
 +    restoreUIInteractivity();
 +    initRadarDrag();
 +    renderEspLoop();
-+    state.isProcessed_4 = true;
++    state.isProcessed_rdh = true;
 +    autoDodgeLoop();
 +  }, 1000);
 +}
@@ -872,31 +872,31 @@ Index: src/core.js
 +  },
 +  true,
 +);
-+document.addEventListener("keydown", (event_2) => {
-+  if (event_2.target.matches("input,textarea,select")) {
++document.addEventListener("keydown", (event_4pb) => {
++  if (event_4pb.target.matches("input,textarea,select")) {
 +    return;
 +  }
-+  if (event_2.key === "F3") {
-+    event_2.preventDefault();
++  if (event_4pb.key === "F3") {
++    event_4pb.preventDefault();
 +    trackPlayer();
 +  }
-+  if (event_2.key === "F4") {
-+    event_2.preventDefault();
-+    toggleEsp_2();
++  if (event_4pb.key === "F4") {
++    event_4pb.preventDefault();
++    toggleEsp_sdk();
 +  }
 +});
-+document.addEventListener("keydown", (event_4) => {
++document.addEventListener("keydown", (event_4kz) => {
    if (
 -    keyboardEvent.key === state.activeKey &&
 -    !keyboardEvent.repeat &&
 -    !keyboardEvent.target.matches("input, textarea, button")
-+    event_4.key === state.activeKey &&
-+    !event_4.repeat &&
-+    !event_4.target.matches("input,textarea,button,select")
++    event_4kz.key === state.activeKey &&
++    !event_4kz.repeat &&
++    !event_4kz.target.matches("input,textarea,button,select")
    ) {
 -    keyboardEvent.preventDefault();
 -    togglePanels();
-+    event_4.preventDefault();
++    event_4kz.preventDefault();
 +    toggleUiVisibility();
    }
  });
@@ -916,17 +916,18 @@ Index: src/core.js
    entityTrailInterval: null,
    isToggled: false,
    angleIndex: 0,
+-  isToggled_r5u: false,
 +  keyQ: "q",
 +  keyE: "e",
-   isToggled_2: false,
-+  isProcessed_4: false,
++  isToggled_sak: false,
++  isProcessed_rdh: false,
 +  position: null,
 +  counter: 0,
 +  dataList: [],
-+  counter_2: 0,
-+  position_2: null,
-+  counter_3: 0,
-+  counter_4: 0,
++  counter_agp: 0,
++  position_t9s: null,
++  counter_sm3: 0,
++  counter_tkq: 0,
    activeKey: "Shift",
  };
 -
@@ -945,7 +946,7 @@ Index: src/core.js
 +  getEntityPosition,
 +  calculateDirection,
 +  findEntityById,
-+  isAreaSkipped_2,
++  isAreaSkipped_sc8,
 +  initAutoFarm,
 +  initializeAntiDetection,
 +  initializeViewportSettings,
@@ -956,8 +957,8 @@ Index: src/core.js
 +  offsetValue,
    gameInstance,
    playerData,
--  isProcessed_2,
-+  isProcessed_3,
+-  isProcessed_run,
++  isProcessed_skx,
    config,
 +  dragState,
 +  tickInterval,
@@ -1050,11 +1051,11 @@ Index: src/features/aimbot.js
 +import { simulateMoveAndClick } from "./movement.js";
 +import { showToast } from "../ui/interaction.js";
 +
-+let currentTime_2 = 0;
-+let currentTime_3 = 0;
-+let entityTrailInterval_3 = null;
++let currentTime_qq5 = 0;
++let currentTime_re6 = 0;
++let entityTrailInterval_jft = null;
 +function autoDodgeLoop() {
-+  if (!state.isProcessed_4) {
++  if (!state.isProcessed_rdh) {
 +    return;
 +  }
 +  setTimeout(autoDodgeLoop, 80);
@@ -1104,13 +1105,13 @@ Index: src/features/aimbot.js
 +      state.position = null;
 +      state.counter = 0;
 +      state.dataList = [];
-+      entityTrailInterval_3 = null;
++      entityTrailInterval_jft = null;
 +      return;
 +    }
 +    const currentTime = Date.now();
 +    let hasMoved = false;
-+    if (currentTime - currentTime_3 > 600) {
-+      currentTime_3 = currentTime;
++    if (currentTime - currentTime_re6 > 600) {
++      currentTime_re6 = currentTime;
 +      if (state.position) {
 +        const distFromLastPos = calculateDistance(
 +          playerPosition.x,
@@ -1176,9 +1177,9 @@ Index: src/features/aimbot.js
 +        const sinAdjustedAngle = Math.sin(adjustedAngle);
 +        nearbyEntities.forEach((otherEntity) => {
 +          const diffX = otherEntity.x - playerPosition.x;
-+          const deltaY_2 = otherEntity.y - playerPosition.y;
++          const deltaY_u6o = otherEntity.y - playerPosition.y;
 +          const totalOffset =
-+            cosAdjustedAngle * diffX + sinAdjustedAngle * deltaY_2;
++            cosAdjustedAngle * diffX + sinAdjustedAngle * deltaY_u6o;
 +          currentValue -= totalOffset;
 +        });
 +        if (currentValue > maxValue) {
@@ -1197,14 +1198,14 @@ Index: src/features/aimbot.js
 +        state.dataList = [];
 +      }
 +    }
-+    entityTrailInterval_3 = angle;
-+    const angle_2 = playerPosition.x + Math.cos(angle) * 2000;
-+    const angle_3 = playerPosition.y + Math.sin(angle) * 2000;
-+    const angle_4 = currentTime - currentTime_2 > deltaThreshold;
-+    if (angle_4) {
-+      currentTime_2 = currentTime;
++    entityTrailInterval_jft = angle;
++    const angle_p9p = playerPosition.x + Math.cos(angle) * 2000;
++    const angle_q62 = playerPosition.y + Math.sin(angle) * 2000;
++    const angle_q0o = currentTime - currentTime_qq5 > deltaThreshold;
++    if (angle_q0o) {
++      currentTime_qq5 = currentTime;
 +    }
-+    simulateMoveAndClick(angle_2, angle_3, angle_4);
++    simulateMoveAndClick(angle_p9p, angle_q62, angle_q0o);
 +  } catch (data) {}
 +}
 +function enableAutoDodge() {
@@ -1212,9 +1213,9 @@ Index: src/features/aimbot.js
 +  state.position = null;
 +  state.counter = 0;
 +  state.dataList = [];
-+  entityTrailInterval_3 = null;
-+  if (!state.isProcessed_4) {
-+    state.isProcessed_4 = true;
++  entityTrailInterval_jft = null;
++  if (!state.isProcessed_rdh) {
++    state.isProcessed_rdh = true;
 +    autoDodgeLoop();
 +  }
 +  showToast("Auto dodge enabled");
@@ -1232,7 +1233,7 @@ Index: src/features/antidetection.js
 -import { getGameCanvas } from "../utils.js";
 -
 -function startAntiAfk() {
--  if (featuresentitytrailState.entityTrailInterval_2) {
+-  if (featuresentitytrailState.entityTrailInterval_s4i) {
 -    return;
 -  }
 -  const gameCanvas = getGameCanvas();
@@ -1240,7 +1241,7 @@ Index: src/features/antidetection.js
 -    showNotification("Game canvas not found!");
 -    return;
 -  }
--  featuresentitytrailState.entityTrailInterval_2 = setInterval(() => {
+-  featuresentitytrailState.entityTrailInterval_s4i = setInterval(() => {
 -    const angleDegrees = angles[state.angleIndex];
 -    const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
 -    const offsetX = Math.round(radius * Math.sin(angleRadians));
@@ -1270,7 +1271,7 @@ Index: src/features/autofarm.js
 +  maxFailCount,
 +  getGameState,
 +  getEntityManager,
-+  isAreaSkipped_2,
++  isAreaSkipped_sc8,
 +  getFirstAnimalPosition,
 +  angle,
 +  initAutoFarm,
@@ -1303,8 +1304,8 @@ Index: src/features/autofarm.js
 +window.autoFarmSkipClearTime = 0;
 +window.autoFarmSkipAreas = [];
 +
-+const offsetValue_2 = 400;
-+const tickInterval_2 = 600;
++const offsetValue_tz2 = 400;
++const tickInterval_sco = 600;
 +function isAreaSkipped(x, y) {
 +  const currentTime = Date.now();
 +  window.autoFarmSkipAreas = window.autoFarmSkipAreas.filter(
@@ -1322,7 +1323,7 @@ Index: src/features/autofarm.js
 +  let existingArea = window.autoFarmSkipAreas.find(
 +    (position) =>
 +      calculateDistance(x, y, state.position.x, state.position.y) <
-+      offsetValue_2,
++      offsetValue_tz2,
 +  );
 +  if (existingArea) {
 +    existingArea.failCount++;
@@ -1335,7 +1336,7 @@ Index: src/features/autofarm.js
 +    window.autoFarmSkipAreas.push({
 +      x: x,
 +      y: y,
-+      radius: offsetValue_2,
++      radius: offsetValue_tz2,
 +      time: currentTime,
 +      failCount: 1,
 +      skipped: false,
@@ -1374,7 +1375,7 @@ Index: src/features/autofarm.js
 +      if (isPlayer(targetEntity)) {
 +        return;
 +      }
-+      if (isAreaSkipped_2(myY, posY)) {
++      if (isAreaSkipped_sc8(myY, posY)) {
 +        return;
 +      }
 +      const distance = calculateDistance(playerX, playerY, myY, posY);
@@ -1422,7 +1423,7 @@ Index: src/features/autofarm.js
 +      if (isPlayer(targetEntity)) {
 +        return;
 +      }
-+      if (isAreaSkipped_2(posX, posY)) {
++      if (isAreaSkipped_sc8(posX, posY)) {
 +        return;
 +      }
 +      const distance = calculateDistance(playerX, playerY, posX, posY);
@@ -1568,16 +1569,16 @@ Index: src/features/autofarm.js
 +    y: avoidY,
 +  };
 +}
-+let currentTime_4 = 0;
++let currentTime_sky = 0;
 +function simulateEvolveKeyPress() {
 +  if (!window.autoFarmEvolve) {
 +    return;
 +  }
 +  const now = Date.now();
-+  if (now - currentTime_4 < 5000) {
++  if (now - currentTime_sky < 5000) {
 +    return;
 +  }
-+  currentTime_4 = now;
++  currentTime_sky = now;
 +  const gameElement = getGameCanvas();
 +  const randomDigit = Math.floor(Math.random() * 9) + 1;
 +  const digitString = String(randomDigit);
@@ -1607,24 +1608,24 @@ Index: src/features/autofarm.js
 +    } catch (context) {}
 +  });
 +}
-+let isToggled_3 = false;
-+let currentTime_5 = 0;
++let isToggled_rg1 = false;
++let currentTime_r36 = 0;
 +function checkAntiStuck(currentPos) {
 +  const now = Date.now();
-+  if (now - state.counter_4 < 1500) {
++  if (now - state.counter_tkq < 1500) {
 +    return false;
 +  }
-+  state.counter_4 = now;
-+  if (state.position_2) {
++  state.counter_tkq = now;
++  if (state.position_t9s) {
 +    const dist = calculateDistance(
 +      currentPos.x,
 +      currentPos.y,
-+      state.position_2.x,
-+      state.position_2.y,
++      state.position_t9s.x,
++      state.position_t9s.y,
 +    );
 +    if (dist < 25) {
-+      state.counter_3++;
-+      if (state.counter_3 >= 1 && window.autoFarmCurrentTarget) {
++      state.counter_sm3++;
++      if (state.counter_sm3 >= 1 && window.autoFarmCurrentTarget) {
 +        handleFarmFailure(
 +          window.autoFarmCurrentTarget.x,
 +          window.autoFarmCurrentTarget.y,
@@ -1632,10 +1633,10 @@ Index: src/features/autofarm.js
 +        window.autoFarmSkipIds.add(window.autoFarmCurrentTarget.id);
 +        window.autoFarmCurrentTarget = null;
 +        window.autoFarmTargetStartTime = 0;
-+        state.counter_3 = 0;
++        state.counter_sm3 = 0;
 +      }
-+      if (state.counter_3 >= 2) {
-+        state.counter_3 = 0;
++      if (state.counter_sm3 >= 2) {
++        state.counter_sm3 = 0;
 +        window.autoFarmCurrentTarget = null;
 +        window.autoFarmTargetStartTime = 0;
 +        const randomAngle = Math.random() * Math.PI * 2;
@@ -1645,12 +1646,12 @@ Index: src/features/autofarm.js
 +        return true;
 +      }
 +    } else {
-+      state.counter_3 = 0;
++      state.counter_sm3 = 0;
      }
 -    if (fishLevelSettings.hasSec) {
 -      return sendPacket(id4, currentValue);
 +  }
-+  state.position_2 = {
++  state.position_t9s = {
 +    x: currentPos.x,
 +    y: currentPos.y,
 +  };
@@ -1675,7 +1676,7 @@ Index: src/features/autofarm.js
 +}
 +function autoFarmUpdate() {
 +  if (!window.autoFarmActive) {
-+    isToggled_3 = false;
++    isToggled_rg1 = false;
 +    return;
 +  }
 +  const now = Date.now();
@@ -1703,7 +1704,7 @@ Index: src/features/autofarm.js
 +    const localPlayer = getFirstAnimalPosition();
 +    if (!localPlayer) {
 +      window.autoFarmActive = false;
-+      isToggled_3 = false;
++      isToggled_rg1 = false;
 +      const farmButton = document.getElementById("autoFarmBtn");
 +      if (farmButton) {
 +        farmButton.textContent = "Auto Farm";
@@ -1725,9 +1726,9 @@ Index: src/features/autofarm.js
 +      const targetX = localPlayer.x + avoidanceVector.x;
 +      const targetY = localPlayer.y + avoidanceVector.y;
 +      const isBoosting =
-+        window.autoFarmBoost && now - state.counter_2 > tickInterval_2;
++        window.autoFarmBoost && now - state.counter_agp > tickInterval_sco;
 +      if (isBoosting) {
-+        state.counter_2 = now;
++        state.counter_agp = now;
 +      }
 +      simulateMoveAndClick(targetX, targetY, isBoosting);
 +      setTimeout(autoFarmUpdate, 60);
@@ -1751,7 +1752,7 @@ Index: src/features/autofarm.js
 +          }
 +          window.autoFarmCurrentTarget = nearestTarget;
 +          window.autoFarmTargetStartTime = now;
-+          state.counter_3 = 0;
++          state.counter_sm3 = 0;
 +        }
 +        if (nearestTarget.distance < 40) {
 +          finalX += (Math.random() - 0.5) * 80;
@@ -1760,9 +1761,9 @@ Index: src/features/autofarm.js
 +      } else {
 +        window.autoFarmCurrentTarget = null;
 +        window.autoFarmTargetStartTime = 0;
-+        if (now - currentTime_5 > 2500) {
++        if (now - currentTime_r36 > 2500) {
 +          angle = Math.random() * Math.PI * 2;
-+          currentTime_5 = now;
++          currentTime_r36 = now;
 +        }
 +        finalX = localPlayer.x + Math.cos(angle) * 1000;
 +        finalY = localPlayer.y + Math.sin(angle) * 1000;
@@ -1795,9 +1796,9 @@ Index: src/features/autofarm.js
 +        } else {
 +          window.autoFarmCurrentTarget = null;
 +          window.autoFarmTargetStartTime = 0;
-+          if (now - currentTime_5 > 2500) {
++          if (now - currentTime_r36 > 2500) {
 +            angle = Math.random() * Math.PI * 2;
-+            currentTime_5 = now;
++            currentTime_r36 = now;
 +          }
 +          finalX = localPlayer.x + Math.cos(angle) * 1000;
 +          finalY = localPlayer.y + Math.sin(angle) * 1000;
@@ -1808,16 +1809,16 @@ Index: src/features/autofarm.js
 +      if (window.autoFarmPatrolPoints.length === 0) {
 +        generatePatrolPoints();
 +      }
-+      const nearbyTarget_2 = findClosestFarmable(800);
-+      if (nearbyTarget_2) {
-+        finalX = nearbyTarget_2.x;
-+        finalY = nearbyTarget_2.y;
-+        minDistance = nearbyTarget_2.distance;
++      const nearbyTarget_5dl = findClosestFarmable(800);
++      if (nearbyTarget_5dl) {
++        finalX = nearbyTarget_5dl.x;
++        finalY = nearbyTarget_5dl.y;
++        minDistance = nearbyTarget_5dl.distance;
 +        if (
 +          !window.autoFarmCurrentTarget ||
-+          window.autoFarmCurrentTarget.id !== nearbyTarget_2.id
++          window.autoFarmCurrentTarget.id !== nearbyTarget_5dl.id
 +        ) {
-+          window.autoFarmCurrentTarget = nearbyTarget_2;
++          window.autoFarmCurrentTarget = nearbyTarget_5dl;
 +          window.autoFarmTargetStartTime = now;
 +        }
 +      } else {
@@ -1844,12 +1845,12 @@ Index: src/features/autofarm.js
 +    }
 +    if (finalX != null && finalY != null) {
 +      const angle = minDistance > 350;
-+      const angle_2 = now - state.counter_2 > tickInterval_2;
-+      const angle_3 = window.autoFarmBoost && angle && angle_2;
-+      if (angle_3) {
-+        state.counter_2 = now;
++      const angle_6iu = now - state.counter_agp > tickInterval_sco;
++      const angle_6jy = window.autoFarmBoost && angle && angle_6iu;
++      if (angle_6jy) {
++        state.counter_agp = now;
 +      }
-+      simulateMoveAndClick(finalX, finalY, angle_3);
++      simulateMoveAndClick(finalX, finalY, angle_6jy);
 +    }
 +  } catch (data) {
 +    console.error("[AutoFarm] Error:", data);
@@ -1857,15 +1858,15 @@ Index: src/features/autofarm.js
 +  setTimeout(autoFarmUpdate, 60);
 +}
 +function startAutoFarmLoop() {
-+  if (isToggled_3) {
++  if (isToggled_rg1) {
 +    return;
 +  }
-+  isToggled_3 = true;
++  isToggled_rg1 = true;
 +  autoFarmUpdate();
 +}
 +function stopAutoFarm() {
 +  window.autoFarmActive = false;
-+  isToggled_3 = false;
++  isToggled_rg1 = false;
 +  const elapsedTime = (
 +    (Date.now() - window.autoFarmStats.startTime) /
 +    1000
@@ -1878,12 +1879,12 @@ Index: src/features/autofarm.js
 +      "s",
 +  );
 +}
-+document.addEventListener("keydown", (event_3) => {
-+  if (event_3.target.matches("input,textarea,select")) {
++document.addEventListener("keydown", (event_7o7) => {
++  if (event_7o7.target.matches("input,textarea,select")) {
 +    return;
 +  }
-+  if (event_3.key === "F5") {
-+    event_3.preventDefault();
++  if (event_7o7.key === "F5") {
++    event_7o7.preventDefault();
 +    if (window.autoFarmActive) {
 +      stopAutoFarm();
 +      const farmBtn = document.getElementById("autoFarmBtn");
@@ -1894,10 +1895,10 @@ Index: src/features/autofarm.js
 +    } else {
 +      const farmModeSelect = document.getElementById("farmModeSelect");
 +      initAutoFarm(farmModeSelect ? farmModeSelect.value : "nearest");
-+      const autoFarmButton_2 = document.getElementById("autoFarmBtn");
-+      if (autoFarmButton_2) {
-+        autoFarmButton_2.textContent = "Stop Farm";
-+        autoFarmButton_2.classList.add("toggle-on");
++      const autoFarmButton = document.getElementById("autoFarmBtn");
++      if (autoFarmButton) {
++        autoFarmButton.textContent = "Stop Farm";
++        autoFarmButton.classList.add("toggle-on");
 +      }
 +    }
 +  }
@@ -1987,6 +1988,17 @@ Index: src/features/chat.js
  
 -export { startScheduledTask, stopInterval, autoChat };
 +export { startScheduledTask, stopInterval, simulateChatInput };
+Index: src/features/entitytrail.js
+===================================================================
+--- src/features/entitytrail.js	v1.5
++++ src/features/entitytrail.js	v1.6
+@@ -1,5 +1,5 @@
+ export const featuresentitytrailState = {
+-  entityTrailInterval_s4i: null,
++  entityTrailInterval_rfg: null,
+ };
+ 
+ export {};
 Index: src/features/esp.js
 ===================================================================
 --- src/features/esp.js	v1.5
@@ -2333,11 +2345,11 @@ Index: src/features/esp.js
 +    showToast("No players nearby");
 +  }
 +}
-+function toggleEsp_2() {
++function toggleEsp_sdk() {
 +  window.espTrackedEntityId = null;
 +  showToast("Tracking cleared");
 +}
-+function toggleEsp_3() {
++function toggleEsp_sl9() {
 +  window.autoDodgeEnabled = false;
 +  showToast("Auto dodge disabled");
 +}
@@ -2346,15 +2358,15 @@ Index: src/features/esp.js
 +    showToast("Minimap not available");
 +    return;
 +  }
-+  if (state.isToggled_2) {
++  if (state.isToggled_sak) {
 +    playerData.minimap.scale.set(1);
 +    playerData.minimap.pivot.set(0, 0);
-+    state.isToggled_2 = false;
++    state.isToggled_sak = false;
 +    showToast("Minimap restored");
 +  } else {
 +    playerData.minimap.scale.set(0.5);
 +    playerData.minimap.pivot.set(-70, -45);
-+    state.isToggled_2 = true;
++    state.isToggled_sak = true;
 +    showToast("Small minimap enabled");
 +  }
 +}
@@ -2366,15 +2378,15 @@ Index: src/features/esp.js
 +  renderEspLoop,
 +  toggleEsp,
 +  trackPlayer,
-+  toggleEsp_2,
-+  toggleEsp_3,
++  toggleEsp_sdk,
++  toggleEsp_sl9,
 +  toggleMinimapSize,
 +};
 Index: src/features/movement.js
 ===================================================================
 --- src/features/movement.js	v1.5
 +++ src/features/movement.js	v1.6
-@@ -1,7 +1,39 @@
+@@ -1,18 +1,155 @@
 +import {
 +  angles,
 +  radius,
@@ -2388,7 +2400,7 @@ Index: src/features/movement.js
 +import { getGameCanvas } from "../utils.js";
  
 +function startCircularMovement() {
-+  if (featuresentitytrailState.entityTrailInterval_2) {
++  if (featuresentitytrailState.entityTrailInterval_rfg) {
 +    return;
 +  }
 +  const canvas = getGameCanvas();
@@ -2396,7 +2408,7 @@ Index: src/features/movement.js
 +    showToast("Canvas not found");
 +    return;
 +  }
-+  featuresentitytrailState.entityTrailInterval_2 = setInterval(() => {
++  featuresentitytrailState.entityTrailInterval_rfg = setInterval(() => {
 +    const angleDegrees = angles[state.angleIndex];
 +    const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
 +    const offsetX = Math.round(radius * Math.sin(angleRadians));
@@ -2412,12 +2424,17 @@ Index: src/features/movement.js
 +  }, 15);
 +}
  function stopEntityTrail() {
-   if (featuresentitytrailState.entityTrailInterval_2) {
-     clearInterval(featuresentitytrailState.entityTrailInterval_2);
-     featuresentitytrailState.entityTrailInterval_2 = null;
-@@ -10,9 +42,114 @@
+-  if (featuresentitytrailState.entityTrailInterval_s4i) {
+-    clearInterval(featuresentitytrailState.entityTrailInterval_s4i);
+-    featuresentitytrailState.entityTrailInterval_s4i = null;
++  if (featuresentitytrailState.entityTrailInterval_rfg) {
++    clearInterval(featuresentitytrailState.entityTrailInterval_rfg);
++    featuresentitytrailState.entityTrailInterval_rfg = null;
+   }
+ }
  function toggleMouseSimulation() {
-   if (featuresentitytrailState.entityTrailInterval_2) {
+-  if (featuresentitytrailState.entityTrailInterval_s4i) {
++  if (featuresentitytrailState.entityTrailInterval_rfg) {
      stopEntityTrail();
    } else {
 -    startAntiAfk();
@@ -2708,18 +2725,18 @@ Index: src/ui/panels.js
 ===================================================================
 --- src/ui/panels.js	v1.5
 +++ src/ui/panels.js	v1.6
-@@ -1,689 +1,466 @@
+@@ -1,689 +1,467 @@
  import {
    radius,
 -  gameInstance,
 -  playerData,
    config,
 -  initInterceptor,
--  isProcessed_2,
+-  isProcessed_run,
 -  initializeAntiTamper,
 -  disableGameRestrictions,
 +  hookTextEncoder,
-+  isProcessed_3,
++  isProcessed_skx,
 +  initAutoFarm,
 +  initializeAntiDetection,
 +  initializeViewportSettings,
@@ -2729,8 +2746,8 @@ Index: src/ui/panels.js
  import {
 +  toggleEsp,
 +  trackPlayer,
-+  toggleEsp_2,
-+  toggleEsp_3,
++  toggleEsp_sdk,
++  toggleEsp_sl9,
 +  toggleMinimapSize,
 +} from "../features/esp.js";
 +import {
@@ -2751,7 +2768,7 @@ Index: src/ui/panels.js
 -import { toggleMinimapScale } from "./radar.js";
 -import { applyThemeColors } from "./theme.js";
  
--let isProcessed_3 = false;
+-let isProcessed_r36 = false;
 -function createHalloweenModal(modalConfig) {
 +function showHalloweenModal(config) {
    const modalContainer = document.createElement("div");
@@ -2832,7 +2849,7 @@ Index: src/ui/panels.js
 +  codeInput.focus();
  }
 -const initControlOverlay = () => {
--  if (isProcessed_3) {
+-  if (isProcessed_r36) {
 -    return;
 -  }
 -  function sendActionSequence() {
@@ -2927,7 +2944,7 @@ Index: src/ui/panels.js
 -      document.getElementById("ctrl-overlay").style.pointerEvents = "none";
 -    } catch {}
 -  });
--  isProcessed_3 = true;
+-  isProcessed_r36 = true;
 -};
 -function createUpdateHistoryStyles() {
 -  const styleElement = document.createElement("style");
@@ -3019,9 +3036,9 @@ Index: src/ui/panels.js
 -  draggableElement.addEventListener("click", (inputEvent) => {
 -    if (isDragging) {
 -      inputEvent.stopImmediatePropagation();
-+  element.addEventListener("click", (event_2) => {
++  element.addEventListener("click", (event_a8f) => {
 +    if (hasMoved) {
-+      event_2.stopImmediatePropagation();
++      event_a8f.stopImmediatePropagation();
      }
    });
 -  if (localStorage.getItem("theme") === "halloween") {
@@ -3084,8 +3101,8 @@ Index: src/ui/panels.js
    };
 -  const spoofButton = deepToolsPanel.querySelector("#patchBtn");
 -  spoofButton.onclick = () => initInterceptor(spoofButton);
--  const spoofButton_2 = deepToolsPanel.querySelector("#spoofBtn");
--  spoofButton_2.onclick = () => {
+-  const spoofButton_251 = deepToolsPanel.querySelector("#spoofBtn");
+-  spoofButton_251.onclick = () => {
 -    const inputLimit = generateRandomString(8);
 -    if (simulateTyping(".play-game .el-input__inner", inputLimit)) {
 -      showNotification("Spoofed name!");
@@ -3130,21 +3147,22 @@ Index: src/ui/panels.js
 +      showToast("No name input found");
 +    }
 +  };
-+  const spinBtn_2 = panelElement.querySelector("#spinBtn");
-+  spinBtn_2.onclick = () => {
++  const spinBtn_jno = panelElement.querySelector("#spinBtn");
++  spinBtn_jno.onclick = () => {
      toggleMouseSimulation();
-     if (featuresentitytrailState.entityTrailInterval_2) {
+-    if (featuresentitytrailState.entityTrailInterval_s4i) {
 -      autoChatButton.textContent = "Disable Auto Spin";
 -      autoChatButton.style.color = "var(--accent)";
 -      autoChatButton.style.opacity = "0.6";
-+      spinBtn_2.textContent = "Stop Spin";
-+      spinBtn_2.classList.add("toggle-on");
++    if (featuresentitytrailState.entityTrailInterval_rfg) {
++      spinBtn_jno.textContent = "Stop Spin";
++      spinBtn_jno.classList.add("toggle-on");
      } else {
 -      autoChatButton.textContent = "Enable Auto Spin";
 -      autoChatButton.style.color = "var(--accent)";
 -      autoChatButton.style.opacity = "1";
-+      spinBtn_2.textContent = "Auto Spin";
-+      spinBtn_2.classList.remove("toggle-on");
++      spinBtn_jno.textContent = "Auto Spin";
++      spinBtn_jno.classList.remove("toggle-on");
      }
    };
 -  const spinKeyInput = deepToolsPanel.querySelector("#spinKeyInput");
@@ -3159,35 +3177,36 @@ Index: src/ui/panels.js
 +    lastPressedKey = keyEvent.code || keyEvent.key;
 +    turnRightKeyInput.value = lastPressedKey.replace("Key", "").toUpperCase();
    });
--  document.addEventListener("keydown", (event_2) => {
+-  document.addEventListener("keydown", (event_1u9) => {
 +  document.addEventListener("keydown", (keyboardEvent) => {
      if (
        lastPressedKey &&
--      event_2.code === lastPressedKey &&
--      !event_2.target.matches("input, textarea, button")
+-      event_1u9.code === lastPressedKey &&
+-      !event_1u9.target.matches("input, textarea, button")
 +      keyboardEvent.code === lastPressedKey &&
 +      !keyboardEvent.target.matches("input,textarea,button,select")
      ) {
--      event_2.preventDefault();
+-      event_1u9.preventDefault();
 +      keyboardEvent.preventDefault();
        toggleMouseSimulation();
-       if (featuresentitytrailState.entityTrailInterval_2) {
+-      if (featuresentitytrailState.entityTrailInterval_s4i) {
 -        autoChatButton.textContent = "Disable Auto Spin";
 -        autoChatButton.style.color = "var(--accent)";
 -        autoChatButton.style.opacity = "0.6";
-+        spinBtn_2.textContent = "Stop Spin";
-+        spinBtn_2.classList.add("toggle-on");
++      if (featuresentitytrailState.entityTrailInterval_rfg) {
++        spinBtn_jno.textContent = "Stop Spin";
++        spinBtn_jno.classList.add("toggle-on");
        } else {
 -        autoChatButton.textContent = "Enable Auto Spin";
 -        autoChatButton.style.color = "var(--accent)";
 -        autoChatButton.style.opacity = "1";
-+        spinBtn_2.textContent = "Auto Spin";
-+        spinBtn_2.classList.remove("toggle-on");
++        spinBtn_jno.textContent = "Auto Spin";
++        spinBtn_jno.classList.remove("toggle-on");
        }
      }
    });
--  const autoChatButton_2 = deepToolsPanel.querySelector("#autoChatBtn");
--  autoChatButton_2.onclick = () => {
+-  const autoChatButton_3ud = deepToolsPanel.querySelector("#autoChatBtn");
+-  autoChatButton_3ud.onclick = () => {
 -    const chatMessageValue = deepToolsPanel.querySelector("#chatMsg").value;
 -    const delayInput = deepToolsPanel.querySelector("#delayInput");
 -    const delayValue = parseInt(delayInput.value) || 10;
@@ -3197,39 +3216,39 @@ Index: src/ui/panels.js
 -    }
 -    if (state.isToggled) {
 -      stopInterval();
--      autoChatButton_2.textContent = "Enable Auto Chat";
--      autoChatButton_2.style.color = "var(--accent)";
--      autoChatButton_2.style.opacity = "1";
+-      autoChatButton_3ud.textContent = "Enable Auto Chat";
+-      autoChatButton_3ud.style.color = "var(--accent)";
+-      autoChatButton_3ud.style.opacity = "1";
 -    } else {
 -      startScheduledTask(chatMessageValue, delayValue);
--      autoChatButton_2.textContent = "Disable Auto Chat";
--      autoChatButton_2.style.color = "var(--accent)";
--      autoChatButton_2.style.opacity = "0.6";
+-      autoChatButton_3ud.textContent = "Disable Auto Chat";
+-      autoChatButton_3ud.style.color = "var(--accent)";
+-      autoChatButton_3ud.style.opacity = "0.6";
 -    }
 -  };
 -  let deepToolsOffsetX;
 -  let deepToolsOffsetY;
 -  let deepToolsDragActive = false;
 -  let deepToolsIsDragging = false;
--  deepToolsPanel.addEventListener("mousedown", (event_3) => {
+-  deepToolsPanel.addEventListener("mousedown", (event_xe9) => {
 -    if (
--      event_3.target.tagName === "BUTTON" ||
--      event_3.target.tagName === "TEXTAREA" ||
--      event_3.target.tagName === "INPUT" ||
--      event_3.target.classList.contains("credits")
+-      event_xe9.target.tagName === "BUTTON" ||
+-      event_xe9.target.tagName === "TEXTAREA" ||
+-      event_xe9.target.tagName === "INPUT" ||
+-      event_xe9.target.classList.contains("credits")
 -    ) {
 -      return;
 -    }
 -    deepToolsDragActive = true;
 -    deepToolsIsDragging = false;
 -    deepToolsOffsetX =
--      event_3.clientX - deepToolsPanel.getBoundingClientRect().left;
+-      event_xe9.clientX - deepToolsPanel.getBoundingClientRect().left;
 -    deepToolsOffsetY =
--      event_3.clientY - deepToolsPanel.getBoundingClientRect().top;
+-      event_xe9.clientY - deepToolsPanel.getBoundingClientRect().top;
 -    deepToolsPanel.style.transition = "none";
 -    const handleMouseMove = (mouseEvent) => {
--      const deltaX = mouseEvent.clientX - event_3.clientX;
--      const deltaY = mouseEvent.clientY - event_3.clientY;
+-      const deltaX = mouseEvent.clientX - event_xe9.clientX;
+-      const deltaY = mouseEvent.clientY - event_xe9.clientY;
 -      if (
 -        !deepToolsIsDragging &&
 -        (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)
@@ -3252,26 +3271,27 @@ Index: src/ui/panels.js
 -    };
 -    document.addEventListener("mousemove", handleMouseMove);
 -    document.addEventListener("mouseup", handleMouseUp);
-+  const turnRightKeyInput_2 = panelElement.querySelector("#turnLeftKeyInput");
-+  const turnRightKeyInput_3 = panelElement.querySelector("#turnRightKeyInput");
-+  turnRightKeyInput_2.value = state.keyQ.toUpperCase();
-+  turnRightKeyInput_3.value = state.keyE.toUpperCase();
-+  turnRightKeyInput_2.addEventListener("keydown", (uiEvent) => {
++  const turnRightKeyInput_hid = panelElement.querySelector("#turnLeftKeyInput");
++  const turnRightKeyInput_ij7 =
++    panelElement.querySelector("#turnRightKeyInput");
++  turnRightKeyInput_hid.value = state.keyQ.toUpperCase();
++  turnRightKeyInput_ij7.value = state.keyE.toUpperCase();
++  turnRightKeyInput_hid.addEventListener("keydown", (uiEvent) => {
 +    uiEvent.preventDefault();
 +    uiEvent.stopPropagation();
 +    state.keyQ = uiEvent.key;
-+    turnRightKeyInput_2.value =
++    turnRightKeyInput_hid.value =
 +      uiEvent.key.length === 1 ? uiEvent.key.toUpperCase() : uiEvent.key;
    });
--  deepToolsPanel.addEventListener("click", (event_4) => {
+-  deepToolsPanel.addEventListener("click", (event_mr3) => {
 -    if (deepToolsIsDragging) {
--      event_4.stopImmediatePropagation();
+-      event_mr3.stopImmediatePropagation();
 -    }
-+  turnRightKeyInput_3.addEventListener("keydown", (inputEvent) => {
++  turnRightKeyInput_ij7.addEventListener("keydown", (inputEvent) => {
 +    inputEvent.preventDefault();
 +    inputEvent.stopPropagation();
 +    state.keyE = inputEvent.key;
-+    turnRightKeyInput_3.value =
++    turnRightKeyInput_ij7.value =
 +      inputEvent.key.length === 1
 +        ? inputEvent.key.toUpperCase()
 +        : inputEvent.key;
@@ -3317,6 +3337,8 @@ Index: src/ui/panels.js
    document.body.appendChild(plusPanel);
 -  const astraVisionButton = plusPanel.querySelector("#thresherBtn");
 -  astraVisionButton.onclick = () => {
+-    if (isProcessed_r36) {
+-      showNotification("Thresher Super Boost is already active!");
 +  const plusBody = plusPanel.querySelector("#plusBody");
 +  let isHidden = false;
 +  plusPanel.querySelector("#plusMin").onclick = (toggleEvent) => {
@@ -3331,8 +3353,7 @@ Index: src/ui/panels.js
 +  };
 +  const astraVisionBtn = plusPanel.querySelector("#astraVisionBtn");
 +  astraVisionBtn.onclick = () => {
-     if (isProcessed_3) {
--      showNotification("Thresher Super Boost is already active!");
++    if (isProcessed_skx) {
 +      showToast("Already active");
        return;
      }
@@ -3347,16 +3368,16 @@ Index: src/ui/panels.js
 +    astraVisionBtn.classList.add("toggle-on");
 +    astraVisionBtn.disabled = true;
    };
--  const astraVisionButton_2 = plusPanel.querySelector("#astraVisionBtn");
--  astraVisionButton_2.onclick = () => {
--    if (isProcessed_2) {
+-  const astraVisionButton_cs5 = plusPanel.querySelector("#astraVisionBtn");
+-  astraVisionButton_cs5.onclick = () => {
+-    if (isProcessed_run) {
 -      showNotification("Astra-Vision already enabled!");
 -      return;
 +  const autoDodgeBtn = plusPanel.querySelector("#smallMinimapBtn");
 +  autoDodgeBtn.onclick = () => {
 +    initializeAntiDetection();
 +    toggleMinimapSize();
-+    if (state.isToggled_2) {
++    if (state.isToggled_sak) {
 +      autoDodgeBtn.textContent = "Minimap: Small";
 +      autoDodgeBtn.classList.add("toggle-on");
 +    } else {
@@ -3365,10 +3386,10 @@ Index: src/ui/panels.js
      }
 -    initializeAntiTamper();
 -    disableGameRestrictions();
--    astraVisionButton_2.textContent = "Astra-Vision Active";
--    astraVisionButton_2.style.color = "var(--accent)";
--    astraVisionButton_2.style.opacity = "0.6";
--    astraVisionButton_2.disabled = true;
+-    astraVisionButton_cs5.textContent = "Astra-Vision Active";
+-    astraVisionButton_cs5.style.color = "var(--accent)";
+-    astraVisionButton_cs5.style.opacity = "0.6";
+-    astraVisionButton_cs5.disabled = true;
 -    showNotification(
 -      "👁️ Astra-Vision enabled! (zoom-limit unlocked, no ink-flash or deep darkness effects)",
 -    );
@@ -3377,22 +3398,22 @@ Index: src/ui/panels.js
 -  smallMinimapButton.onclick = () => {
 -    initializeAntiTamper();
 -    toggleMinimapScale();
--    if (state.isToggled_2) {
+-    if (state.isToggled_r5u) {
 -      smallMinimapButton.textContent = "Disable Small Minimap";
 -      smallMinimapButton.style.color = "var(--accent)";
 -      smallMinimapButton.style.opacity = "0.6";
-+  const autoDodgeBtn_2 = plusPanel.querySelector("#espBtn");
-+  autoDodgeBtn_2.onclick = () => {
++  const autoDodgeBtn_w1m = plusPanel.querySelector("#espBtn");
++  autoDodgeBtn_w1m.onclick = () => {
 +    toggleEsp();
 +    if (window.espEnabled) {
-+      autoDodgeBtn_2.textContent = "ESP ✓";
-+      autoDodgeBtn_2.classList.add("toggle-on");
++      autoDodgeBtn_w1m.textContent = "ESP ✓";
++      autoDodgeBtn_w1m.classList.add("toggle-on");
      } else {
 -      smallMinimapButton.textContent = "Enable Small Minimap";
 -      smallMinimapButton.style.color = "var(--accent)";
 -      smallMinimapButton.style.opacity = "1";
-+      autoDodgeBtn_2.textContent = "ESP";
-+      autoDodgeBtn_2.classList.remove("toggle-on");
++      autoDodgeBtn_w1m.textContent = "ESP";
++      autoDodgeBtn_w1m.classList.remove("toggle-on");
      }
    };
 -  let plusPanelOffsetX;
@@ -3414,17 +3435,17 @@ Index: src/ui/panels.js
 +    showToast("ESP: " + espModeEvent.target.value);
 +  };
 +  plusPanel.querySelector("#trackNearestBtn").onclick = () => trackPlayer();
-+  plusPanel.querySelector("#untrackBtn").onclick = () => toggleEsp_2();
-+  const autoDodgeBtn_3 = plusPanel.querySelector("#autoDodgeBtn");
-+  autoDodgeBtn_3.onclick = () => {
++  plusPanel.querySelector("#untrackBtn").onclick = () => toggleEsp_sdk();
++  const autoDodgeBtn_gu6 = plusPanel.querySelector("#autoDodgeBtn");
++  autoDodgeBtn_gu6.onclick = () => {
 +    if (window.autoDodgeEnabled) {
-+      toggleEsp_3();
-+      autoDodgeBtn_3.textContent = "Auto Dodge";
-+      autoDodgeBtn_3.classList.remove("toggle-on");
++      toggleEsp_sl9();
++      autoDodgeBtn_gu6.textContent = "Auto Dodge";
++      autoDodgeBtn_gu6.classList.remove("toggle-on");
 +    } else {
 +      enableAutoDodge();
-+      autoDodgeBtn_3.textContent = "Dodging ✓";
-+      autoDodgeBtn_3.classList.add("toggle-on");
++      autoDodgeBtn_gu6.textContent = "Dodging ✓";
++      autoDodgeBtn_gu6.classList.add("toggle-on");
      }
 -    plusPanelDragActive = true;
 -    plusPanelIsDragging = false;
@@ -3442,19 +3463,19 @@ Index: src/ui/panels.js
 +  };
 +  const autoFarmBtn = plusPanel.querySelector("#autoFarmBtn");
 +  autoFarmBtn.id = "autoFarmBtn";
-+  const farmModeSelect_2 = plusPanel.querySelector("#farmModeSelect");
++  const farmModeSelect_wjb = plusPanel.querySelector("#farmModeSelect");
 +  autoFarmBtn.onclick = () => {
 +    if (window.autoFarmActive) {
 +      stopAutoFarm();
 +      autoFarmBtn.textContent = "Auto Farm (F5)";
 +      autoFarmBtn.classList.remove("toggle-on");
 +    } else {
-+      initAutoFarm(farmModeSelect_2.value);
++      initAutoFarm(farmModeSelect_wjb.value);
 +      autoFarmBtn.textContent = "Stop Farm (F5)";
 +      autoFarmBtn.classList.add("toggle-on");
 +    }
 +  };
-+  farmModeSelect_2.onchange = (autoFarmModeEvent) => {
++  farmModeSelect_wjb.onchange = (autoFarmModeEvent) => {
 +    if (window.autoFarmActive) {
 +      window.autoFarmMode = autoFarmModeEvent.target.value;
 +      if (autoFarmModeEvent.target.value === "patrol") {
@@ -3476,9 +3497,9 @@ Index: src/ui/panels.js
 -    document.addEventListener("mousemove", handleMouseMove);
 -    document.addEventListener("mouseup", handleMouseUp);
 -  });
--  plusPanel.addEventListener("click", (event_2) => {
+-  plusPanel.addEventListener("click", (event_wtd) => {
 -    if (plusPanelIsDragging) {
--      event_2.stopImmediatePropagation();
+-      event_wtd.stopImmediatePropagation();
 +      showToast("Farm: " + autoFarmModeEvent.target.value);
      }
 -  });
@@ -3764,15 +3785,15 @@ Index: src/ui/radar.js
 +  if (!gameState || gameState.error) {
      return;
    }
--  if (state.isToggled_2) {
+-  if (state.isToggled_r5u) {
 -    playerData.minimap.scale.set(1);
 -    playerData.minimap.pivot.set(0, 0);
--    state.isToggled_2 = false;
+-    state.isToggled_r5u = false;
 -    showNotification("🗺️ Minimap restored to normal!");
 -  } else {
 -    playerData.minimap.scale.set(0.5);
 -    playerData.minimap.pivot.set(-70, -45);
--    state.isToggled_2 = true;
+-    state.isToggled_r5u = true;
 -    showNotification("🗺️ Small Minimap enabled!");
 +  const radarSize = 150;
 +  if (dragState.x === null) {
@@ -4362,10 +4383,10 @@ Index: src/utils.js
 +      (entityA, entityB) => entityA.distance - entityB.distance,
 +    );
 +    gameData.players.sort(
-+      (entityA_2, entityB_2) => entityA_2.distance - entityB_2.distance,
++      (entityA_edv, entityB_f6f) => entityA_edv.distance - entityB_f6f.distance,
 +    );
 +    gameData.food.sort(
-+      (entityA_3, otherItem) => entityA_3.distance - otherItem.distance,
++      (entityA_e8a, otherItem) => entityA_e8a.distance - otherItem.distance,
 +    );
 +    return gameData;
 +  } catch (error) {

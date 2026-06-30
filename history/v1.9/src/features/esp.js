@@ -6,7 +6,7 @@ import {
   findEntityById,
   angle,
   getFirstAnimalPosition,
-  getGameState_2,
+  getGameState_sso,
   getViewportScale,
   playerData,
   state,
@@ -313,7 +313,7 @@ function renderEspLoop() {
   const canvas = getOrCreateCanvas("esp-overlay", 999998);
   const ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  const gameData = getGameState_2();
+  const gameData = getGameState_sso();
   const localPlayer = getFirstAnimalPosition();
   const settings = getViewportScale();
   drawEsp(ctx, gameData, canvas.width / 2, canvas.height / 2, settings);
@@ -326,7 +326,7 @@ function toggleEsp() {
   showNotification(window.espEnabled ? "ESP enabled" : "ESP disabled");
 }
 function trackPlayer() {
-  const gameData = getGameState_2();
+  const gameData = getGameState_sso();
   if (gameData && gameData.players && gameData.players.length > 0) {
     window.espTrackedEntityId = gameData.players[0].id;
     showNotification(
@@ -337,11 +337,11 @@ function trackPlayer() {
     showNotification("No players nearby");
   }
 }
-function toggleEsp_2() {
+function toggleEsp_s2u() {
   window.espTrackedEntityId = null;
   showNotification("Tracking cleared");
 }
-function toggleEsp_3() {
+function toggleEsp_qmn() {
   window.autoDodgeEnabled = false;
   showNotification("Auto dodge disabled");
 }
@@ -350,15 +350,15 @@ function toggleMinimapSize() {
     showNotification("Minimap not available");
     return;
   }
-  if (state.isToggled_3) {
+  if (state.isToggled_s33) {
     playerData.minimap.scale.set(1);
     playerData.minimap.pivot.set(0, 0);
-    state.isToggled_3 = false;
+    state.isToggled_s33 = false;
     showNotification("Minimap restored");
   } else {
     playerData.minimap.scale.set(0.5);
     playerData.minimap.pivot.set(-70, -45);
-    state.isToggled_3 = true;
+    state.isToggled_s33 = true;
     showNotification("Small minimap enabled");
   }
 }
@@ -369,7 +369,7 @@ export {
   renderEspLoop,
   toggleEsp,
   trackPlayer,
-  toggleEsp_2,
-  toggleEsp_3,
+  toggleEsp_s2u,
+  toggleEsp_qmn,
   toggleMinimapSize,
 };

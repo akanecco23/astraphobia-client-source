@@ -11,7 +11,7 @@ import {
   radius,
   gameInstance,
   playerData,
-  isProcessed_2,
+  isProcessed_jat,
   config,
   state,
 } from "./src/core.js";

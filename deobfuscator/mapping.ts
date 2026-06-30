@@ -14,7 +14,7 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import type { Fingerprint } from "./types.js";
 import { resolve } from "path";
 
-const SUFFIX_RE = /(?:_\d+)+$/;
+const SUFFIX_RE = /(?:_[a-zA-Z0-9]{1,4})+$/;
 
 function stripNameSuffix(name: string): string {
   return name.replace(SUFFIX_RE, "");
@@ -271,6 +271,38 @@ export class MappingStore {
     return bestMatch?.entry;
   }
 
+  // Broad cross-version search: look across ALL stored role fingerprints
+  // with a lower threshold. Used as a last resort before falling back to LLM.
+  findVariableByRoleFingerprintBroad(
+    roleFingerprint: VariableRoleFingerprint,
+  ): VariableMappingEntry | undefined {
+    if (!this.data.variableFingerprints) return undefined;
+
+    let bestMatch: { entry: VariableMappingEntry; similarity: number } | null =
+      null;
+    const BROAD_THRESHOLD = 0.4;
+
+    for (const [, entry] of Object.entries(
+      this.data.variableFingerprints as Record<string, VariableMappingEntry>,
+    )) {
+      if (!entry.roleFingerprint) continue;
+
+      const similarity = this.computeRoleFingerprintSimilarity(
+        roleFingerprint,
+        entry.roleFingerprint,
+        "function",
+      );
+
+      if (similarity >= BROAD_THRESHOLD) {
+        if (!bestMatch || similarity > bestMatch.similarity) {
+          bestMatch = { entry, similarity };
+        }
+      }
+    }
+
+    return bestMatch?.entry;
+  }
+
   setVariableRoleFingerprint(
     funcFingerprintHash: string,
     roleFingerprintHash: string,
@@ -468,5 +500,105 @@ export class MappingStore {
     }
 
     return merged;
+  }
+
+  // LLM-based deduplication: for each DNA group with multiple names,
+  // use the LLM to pick the best name (or suggest a new one).
+  async llmDedupeFunctions(llm: import("./llm.js").LLMClient): Promise<number> {
+    const dnaGroups = new Map<string, { names: Set<string>; keys: string[] }>();
+
+    for (const [key, entry] of Object.entries(this.data.functions)) {
+      let dnaKey = "";
+      if (entry.fingerprint) {
+        const dna = computeFunctionDNA(entry.fingerprint);
+        dnaKey = [dna.stringDNA, dna.apiDNA, dna.propertyDNA, dna.callDNA]
+          .filter(Boolean)
+          .join("::");
+      } else if (entry.fingerprintHash) {
+        dnaKey = `hash::${entry.fingerprintHash}`;
+      }
+      if (!dnaKey) continue;
+
+      if (!dnaGroups.has(dnaKey)) {
+        dnaGroups.set(dnaKey, { names: new Set(), keys: [] });
+      }
+      const group = dnaGroups.get(dnaKey)!;
+      group.names.add(entry.name);
+      group.keys.push(key);
+    }
+
+    let changed = 0;
+    for (const [, group] of dnaGroups) {
+      if (group.names.size <= 1) continue;
+      const names = [...group.names];
+      // Build a simple code context from the fingerprint
+      const sampleEntry = this.data.functions[group.keys[0]!];
+      const codeContext = sampleEntry
+        ? [
+            `params: ${sampleEntry.params.join(", ") || "none"}`,
+            `locals: ${sampleEntry.locals.join(", ") || "none"}`,
+            `properties: ${(sampleEntry.fingerprint.propertyAccesses ?? []).slice(0, 10).join(", ") || "none"}`,
+            `calls: ${(sampleEntry.fingerprint.calledFunctions ?? []).slice(0, 10).join(", ") || "none"}`,
+          ].join("\n")
+        : undefined;
+
+      const bestName = await llm.pickBestFunctionName(names, codeContext);
+      if (!bestName) continue;
+
+      for (const key of group.keys) {
+        const entry = this.data.functions[key];
+        if (entry && entry.name !== bestName) {
+          entry.name = bestName;
+          changed++;
+        }
+      }
+    }
+
+    return changed;
+  }
+
+  // LLM-based deduplication: for each role fingerprint group with multiple
+  // names, use the LLM to pick the best name.
+  async llmDedupeVariables(llm: import("./llm.js").LLMClient): Promise<number> {
+    if (!this.data.variableFingerprints) return 0;
+
+    // Group by funcHash::roleHash, but only process groups with multiple names
+    const groups = new Map<string, { names: Set<string>; fpKeys: string[] }>();
+
+    for (const [fpKey, entry] of Object.entries(
+      this.data.variableFingerprints,
+    )) {
+      if (!entry.roleFingerprint) continue;
+      const roleHash = entry.roleFingerprint.hash;
+      if (!roleHash) continue;
+
+      const funcHash = fpKey.split("::")[0] ?? "";
+      const groupKey = `${funcHash}::${roleHash}`;
+
+      if (!groups.has(groupKey)) {
+        groups.set(groupKey, { names: new Set(), fpKeys: [] });
+      }
+      const group = groups.get(groupKey)!;
+      group.names.add(entry.name);
+      group.fpKeys.push(fpKey);
+    }
+
+    let changed = 0;
+    for (const [, group] of groups) {
+      if (group.names.size <= 1) continue;
+      const names = [...group.names];
+      const bestName = await llm.pickBestVariableName(names);
+      if (!bestName) continue;
+
+      for (const fpKey of group.fpKeys) {
+        const entry = this.data.variableFingerprints![fpKey];
+        if (entry && entry.name !== bestName) {
+          entry.name = bestName;
+          changed++;
+        }
+      }
+    }
+
+    return changed;
   }
 }

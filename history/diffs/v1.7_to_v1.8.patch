@@ -2,7 +2,7 @@ Index: content.js
 ===================================================================
 --- content.js	v1.7
 +++ content.js	v1.8
-@@ -1,23 +1,24 @@
+@@ -1,24 +1,25 @@
  import {
 -  hookTextEncoder,
 +  wrapWithProxy,
@@ -27,10 +27,12 @@ Index: content.js
    gameInstance,
    playerData,
 -  config,
-   isProcessed_4,
+-  isProcessed_l68,
++  isProcessed_rjo,
    dragState,
    tickInterval,
    deltaThreshold,
+   maxFailCount,
 @@ -29,10 +30,10 @@
  import {
    handleFarmFailure,
@@ -44,7 +46,7 @@ Index: content.js
    simulateEvolveKey,
    detectAndHandleStuck,
    setupPatrolPoints,
-@@ -40,35 +41,32 @@
+@@ -40,72 +41,69 @@
    stopAutoFarm,
  } from "./src/features/autofarm.js";
  import {
@@ -84,11 +86,15 @@ Index: content.js
 +  renderEspLoop,
    toggleEsp,
    trackPlayer,
-   toggleEsp_2,
-   toggleEsp_3,
-@@ -77,35 +75,35 @@
+-  toggleEsp_tia,
+-  toggleEsp_sl0,
++  toggleEsp_qot,
++  toggleEsp_slh,
+   toggleMinimapSize,
+ } from "./src/features/esp.js";
  import {
-   stopEntityTrail_2,
+-  stopEntityTrail_r5j,
++  stopEntityTrail_sl0,
    toggleEntityTrail,
    drawEntityTrail,
 -  renderOverlayLoop,
@@ -149,7 +155,7 @@ Index: src/core.js
 ===================================================================
 --- src/core.js	v1.7
 +++ src/core.js	v1.8
-@@ -3,39 +3,43 @@
+@@ -3,54 +3,54 @@
    createVisionPanel,
    createCombatPanel,
    createAutomationPanel,
@@ -180,9 +186,13 @@ Index: src/core.js
    autoDodgeLoop,
    toggleLock,
  } from "./features/aimbot.js";
--import { renderEspOverlay, trackPlayer, toggleEsp_2 } from "./features/esp.js";
+-import {
+-  renderEspOverlay,
+-  trackPlayer,
+-  toggleEsp_tia,
+-} from "./features/esp.js";
 -import { setTheme, initHomeBackground, injectStyles } from "./ui/theme.js";
-+import { renderEspLoop, trackPlayer, toggleEsp_2 } from "./features/esp.js";
++import { renderEspLoop, trackPlayer, toggleEsp_qot } from "./features/esp.js";
  import { setupPatrolPoints, autoFarmLoop } from "./features/autofarm.js";
 -import { moveMouseToSide } from "./features/movement.js";
 +import { applyTheme, initBackground, injectStyles } from "./ui/theme.js";
@@ -200,14 +210,16 @@ Index: src/core.js
 +  targetObject[propertyKey] = proxyValue;
 +}
  let currentTime = 0;
- let isProcessed_2 = false;
+-let isProcessed_r5u = false;
 -function hookTextEncoder() {
+-  if (isProcessed_r5u) {
++let isProcessed_tbm = false;
 +function interceptTextEncoder() {
-   if (isProcessed_2) {
++  if (isProcessed_tbm) {
      return;
    }
    function unescapeString(inputString) {
-@@ -43,10 +47,10 @@
+     if (typeof inputString !== "string") {
        return inputString;
      }
      return inputString.replace(
@@ -220,7 +232,7 @@ Index: src/core.js
              return "\\";
            case "n":
              return "\n";
-@@ -67,36 +71,36 @@
+@@ -71,36 +71,36 @@
            case "4":
            case "5":
            case "6":
@@ -267,7 +279,7 @@ Index: src/core.js
        const commandPatterns = [
          /^(\x14{3}\d+\|6\|)(.+)$/gm,
          /^(\x14{3}\d+\|8\|)(.+)$/gm,
-@@ -107,24 +111,24 @@
+@@ -111,24 +111,24 @@
          let patternIndex = 0;
          patternIndex < commandPatterns.length;
          patternIndex++
@@ -301,7 +313,18 @@ Index: src/core.js
    const observer = new MutationObserver(() => {
      document
        .querySelector(".play-game .el-input__inner")
-@@ -206,18 +210,35 @@
+@@ -143,9 +143,9 @@
+   observer.observe(document.body, {
+     childList: true,
+     subtree: true,
+   });
+-  isProcessed_r5u = true;
++  isProcessed_tbm = true;
+   showNotification("Special characters enabled");
+ }
+ const angles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
+ const radius = 300;
+@@ -210,18 +210,35 @@
      }
    }
    return null;
@@ -342,11 +365,12 @@ Index: src/core.js
    } catch (error) {
      return null;
    }
-@@ -263,8 +284,44 @@
+@@ -267,19 +284,55 @@
      dirX: dirX,
      dirY: dirY,
    };
  }
+-let isProcessed_l68 = false;
 +function findEntityById(entityId) {
 +  try {
 +    const rawState = getGameState();
@@ -383,12 +407,17 @@ Index: src/core.js
 +    return null;
 +  }
 +}
- let isProcessed_4 = false;
++let isProcessed_rjo = false;
  function startEntityTrail() {
-   if (featuresentitytrailState.entityTrailInterval_3) {
-     clearInterval(featuresentitytrailState.entityTrailInterval_3);
-@@ -273,9 +330,9 @@
-   featuresentitytrailState.entityTrailInterval_3 = setInterval(() => {
+-  if (featuresentitytrailState.entityTrailInterval_skd) {
+-    clearInterval(featuresentitytrailState.entityTrailInterval_skd);
+-    featuresentitytrailState.entityTrailInterval_skd = null;
++  if (featuresentitytrailState.entityTrailInterval_rf6) {
++    clearInterval(featuresentitytrailState.entityTrailInterval_rf6);
++    featuresentitytrailState.entityTrailInterval_rf6 = null;
+   }
+-  featuresentitytrailState.entityTrailInterval_skd = setInterval(() => {
++  featuresentitytrailState.entityTrailInterval_rf6 = setInterval(() => {
      if (!window.entityTrailEnabled || !window.entityTrailTargetId) {
        return;
      }
@@ -398,17 +427,40 @@ Index: src/core.js
        const gameData = getNearbyEntities();
        if (gameData && gameData.players && gameData.players.length > 0) {
          window.entityTrailTargetId = gameData.players[0].id;
-@@ -344,84 +401,79 @@
+@@ -334,98 +387,93 @@
+   window.autoFarmTargetStartTime = 0;
+   window.autoFarmSkipIds.clear();
+   window.autoFarmSkipAreas = [];
+   window.autoFarmSkipClearTime = Date.now();
+-  state.position_qml = null;
+-  state.counter_rvr = 0;
+-  state.counter_r46 = 0;
+-  state.counter_sce = 0;
++  state.position_r79 = null;
++  state.counter_ss2 = 0;
++  state.counter_rlc = 0;
++  state.counter_ta8 = 0;
+   if (farmMode === "patrol") {
+     setupPatrolPoints();
+   }
+   showNotification("Auto farm started (" + window.autoFarmMode + ")");
+-  if (!state.isToggled_sv3) {
+-    state.isToggled_sv3 = true;
++  if (!state.isToggled_suc) {
++    state.isToggled_suc = true;
      autoFarmLoop();
    }
  }
- let isProcessed_6 = false;
+-let isProcessed_shm = false;
 -const initAntiTamper = () => {
+-  if (isProcessed_shm) {
++let isProcessed_js3 = false;
 +const initGameHooks = () => {
-   if (isProcessed_6) {
++  if (isProcessed_js3) {
      return;
    }
-   isProcessed_6 = true;
+-  isProcessed_shm = true;
++  isProcessed_js3 = true;
    const cache = {};
 -  for (const reflectMethod of Object.getOwnPropertyNames(Reflect)) {
 -    cache[reflectMethod] = Reflect[reflectMethod];
@@ -458,7 +510,7 @@ Index: src/core.js
 -    apply(thisContext, args, extraArgs) {
 +  let lastTimestamp = 0;
 +  wrapValue(Function.prototype, "bind", {
-+    apply(thisContext, argsArray_2, extraParam) {
++    apply(thisContext, argsArray_cn2, extraParam) {
        try {
          try {
            if (
@@ -467,7 +519,7 @@ Index: src/core.js
 +            null
            ) {
 -            return cache.apply(thisContext, args, extraArgs);
-+            return cache.apply(thisContext, argsArray_2, extraParam);
++            return cache.apply(thisContext, argsArray_cn2, extraParam);
            }
          } catch {}
 -        if (extraArgs[0] && extraArgs[0].aboveBgPlatformsContainer != null) {
@@ -519,7 +571,7 @@ Index: src/core.js
            try {
              appState = document
                .getElementById("app")
-@@ -439,9 +491,9 @@
+@@ -443,9 +491,9 @@
                  return;
                }
                const firstAnimal = playerData.myAnimals[0];
@@ -530,7 +582,7 @@ Index: src/core.js
                    "enable",
                    {
                      apply() {},
-@@ -459,15 +511,15 @@
+@@ -463,41 +511,41 @@
                }
                clearInterval(intervalId);
              } catch {}
@@ -544,14 +596,19 @@ Index: src/core.js
          }
        } catch {}
 -      return cache.apply(thisContext, args, extraArgs);
-+      return cache.apply(thisContext, argsArray_2, extraParam);
++      return cache.apply(thisContext, argsArray_cn2, extraParam);
      },
    });
  };
- let isProcessed_7 = false;
-@@ -477,20 +529,20 @@
+-let isProcessed_sse = false;
++let isProcessed_qmj = false;
+ function initializeApp() {
+-  if (isProcessed_sse) {
++  if (isProcessed_qmj) {
+     return;
    }
-   isProcessed_7 = true;
+-  isProcessed_sse = true;
++  isProcessed_qmj = true;
    setTimeout(() => {
      injectStyles();
 -    setTheme(localStorage.getItem("theme") || "grey");
@@ -569,14 +626,19 @@ Index: src/core.js
 -    initRadarDragging();
 -    renderEspOverlay();
 -    renderOverlayLoop();
+-    isProcessed_l68 = true;
 +    initRadarDrag();
 +    renderEspLoop();
 +    renderOverlay();
-     isProcessed_4 = true;
++    isProcessed_rjo = true;
      updateLockOnTarget();
-     state.isProcessed_5 = true;
+-    state.isProcessed_rdv = true;
++    state.isProcessed_r5v = true;
      autoDodgeLoop();
-@@ -507,14 +559,14 @@
+   }, 1000);
+ }
+ document.addEventListener(
+@@ -511,68 +559,68 @@
      }
      if (event.key.toLowerCase() === state.keyQ.toLowerCase()) {
        event.preventDefault();
@@ -593,15 +655,44 @@ Index: src/core.js
    },
    true,
  );
-@@ -543,14 +595,14 @@
-     if (event_3.repeat) {
+ document.addEventListener(
+   "keydown",
+-  (event_69q) => {
+-    if (event_69q.target.matches("input,textarea,select,[contenteditable]")) {
++  (event_6lj) => {
++    if (event_6lj.target.matches("input,textarea,select,[contenteditable]")) {
+       return;
+     }
+-    if (event_69q.repeat) {
++    if (event_6lj.repeat) {
+       return;
+     }
+-    if (event_69q.key.toLowerCase() === window.lockKey.toLowerCase()) {
+-      event_69q.preventDefault();
++    if (event_6lj.key.toLowerCase() === window.lockKey.toLowerCase()) {
++      event_6lj.preventDefault();
+       toggleLock();
+     }
+   },
+   true,
+ );
+ document.addEventListener(
+   "keydown",
+-  (event_4og) => {
+-    if (event_4og.target.matches("input,textarea,select,[contenteditable]")) {
++  (event_6hz) => {
++    if (event_6hz.target.matches("input,textarea,select,[contenteditable]")) {
+       return;
+     }
+-    if (event_4og.repeat) {
++    if (event_6hz.repeat) {
        return;
      }
      const entityTraceKey = window.entityTraceKey.toLowerCase();
--    const lowercaseKey = event_3.key.toLowerCase();
--    const lowercaseCode = event_3.code.toLowerCase();
-+    const entityKey = event_3.key.toLowerCase();
-+    const entityCode = event_3.code.toLowerCase();
+-    const lowercaseKey = event_4og.key.toLowerCase();
+-    const lowercaseCode = event_4og.code.toLowerCase();
++    const entityKey = event_6hz.key.toLowerCase();
++    const entityCode = event_6hz.code.toLowerCase();
      if (
 -      lowercaseKey === entityTraceKey ||
 -      lowercaseCode === entityTraceKey ||
@@ -610,10 +701,36 @@ Index: src/core.js
 +      entityCode === entityTraceKey ||
 +      entityCode === "key" + entityTraceKey
      ) {
-       event_3.preventDefault();
+-      event_4og.preventDefault();
++      event_6hz.preventDefault();
        toggleEntityTrail();
      }
-@@ -581,10 +633,10 @@
+   },
+   true,
+ );
+-document.addEventListener("keydown", (event_6k3) => {
+-  if (event_6k3.target.matches("input,textarea,select")) {
++document.addEventListener("keydown", (event_6wr) => {
++  if (event_6wr.target.matches("input,textarea,select")) {
+     return;
+   }
+-  if (event_6k3.key === "F3") {
+-    event_6k3.preventDefault();
++  if (event_6wr.key === "F3") {
++    event_6wr.preventDefault();
+     trackPlayer();
+   }
+-  if (event_6k3.key === "F4") {
+-    event_6k3.preventDefault();
+-    toggleEsp_tia();
++  if (event_6wr.key === "F4") {
++    event_6wr.preventDefault();
++    toggleEsp_qot();
+   }
+ });
+ document.addEventListener("keydown", (keyboardEvent) => {
+   if (
+@@ -585,10 +633,10 @@
    }
  });
  window.addEventListener("load", () => {
@@ -626,8 +743,30 @@ Index: src/core.js
  });
  export const state = {
    currentTrackId: "",
-@@ -607,26 +659,27 @@
-   counter_4: 0,
+@@ -597,41 +645,42 @@
+   isToggled: false,
+   angleIndex: 0,
+   keyQ: "q",
+   keyE: "e",
+-  isProcessed_rnh: false,
+-  isToggled_r8c: false,
+-  isProcessed_rdv: false,
++  isProcessed_rjn: false,
++  isToggled_sl0: false,
++  isProcessed_r5v: false,
+   position: null,
+   counter: 0,
+   dataList: [],
+-  counter_sce: 0,
+-  isToggled_sv3: false,
+-  position_qml: null,
+-  counter_rvr: 0,
+-  counter_r46: 0,
++  counter_ta8: 0,
++  isToggled_suc: false,
++  position_r79: null,
++  counter_ss2: 0,
++  counter_rlc: 0,
    activeKey: "Shift",
  };
  export {
@@ -654,10 +793,12 @@ Index: src/core.js
    gameInstance,
    playerData,
 -  config,
-   isProcessed_4,
+-  isProcessed_l68,
++  isProcessed_rjo,
    dragState,
    tickInterval,
    deltaThreshold,
+   maxFailCount,
 Index: src/features/adblock.js
 ===================================================================
 --- src/features/adblock.js	v1.7
@@ -700,15 +841,17 @@ Index: src/features/aimbot.js
 ===================================================================
 --- src/features/aimbot.js	v1.7
 +++ src/features/aimbot.js	v1.8
-@@ -1,7 +1,8 @@
+@@ -1,8 +1,9 @@
  import {
    getFirstAnimalPosition,
    getEntityPosition,
+-  isProcessed_l68,
 +  findEntityById,
-   isProcessed_4,
++  isProcessed_rjo,
    angle,
    getGameState,
    getEntityManager,
+   tickInterval,
 @@ -10,9 +11,8 @@
    state,
  } from "../core.js";
@@ -719,7 +862,16 @@ Index: src/features/aimbot.js
    isPlayer,
    calculateDistance,
  } from "../utils.js";
-@@ -28,9 +28,9 @@
+@@ -20,17 +20,17 @@
+ import { updateLockButtonUI } from "../ui/radar.js";
+ import { simulateClick } from "./movement.js";
+ 
+ function updateLockOnTarget() {
+-  if (!isProcessed_l68) {
++  if (!isProcessed_rjo) {
+     return;
+   }
+   requestAnimationFrame(updateLockOnTarget);
    if (!window.lockEnabled || !window.lockTargetId) {
      return;
    }
@@ -881,7 +1033,21 @@ Index: src/features/aimbot.js
        clientX: finalX,
        clientY: finalY,
        bubbles: true,
-@@ -176,20 +174,20 @@
+@@ -165,31 +163,31 @@
+   if (shouldClick) {
+     simulateClick(finalX, finalY);
+   }
+ }
+-let currentTime_iij = 0;
+-let currentTime_sbn = 0;
++let currentTime_qmc = 0;
++let currentTime_trw = 0;
+ function autoDodgeLoop() {
+-  if (!state.isProcessed_rdv) {
++  if (!state.isProcessed_r5v) {
+     return;
+   }
+   setTimeout(autoDodgeLoop, 80);
    if (!window.autoDodgeEnabled) {
      return;
    }
@@ -920,10 +1086,15 @@ Index: src/features/aimbot.js
          posY,
        );
        if (distanceToTarget < tickInterval) {
-@@ -231,35 +229,35 @@
+@@ -228,38 +226,38 @@
+       return;
+     }
+     const now = Date.now();
      let isDodging = false;
-     if (now - currentTime_3 > 600) {
-       currentTime_3 = now;
+-    if (now - currentTime_sbn > 600) {
+-      currentTime_sbn = now;
++    if (now - currentTime_trw > 600) {
++      currentTime_trw = now;
        if (state.position) {
 -        const distFromLastPos = calculateDistance(
 -          localPlayer.x,
@@ -966,7 +1137,7 @@ Index: src/features/aimbot.js
          sumY += (deltaY / distance) * distanceRatio;
        }
      });
-@@ -280,9 +278,9 @@
+@@ -280,32 +278,32 @@
          -Math.PI / 2,
          (Math.PI * 3) / 4,
          (-Math.PI * 3) / 4,
@@ -977,7 +1148,13 @@ Index: src/features/aimbot.js
        for (const angleOffset of anglePresets) {
          const rotatedAngle = angle + angleOffset;
          if (
-@@ -295,17 +293,17 @@
+           state.dataList.some(
+-            (myY_7x0) => Math.abs(myY_7x0 - rotatedAngle) < 0.3,
++            (myY_9nl) => Math.abs(myY_9nl - rotatedAngle) < 0.3,
+           ) &&
+           state.counter < 5
+         ) {
+           continue;
          }
          let projection = 0;
          nearbyEntities.forEach((entity) => {
@@ -999,22 +1176,42 @@ Index: src/features/aimbot.js
        if (state.dataList.length > 8) {
          state.dataList.shift();
        }
-@@ -318,11 +316,11 @@
-     const angle_2 = now - currentTime_2 > deltaThreshold;
-     if (angle_2) {
-       currentTime_2 = now;
+@@ -314,34 +312,34 @@
+         state.counter = 0;
+         state.dataList = [];
+       }
+     }
+-    const angle_qxb = now - currentTime_iij > deltaThreshold;
+-    if (angle_qxb) {
+-      currentTime_iij = now;
++    const angle_98u = now - currentTime_qmc > deltaThreshold;
++    if (angle_98u) {
++      currentTime_qmc = now;
      }
 -    movePointerToTarget(
 -      localPlayer.x + Math.cos(angle) * 2000,
 -      localPlayer.y + Math.sin(angle) * 2000,
+-      angle_qxb,
 +    aimAtTarget(
 +      playerPos.x + Math.cos(angle) * 2000,
 +      playerPos.y + Math.sin(angle) * 2000,
-       angle_2,
++      angle_98u,
      );
    } catch (data) {}
  }
-@@ -340,8 +338,8 @@
+ function enableAutoDodge() {
+   window.autoDodgeEnabled = true;
+   state.position = null;
+   state.counter = 0;
+   state.dataList = [];
+-  if (!state.isProcessed_rdv) {
+-    state.isProcessed_rdv = true;
++  if (!state.isProcessed_r5v) {
++    state.isProcessed_r5v = true;
+     autoDodgeLoop();
+   }
+   showNotification("Auto dodge enabled");
+ }
  
  export {
    updateLockOnTarget,
@@ -1039,8 +1236,15 @@ Index: src/features/autofarm.js
  window.autoFarmActive = false;
  window.autoFarmMode = "nearest";
  window.autoFarmRange = 3000;
-@@ -37,9 +37,9 @@
- const tickInterval_2 = 600;
+@@ -32,19 +32,19 @@
+ window.autoFarmSkipIds = new Set();
+ window.autoFarmSkipClearTime = 0;
+ window.autoFarmSkipAreas = [];
+ 
+-const offsetValue_sbo = 400;
+-const tickInterval_j7h = 600;
++const offsetValue_qn6 = 400;
++const tickInterval_st4 = 600;
  function handleFarmFailure(x, y) {
    const currentTime = Date.now();
    window.autoFarmSkipAreas = window.autoFarmSkipAreas.filter(
@@ -1050,6 +1254,23 @@ Index: src/features/autofarm.js
    let existingArea = window.autoFarmSkipAreas.find(
      (position) =>
        calculateDistance(x, y, state.position.x, state.position.y) <
+-      offsetValue_sbo,
++      offsetValue_qn6,
+   );
+   if (existingArea) {
+     existingArea.failCount++;
+     existingArea.time = currentTime;
+@@ -55,9 +55,9 @@
+   } else {
+     window.autoFarmSkipAreas.push({
+       x: x,
+       y: y,
+-      radius: offsetValue_sbo,
++      radius: offsetValue_qn6,
+       time: currentTime,
+       failCount: 1,
+       skipped: false,
+     });
 @@ -65,9 +65,9 @@
  }
  function isAreaSkipped(x, y) {
@@ -1211,19 +1432,25 @@ Index: src/features/autofarm.js
        }
      });
    } catch (data) {}
-@@ -303,16 +303,16 @@
+@@ -298,21 +298,21 @@
+     x: avoidX,
+     y: avoidY,
+   };
+ }
+-let currentTime_sj8 = 0;
++let currentTime_r3o = 0;
  function simulateEvolveKey() {
    if (!window.autoFarmEvolve) {
      return;
    }
 -  const now = Date.now();
--  if (now - currentTime_4 < 5000) {
+-  if (now - currentTime_sj8 < 5000) {
 +  const currentTime = Date.now();
-+  if (currentTime - currentTime_4 < 5000) {
++  if (currentTime - currentTime_r3o < 5000) {
      return;
    }
--  currentTime_4 = now;
-+  currentTime_4 = currentTime;
+-  currentTime_sj8 = now;
++  currentTime_r3o = currentTime;
    const gameCanvas = getGameCanvas();
    const randomDigit = String(Math.floor(Math.random() * 9) + 1);
 -  const eventInit = {
@@ -1232,7 +1459,7 @@ Index: src/features/autofarm.js
      code: "Digit" + randomDigit,
      keyCode: randomDigit.charCodeAt(0),
      which: randomDigit.charCodeAt(0),
-@@ -323,15 +323,19 @@
+@@ -323,61 +323,65 @@
      if (!targetElement) {
        return;
      }
@@ -1253,10 +1480,46 @@ Index: src/features/autofarm.js
 +    } catch (data) {}
    });
  }
- let currentTime_5 = 0;
+-let currentTime_stj = 0;
++let currentTime_sz8 = 0;
  function detectAndHandleStuck(currentPos) {
-@@ -364,9 +368,9 @@
-         state.counter_3 = 0;
+   const now = Date.now();
+-  if (now - state.counter_r46 < 1500) {
++  if (now - state.counter_rlc < 1500) {
+     return false;
+   }
+-  state.counter_r46 = now;
+-  if (state.position_qml) {
++  state.counter_rlc = now;
++  if (state.position_r79) {
+     if (
+       calculateDistance(
+         currentPos.x,
+         currentPos.y,
+-        state.position_qml.x,
+-        state.position_qml.y,
++        state.position_r79.x,
++        state.position_r79.y,
+       ) < 25
+     ) {
+-      state.counter_rvr++;
+-      if (state.counter_rvr >= 1 && window.autoFarmCurrentTarget) {
++      state.counter_ss2++;
++      if (state.counter_ss2 >= 1 && window.autoFarmCurrentTarget) {
+         handleFarmFailure(
+           window.autoFarmCurrentTarget.x,
+           window.autoFarmCurrentTarget.y,
+         );
+         window.autoFarmSkipIds.add(window.autoFarmCurrentTarget.id);
+         window.autoFarmCurrentTarget = null;
+         window.autoFarmTargetStartTime = 0;
+-        state.counter_rvr = 0;
++        state.counter_ss2 = 0;
+       }
+-      if (state.counter_rvr >= 2) {
+-        state.counter_rvr = 0;
++      if (state.counter_ss2 >= 2) {
++        state.counter_ss2 = 0;
          window.autoFarmCurrentTarget = null;
          window.autoFarmTargetStartTime = 0;
          const randomAngle = Math.random() * Math.PI * 2;
@@ -1266,9 +1529,26 @@ Index: src/features/autofarm.js
            currentPos.y + Math.sin(randomAngle) * 1500,
            true,
          );
-@@ -401,17 +405,17 @@
+         return true;
+       }
+     } else {
+-      state.counter_rvr = 0;
++      state.counter_ss2 = 0;
+     }
+   }
+-  state.position_qml = {
++  state.position_r79 = {
+     x: currentPos.x,
+     y: currentPos.y,
+   };
+   return false;
+@@ -398,20 +402,20 @@
+   window.autoFarmPatrolIndex = 0;
+ }
+ function autoFarmLoop() {
    if (!window.autoFarmActive) {
-     state.isToggled_3 = false;
+-    state.isToggled_sv3 = false;
++    state.isToggled_suc = false;
      return;
    }
 -  const currentTime = Date.now();
@@ -1288,7 +1568,7 @@ Index: src/features/autofarm.js
      handleFarmFailure(
        window.autoFarmCurrentTarget.x,
        window.autoFarmCurrentTarget.y,
-@@ -422,162 +426,162 @@
+@@ -422,186 +426,185 @@
      setTimeout(autoFarmLoop, 100);
      return;
    }
@@ -1298,11 +1578,12 @@ Index: src/features/autofarm.js
 +    const player = getFirstAnimalPosition();
 +    if (!player) {
        window.autoFarmActive = false;
-       state.isToggled_3 = false;
+-      state.isToggled_sv3 = false;
 -      const farmBtn = document.getElementById("autoFarmBtn");
 -      if (farmBtn) {
 -        farmBtn.textContent = "Auto Farm";
 -        farmBtn.classList.remove("toggle-on");
++      state.isToggled_suc = false;
 +      const autoFarmBtnElement = document.getElementById("autoFarmBtn");
 +      if (autoFarmBtnElement) {
 +        autoFarmBtnElement.textContent = "Auto Farm";
@@ -1324,13 +1605,14 @@ Index: src/features/autofarm.js
        window.autoFarmAvoidPlayers
      ) {
 -      const useBoost =
--        window.autoFarmBoost && currentTime - state.counter_2 > tickInterval_2;
+-        window.autoFarmBoost &&
+-        currentTime - state.counter_sce > tickInterval_j7h;
 -      if (useBoost) {
--        state.counter_2 = currentTime;
+-        state.counter_sce = currentTime;
 +      const canBoost =
-+        window.autoFarmBoost && now - state.counter_2 > tickInterval_2;
++        window.autoFarmBoost && now - state.counter_ta8 > tickInterval_st4;
 +      if (canBoost) {
-+        state.counter_2 = now;
++        state.counter_ta8 = now;
        }
 -      movePointerToTarget(
 -        target.x + playerOffset.x,
@@ -1371,9 +1653,10 @@ Index: src/features/autofarm.js
            }
 -          window.autoFarmCurrentTarget = nearest;
 -          window.autoFarmTargetStartTime = currentTime;
+-          state.counter_rvr = 0;
 +          window.autoFarmCurrentTarget = nearestTarget;
 +          window.autoFarmTargetStartTime = now;
-           state.counter_3 = 0;
++          state.counter_ss2 = 0;
          }
 -        if (nearest.distance < 40) {
 -          destX += (Math.random() - 0.5) * 80;
@@ -1385,11 +1668,11 @@ Index: src/features/autofarm.js
        } else {
          window.autoFarmCurrentTarget = null;
          window.autoFarmTargetStartTime = 0;
--        if (currentTime - currentTime_5 > 2500) {
-+        if (now - currentTime_5 > 2500) {
+-        if (currentTime - currentTime_stj > 2500) {
++        if (now - currentTime_sz8 > 2500) {
            angle = Math.random() * Math.PI * 2;
--          currentTime_5 = currentTime;
-+          currentTime_5 = now;
+-          currentTime_stj = currentTime;
++          currentTime_sz8 = now;
          }
 -        destX = target.x + Math.cos(angle) * 1000;
 -        destY = target.y + Math.sin(angle) * 1000;
@@ -1439,11 +1722,11 @@ Index: src/features/autofarm.js
          } else {
            window.autoFarmCurrentTarget = null;
            window.autoFarmTargetStartTime = 0;
--          if (currentTime - currentTime_5 > 2500) {
-+          if (now - currentTime_5 > 2500) {
+-          if (currentTime - currentTime_stj > 2500) {
++          if (now - currentTime_sz8 > 2500) {
              angle = Math.random() * Math.PI * 2;
--            currentTime_5 = currentTime;
-+            currentTime_5 = now;
+-            currentTime_stj = currentTime;
++            currentTime_sz8 = now;
            }
 -          destX = target.x + Math.cos(angle) * 1000;
 -          destY = target.y + Math.sin(angle) * 1000;
@@ -1457,24 +1740,24 @@ Index: src/features/autofarm.js
        if (!window.autoFarmPatrolPoints.length) {
          setupPatrolPoints();
        }
--      const targetEntity_2 = findClosestFarmableEntity(800);
--      if (targetEntity_2) {
--        destX = targetEntity_2.x;
--        destY = targetEntity_2.y;
--        minDist = targetEntity_2.distance;
-+      const selectedTarget_2 = findClosestFarmableEntity(800);
-+      if (selectedTarget_2) {
-+        targetX = selectedTarget_2.x;
-+        targetY = selectedTarget_2.y;
-+        minDistance = selectedTarget_2.distance;
+-      const targetEntity_gyh = findClosestFarmableEntity(800);
+-      if (targetEntity_gyh) {
+-        destX = targetEntity_gyh.x;
+-        destY = targetEntity_gyh.y;
+-        minDist = targetEntity_gyh.distance;
++      const selectedTarget_1m3 = findClosestFarmableEntity(800);
++      if (selectedTarget_1m3) {
++        targetX = selectedTarget_1m3.x;
++        targetY = selectedTarget_1m3.y;
++        minDistance = selectedTarget_1m3.distance;
          if (
            !window.autoFarmCurrentTarget ||
--          window.autoFarmCurrentTarget.id !== targetEntity_2.id
-+          window.autoFarmCurrentTarget.id !== selectedTarget_2.id
+-          window.autoFarmCurrentTarget.id !== targetEntity_gyh.id
++          window.autoFarmCurrentTarget.id !== selectedTarget_1m3.id
          ) {
--          window.autoFarmCurrentTarget = targetEntity_2;
+-          window.autoFarmCurrentTarget = targetEntity_gyh;
 -          window.autoFarmTargetStartTime = currentTime;
-+          window.autoFarmCurrentTarget = selectedTarget_2;
++          window.autoFarmCurrentTarget = selectedTarget_1m3;
 +          window.autoFarmTargetStartTime = now;
          }
        } else {
@@ -1510,12 +1793,12 @@ Index: src/features/autofarm.js
        const angle =
          window.autoFarmBoost &&
 -        minDist > 350 &&
--        currentTime - state.counter_2 > tickInterval_2;
+-        currentTime - state.counter_sce > tickInterval_j7h;
 +        minDistance > 350 &&
-+        now - state.counter_2 > tickInterval_2;
++        now - state.counter_ta8 > tickInterval_st4;
        if (angle) {
--        state.counter_2 = currentTime;
-+        state.counter_2 = now;
+-        state.counter_sce = currentTime;
++        state.counter_ta8 = now;
        }
 -      movePointerToTarget(destX, destY, angle);
 +      aimAtTarget(targetX, targetY, angle);
@@ -1523,7 +1806,35 @@ Index: src/features/autofarm.js
    } catch (data) {
      console.error("[AutoFarm]", data);
    }
-@@ -622,10 +626,10 @@
+   setTimeout(autoFarmLoop, 60);
+ }
+ function stopAutoFarm() {
+   window.autoFarmActive = false;
+-  state.isToggled_sv3 = false;
++  state.isToggled_suc = false;
+   showNotification(
+     "Farm stopped. ~" +
+       window.autoFarmStats.collected +
+       " food in " +
+       ((Date.now() - window.autoFarmStats.startTime) / 1000).toFixed(0) +
+       "s",
+   );
+ }
+-document.addEventListener("keydown", (event_5b0) => {
+-  if (event_5b0.target.matches("input,textarea,select")) {
++document.addEventListener("keydown", (event_6s3) => {
++  if (event_6s3.target.matches("input,textarea,select")) {
+     return;
+   }
+-  if (event_5b0.key === "F5") {
+-    event_5b0.preventDefault();
++  if (event_6s3.key === "F5") {
++    event_6s3.preventDefault();
+     if (window.autoFarmActive) {
+       stopAutoFarm();
+       const farmBtn = document.getElementById("autoFarmBtn");
+       if (farmBtn) {
+@@ -623,10 +626,10 @@
  export {
    handleFarmFailure,
    isAreaSkipped,
@@ -1609,7 +1920,7 @@ Index: src/features/entitytrail.js
 ===================================================================
 --- src/features/entitytrail.js	v1.7
 +++ src/features/entitytrail.js	v1.8
-@@ -5,9 +5,9 @@
+@@ -5,25 +5,25 @@
    state,
  } from "../core.js";
  import {
@@ -1620,7 +1931,28 @@ Index: src/features/entitytrail.js
  } from "../utils.js";
  import { showNotification } from "../ui/interaction.js";
  import { refreshUI } from "../ui/panels.js";
-@@ -46,73 +46,70 @@
+ 
+-function stopEntityTrail_r5j() {
+-  if (featuresentitytrailState.entityTrailInterval_skd) {
+-    clearInterval(featuresentitytrailState.entityTrailInterval_skd);
+-    featuresentitytrailState.entityTrailInterval_skd = null;
++function stopEntityTrail_sl0() {
++  if (featuresentitytrailState.entityTrailInterval_rf6) {
++    clearInterval(featuresentitytrailState.entityTrailInterval_rf6);
++    featuresentitytrailState.entityTrailInterval_rf6 = null;
+   }
+ }
+ function toggleEntityTrail() {
+   if (window.entityTrailEnabled) {
+     window.entityTrailEnabled = false;
+     window.entityTrailTargetId = null;
+-    stopEntityTrail_r5j();
++    stopEntityTrail_sl0();
+     window.entityTrailHistory = [];
+     showNotification("Trail stopped");
+     refreshUI();
+     return;
+@@ -46,73 +46,71 @@
    startEntityTrail();
    showNotification("Tracing: " + targetPlayerName);
    refreshUI();
@@ -1667,8 +1999,8 @@ Index: src/features/entitytrail.js
    }
    for (let j = 0; j < window.entityTrailHistory.length; j += 5) {
      const point = window.entityTrailHistory[j];
--    const pointAge_2 = currentTime - point.time;
--    const opacity_2 = Math.max(0.1, 1 - pointAge_2 / trailDuration);
+-    const pointAge_ea1 = currentTime - point.time;
+-    const opacity_e1r = Math.max(0.1, 1 - pointAge_ea1 / trailDuration);
 -    const pointX = centerX + (point.x - playerPos.x) * zoomScale;
 -    const pointY = centerY + (point.y - playerPos.y) * zoomScale;
 +    const pointAge = currentTime - point.time;
@@ -1676,7 +2008,7 @@ Index: src/features/entitytrail.js
 +    const pointX = halfWidth + (point.x - originPos.x) * zoomScale;
 +    const pointY = halfHeight + (point.y - originPos.y) * zoomScale;
      ctx.fillStyle =
--      "rgba(" + colorR + "," + colorG + "," + colorB + "," + opacity_2 + ")";
+-      "rgba(" + colorR + "," + colorG + "," + colorB + "," + opacity_e1r + ")";
 +      "rgba(" + red + "," + green + "," + blue + "," + pointOpacity + ")";
      ctx.beginPath();
      ctx.arc(pointX, pointY, 2, 0, Math.PI * 2);
@@ -1686,16 +2018,18 @@ Index: src/features/entitytrail.js
      const lastTrailPoint =
        window.entityTrailHistory[window.entityTrailHistory.length - 1];
 -    const screenY = centerX + (lastTrailPoint.x - playerPos.x) * zoomScale;
--    const screenY_2 = centerY + (lastTrailPoint.y - playerPos.y) * zoomScale;
+-    const screenY_eka = centerY + (lastTrailPoint.y - playerPos.y) * zoomScale;
 -    ctx.fillStyle = "rgb(" + colorR + "," + colorG + "," + colorB + ")";
 +    const screenY = halfWidth + (lastTrailPoint.x - originPos.x) * zoomScale;
-+    const screenY_2 = halfHeight + (lastTrailPoint.y - originPos.y) * zoomScale;
++    const screenY_vbc =
++      halfHeight + (lastTrailPoint.y - originPos.y) * zoomScale;
 +    ctx.fillStyle = "rgb(" + red + "," + green + "," + blue + ")";
      ctx.font = "bold 10px monospace";
      ctx.fillText(
        "TRAIL (" + window.entityTrailHistory.length + " pts)",
        screenY + 8,
-       screenY_2 - 8,
+-      screenY_eka - 8,
++      screenY_vbc - 8,
      );
    }
  }
@@ -1722,18 +2056,25 @@ Index: src/features/entitytrail.js
  window.entityTrailColor = {
    r: 255,
    g: 150,
-@@ -128,10 +125,5 @@
-   entityTrailInterval_2: null,
-   entityTrailInterval_3: null,
+@@ -124,14 +122,14 @@
+ window.entityTrailMaxLength = 200;
+ window.entityTrailRecordInterval = 100;
+ 
+ export const featuresentitytrailState = {
+-  entityTrailInterval_rdg: null,
+-  entityTrailInterval_skd: null,
++  entityTrailInterval_sje: null,
++  entityTrailInterval_rf6: null,
  };
  
--export {
--  stopEntityTrail_2,
--  toggleEntityTrail,
--  drawEntityTrail,
+ export {
+-  stopEntityTrail_r5j,
++  stopEntityTrail_sl0,
+   toggleEntityTrail,
+   drawEntityTrail,
 -  renderOverlayLoop,
--};
-+export { stopEntityTrail_2, toggleEntityTrail, drawEntityTrail, renderOverlay };
++  renderOverlay,
+ };
 Index: src/features/esp.js
 ===================================================================
 --- src/features/esp.js	v1.7
@@ -2057,7 +2398,39 @@ Index: src/features/esp.js
  function toggleEsp() {
    window.espEnabled = !window.espEnabled;
    showNotification(window.espEnabled ? "ESP enabled" : "ESP disabled");
-@@ -360,11 +372,11 @@
+@@ -333,40 +345,40 @@
+   } else {
+     showNotification("No players nearby");
+   }
+ }
+-function toggleEsp_tia() {
++function toggleEsp_qot() {
+   window.espTrackedEntityId = null;
+   showNotification("Tracking cleared");
+ }
+-function toggleEsp_sl0() {
++function toggleEsp_slh() {
+   window.autoDodgeEnabled = false;
+   showNotification("Auto dodge disabled");
+ }
+ function toggleMinimapSize() {
+   if (!playerData || !playerData.minimap) {
+     showNotification("Minimap not available");
+     return;
+   }
+-  if (state.isToggled_r8c) {
++  if (state.isToggled_sl0) {
+     playerData.minimap.scale.set(1);
+     playerData.minimap.pivot.set(0, 0);
+-    state.isToggled_r8c = false;
++    state.isToggled_sl0 = false;
+     showNotification("Minimap restored");
+   } else {
+     playerData.minimap.scale.set(0.5);
+     playerData.minimap.pivot.set(-70, -45);
+-    state.isToggled_r8c = true;
++    state.isToggled_sl0 = true;
+     showNotification("Small minimap enabled");
    }
  }
  
@@ -2070,13 +2443,53 @@ Index: src/features/esp.js
 +  renderEspLoop,
    toggleEsp,
    trackPlayer,
-   toggleEsp_2,
-   toggleEsp_3,
+-  toggleEsp_tia,
+-  toggleEsp_sl0,
++  toggleEsp_qot,
++  toggleEsp_slh,
+   toggleMinimapSize,
+ };
 Index: src/features/movement.js
 ===================================================================
 --- src/features/movement.js	v1.7
 +++ src/features/movement.js	v1.8
-@@ -39,18 +39,18 @@
+@@ -3,17 +3,17 @@
+ import { showNotification } from "../ui/interaction.js";
+ import { getGameCanvas } from "../utils.js";
+ 
+ function startCircularMovement() {
+-  if (featuresentitytrailState.entityTrailInterval_rdg) {
++  if (featuresentitytrailState.entityTrailInterval_sje) {
+     return;
+   }
+   const canvas = getGameCanvas();
+   if (!canvas) {
+     showNotification("Canvas not found");
+     return;
+   }
+-  featuresentitytrailState.entityTrailInterval_rdg = setInterval(() => {
++  featuresentitytrailState.entityTrailInterval_sje = setInterval(() => {
+     const angleDegrees = angles[state.angleIndex];
+     const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
+     const offsetX = Math.round(radius * Math.sin(angleRadians));
+     const offsetY = Math.round(radius * Math.cos(angleRadians));
+@@ -27,30 +27,30 @@
+     state.angleIndex = (state.angleIndex + 1) % angles.length;
+   }, 15);
+ }
+ function stopEntityTrail() {
+-  if (featuresentitytrailState.entityTrailInterval_rdg) {
+-    clearInterval(featuresentitytrailState.entityTrailInterval_rdg);
+-    featuresentitytrailState.entityTrailInterval_rdg = null;
++  if (featuresentitytrailState.entityTrailInterval_sje) {
++    clearInterval(featuresentitytrailState.entityTrailInterval_sje);
++    featuresentitytrailState.entityTrailInterval_sje = null;
+   }
+ }
+ function toggleMouseSimulation() {
+-  if (featuresentitytrailState.entityTrailInterval_rdg) {
++  if (featuresentitytrailState.entityTrailInterval_sje) {
+     stopEntityTrail();
    } else {
      startCircularMovement();
    }
@@ -2144,8 +2557,9 @@ Index: src/features/xray.js
 +import { showNotification } from "../ui/interaction.js";
  
 -const initializeViewportHacks = () => {
+-  if (state.isProcessed_rnh) {
 +const initializeAstraVision = () => {
-   if (state.isProcessed_3) {
++  if (state.isProcessed_rjn) {
      return;
    }
    if (!playerData) {
@@ -2206,7 +2620,8 @@ Index: src/features/xray.js
 -    console.error(url);
 +    console.error("AstraVision Error:", url);
    }
-   state.isProcessed_3 = true;
+-  state.isProcessed_rnh = true;
++  state.isProcessed_rjn = true;
  };
  
 -export { initializeViewportHacks };
@@ -2251,8 +2666,15 @@ Index: src/ui/panels.js
 ===================================================================
 --- src/ui/panels.js	v1.7
 +++ src/ui/panels.js	v1.8
-@@ -6,47 +6,48 @@
-   toggleEsp_3,
+@@ -1,52 +1,53 @@
+ import {
+   toggleEsp,
+   trackPlayer,
+-  toggleEsp_tia,
++  toggleEsp_qot,
+   toggleMinimapSize,
+-  toggleEsp_sl0,
++  toggleEsp_slh,
  } from "../features/esp.js";
  import {
    radius,
@@ -2358,7 +2780,21 @@ Index: src/ui/panels.js
          element.style.right = "auto";
        }
      };
-@@ -140,76 +141,77 @@
+@@ -115,11 +116,11 @@
+     };
+     document.addEventListener("mousemove", handleMouseMove);
+     document.addEventListener("mouseup", handleMouseUp);
+   });
+-  element.addEventListener("click", (event_v9h) => {
++  element.addEventListener("click", (event_re9) => {
+     if (hasMoved) {
+-      event_v9h.stopImmediatePropagation();
++      event_re9.stopImmediatePropagation();
+     }
+   });
+ }
+ function createToolsPanel() {
+@@ -140,100 +141,101 @@
    };
    toolsPanel.querySelector("#sendBtn").onclick = () => {
      const chatMessage = toolsPanel.querySelector("#chatMsg").value;
@@ -2369,9 +2805,9 @@ Index: src/ui/panels.js
    };
 -  const spinButton = toolsPanel.querySelector("#autoChatBtn");
 -  spinButton.onclick = () => {
--    const chatMessage_2 = toolsPanel.querySelector("#chatMsg").value;
+-    const chatMessage_axv = toolsPanel.querySelector("#chatMsg").value;
 -    const delay = parseInt(toolsPanel.querySelector("#delayInput").value) || 10;
--    if (!chatMessage_2) {
+-    if (!chatMessage_axv) {
 +  const spinBtn = toolsPanel.querySelector("#autoChatBtn");
 +  spinBtn.onclick = () => {
 +    const chatInputContent = toolsPanel.querySelector("#chatMsg").value;
@@ -2388,7 +2824,7 @@ Index: src/ui/panels.js
 +      spinBtn.textContent = "Auto Chat";
 +      spinBtn.classList.remove("toggle-on");
      } else {
--      startScheduledTask(chatMessage_2, delay);
+-      startScheduledTask(chatMessage_axv, delay);
 -      spinButton.textContent = "Stop Chat";
 -      spinButton.classList.add("toggle-on");
 +      startScheduledTask(chatInputContent, messageDelay);
@@ -2422,19 +2858,23 @@ Index: src/ui/panels.js
        showNotification("No name input found");
      }
    };
--  const spinButton_2 = toolsPanel.querySelector("#spinBtn");
--  spinButton_2.onclick = () => {
-+  const spinBtn_2 = toolsPanel.querySelector("#spinBtn");
-+  spinBtn_2.onclick = () => {
+-  const spinButton_t2b = toolsPanel.querySelector("#spinBtn");
+-  spinButton_t2b.onclick = () => {
++  const spinBtn_oj8 = toolsPanel.querySelector("#spinBtn");
++  spinBtn_oj8.onclick = () => {
      toggleMouseSimulation();
--    spinButton_2.textContent = featuresentitytrailState.entityTrailInterval_2
-+    spinBtn_2.textContent = featuresentitytrailState.entityTrailInterval_2
-       ? "Stop Spin"
-       : "Auto Spin";
--    spinButton_2.classList.toggle(
-+    spinBtn_2.classList.toggle(
+-    spinButton_t2b.textContent =
+-      featuresentitytrailState.entityTrailInterval_rdg
+-        ? "Stop Spin"
+-        : "Auto Spin";
+-    spinButton_t2b.classList.toggle(
++    spinBtn_oj8.textContent = featuresentitytrailState.entityTrailInterval_sje
++      ? "Stop Spin"
++      : "Auto Spin";
++    spinBtn_oj8.classList.toggle(
        "toggle-on",
-       !!featuresentitytrailState.entityTrailInterval_2,
+-      !!featuresentitytrailState.entityTrailInterval_rdg,
++      !!featuresentitytrailState.entityTrailInterval_sje,
      );
    };
    const turnRightKeyInput = toolsPanel.querySelector("#spinKeyInput");
@@ -2459,51 +2899,61 @@ Index: src/ui/panels.js
 -      keyupEvent.preventDefault();
 +      shortcutEvent.preventDefault();
        toggleMouseSimulation();
--      spinButton_2.textContent = featuresentitytrailState.entityTrailInterval_2
-+      spinBtn_2.textContent = featuresentitytrailState.entityTrailInterval_2
-         ? "Stop Spin"
-         : "Auto Spin";
--      spinButton_2.classList.toggle(
-+      spinBtn_2.classList.toggle(
+-      spinButton_t2b.textContent =
+-        featuresentitytrailState.entityTrailInterval_rdg
+-          ? "Stop Spin"
+-          : "Auto Spin";
+-      spinButton_t2b.classList.toggle(
++      spinBtn_oj8.textContent = featuresentitytrailState.entityTrailInterval_sje
++        ? "Stop Spin"
++        : "Auto Spin";
++      spinBtn_oj8.classList.toggle(
          "toggle-on",
-         !!featuresentitytrailState.entityTrailInterval_2,
+-        !!featuresentitytrailState.entityTrailInterval_rdg,
++        !!featuresentitytrailState.entityTrailInterval_sje,
        );
      }
-@@ -217,21 +219,23 @@
-   const turnRightKeyInput_2 = toolsPanel.querySelector("#turnLeftKeyInput");
-   const turnRightKeyInput_3 = toolsPanel.querySelector("#turnRightKeyInput");
-   turnRightKeyInput_2.value = state.keyQ.toUpperCase();
-   turnRightKeyInput_3.value = state.keyE.toUpperCase();
--  turnRightKeyInput_2.addEventListener("keydown", (event) => {
+   });
+-  const turnRightKeyInput_uix = toolsPanel.querySelector("#turnLeftKeyInput");
+-  const turnRightKeyInput_uh3 = toolsPanel.querySelector("#turnRightKeyInput");
+-  turnRightKeyInput_uix.value = state.keyQ.toUpperCase();
+-  turnRightKeyInput_uh3.value = state.keyE.toUpperCase();
+-  turnRightKeyInput_uix.addEventListener("keydown", (event) => {
 -    event.preventDefault();
 -    event.stopPropagation();
 -    state.keyQ = event.key;
-+  turnRightKeyInput_2.addEventListener("keydown", (contextMenuEvent) => {
+-    turnRightKeyInput_uix.value =
+-      event.key.length === 1 ? event.key.toUpperCase() : event.key;
++  const turnRightKeyInput_q3j = toolsPanel.querySelector("#turnLeftKeyInput");
++  const turnRightKeyInput_n9e = toolsPanel.querySelector("#turnRightKeyInput");
++  turnRightKeyInput_q3j.value = state.keyQ.toUpperCase();
++  turnRightKeyInput_n9e.value = state.keyE.toUpperCase();
++  turnRightKeyInput_q3j.addEventListener("keydown", (contextMenuEvent) => {
 +    contextMenuEvent.preventDefault();
 +    contextMenuEvent.stopPropagation();
 +    state.keyQ = contextMenuEvent.key;
-     turnRightKeyInput_2.value =
--      event.key.length === 1 ? event.key.toUpperCase() : event.key;
++    turnRightKeyInput_q3j.value =
 +      contextMenuEvent.key.length === 1
 +        ? contextMenuEvent.key.toUpperCase()
 +        : contextMenuEvent.key;
    });
--  turnRightKeyInput_3.addEventListener("keydown", (event_2) => {
--    event_2.preventDefault();
--    event_2.stopPropagation();
--    state.keyE = event_2.key;
-+  turnRightKeyInput_3.addEventListener("keydown", (dragEvent) => {
+-  turnRightKeyInput_uh3.addEventListener("keydown", (event_98m) => {
+-    event_98m.preventDefault();
+-    event_98m.stopPropagation();
+-    state.keyE = event_98m.key;
+-    turnRightKeyInput_uh3.value =
+-      event_98m.key.length === 1 ? event_98m.key.toUpperCase() : event_98m.key;
++  turnRightKeyInput_n9e.addEventListener("keydown", (dragEvent) => {
 +    dragEvent.preventDefault();
 +    dragEvent.stopPropagation();
 +    state.keyE = dragEvent.key;
-     turnRightKeyInput_3.value =
--      event_2.key.length === 1 ? event_2.key.toUpperCase() : event_2.key;
++    turnRightKeyInput_n9e.value =
 +      dragEvent.key.length === 1 ? dragEvent.key.toUpperCase() : dragEvent.key;
    });
    makeDraggable(toolsPanel);
    return toolsPanel;
  }
-@@ -244,33 +248,33 @@
+@@ -246,61 +248,61 @@
      '\n      <div class="ast-header"><span class="ast-header-title">Astraphobia Client</span><button class="ast-header-min" id="visionMin">−</button></div>\n      <div class="ast-body" id="visionBody">\n        <span class="ast-section-label">Vision</span>\n        <button class="ast-btn patched" id="thresherBtn" disabled>Thresher Boost (Patched)</button>\n        <button class="ast-btn" id="astraVisionBtn">Astra-Vision</button>\n        <button class="ast-btn" id="smallMinimapBtn">Small Minimap</button>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">ESP</span>\n        <button class="ast-btn" id="espBtn">ESP</button>\n        <select class="ast-select" id="espModeSelect"><option value="players">Players</option><option value="food">Food</option></select>\n        <button class="ast-btn" id="trackNearestBtn">Track Nearest (F3)</button>\n        <button class="ast-btn" id="untrackBtn">Untrack (F4)</button>\n        <div class="ast-sep"></div>\n        <button class="ast-btn" id="espColorsToggleBtn" style="display:flex;align-items:center;justify-content:space-between;">\n          <span style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-sec,#888);">ESP Colors</span>\n          <span id="espColorsArrow" style="color:var(--text-sec,#888);font-size:12px;">▼</span>\n        </button>\n        <div id="espColorsSection" style="display:none;">\n          <div class="ast-key-row"><span>Close (&lt;500)</span><input type="color" id="espColorClose" value="#ff0000" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Medium (&lt;1500)</span><input type="color" id="espColorMedium" value="#ffff00" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Far (&lt;3000)</span><input type="color" id="espColorFar" value="#00ffff" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Very Far</span><input type="color" id="espColorVeryFar" value="#00ff00" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Tracked</span><input type="color" id="espColorTracked" value="#ff00ff" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Food Close</span><input type="color" id="espColorFoodClose" value="#00ff00" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Food Medium</span><input type="color" id="espColorFoodMedium" value="#88ff88" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Food Far</span><input type="color" id="espColorFoodFar" value="#44cc44" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n        </div>\n      </div>';
    document.body.appendChild(visionPanel);
    const espColorsSection = visionPanel.querySelector("#visionBody");
@@ -2524,7 +2974,8 @@ Index: src/ui/panels.js
    };
    const astraVisionBtn = visionPanel.querySelector("#astraVisionBtn");
    astraVisionBtn.onclick = () => {
-     if (state.isProcessed_3) {
+-    if (state.isProcessed_rnh) {
++    if (state.isProcessed_rjn) {
        showNotification("Already active");
        return;
      }
@@ -2541,11 +2992,22 @@ Index: src/ui/panels.js
 -    initAntiTamper();
 +    initGameHooks();
      toggleMinimapSize();
-     espBtn.textContent = state.isToggled_2 ? "Minimap: Small" : "Small Minimap";
-     espBtn.classList.toggle("toggle-on", state.isToggled_2);
+-    espBtn.textContent = state.isToggled_r8c
++    espBtn.textContent = state.isToggled_sl0
+       ? "Minimap: Small"
+       : "Small Minimap";
+-    espBtn.classList.toggle("toggle-on", state.isToggled_r8c);
++    espBtn.classList.toggle("toggle-on", state.isToggled_sl0);
    };
-@@ -281,11 +285,11 @@
-     espBtn_2.classList.toggle("toggle-on", window.espEnabled);
+-  const espBtn_x1p = visionPanel.querySelector("#espBtn");
+-  espBtn_x1p.onclick = () => {
++  const espBtn_6rn = visionPanel.querySelector("#espBtn");
++  espBtn_6rn.onclick = () => {
+     toggleEsp();
+-    espBtn_x1p.textContent = window.espEnabled ? "ESP ✓" : "ESP";
+-    espBtn_x1p.classList.toggle("toggle-on", window.espEnabled);
++    espBtn_6rn.textContent = window.espEnabled ? "ESP ✓" : "ESP";
++    espBtn_6rn.classList.toggle("toggle-on", window.espEnabled);
    };
    const espModeSelect = visionPanel.querySelector("#espModeSelect");
    espModeSelect.value = window.espMode || "players";
@@ -2557,9 +3019,26 @@ Index: src/ui/panels.js
 +    showNotification("ESP: " + espModeEvent.target.value);
    };
    visionPanel.querySelector("#trackNearestBtn").onclick = () => trackPlayer();
-   visionPanel.querySelector("#untrackBtn").onclick = () => toggleEsp_2();
+-  visionPanel.querySelector("#untrackBtn").onclick = () => toggleEsp_tia();
++  visionPanel.querySelector("#untrackBtn").onclick = () => toggleEsp_qot();
    const espColorsToggleBtn = visionPanel.querySelector("#espColorsToggleBtn");
-@@ -339,16 +343,14 @@
+-  const espColorsSection_xk6 = visionPanel.querySelector("#espColorsSection");
++  const espColorsSection_68h = visionPanel.querySelector("#espColorsSection");
+   const espColorsArrow = visionPanel.querySelector("#espColorsArrow");
+-  let isHidden_y6z = false;
++  let isHidden_6z4 = false;
+   espColorsToggleBtn.onclick = () => {
+-    isHidden_y6z = !isHidden_y6z;
+-    espColorsSection_xk6.style.display = isHidden_y6z ? "block" : "none";
+-    espColorsArrow.textContent = isHidden_y6z ? "▲" : "▼";
++    isHidden_6z4 = !isHidden_6z4;
++    espColorsSection_68h.style.display = isHidden_6z4 ? "block" : "none";
++    espColorsArrow.textContent = isHidden_6z4 ? "▲" : "▼";
+   };
+   const eventInit = {
+     espColorClose: "close",
+     espColorMedium: "medium",
+@@ -343,16 +345,14 @@
    const lockButton = combatPanel.querySelector("#lockBtn");
    lockButton.onclick = () => toggleLock();
    const lockKeyInput = combatPanel.querySelector("#lockKeyInput");
@@ -2581,7 +3060,7 @@ Index: src/ui/panels.js
    const trailColorPicker = combatPanel.querySelector("#trailColorPicker");
    trailColorPicker.addEventListener("input", (colorChangeEvent) => {
      const colorValue = colorChangeEvent.target.value;
-@@ -359,16 +361,16 @@
+@@ -363,16 +363,16 @@
      };
    });
    const traceKeyInput = combatPanel.querySelector("#traceKeyInput");
@@ -2605,7 +3084,7 @@ Index: src/ui/panels.js
    makeDraggable(combatPanel);
    return combatPanel;
  }
-@@ -377,18 +379,19 @@
+@@ -381,23 +381,24 @@
    automationPanel.id = "automation-panel";
    automationPanel.className = "ast-panel";
    automationPanel.style.cssText = "bottom:20px;left:260px;width:230px;";
@@ -2633,7 +3112,13 @@ Index: src/ui/panels.js
    const autoDodgeButton = automationPanel.querySelector("#autoDodgeBtn");
    autoDodgeButton.onclick = () => {
      if (window.autoDodgeEnabled) {
-@@ -414,29 +417,50 @@
+-      toggleEsp_sl0();
++      toggleEsp_slh();
+       autoDodgeButton.textContent = "Auto Dodge";
+       autoDodgeButton.classList.remove("toggle-on");
+     } else {
+       enableAutoDodge();
+@@ -418,30 +419,51 @@
        autoFarmButton.textContent = "Stop Farm (F5)";
        autoFarmButton.classList.add("toggle-on");
      }
@@ -2652,17 +3137,22 @@ Index: src/ui/panels.js
      }
    };
    const farmAvoidToggle = automationPanel.querySelector("#farmBoostToggle");
-   const farmAvoidToggle_2 = automationPanel.querySelector("#farmEvolveToggle");
-   const farmAvoidToggle_3 = automationPanel.querySelector("#farmAvoidToggle");
+-  const farmAvoidToggle_ovg =
++  const farmAvoidToggle_k0h =
+     automationPanel.querySelector("#farmEvolveToggle");
+-  const farmAvoidToggle_qnq = automationPanel.querySelector("#farmAvoidToggle");
++  const farmAvoidToggle_q6k = automationPanel.querySelector("#farmAvoidToggle");
    farmAvoidToggle.checked = window.autoFarmBoost;
-   farmAvoidToggle_2.checked = window.autoFarmEvolve;
-   farmAvoidToggle_3.checked = window.autoFarmAvoidPlayers;
+-  farmAvoidToggle_ovg.checked = window.autoFarmEvolve;
+-  farmAvoidToggle_qnq.checked = window.autoFarmAvoidPlayers;
 -  farmAvoidToggle.onchange = (boostEvent) =>
 -    (window.autoFarmBoost = boostEvent.target.checked);
--  farmAvoidToggle_2.onchange = (evolveEvent) =>
+-  farmAvoidToggle_ovg.onchange = (evolveEvent) =>
 -    (window.autoFarmEvolve = evolveEvent.target.checked);
--  farmAvoidToggle_3.onchange = (avoidPlayersEvent) =>
+-  farmAvoidToggle_qnq.onchange = (avoidPlayersEvent) =>
 -    (window.autoFarmAvoidPlayers = avoidPlayersEvent.target.checked);
++  farmAvoidToggle_k0h.checked = window.autoFarmEvolve;
++  farmAvoidToggle_q6k.checked = window.autoFarmAvoidPlayers;
 +  const farmBoostLabel = farmAvoidToggle.nextElementSibling;
 +  farmBoostLabel.addEventListener("click", (farmOptionEvent1) => {
 +    farmOptionEvent1.stopPropagation();
@@ -2672,29 +3162,29 @@ Index: src/ui/panels.js
 +      farmAvoidToggle.checked ? "Farm boost ON" : "Farm boost OFF",
 +    );
 +  });
-+  const farmEvolveLabel = farmAvoidToggle_2.nextElementSibling;
++  const farmEvolveLabel = farmAvoidToggle_k0h.nextElementSibling;
 +  farmEvolveLabel.addEventListener("click", (farmOptionEvent2) => {
 +    farmOptionEvent2.stopPropagation();
-+    farmAvoidToggle_2.checked = !farmAvoidToggle_2.checked;
-+    window.autoFarmEvolve = farmAvoidToggle_2.checked;
++    farmAvoidToggle_k0h.checked = !farmAvoidToggle_k0h.checked;
++    window.autoFarmEvolve = farmAvoidToggle_k0h.checked;
 +    showNotification(
-+      farmAvoidToggle_2.checked ? "Auto evolve ON" : "Auto evolve OFF",
++      farmAvoidToggle_k0h.checked ? "Auto evolve ON" : "Auto evolve OFF",
 +    );
 +  });
-+  const farmAvoidLabel = farmAvoidToggle_3.nextElementSibling;
++  const farmAvoidLabel = farmAvoidToggle_q6k.nextElementSibling;
 +  farmAvoidLabel.addEventListener("click", (farmOptionEvent3) => {
 +    farmOptionEvent3.stopPropagation();
-+    farmAvoidToggle_3.checked = !farmAvoidToggle_3.checked;
-+    window.autoFarmAvoidPlayers = farmAvoidToggle_3.checked;
++    farmAvoidToggle_q6k.checked = !farmAvoidToggle_q6k.checked;
++    window.autoFarmAvoidPlayers = farmAvoidToggle_q6k.checked;
 +    showNotification(
-+      farmAvoidToggle_3.checked ? "Avoid players ON" : "Avoid players OFF",
++      farmAvoidToggle_q6k.checked ? "Avoid players ON" : "Avoid players OFF",
 +    );
 +  });
    makeDraggable(automationPanel);
    return automationPanel;
  }
  function createSettingsPanel() {
-@@ -444,18 +468,19 @@
+@@ -449,18 +471,19 @@
    settingsPanel.id = "settings-panel";
    settingsPanel.className = "ast-panel";
    settingsPanel.style.cssText = "top:20px;left:20px;width:220px;";
@@ -2721,7 +3211,7 @@ Index: src/ui/panels.js
    const toggleKeyInput = settingsPanel.querySelector("#toggleKeyInput");
    toggleKeyInput.value = state.activeKey.toUpperCase();
    toggleKeyInput.addEventListener("keydown", (keyboardEvent) => {
-@@ -474,47 +499,191 @@
+@@ -479,47 +502,194 @@
        showNotification("Enter a URL");
        return;
      }
@@ -2867,11 +3357,11 @@ Index: src/ui/panels.js
 +      border: "#333",
 +      hover: adjustColor(themePanelColor),
 +    };
-+    const customThemes_2 = JSON.parse(
++    const customThemes_wtz = JSON.parse(
 +      localStorage.getItem("customThemes") || "{}",
 +    );
-+    customThemes_2[customThemeName] = themeSettings;
-+    localStorage.setItem("customThemes", JSON.stringify(customThemes_2));
++    customThemes_wtz[customThemeName] = themeSettings;
++    localStorage.setItem("customThemes", JSON.stringify(customThemes_wtz));
 +    applyTheme(customThemeName);
 +    settingsPanel.querySelector("#customThemeName").value = "";
 +    renderCustomThemes();
@@ -2880,23 +3370,26 @@ Index: src/ui/panels.js
 +  const myThemesToggleBtn = settingsPanel.querySelector(
 +    "#customThemeToggleBtn",
 +  );
-+  const myThemesSection_2 = settingsPanel.querySelector("#customThemeSection");
++  const myThemesSection_uwk = settingsPanel.querySelector(
++    "#customThemeSection",
++  );
 +  const myThemesArrow = settingsPanel.querySelector("#customThemeArrow");
-+  let isHidden_2 = false;
++  let isHidden_9db = false;
 +  myThemesToggleBtn.onclick = () => {
-+    isHidden_2 = !isHidden_2;
-+    myThemesSection_2.style.display = isHidden_2 ? "block" : "none";
-+    myThemesArrow.textContent = isHidden_2 ? "▲" : "▼";
++    isHidden_9db = !isHidden_9db;
++    myThemesSection_uwk.style.display = isHidden_9db ? "block" : "none";
++    myThemesArrow.textContent = isHidden_9db ? "▲" : "▼";
 +  };
-+  const myThemesToggleBtn_2 = settingsPanel.querySelector("#myThemesToggleBtn");
-+  const myThemesSection_3 = settingsPanel.querySelector("#myThemesSection");
-+  const myThemesArrow_2 = settingsPanel.querySelector("#myThemesArrow");
-+  let isHidden_3 = false;
-+  myThemesToggleBtn_2.onclick = () => {
-+    isHidden_3 = !isHidden_3;
-+    myThemesSection_3.style.display = isHidden_3 ? "block" : "none";
-+    myThemesArrow_2.textContent = isHidden_3 ? "▲" : "▼";
-+    if (isHidden_3) {
++  const myThemesToggleBtn_8lc =
++    settingsPanel.querySelector("#myThemesToggleBtn");
++  const myThemesSection_u3r = settingsPanel.querySelector("#myThemesSection");
++  const myThemesArrow_7x5 = settingsPanel.querySelector("#myThemesArrow");
++  let isHidden_7uf = false;
++  myThemesToggleBtn_8lc.onclick = () => {
++    isHidden_7uf = !isHidden_7uf;
++    myThemesSection_u3r.style.display = isHidden_7uf ? "block" : "none";
++    myThemesArrow_7x5.textContent = isHidden_7uf ? "▲" : "▼";
++    if (isHidden_7uf) {
 +      renderCustomThemes();
 +    }
 +  };
@@ -2929,7 +3422,7 @@ Index: src/ui/panels.js
        : "−";
    };
    makeDraggable(updatePanel);
-@@ -528,29 +697,29 @@
+@@ -533,29 +703,29 @@
      "automation-panel",
      "update-history",
      "settings-panel",
@@ -3035,7 +3528,7 @@ Index: src/ui/radar.js
        espColor =
          target.distance < 500
            ? window.espColors.close
-@@ -99,45 +104,45 @@
+@@ -99,69 +104,69 @@
              ? window.espColors.medium
              : target.distance < 3000
                ? window.espColors.far
@@ -3072,9 +3565,9 @@ Index: src/ui/radar.js
 +      const targetEntity = getEntityPosition(targetId);
        if (targetEntity) {
 -        const deltaY = targetEntity.x - gameState.myPos.x;
--        const deltaY_2 = targetEntity.y - gameState.myPos.y;
+-        const deltaY_xp7 = targetEntity.y - gameState.myPos.y;
 +        const offsetY = targetEntity.x - gameState.myPos.x;
-+        const offsetY_2 = targetEntity.y - gameState.myPos.y;
++        const offsetY_n3y = targetEntity.y - gameState.myPos.y;
          const drawY = Math.max(
            radarX + 2,
            Math.min(
@@ -3083,17 +3576,37 @@ Index: src/ui/radar.js
 +            radarX + radarSize / 2 + offsetY * radarScale,
            ),
          );
-         const drawY_2 = Math.max(
+-        const drawY_xpg = Math.max(
++        const drawY_z3t = Math.max(
            radarY + 2,
            Math.min(
              radarY + radarSize - 2,
--            radarY + radarSize / 2 + deltaY_2 * radarScale,
-+            radarY + radarSize / 2 + offsetY_2 * radarScale,
+-            radarY + radarSize / 2 + deltaY_xp7 * radarScale,
++            radarY + radarSize / 2 + offsetY_n3y * radarScale,
            ),
          );
          const alpha = Math.sin(Date.now() / 200) * 0.3 + 0.7;
-         const { r: red, g: blue, b: blue_2 } = window.entityTrailColor;
-@@ -159,9 +164,9 @@
+-        const { r: red, g: blue, b: blue_y68 } = window.entityTrailColor;
+-        const rgbValue = red + "," + blue + "," + blue_y68;
++        const { r: red, g: blue, b: blue_lnb } = window.entityTrailColor;
++        const rgbValue = red + "," + blue + "," + blue_lnb;
+         ctx.strokeStyle = "rgba(" + rgbValue + "," + alpha + ")";
+         ctx.lineWidth = 2;
+         ctx.beginPath();
+-        ctx.arc(drawY, drawY_xpg, 7, 0, Math.PI * 2);
++        ctx.arc(drawY, drawY_z3t, 7, 0, Math.PI * 2);
+         ctx.stroke();
+         ctx.strokeStyle = "rgba(" + rgbValue + "," + alpha * 0.5 + ")";
+         ctx.lineWidth = 4;
+         ctx.beginPath();
+-        ctx.arc(drawY, drawY_xpg, 10, 0, Math.PI * 2);
++        ctx.arc(drawY, drawY_z3t, 10, 0, Math.PI * 2);
+         ctx.stroke();
+         ctx.fillStyle = "rgb(" + rgbValue + ")";
+         ctx.beginPath();
+-        ctx.arc(drawY, drawY_xpg, 3, 0, Math.PI * 2);
++        ctx.arc(drawY, drawY_z3t, 3, 0, Math.PI * 2);
+         ctx.fill();
          if (window.entityTrailHistory.length > 1) {
            ctx.strokeStyle = "rgba(" + rgbValue + ",0.3)";
            ctx.lineWidth = 1;
@@ -3466,10 +3979,10 @@ Index: src/utils.js
 -      (entityA, entityB) => entityA.distance - entityB.distance,
 -    );
 -    entityData.players.sort(
--      (entityA_2, entityB_2) => entityA_2.distance - entityB_2.distance,
+-      (entityA_qn0, entityB_r2r) => entityA_qn0.distance - entityB_r2r.distance,
 -    );
 -    entityData.food.sort(
--      (entityA_3, secondItem) => entityA_3.distance - secondItem.distance,
+-      (entityA_imr, secondItem) => entityA_imr.distance - secondItem.distance,
 -    );
 +    }
 +    entityData.players.sort((itemA, itemB) => itemA.distance - itemB.distance);

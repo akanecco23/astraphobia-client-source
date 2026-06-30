@@ -1,880 +1,420 @@
 import {
-  pausePlayback,
-  resumePlayback,
-  stopPlayback,
-  isPlaying,
-  playNextOrRandom,
-  playPrevious,
-  addTrackToPlaylist,
-  updateMusicPanel,
-} from "./audio.js";
-import {
   radius,
-  initNetworkInterceptor,
-  playerData,
-  initAntiDetection,
-  startAutoFarm,
-  angle,
-  musicPlaylist,
+  setupTextEncoderHook,
+  isProcessed_t1s,
+  initHooks,
   state,
 } from "../core.js";
-import {
-  toggleEsp,
-  trackPlayer,
-  toggleEsp_2,
-  toggleMinimapSize,
-  toggleEsp_3,
-} from "../features/esp.js";
-import {
-  startScheduledTask,
-  stopInterval,
-  simulateChatInput,
-} from "../features/chat.js";
-import {
-  showNotification,
-  simulateTyping,
-  initNameAutofill,
-} from "./interaction.js";
-import { setupPatrolPoints, stopAutoFarm } from "../features/autofarm.js";
+import { simulateTyping, autoTypeChat, showToast } from "./interaction.js";
+import { startScheduledTask, stopInterval } from "../features/chat.js";
 import { featuresentitytrailState } from "../features/entitytrail.js";
-import { toggleLock, enableAutoDodge } from "../features/aimbot.js";
 import { toggleMouseSimulation } from "../features/movement.js";
-import { applyTheme, initBackgroundImage } from "./theme.js";
-import { activateAstraVision } from "../features/xray.js";
 import { generateRandomString } from "../utils.js";
 
-window.lockKey = "t";
-window.entityTraceKey = "h";
-
-function refreshUI() {}
-function showHalloweenCodeModal(onUnlockCallback) {
-  const modalOverlay = document.createElement("div");
-  modalOverlay.style.cssText =
-    "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:100001;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.3s ease;";
-  modalOverlay.innerHTML =
-    '<div style="background:#1a1a1a;padding:32px;border-radius:8px;text-align:center;max-width:400px;width:90%;border:1px solid #333;">\n      <div style="color:#e0e0e0;font-size:18px;font-weight:600;margin-bottom:16px;">Halloween Access Code</div>\n      <input id="hwCodeInput" type="text" placeholder="Enter code..." style="background:#111;border:1px solid #333;color:#e0e0e0;border-radius:4px;padding:10px;font-size:14px;text-align:center;width:100%;box-sizing:border-box;margin-bottom:16px;outline:none;">\n      <div style="display:flex;gap:8px;">\n        <button id="hwCancelBtn" style="flex:1;background:#222;color:#888;border:1px solid #333;border-radius:4px;padding:10px;cursor:pointer;">Cancel</button>\n        <button id="hwSubmitBtn" style="flex:1;background:#ff6600;color:#fff;border:none;border-radius:4px;padding:10px;cursor:pointer;font-weight:600;">Redeem</button>\n      </div></div>';
-  document.body.appendChild(modalOverlay);
-  setTimeout(() => {
-    modalOverlay.style.opacity = "1";
-  }, 10);
-  const codeInput = modalOverlay.querySelector("#hwCodeInput");
-  const closeModal = () => {
-    modalOverlay.style.opacity = "0";
-    setTimeout(() => modalOverlay.remove(), 300);
+function createUpdateHistoryPanel() {
+  const historyStyleElement = document.createElement("style");
+  historyStyleElement.textContent =
+    "\n      #update-history {\n        position: fixed;\n        bottom: 20px;\n        left: 20px;\n        background: linear-gradient(to bottom, #0f0f0f, #1a1a1a);\n        color: #e0e0e0;\n        padding: 14px;\n        border-radius: 12px;\n        font-size: 13px;\n        z-index: 9999;\n        max-width: 220px;\n        max-height: 250px;\n        overflow-y: auto;\n        font-family: 'Segoe UI', sans-serif;\n        cursor: move;\n        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);\n        border: 1px solid #333;\n        transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);\n      }\n      #update-history:hover {\n        transform: translateY(-2px);\n        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);\n      }\n      #update-history ul {\n        margin: 0;\n        padding-left: 15px;\n      }\n      #update-history li {\n        margin-bottom: 5px;\n        line-height: 1.3;\n      }\n      #update-history h3 {\n        margin: 0 0 10px 0;\n        font-size: 14px;\n        color: #ff4d4d;\n        position: relative;\n        padding-right: 25px;\n        text-shadow: 0 0 8px rgba(255,77,77,0.3);\n        font-weight: 700;\n      }\n      #update-history button.min-btn {\n        background: none;\n        border: none;\n        color: #ff4d4d;\n        font-size: 18px;\n        cursor: pointer;\n        position: absolute;\n        top: 30%;\n        right: 5px;\n        transform: translateY(-50%);\n        z-index: 1;\n        transition: color 0.2s ease;\n        width: 20px;\n        height: 20px;\n        line-height: 20px;\n      }\n      #update-history button.min-btn:hover {\n        color: #ff6666;\n      }\n    ";
+  document.head.appendChild(historyStyleElement);
+  const historyPanel = document.createElement("div");
+  historyPanel.id = "update-history";
+  historyPanel.innerHTML =
+    '\n      <h3>Update History <button class="min-btn" id="minHist">−</button></h3>\n      <div id="historyContent">\n        <ul>\n          <li>v1.1 - Added built-in ad blocker, removed boost trail, spoofing for username, keybind selector for auto spin, added settings GUI, added shift keybind to toogle all panels.</li>\n          <li>v1.0 - Initial release with auto chat, auto-spin, special character bypass, and thresher super boost, no-zoom limit is automatically enabled.</li>\n        </ul>\n      </div>\n    ';
+  document.body.appendChild(historyPanel);
+  const minHistBtn = historyPanel.querySelector("#minHist");
+  const historyContent = historyPanel.querySelector("#historyContent");
+  let isHidden = false;
+  minHistBtn.onclick = (toggleEvent) => {
+    toggleEvent.stopPropagation();
+    isHidden = !isHidden;
+    historyContent.style.display = isHidden ? "none" : "block";
+    historyPanel.style.height = isHidden ? "50px" : "auto";
+    minHistBtn.textContent = isHidden ? "+" : "−";
   };
-  modalOverlay.querySelector("#hwSubmitBtn").onclick = () => {
-    const enteredPassword = codeInput.value.trim();
-    if (
-      enteredPassword === "HappyHalloween9" ||
-      enteredPassword === "TrickOrTreat9"
-    ) {
-      localStorage.setItem("halloweenUnlocked", "true");
-      showNotification("Halloween theme unlocked");
-      closeModal();
-      onUnlockCallback(true);
-    } else {
-      codeInput.style.borderColor = "#ff0000";
-      setTimeout(() => {
-        codeInput.style.borderColor = "#333";
-      }, 500);
-      showNotification("Invalid code");
-    }
-  };
-  modalOverlay.querySelector("#hwCancelBtn").onclick = () => {
-    closeModal();
-    onUnlockCallback(false);
-  };
-  codeInput.addEventListener("keypress", (event) => {
-    if (event.key === "Enter") {
-      modalOverlay.querySelector("#hwSubmitBtn").click();
-    }
-  });
-  codeInput.focus();
-}
-function makeDraggable(element) {
   let offsetX;
   let offsetY;
-  let isDragging = false;
-  let hasMoved = false;
-  element.addEventListener("mousedown", (event) => {
+  let isDraggingHistory = false;
+  let isActive = false;
+  historyPanel.addEventListener("mousedown", (clickEvent) => {
     if (
-      ["BUTTON", "INPUT", "TEXTAREA", "SELECT", "A", "LABEL"].includes(
-        event.target.tagName,
-      )
+      ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(clickEvent.target.tagName)
     ) {
       return;
     }
-    if (event.target.closest("button,input,textarea,select,label")) {
-      return;
-    }
-    isDragging = true;
-    hasMoved = false;
-    offsetX = event.clientX - element.getBoundingClientRect().left;
-    offsetY = event.clientY - element.getBoundingClientRect().top;
-    element.style.transition = "none";
+    isDraggingHistory = true;
+    isActive = false;
+    offsetX = clickEvent.clientX - historyPanel.getBoundingClientRect().left;
+    offsetY = clickEvent.clientY - historyPanel.getBoundingClientRect().top;
+    historyPanel.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
-      if (
-        !hasMoved &&
-        (Math.abs(mouseEvent.clientX - event.clientX) > 5 ||
-          Math.abs(mouseEvent.clientY - event.clientY) > 5)
-      ) {
-        hasMoved = true;
+      const deltaX = mouseEvent.clientX - clickEvent.clientX;
+      const deltaY = mouseEvent.clientY - clickEvent.clientY;
+      if (!isActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+        isActive = true;
       }
-      if (isDragging) {
-        element.style.left = mouseEvent.clientX - offsetX + "px";
-        element.style.top = mouseEvent.clientY - offsetY + "px";
-        element.style.bottom = "auto";
-        element.style.right = "auto";
+      if (isDraggingHistory) {
+        historyPanel.style.left = mouseEvent.clientX - offsetX + "px";
+        historyPanel.style.top = mouseEvent.clientY - offsetY + "px";
+        historyPanel.style.bottom = "auto";
+        historyPanel.style.right = "auto";
       }
     };
-    const handleMouseUp = () => {
-      isDragging = false;
-      element.style.transition = "";
+    const stopDraggingTools = () => {
+      isDraggingHistory = false;
+      historyPanel.style.transition = "all 0.3s cubic-bezier(0.23, 1, 0.32, 1)";
       document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("mouseup", stopDraggingTools);
     };
     document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("mouseup", stopDraggingTools);
   });
-  element.addEventListener("click", (event_2) => {
-    if (hasMoved) {
-      event_2.stopImmediatePropagation();
+  historyPanel.addEventListener("click", (event) => {
+    if (isActive) {
+      event.stopImmediatePropagation();
     }
   });
+  return historyPanel;
 }
 function createToolsPanel() {
+  const toolsStyleElement = document.createElement("style");
+  toolsStyleElement.textContent =
+    "\n      #deep-tools-panel {\n        font-family: 'Segoe UI', sans-serif;\n        transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);\n        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);\n        border: 1px solid #333;\n        background: linear-gradient(to bottom, #0f0f0f, #1a1a1a);\n      }\n      #deep-tools-panel:hover {\n        transform: translateY(-2px);\n        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);\n      }\n      #deep-tools-panel textarea {\n        background: #1a1a1a;\n        border: 1px solid #333;\n        color: #eee;\n        border-radius: 6px;\n        padding: 8px;\n        transition: border-color 0.2s;\n        font-size: 13px;\n      }\n      #deep-tools-panel textarea:focus {\n        outline: none;\n        border-color: #ff4d4d;\n        box-shadow: 0 0 0 2px rgba(255,77,77,0.3);\n      }\n      #deep-tools-panel input[type=\"number\"] {\n        background: #1a1a1a;\n        border: 1px solid #333;\n        color: #eee;\n        border-radius: 4px;\n        padding: 4px;\n        width: 60px;\n        text-align: center;\n      }\n      #deep-tools-panel button {\n        background: linear-gradient(to bottom, #222, #111);\n        color: #ff4d4d;\n        border: 1px solid #444;\n        border-radius: 6px;\n        padding: 8px 0;\n        font-weight: 600;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n      }\n      #deep-tools-panel button:hover:not(:disabled) {\n        background: linear-gradient(to bottom, #2a2a2a, #1a1a1a);\n        border-color: #ff4d4d;\n        transform: translateY(-1px);\n        box-shadow: 0 4px 8px rgba(255,77,77,0.3);\n      }\n      #deep-tools-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);\n      }\n      #deep-tools-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #deep-tools-panel button.min-btn {\n        background: none;\n        border: none;\n        color: #ff4d4d;\n        font-size: 18px;\n        cursor: pointer;\n        position: absolute;\n        top: 30%;\n        right: 5px;\n        transform: translateY(-50%);\n        z-index: 1;\n        transition: color 0.2s ease;\n        width: 20px;\n        height: 20px;\n        line-height: 20px;\n      }\n      #deep-tools-panel button.min-btn:hover {\n        color: #ff6666;\n      }\n      #deep-tools-panel .credits {\n        margin-top: 10px;\n        font-size: 10px;\n        color: #777;\n        line-height: 1.3;\n      }\n      #deep-tools-panel .auto-chat-controls {\n        display: flex;\n        gap: 5px;\n        margin-bottom: 8px;\n        align-items: center;\n        justify-content: center;\n      }\n      #deep-tools-panel .spin-keybind {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        margin-bottom: 8px;\n        font-size: 12px;\n      }\n      #deep-tools-panel .spin-keybind label {\n        color: #eee;\n      }\n      #deep-tools-panel #spinKeyInput {\n        background: #1a1a1a;\n        border: 1px solid #333;\n        color: #eee;\n        border-radius: 4px;\n        padding: 4px;\n        width: 50px;\n        text-align: center;\n      }\n      #aim-overlay, #ctrl-overlay {\n        z-index: 10000 !important;\n      }\n      div.game {\n        position: relative;\n      }\n      /* Ad Removal */\n      div.sidebar.left > div.ad-block {\n        opacity: 0 !important;\n        pointer-events: none !important;\n        display: none !important;\n      }\n      div.sidebar.left > a {\n        display: none !important;\n      }\n      div.sidebar.left {\n        max-width: 30vw;\n        width: 21rem;\n        bottom: 0 !important;\n      }\n    ";
+  document.head.appendChild(toolsStyleElement);
   const toolsPanel = document.createElement("div");
   toolsPanel.id = "deep-tools-panel";
-  toolsPanel.className = "ast-panel";
-  toolsPanel.style.cssText = "bottom:20px;right:20px;width:230px;";
+  toolsPanel.style.position = "fixed";
+  toolsPanel.style.bottom = "20px";
+  toolsPanel.style.right = "20px";
+  toolsPanel.style.color = "#e0e0e0";
+  toolsPanel.style.padding = "14px";
+  toolsPanel.style.borderRadius = "12px";
+  toolsPanel.style.fontSize = "14px";
+  toolsPanel.style.zIndex = "99999";
+  toolsPanel.style.userSelect = "none";
+  toolsPanel.style.width = "220px";
+  toolsPanel.style.textAlign = "center";
+  toolsPanel.style.cursor = "move";
+  toolsPanel.style.overflow = "hidden";
   toolsPanel.innerHTML =
-    '\n      <div class="ast-header"><span class="ast-header-title">Astraphobia Client</span><button class="ast-header-min" id="mainMin">−</button></div>\n      <div class="ast-body" id="mainBody">\n                    <span class="ast-section-label">Autofill Name</span>\n        <div class="ast-row" style="margin-bottom:6px;">\n          <input class="ast-input" type="text" id="savedNameDisplay" placeholder="Enter name..." style="flex:1;">\n          <button class="ast-btn" id="setNameBtn" style="width:40px;padding:6px 5px;margin:0;flex-shrink:0;text-align:center;">Set</button>\n          <button class="ast-btn" id="clearNameBtn" style="width:30px;padding:6px 5px;margin:0;flex-shrink:0;text-align:center;">✕</button>\n        </div>\n        <span class="ast-section-label">Chat</span>\n        <textarea class="ast-textarea" id="chatMsg" placeholder="Message..." rows="2"></textarea>\n        <button class="ast-btn" id="sendBtn">Send Chat</button>\n        <div class="ast-row" style="margin-top:4px;">\n          <input class="ast-input" type="number" id="delayInput" min="1" max="300" value="10" style="width:50px;text-align:center;">\n          <span style="font-size:11px;color:#888;">sec</span>\n          <button class="ast-btn" id="autoChatBtn" style="flex:1;margin-bottom:0;">Auto Chat</button>\n        </div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Tools</span>\n        <button class="ast-btn" id="patchBtn">Special Characters</button>\n        <button class="ast-btn" id="spoofBtn">Spoof Username</button>\n        <button class="ast-btn" id="spinBtn">Auto Spin</button>\n        <div class="ast-key-row"><span>Spin key</span><input class="ast-key-capture" id="spinKeyInput" type="text" placeholder="..." readonly></div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Turn Controls</span>\n        <div class="ast-key-row">\n          <span>Turn Left</span>\n          <input class="ast-key-capture" id="turnLeftKeyInput" type="text" value="Q" readonly>\n        </div>\n        <div class="ast-key-row">\n          <span>Turn Right</span>\n          <input class="ast-key-capture" id="turnRightKeyInput" type="text" value="E" readonly>\n        </div>\n        <div class="ast-credits">Made by Astraphobia</div>\n      </div>';
+    '\n      <div style="font-weight:700; margin-bottom:10px; color:#ff4d4d; text-shadow: 0 0 8px rgba(255,77,77,0.3); position: relative; height: 40px; line-height: 40px; padding-right: 25px;">\n        ASTRAPHOBIA CLIENT\n        <button class="min-btn" id="minPanel">−</button>\n      </div>\n      <div id="panelContent">\n        <textarea id="chatMsg" placeholder="Type message..." style="width:100%; height:45px; margin-bottom:10px; resize:none;"></textarea>\n        <button id="sendBtn" style="width:100%; margin-bottom:8px;">Send Typed Chat</button>\n        <div class="auto-chat-controls">\n          <input type="number" id="delayInput" min="1" max="300" value="10" style="margin-right:5px;">\n          <span style="font-size:12px;">sec</span>\n        </div>\n        <button id="autoChatBtn" style="width:100%; margin-bottom:8px;">Enable Auto Chat</button>\n        <button id="patchBtn" style="width:100%; margin-bottom:8px;">Enable Special Characters(in chat/clan/name)</button>\n        <button id="spoofBtn" style="width:100%; margin-bottom:8px;">Spoof Username:Random Unicode Name(ban decrease)</button>\n        <button id="spinBtn" style="width:100%; margin-bottom:8px;">Enable Auto Spin</button>\n        <div class="spin-keybind">\n          <label for="spinKeyInput">Keybind:</label>\n          <input type="text" id="spinKeyInput" placeholder="Press key..." readonly>\n        </div>\n        <div class="credits">\n          Coder: Astraphobia<br>\n          Owner: Astraphobia<br>\n          Designer: Astraphobia<br>\n          Tester: Astraphobia\n        </div>\n      </div>\n    ';
   document.body.appendChild(toolsPanel);
-  const mainBody = toolsPanel.querySelector("#mainBody");
+  const minPanel = toolsPanel.querySelector("#minPanel");
+  const panelContent = toolsPanel.querySelector("#panelContent");
   let isHidden = false;
-  toolsPanel.querySelector("#mainMin").onclick = (event) => {
+  minPanel.onclick = (event) => {
     event.stopPropagation();
     isHidden = !isHidden;
-    mainBody.style.display = isHidden ? "none" : "block";
-    toolsPanel.querySelector("#mainMin").textContent = isHidden ? "+" : "−";
+    panelContent.style.display = isHidden ? "none" : "block";
+    toolsPanel.style.height = isHidden ? "50px" : "auto";
+    minPanel.textContent = isHidden ? "+" : "−";
   };
   toolsPanel.querySelector("#sendBtn").onclick = () => {
     const chatMessage = toolsPanel.querySelector("#chatMsg").value;
     if (chatMessage) {
-      simulateChatInput(chatMessage);
+      autoTypeChat(chatMessage);
     }
   };
-  const spinBtn = toolsPanel.querySelector("#autoChatBtn");
-  spinBtn.onclick = () => {
-    const messageText = toolsPanel.querySelector("#chatMsg").value;
-    const delayValue =
-      parseInt(toolsPanel.querySelector("#delayInput").value) || 10;
-    if (!messageText) {
-      showNotification("Enter a message first");
-      return;
-    }
-    if (state.isToggled_2) {
-      stopInterval();
-      spinBtn.textContent = "Auto Chat";
-      spinBtn.classList.remove("toggle-on");
+  const spoofBtn = toolsPanel.querySelector("#patchBtn");
+  spoofBtn.onclick = () => setupTextEncoderHook(spoofBtn);
+  const spoofBtn_o7w = toolsPanel.querySelector("#spoofBtn");
+  spoofBtn_o7w.onclick = () => {
+    const generatedValue = generateRandomString(8);
+    if (simulateTyping(".play-game .el-input__inner", generatedValue)) {
+      showToast("Spoofed name!");
+    } else if (simulateTyping(".new-tribe .el-input__inner", generatedValue)) {
+      showToast("Spoofed tribe name!");
     } else {
-      startScheduledTask(messageText, delayValue);
-      spinBtn.textContent = "Stop Chat";
-      spinBtn.classList.add("toggle-on");
+      showToast("No name input found! Enable special characters first.");
     }
   };
-  const patchBtn = toolsPanel.querySelector("#patchBtn");
-  patchBtn.onclick = () => {
-    initNetworkInterceptor();
-    patchBtn.textContent = "Special Chars Active";
-    patchBtn.disabled = true;
-    patchBtn.classList.add("toggle-on");
-  };
-  toolsPanel.querySelector("#spoofBtn").onclick = () => {
-    const randomString = generateRandomString(8);
-    if (simulateTyping(".play-game .el-input__inner", randomString)) {
-      showNotification("Name spoofed");
-    } else if (simulateTyping(".new-tribe .el-input__inner", randomString)) {
-      showNotification("Tribe name spoofed");
-    } else {
-      showNotification("No name input found");
-    }
-  };
-  const spinBtn_2 = toolsPanel.querySelector("#spinBtn");
-  spinBtn_2.onclick = () => {
+  const autoChatBtn = toolsPanel.querySelector("#spinBtn");
+  autoChatBtn.onclick = () => {
     toggleMouseSimulation();
-    spinBtn_2.textContent = featuresentitytrailState.entityTrailInterval_2
-      ? "Stop Spin"
-      : "Auto Spin";
-    spinBtn_2.classList.toggle(
-      "toggle-on",
-      !!featuresentitytrailState.entityTrailInterval_2,
-    );
+    if (featuresentitytrailState.entityTrailInterval_rkn) {
+      autoChatBtn.textContent = "Disable Auto Spin";
+      autoChatBtn.style.color = "#4dff4d";
+    } else {
+      autoChatBtn.textContent = "Enable Auto Spin";
+      autoChatBtn.style.color = "#ff4d4d";
+    }
   };
-  const turnRightKeyInput = toolsPanel.querySelector("#spinKeyInput");
+  const spinKeyInput = toolsPanel.querySelector("#spinKeyInput");
   let lastPressedKey = null;
-  turnRightKeyInput.addEventListener("keydown", (keydownEvent) => {
-    keydownEvent.preventDefault();
-    lastPressedKey = keydownEvent.code || keydownEvent.key;
-    turnRightKeyInput.value = lastPressedKey.replace("Key", "").toUpperCase();
+  spinKeyInput.addEventListener("keydown", (keyboardEvent) => {
+    keyboardEvent.preventDefault();
+    lastPressedKey = keyboardEvent.code || keyboardEvent.key;
+    spinKeyInput.value = lastPressedKey.replace("Key", "").toLowerCase();
   });
-  document.addEventListener("keydown", (keyupEvent) => {
+  document.addEventListener("keydown", (keyEvent) => {
     if (
       lastPressedKey &&
-      keyupEvent.code === lastPressedKey &&
-      !keyupEvent.target.matches("input,textarea,button,select")
+      keyEvent.code === lastPressedKey &&
+      !keyEvent.target.matches("input, textarea, button")
     ) {
-      keyupEvent.preventDefault();
+      keyEvent.preventDefault();
       toggleMouseSimulation();
-      spinBtn_2.textContent = featuresentitytrailState.entityTrailInterval_2
-        ? "Stop Spin"
-        : "Auto Spin";
-      spinBtn_2.classList.toggle(
-        "toggle-on",
-        !!featuresentitytrailState.entityTrailInterval_2,
-      );
+      if (featuresentitytrailState.entityTrailInterval_rkn) {
+        autoChatBtn.textContent = "Disable Auto Spin";
+        autoChatBtn.style.color = "#4dff4d";
+      } else {
+        autoChatBtn.textContent = "Enable Auto Spin";
+        autoChatBtn.style.color = "#ff4d4d";
+      }
     }
   });
-  const turnRightKeyInput_2 = toolsPanel.querySelector("#turnLeftKeyInput");
-  const turnRightKeyInput_3 = toolsPanel.querySelector("#turnRightKeyInput");
-  turnRightKeyInput_2.value = state.keyQ.toUpperCase();
-  turnRightKeyInput_3.value = state.keyE.toUpperCase();
-  turnRightKeyInput_2.addEventListener("keydown", (clickEvent) => {
-    clickEvent.preventDefault();
-    clickEvent.stopPropagation();
-    state.keyQ = clickEvent.key;
-    turnRightKeyInput_2.value =
-      clickEvent.key.length === 1
-        ? clickEvent.key.toUpperCase()
-        : clickEvent.key;
-  });
-  turnRightKeyInput_3.addEventListener("keydown", (contextEvent) => {
-    contextEvent.preventDefault();
-    contextEvent.stopPropagation();
-    state.keyE = contextEvent.key;
-    turnRightKeyInput_3.value =
-      contextEvent.key.length === 1
-        ? contextEvent.key.toUpperCase()
-        : contextEvent.key;
-  });
-  const savedNameDisplay = toolsPanel.querySelector("#savedNameDisplay");
-  const clearNameBtn = toolsPanel.querySelector("#setNameBtn");
-  const clearNameBtn_2 = toolsPanel.querySelector("#clearNameBtn");
-  if (savedNameDisplay) {
-    savedNameDisplay.value = localStorage.getItem("autofill_name") || "";
-  }
-  if (clearNameBtn) {
-    clearNameBtn.onclick = () => {
-      const autofillName = savedNameDisplay.value.trim();
-      if (autofillName) {
-        localStorage.setItem("autofill_name", autofillName);
-        state.isToggled = false;
-        initNameAutofill();
-        showNotification("Name saved: " + autofillName);
+  const autoChatBtn_o0p = toolsPanel.querySelector("#autoChatBtn");
+  autoChatBtn_o0p.onclick = () => {
+    const chatMessageText = toolsPanel.querySelector("#chatMsg").value;
+    const delayInput = toolsPanel.querySelector("#delayInput");
+    const delayValue = parseInt(delayInput.value) || 10;
+    if (!chatMessageText) {
+      showToast("⚠️ Enter a message first!");
+      return;
+    }
+    if (state.isToggled) {
+      stopInterval();
+      autoChatBtn_o0p.textContent = "Enable Auto Chat";
+      autoChatBtn_o0p.style.color = "#ff4d4d";
+    } else {
+      startScheduledTask(chatMessageText, delayValue);
+      autoChatBtn_o0p.textContent = "Disable Auto Chat";
+      autoChatBtn_o0p.style.color = "#4dff4d";
+    }
+  };
+  let offsetX;
+  let offsetY;
+  let isDraggingTools = false;
+  let isActive = false;
+  toolsPanel.addEventListener("mousedown", (uiEvent) => {
+    if (
+      uiEvent.target.tagName === "BUTTON" ||
+      uiEvent.target.tagName === "TEXTAREA" ||
+      uiEvent.target.tagName === "INPUT" ||
+      uiEvent.target.classList.contains("credits")
+    ) {
+      return;
+    }
+    isDraggingTools = true;
+    isActive = false;
+    offsetX = uiEvent.clientX - toolsPanel.getBoundingClientRect().left;
+    offsetY = uiEvent.clientY - toolsPanel.getBoundingClientRect().top;
+    toolsPanel.style.transition = "none";
+    const handleMouseMove = (mouseEvent) => {
+      const deltaX = mouseEvent.clientX - uiEvent.clientX;
+      const deltaY = mouseEvent.clientY - uiEvent.clientY;
+      if (!isActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+        isActive = true;
+      }
+      if (isDraggingTools) {
+        toolsPanel.style.left = mouseEvent.clientX - offsetX + "px";
+        toolsPanel.style.top = mouseEvent.clientY - offsetY + "px";
+        toolsPanel.style.bottom = "auto";
+        toolsPanel.style.right = "auto";
       }
     };
-  }
-  if (clearNameBtn_2) {
-    clearNameBtn_2.onclick = () => {
-      localStorage.removeItem("autofill_name");
-      state.isToggled = false;
-      if (savedNameDisplay) {
-        savedNameDisplay.value = "";
-      }
-      showNotification("Autofill cleared");
+    const stopDraggingTools = () => {
+      isDraggingTools = false;
+      toolsPanel.style.transition = "all 0.3s cubic-bezier(0.23, 1, 0.32, 1)";
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", stopDraggingTools);
     };
-  }
-  makeDraggable(toolsPanel);
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", stopDraggingTools);
+  });
+  toolsPanel.addEventListener("click", (propagationEvent) => {
+    if (isActive) {
+      propagationEvent.stopImmediatePropagation();
+    }
+  });
   return toolsPanel;
 }
-function createVisionPanel() {
-  const visionPanel = document.createElement("div");
-  visionPanel.id = "vision-panel";
-  visionPanel.className = "ast-panel";
-  visionPanel.style.cssText = "top:20px;right:20px;width:230px;";
-  visionPanel.innerHTML =
-    '\n      <div class="ast-header"><span class="ast-header-title">Astraphobia Client</span><button class="ast-header-min" id="visionMin">−</button></div>\n      <div class="ast-body" id="visionBody">\n        <span class="ast-section-label">Vision</span>\n        <button class="ast-btn patched" id="thresherBtn" disabled>Thresher Boost (Patched)</button>\n        <button class="ast-btn" id="astraVisionBtn">Astra-Vision</button>\n        <button class="ast-btn" id="smallMinimapBtn">Small Minimap</button>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">ESP</span>\n        <button class="ast-btn" id="espBtn">ESP</button>\n        <select class="ast-select" id="espModeSelect"><option value="players">Players</option><option value="food">Food</option></select>\n        <button class="ast-btn" id="trackNearestBtn">Track Nearest (F3)</button>\n        <button class="ast-btn" id="untrackBtn">Untrack (F4)</button>\n        <div class="ast-sep"></div>\n        <button class="ast-btn" id="espColorsToggleBtn" style="display:flex;align-items:center;justify-content:space-between;">\n          <span style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-sec,#888);">ESP Colors</span>\n          <span id="espColorsArrow" style="color:var(--text-sec,#888);font-size:12px;">▼</span>\n        </button>\n        <div id="espColorsSection" style="display:none;">\n          <div class="ast-key-row"><span>Close (&lt;500)</span><input type="color" id="espColorClose" value="#ff0000" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Medium (&lt;1500)</span><input type="color" id="espColorMedium" value="#ffff00" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Far (&lt;3000)</span><input type="color" id="espColorFar" value="#00ffff" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Very Far</span><input type="color" id="espColorVeryFar" value="#00ff00" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Tracked</span><input type="color" id="espColorTracked" value="#ff00ff" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Food Close</span><input type="color" id="espColorFoodClose" value="#00ff00" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Food Medium</span><input type="color" id="espColorFoodMedium" value="#88ff88" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Food Far</span><input type="color" id="espColorFoodFar" value="#44cc44" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n        </div>\n      </div>';
-  document.body.appendChild(visionPanel);
-  const espColorsSection = visionPanel.querySelector("#visionBody");
+function initPlusPanel() {
+  const plusStyle = document.createElement("style");
+  plusStyle.textContent =
+    "\n      #plus-panel {\n        font-family: 'Segoe UI', sans-serif;\n        transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);\n        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);\n        border: 1px solid #333;\n        background: linear-gradient(to bottom, #0f0f0f, #1a1a1a);\n      }\n      #plus-panel:hover {\n        transform: translateY(-2px);\n        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);\n      }\n      #plus-panel textarea {\n        background: #1a1a1a;\n        border: 1px solid #333;\n        color: #eee;\n        border-radius: 6px;\n        padding: 8px;\n        transition: border-color 0.2s;\n        font-size: 13px;\n      }\n      #plus-panel textarea:focus {\n        outline: none;\n        border-color: #ff4d4d;\n        box-shadow: 0 0 0 2px rgba(255,77,77,0.3);\n      }\n      #plus-panel input[type=\"number\"] {\n        background: #1a1a1a;\n        border: 1px solid #333;\n        color: #eee;\n        border-radius: 4px;\n        padding: 4px;\n        width: 60px;\n        text-align: center;\n      }\n      #plus-panel button {\n        background: linear-gradient(to bottom, #222, #111);\n        color: #ff4d4d;\n        border: 1px solid #444;\n        border-radius: 6px;\n        padding: 8px 0;\n        font-weight: 600;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        width: 100%;\n        margin-bottom: 8px;\n      }\n      #plus-panel button:hover:not(:disabled) {\n        background: linear-gradient(to bottom, #2a2a2a, #1a1a1a);\n        border-color: #ff4d4d;\n        transform: translateY(-1px);\n        box-shadow: 0 4px 8px rgba(255,77,77,0.3);\n      }\n      #plus-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);\n      }\n      #plus-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #plus-panel button.min-btn {\n        background: none;\n        border: none;\n        color: #ff4d4d;\n        font-size: 18px;\n        cursor: pointer;\n        position: absolute;\n        top: 30%;\n        right: 5px;\n        transform: translateY(-50%);\n        z-index: 1;\n        transition: color 0.2s ease;\n        width: 20px;\n        height: 20px;\n        line-height: 20px;\n      }\n      #plus-panel button.min-btn:hover {\n        color: #ff6666;\n      }\n    ";
+  document.head.appendChild(plusStyle);
+  const plusPanelElement = document.createElement("div");
+  plusPanelElement.id = "plus-panel";
+  plusPanelElement.style.position = "fixed";
+  plusPanelElement.style.top = "20px";
+  plusPanelElement.style.right = "20px";
+  plusPanelElement.style.color = "#e0e0e0";
+  plusPanelElement.style.padding = "14px";
+  plusPanelElement.style.borderRadius = "12px";
+  plusPanelElement.style.fontSize = "14px";
+  plusPanelElement.style.zIndex = "99999";
+  plusPanelElement.style.userSelect = "none";
+  plusPanelElement.style.width = "220px";
+  plusPanelElement.style.textAlign = "center";
+  plusPanelElement.style.cursor = "move";
+  plusPanelElement.style.overflow = "hidden";
+  plusPanelElement.innerHTML =
+    '\n      <div style="font-weight:700; margin-bottom:10px; color:#ff4d4d; text-shadow: 0 0 8px rgba(255,77,77,0.3); position: relative; height: 40px; line-height: 40px; padding-right: 25px;">\n        ASTRAPHOBIA CLIENT\n        <button class="min-btn" id="minPlus">−</button>\n      </div>\n      <div id="plusContent">\n        <button id="thresherBtn">Enable Thresher Super Boost(ctrl + shift and click)(minumum required 2 boost)</button>\n      </div>\n    ';
+  document.body.appendChild(plusPanelElement);
+  const minPlusBtn = plusPanelElement.querySelector("#minPlus");
+  const plusContent = plusPanelElement.querySelector("#plusContent");
   let isHidden = false;
-  visionPanel.querySelector("#visionMin").onclick = (toggleEvent) => {
-    toggleEvent.stopPropagation();
+  minPlusBtn.onclick = (eventHandler) => {
+    eventHandler.stopPropagation();
     isHidden = !isHidden;
-    espColorsSection.style.display = isHidden ? "none" : "block";
-    visionPanel.querySelector("#visionMin").textContent = isHidden ? "+" : "−";
+    plusContent.style.display = isHidden ? "none" : "block";
+    plusPanelElement.style.height = isHidden ? "50px" : "auto";
+    minPlusBtn.textContent = isHidden ? "+" : "−";
   };
-  visionPanel.querySelector("#thresherBtn").onclick = (preventEvent) => {
-    preventEvent.preventDefault();
-    showNotification("Thresher boost has been patched");
-  };
-  const astraVisionBtn = visionPanel.querySelector("#astraVisionBtn");
-  astraVisionBtn.onclick = () => {
-    if (state.isProcessed_5) {
-      showNotification("Already active");
+  const thresherBtn = plusPanelElement.querySelector("#thresherBtn");
+  thresherBtn.onclick = () => {
+    if (isProcessed_t1s) {
+      showToast("Thresher Super Boost is already active!");
       return;
     }
-    initAntiDetection();
-    if (!playerData) {
-      showNotification("Loading... click again in 2s");
-      setTimeout(() => {
-        activateAstraVision();
-        astraVisionBtn.textContent = "Astra-Vision ✓";
-        astraVisionBtn.classList.add("toggle-on");
-        astraVisionBtn.disabled = true;
-      }, 2000);
+    initHooks();
+    thresherBtn.textContent = "Thresher Super Boost Active";
+    thresherBtn.style.color = "#4dff4d";
+    thresherBtn.disabled = true;
+  };
+  let offsetX;
+  let offsetY;
+  let isDraggingPlusPanel = false;
+  let isActive = false;
+  plusPanelElement.addEventListener("mousedown", (clickEvent) => {
+    if (
+      clickEvent.target.tagName === "BUTTON" ||
+      clickEvent.target.tagName === "TEXTAREA" ||
+      clickEvent.target.tagName === "INPUT" ||
+      clickEvent.target.classList.contains("credits")
+    ) {
       return;
     }
-    activateAstraVision();
-    astraVisionBtn.textContent = "Astra-Vision ✓";
-    astraVisionBtn.classList.add("toggle-on");
-    astraVisionBtn.disabled = true;
-  };
-  const espBtn = visionPanel.querySelector("#smallMinimapBtn");
-  espBtn.onclick = () => {
-    initAntiDetection();
-    if (!playerData) {
-      showNotification("Not in game yet");
-      return;
-    }
-    if (!playerData.minimap) {
-      showNotification("Minimap not available");
-      return;
-    }
-    toggleMinimapSize();
-    espBtn.textContent = state.isToggled_3 ? "Minimap: Small" : "Small Minimap";
-    espBtn.classList.toggle("toggle-on", state.isToggled_3);
-  };
-  const espBtn_2 = visionPanel.querySelector("#espBtn");
-  espBtn_2.onclick = () => {
-    toggleEsp();
-    espBtn_2.textContent = window.espEnabled ? "ESP ✓" : "ESP";
-    espBtn_2.classList.toggle("toggle-on", window.espEnabled);
-  };
-  const espModeSelect = visionPanel.querySelector("#espModeSelect");
-  espModeSelect.value = window.espMode || "players";
-  espModeSelect.onchange = (changeEvent) => {
-    window.espMode = changeEvent.target.value;
-    showNotification("ESP: " + changeEvent.target.value);
-  };
-  visionPanel.querySelector("#trackNearestBtn").onclick = () => trackPlayer();
-  visionPanel.querySelector("#untrackBtn").onclick = () => toggleEsp_2();
-  const espColorsToggleBtn = visionPanel.querySelector("#espColorsToggleBtn");
-  const espColorsSection_2 = visionPanel.querySelector("#espColorsSection");
-  const espColorsArrow = visionPanel.querySelector("#espColorsArrow");
-  let isHidden_2 = false;
-  espColorsToggleBtn.onclick = () => {
-    isHidden_2 = !isHidden_2;
-    espColorsSection_2.style.display = isHidden_2 ? "block" : "none";
-    espColorsArrow.textContent = isHidden_2 ? "▲" : "▼";
-  };
-  const eventInit = {
-    espColorClose: "close",
-    espColorMedium: "medium",
-    espColorFar: "far",
-    espColorVeryFar: "veryFar",
-    espColorTracked: "tracked",
-    espColorFoodClose: "foodClose",
-    espColorFoodMedium: "foodMedium",
-    espColorFoodFar: "foodFar",
-  };
-  Object.entries(eventInit).forEach(([elementId, colorKey]) => {
-    const element = visionPanel.querySelector("#" + elementId);
-    if (element) {
-      element.addEventListener("input", (event) => {
-        window.espColors[colorKey] = event.target.value;
-      });
-    }
-  });
-  makeDraggable(visionPanel);
-  return visionPanel;
-}
-function createCombatPanel() {
-  const combatPanel = document.createElement("div");
-  combatPanel.id = "combat-panel";
-  combatPanel.className = "ast-panel";
-  combatPanel.style.cssText = "top:20px;left:260px;width:230px;";
-  combatPanel.innerHTML =
-    '\n      <div class="ast-header"><span class="ast-header-title">Astraphobia Client</span><button class="ast-header-min" id="combatMin">−</button></div>\n      <div class="ast-body" id="combatBody">\n        <span class="ast-section-label">Combat</span>\n        <button class="ast-btn" id="lockBtn">Lock Nearest</button>\n        <div class="ast-key-row"><span>Lock Key</span><input class="ast-key-capture" id="lockKeyInput" type="text" value="T" readonly></div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Tracking</span>\n        <div class="ast-key-row" style="margin-top:4px;">\n          <span>Trail Color</span>\n          <input type="color" id="trailColorPicker" value="#ff9600" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;background:var(--bg2,#242424);cursor:pointer;padding:0;">\n        </div>\n        <div class="ast-key-row"><span>Trace Key (re-targets)</span><input class="ast-key-capture" id="traceKeyInput" type="text" value="H" readonly></div>\n      </div>';
-  document.body.appendChild(combatPanel);
-  const combatBody = combatPanel.querySelector("#combatBody");
-  let isCombatPanelMinimized = false;
-  combatPanel.querySelector("#combatMin").onclick = (toggleEvent) => {
-    toggleEvent.stopPropagation();
-    isCombatPanelMinimized = !isCombatPanelMinimized;
-    combatBody.style.display = isCombatPanelMinimized ? "none" : "block";
-    combatPanel.querySelector("#combatMin").textContent = isCombatPanelMinimized
-      ? "+"
-      : "−";
-  };
-  const lockButton = combatPanel.querySelector("#lockBtn");
-  lockButton.onclick = () => toggleLock();
-  const lockKeyInput = combatPanel.querySelector("#lockKeyInput");
-  lockKeyInput.value = window.lockKey.toUpperCase();
-  lockKeyInput.addEventListener("keydown", (lockEvent) => {
-    lockEvent.preventDefault();
-    lockEvent.stopPropagation();
-    window.lockKey = lockEvent.key;
-    lockKeyInput.value =
-      lockEvent.key.length === 1 ? lockEvent.key.toUpperCase() : lockEvent.key;
-  });
-  const trailColorPicker = combatPanel.querySelector("#trailColorPicker");
-  trailColorPicker.addEventListener("input", (colorEvent) => {
-    const colorValue = colorEvent.target.value;
-    window.entityTrailColor = {
-      r: parseInt(colorValue.slice(1, 3), 16),
-      g: parseInt(colorValue.slice(3, 5), 16),
-      b: parseInt(colorValue.slice(5, 7), 16),
-    };
-  });
-  const traceKeyInput = combatPanel.querySelector("#traceKeyInput");
-  traceKeyInput.value = window.entityTraceKey.toUpperCase();
-  traceKeyInput.addEventListener("keydown", (traceEvent) => {
-    traceEvent.preventDefault();
-    traceEvent.stopPropagation();
-    window.entityTraceKey = traceEvent.key.toLowerCase();
-    traceKeyInput.value =
-      traceEvent.key.length === 1
-        ? traceEvent.key.toUpperCase()
-        : traceEvent.key;
-  });
-  makeDraggable(combatPanel);
-  return combatPanel;
-}
-function createAutomationPanel() {
-  const automationPanel = document.createElement("div");
-  automationPanel.id = "automation-panel";
-  automationPanel.className = "ast-panel";
-  automationPanel.style.cssText = "bottom:20px;left:260px;width:230px;";
-  automationPanel.innerHTML =
-    '\n      <div class="ast-header"><span class="ast-header-title">Astraphobia Client</span><button class="ast-header-min" id="autoMin">−</button></div>\n      <div class="ast-body" id="autoBody">\n        <span class="ast-section-label">Automation</span>\n        <button class="ast-btn" id="autoDodgeBtn">Auto Dodge</button>\n        <button class="ast-btn" id="autoFarmBtn">Auto Farm (F5)</button>\n        <select class="ast-select" id="farmModeSelect" style="margin-top:4px;">\n          <option value="nearest">Nearest Food</option>\n          <option value="cluster">Food Clusters</option>\n          <option value="patrol">Patrol Route</option>\n        </select>\n        <div class="ast-toggle-row"><span>Boost</span><div class="ast-switch"><input type="checkbox" id="farmBoostToggle" checked><span class="slider"></span></div></div>\n        <div class="ast-toggle-row"><span>Auto Evolve</span><div class="ast-switch"><input type="checkbox" id="farmEvolveToggle" checked><span class="slider"></span></div></div>\n        <div class="ast-toggle-row"><span>Avoid Players</span><div class="ast-switch"><input type="checkbox" id="farmAvoidToggle" checked><span class="slider"></span></div></div>\n      </div>';
-  document.body.appendChild(automationPanel);
-  const automationBody = automationPanel.querySelector("#autoBody");
-  let isAutomationPanelMinimized = false;
-  automationPanel.querySelector("#autoMin").onclick = (menuToggleEvent) => {
-    menuToggleEvent.stopPropagation();
-    isAutomationPanelMinimized = !isAutomationPanelMinimized;
-    automationBody.style.display = isAutomationPanelMinimized
-      ? "none"
-      : "block";
-    automationPanel.querySelector("#autoMin").textContent =
-      isAutomationPanelMinimized ? "+" : "−";
-  };
-  const autoDodgeButton = automationPanel.querySelector("#autoDodgeBtn");
-  autoDodgeButton.onclick = () => {
-    if (window.autoDodgeEnabled) {
-      toggleEsp_3();
-      autoDodgeButton.textContent = "Auto Dodge";
-      autoDodgeButton.classList.remove("toggle-on");
-    } else {
-      enableAutoDodge();
-      autoDodgeButton.textContent = "Dodging ✓";
-      autoDodgeButton.classList.add("toggle-on");
-    }
-  };
-  const autoFarmButton = automationPanel.querySelector("#autoFarmBtn");
-  autoFarmButton.id = "autoFarmBtn";
-  const farmModeSelect = automationPanel.querySelector("#farmModeSelect");
-  autoFarmButton.onclick = () => {
-    if (window.autoFarmActive) {
-      stopAutoFarm();
-      autoFarmButton.textContent = "Auto Farm (F5)";
-      autoFarmButton.classList.remove("toggle-on");
-    } else {
-      startAutoFarm(farmModeSelect.value);
-      autoFarmButton.textContent = "Stop Farm (F5)";
-      autoFarmButton.classList.add("toggle-on");
-    }
-  };
-  farmModeSelect.onchange = (farmModeChangeEvent) => {
-    if (window.autoFarmActive) {
-      window.autoFarmMode = farmModeChangeEvent.target.value;
-      if (farmModeChangeEvent.target.value === "patrol") {
-        setupPatrolPoints();
+    isDraggingPlusPanel = true;
+    isActive = false;
+    offsetX =
+      clickEvent.clientX - plusPanelElement.getBoundingClientRect().left;
+    offsetY = clickEvent.clientY - plusPanelElement.getBoundingClientRect().top;
+    plusPanelElement.style.transition = "none";
+    const handleMouseMove = (mouseEvent) => {
+      const deltaX = mouseEvent.clientX - clickEvent.clientX;
+      const deltaY = mouseEvent.clientY - clickEvent.clientY;
+      if (!isActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+        isActive = true;
       }
-      showNotification("Farm: " + farmModeChangeEvent.target.value);
+      if (isDraggingPlusPanel) {
+        plusPanelElement.style.left = mouseEvent.clientX - offsetX + "px";
+        plusPanelElement.style.top = mouseEvent.clientY - offsetY + "px";
+        plusPanelElement.style.bottom = "auto";
+        plusPanelElement.style.right = "auto";
+      }
+    };
+    const stopDraggingTools = () => {
+      isDraggingPlusPanel = false;
+      plusPanelElement.style.transition =
+        "all 0.3s cubic-bezier(0.23, 1, 0.32, 1)";
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", stopDraggingTools);
+    };
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", stopDraggingTools);
+  });
+  plusPanelElement.addEventListener("click", (inputEvent) => {
+    if (isActive) {
+      inputEvent.stopImmediatePropagation();
     }
-  };
-  const farmAvoidToggle = automationPanel.querySelector("#farmBoostToggle");
-  const farmAvoidToggle_2 = automationPanel.querySelector("#farmEvolveToggle");
-  const farmAvoidToggle_3 = automationPanel.querySelector("#farmAvoidToggle");
-  farmAvoidToggle.checked = window.autoFarmBoost;
-  farmAvoidToggle_2.checked = window.autoFarmEvolve;
-  farmAvoidToggle_3.checked = window.autoFarmAvoidPlayers;
-  const farmBoostLabel = farmAvoidToggle.nextElementSibling;
-  farmBoostLabel.addEventListener("click", (autoFarmToggleEvent) => {
-    autoFarmToggleEvent.stopPropagation();
-    farmAvoidToggle.checked = !farmAvoidToggle.checked;
-    window.autoFarmBoost = farmAvoidToggle.checked;
-    showNotification(
-      farmAvoidToggle.checked ? "Farm boost ON" : "Farm boost OFF",
-    );
   });
-  const farmEvolveLabel = farmAvoidToggle_2.nextElementSibling;
-  farmEvolveLabel.addEventListener("click", (settingToggleEvent) => {
-    settingToggleEvent.stopPropagation();
-    farmAvoidToggle_2.checked = !farmAvoidToggle_2.checked;
-    window.autoFarmEvolve = farmAvoidToggle_2.checked;
-    showNotification(
-      farmAvoidToggle_2.checked ? "Auto evolve ON" : "Auto evolve OFF",
-    );
-  });
-  const farmAvoidLabel = farmAvoidToggle_3.nextElementSibling;
-  farmAvoidLabel.addEventListener("click", (optionToggleEvent) => {
-    optionToggleEvent.stopPropagation();
-    farmAvoidToggle_3.checked = !farmAvoidToggle_3.checked;
-    window.autoFarmAvoidPlayers = farmAvoidToggle_3.checked;
-    showNotification(
-      farmAvoidToggle_3.checked ? "Avoid players ON" : "Avoid players OFF",
-    );
-  });
-  makeDraggable(automationPanel);
-  return automationPanel;
+  return plusPanelElement;
 }
-function createSettingsPanel() {
-  const settingsPanel = document.createElement("div");
-  settingsPanel.id = "settings-panel";
-  settingsPanel.className = "ast-panel";
-  settingsPanel.style.cssText = "top:20px;left:20px;width:220px;";
-  settingsPanel.innerHTML =
-    '\n      <div class="ast-header"><span class="ast-header-title">Settings</span><button class="ast-header-min" id="settingsMin">−</button></div>\n      <div class="ast-body" id="settingsBody">\n        <div class="ast-key-row"><span>Toggle UI</span><input class="ast-key-capture" id="toggleKeyInput" type="text" value="SHIFT" readonly></div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Background</span>\n        <div class="ast-row"><input class="ast-input" type="text" id="bgUrl" placeholder="Image URL..." style="flex:1;"><button class="ast-btn" id="applyBg" style="width:auto;padding:6px 10px;margin:0;">Set</button></div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Theme</span>\n        <select class="ast-select" id="themeSelect">\n          <option value="grey">Grey</option><option value="blue">Blue</option><option value="red">Red</option>\n          <option value="green">Green</option><option value="pink">Pink</option><option value="starwars">Star Wars</option>\n          <option value="kfc">KFC</option><option value="halloween">Halloween 🔒</option>\n        </select>\n        <div class="ast-sep"></div>\n        <button class="ast-btn" id="customThemeToggleBtn" style="display:flex;align-items:center;justify-content:space-between;">\n          <span style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-sec,#888);">Create Theme</span>\n          <span id="customThemeArrow" style="color:var(--text-sec,#888);font-size:12px;">▼</span>\n        </button>\n        <div id="customThemeSection" style="display:none;padding-top:4px;">\n          <input class="ast-input" type="text" id="customThemeName" placeholder="Theme name..." style="width:100%;box-sizing:border-box;margin-bottom:4px;">\n<div class="ast-key-row"><span>Accent</span><input type="color" id="ctAcc" value="#888888" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n<div class="ast-key-row"><span>Background</span><input type="color" id="ctBg" value="#1a1a1a" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n<div class="ast-key-row"><span>Panel</span><input type="color" id="ctPanel" value="#242424" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n<button class="ast-btn" id="saveCustomTheme" style="margin-top:4px;">Save Theme</button>\n        </div>\n        <div class="ast-sep"></div>\n        <button class="ast-btn" id="myThemesToggleBtn" style="display:flex;align-items:center;justify-content:space-between;">\n          <span style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-sec,#888);">My Themes</span>\n          <span id="myThemesArrow" style="color:var(--text-sec,#888);font-size:12px;">▼</span>\n        </button>\n        <div id="myThemesSection" style="display:none;padding-top:4px;">\n          <div id="customThemeList"></div>\n          <div id="noThemesMsg" style="font-size:11px;color:#555;text-align:center;padding:8px 0;">No custom themes yet</div>\n        </div>\n      </div>';
-  document.body.appendChild(settingsPanel);
-  const themesSection = settingsPanel.querySelector("#settingsBody");
+function initSettingsPanel() {
+  const settingsStyle = document.createElement("style");
+  settingsStyle.textContent =
+    "\n      #settings-panel {\n        font-family: 'Segoe UI', sans-serif;\n        transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);\n        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);\n        border: 1px solid #333;\n        background: linear-gradient(to bottom, #0f0f0f, #1a1a1a);\n        position: fixed;\n        top: 20px;\n        left: 20px;\n        color: #e0e0e0;\n        padding: 14px;\n        border-radius: 12px;\n        font-size: 14px;\n        z-index: 99999;\n        user-select: none;\n        width: 220px;\n        text-align: center;\n        cursor: move;\n        overflow: hidden;\n      }\n      #settings-panel:hover {\n        transform: translateY(-2px);\n        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);\n      }\n      #settings-panel button {\n        background: linear-gradient(to bottom, #222, #111);\n        color: #ff4d4d;\n        border: 1px solid #444;\n        border-radius: 6px;\n        padding: 8px 0;\n        font-weight: 600;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        width: 100%;\n        margin-bottom: 8px;\n      }\n      #settings-panel button:hover:not(:disabled) {\n        background: linear-gradient(to bottom, #2a2a2a, #1a1a1a);\n        border-color: #ff4d4d;\n        transform: translateY(-1px);\n        box-shadow: 0 4px 8px rgba(255,77,77,0.3);\n      }\n      #settings-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);\n      }\n      #settings-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #settings-panel button.min-btn {\n        background: none;\n        border: none;\n        color: #ff4d4d;\n        font-size: 18px;\n        cursor: pointer;\n        position: absolute;\n        top: 30%;\n        right: 5px;\n        transform: translateY(-50%);\n        z-index: 1;\n        transition: color 0.2s ease;\n        width: 20px;\n        height: 20px;\n        line-height: 20px;\n      }\n      #settings-panel button.min-btn:hover {\n        color: #ff6666;\n      }\n      #settings-panel .keybind-set {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        margin-bottom: 8px;\n        font-size: 12px;\n      }\n      #settings-panel .keybind-set label {\n        color: #eee;\n      }\n      #settings-panel #toggleKeyInput {\n        background: #1a1a1a;\n        border: 1px solid #333;\n        color: #eee;\n        border-radius: 4px;\n        padding: 4px;\n        width: 80px;\n        text-align: center;\n      }\n    ";
+  document.head.appendChild(settingsStyle);
+  const settingsPanelElement = document.createElement("div");
+  settingsPanelElement.id = "settings-panel";
+  settingsPanelElement.innerHTML =
+    '\n      <div style="font-weight:700; margin-bottom:10px; color:#ff4d4d; text-shadow: 0 0 8px rgba(255,77,77,0.3); position: relative; height: 40px; line-height: 40px; padding-right: 25px;">\n        SETTINGS\n        <button class="min-btn" id="minSettings">−</button>\n      </div>\n      <div id="settingsContent">\n        <div class="keybind-set">\n          <label for="toggleKeyInput">Toggle Client:</label>\n          <input type="text" id="toggleKeyInput" placeholder="Press key..." readonly>\n        </div>\n      </div>\n    ';
+  document.body.appendChild(settingsPanelElement);
+  const minSettingsBtn = settingsPanelElement.querySelector("#minSettings");
+  const settingsContent =
+    settingsPanelElement.querySelector("#settingsContent");
   let isHidden = false;
-  settingsPanel.querySelector("#settingsMin").onclick = (toggleEvent) => {
+  minSettingsBtn.onclick = (toggleEvent) => {
     toggleEvent.stopPropagation();
     isHidden = !isHidden;
-    themesSection.style.display = isHidden ? "none" : "block";
-    settingsPanel.querySelector("#settingsMin").textContent = isHidden
-      ? "+"
-      : "−";
+    settingsContent.style.display = isHidden ? "none" : "block";
+    settingsPanelElement.style.height = isHidden ? "50px" : "auto";
+    minSettingsBtn.textContent = isHidden ? "+" : "−";
   };
-  const toggleKeyInput = settingsPanel.querySelector("#toggleKeyInput");
-  toggleKeyInput.value = state.activeKey.toUpperCase();
+  const toggleKeyInput = settingsPanelElement.querySelector("#toggleKeyInput");
+  toggleKeyInput.value = state.activeKey;
   toggleKeyInput.addEventListener("keydown", (keyEvent) => {
     keyEvent.preventDefault();
     state.activeKey = keyEvent.key;
-    toggleKeyInput.value =
-      keyEvent.key.length === 1 ? keyEvent.key.toUpperCase() : keyEvent.key;
+    toggleKeyInput.value = state.activeKey;
   });
-  const bgUrlInput = settingsPanel.querySelector("#bgUrl");
-  bgUrlInput.value = localStorage.getItem("bgUrl") || "";
-  settingsPanel.querySelector("#applyBg").onclick = () => {
-    const bgUrl = bgUrlInput.value.trim();
-    if (!bgUrl) {
-      showNotification("Enter a URL");
+  let offsetX;
+  let offsetY;
+  let isDraggingSettingsPanel = false;
+  let isActive = false;
+  settingsPanelElement.addEventListener("mousedown", (clickEvent) => {
+    if (
+      clickEvent.target.tagName === "BUTTON" ||
+      clickEvent.target.tagName === "INPUT" ||
+      clickEvent.target.classList.contains("credits")
+    ) {
       return;
     }
-    localStorage.setItem("bgUrl", bgUrl);
-    initBackgroundImage();
-    showNotification("Background applied");
-  };
-  const themeSelectElement = settingsPanel.querySelector("#themeSelect");
-  const angle = localStorage.getItem("theme") || "grey";
-  const customThemes = JSON.parse(localStorage.getItem("customThemes") || "{}");
-  const presetThemes = [
-    "grey",
-    "blue",
-    "red",
-    "green",
-    "pink",
-    "starwars",
-    "kfc",
-    "halloween",
-  ];
-  themeSelectElement.value =
-    presetThemes.includes(angle) || customThemes[angle] ? angle : "grey";
-  themeSelectElement.onchange = (themeChangeEvent) => {
-    const myY = themeChangeEvent.target.value;
-    if (myY === "halloween") {
-      showHalloweenCodeModal((isHalloweenTheme) => {
-        if (isHalloweenTheme) {
-          applyTheme("halloween");
-        } else {
-          themeChangeEvent.target.value =
-            localStorage.getItem("theme") || "grey";
-        }
-      });
-    } else {
-      applyTheme(myY);
-      showNotification("Theme: " + myY);
-    }
-  };
-  const renderCustomThemes = () => {
-    const customThemeListElement =
-      settingsPanel.querySelector("#customThemeList");
-    const noThemesMsgElement = settingsPanel.querySelector("#noThemesMsg");
-    const customThemesData = JSON.parse(
-      localStorage.getItem("customThemes") || "{}",
-    );
-    const customThemeKeys = Object.keys(customThemesData);
-    customThemeListElement.innerHTML = "";
-    noThemesMsgElement.style.display =
-      customThemeKeys.length === 0 ? "block" : "none";
-    customThemeKeys.forEach((url) => {
-      const themeDiv = document.createElement("div");
-      themeDiv.style.cssText = "display:flex;gap:4px;margin-bottom:3px;";
-      const isThemeActive = localStorage.getItem("theme") === url;
-      themeDiv.innerHTML =
-        '\n          <button class="ast-btn' +
-        (isThemeActive ? " toggle-on" : "") +
-        '" style="flex:1;margin:0;">' +
-        url +
-        '</button>\n          <button class="ast-btn" style="width:32px;margin:0;text-align:center;color:#f44336;">✕</button>';
-      themeDiv.querySelectorAll("button")[0].onclick = () => {
-        applyTheme(url);
-        showNotification("Theme: " + url);
-        renderCustomThemes();
-      };
-      themeDiv.querySelectorAll("button")[1].onclick = () => {
-        const customThemes = JSON.parse(
-          localStorage.getItem("customThemes") || "{}",
-        );
-        delete customThemes[url];
-        localStorage.setItem("customThemes", JSON.stringify(customThemes));
-        if (localStorage.getItem("theme") === url) {
-          applyTheme("grey");
-          themeSelectElement.value = "grey";
-          showNotification("Theme reset to Grey");
-        } else {
-          showNotification("Deleted: " + url);
-        }
-        renderCustomThemes();
-      };
-      customThemeListElement.appendChild(themeDiv);
-    });
-  };
-  renderCustomThemes();
-  settingsPanel.querySelector("#saveCustomTheme").onclick = () => {
-    const inputThemeName = settingsPanel
-      .querySelector("#customThemeName")
-      .value.trim();
-    if (!inputThemeName) {
-      showNotification("Enter a theme name");
-      return;
-    }
-    const presetThemes = [
-      "grey",
-      "blue",
-      "red",
-      "green",
-      "pink",
-      "starwars",
-      "kfc",
-      "halloween",
-    ];
-    if (presetThemes.includes(inputThemeName.toLowerCase())) {
-      showNotification("Cannot use built-in theme name");
-      return;
-    }
-    const accentColor = settingsPanel.querySelector("#ctAcc").value;
-    const themeBgColor = settingsPanel.querySelector("#ctBg").value;
-    const themePanelColor = settingsPanel.querySelector("#ctPanel").value;
-    const red = parseInt(accentColor.slice(1, 3), 16);
-    const green = parseInt(accentColor.slice(3, 5), 16);
-    const blue = parseInt(accentColor.slice(5, 7), 16);
-    const adjustColor = (hexColor) => {
-      const redChannel = parseInt(hexColor.slice(1, 3), 16) + 10;
-      const greenChannel = parseInt(hexColor.slice(3, 5), 16) + 10;
-      const blueChannel = parseInt(hexColor.slice(5, 7), 16) + 10;
-      return (
-        "#" +
-        [redChannel, greenChannel, blueChannel]
-          .map((colorValue) =>
-            Math.min(255, colorValue).toString(16).padStart(2, "0"),
-          )
-          .join("")
-      );
+    isDraggingSettingsPanel = true;
+    isActive = false;
+    offsetX =
+      clickEvent.clientX - settingsPanelElement.getBoundingClientRect().left;
+    offsetY =
+      clickEvent.clientY - settingsPanelElement.getBoundingClientRect().top;
+    settingsPanelElement.style.transition = "none";
+    const handleMouseMove = (mouseEvent) => {
+      const deltaX = mouseEvent.clientX - clickEvent.clientX;
+      const deltaY = mouseEvent.clientY - clickEvent.clientY;
+      if (!isActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+        isActive = true;
+      }
+      if (isDraggingSettingsPanel) {
+        settingsPanelElement.style.left = mouseEvent.clientX - offsetX + "px";
+        settingsPanelElement.style.top = mouseEvent.clientY - offsetY + "px";
+        settingsPanelElement.style.bottom = "auto";
+        settingsPanelElement.style.right = "auto";
+      }
     };
-    const themeSettings = {
-      acc: accentColor,
-      accH: adjustColor(accentColor),
-      accRGB: red + "," + green + "," + blue,
-      text: "#e0e0e0",
-      textSec: "#888",
-      bg1: themeBgColor,
-      bg2: themePanelColor,
-      bg3: adjustColor(themePanelColor),
-      border: "#333",
-      hover: adjustColor(themePanelColor),
+    const stopDraggingTools = () => {
+      isDraggingSettingsPanel = false;
+      settingsPanelElement.style.transition =
+        "all 0.3s cubic-bezier(0.23, 1, 0.32, 1)";
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", stopDraggingTools);
     };
-    const customThemes = JSON.parse(
-      localStorage.getItem("customThemes") || "{}",
-    );
-    customThemes[inputThemeName] = themeSettings;
-    localStorage.setItem("customThemes", JSON.stringify(customThemes));
-    applyTheme(inputThemeName);
-    settingsPanel.querySelector("#customThemeName").value = "";
-    renderCustomThemes();
-    showNotification("Theme saved: " + inputThemeName);
-  };
-  const myThemesToggleBtn = settingsPanel.querySelector(
-    "#customThemeToggleBtn",
-  );
-  const themesSection_2 = settingsPanel.querySelector("#customThemeSection");
-  const themesArrow = settingsPanel.querySelector("#customThemeArrow");
-  let isHidden_2 = false;
-  myThemesToggleBtn.onclick = () => {
-    isHidden_2 = !isHidden_2;
-    themesSection_2.style.display = isHidden_2 ? "block" : "none";
-    themesArrow.textContent = isHidden_2 ? "▲" : "▼";
-  };
-  const myThemesToggleBtn_2 = settingsPanel.querySelector("#myThemesToggleBtn");
-  const themesSection_3 = settingsPanel.querySelector("#myThemesSection");
-  const themesArrow_2 = settingsPanel.querySelector("#myThemesArrow");
-  let isHidden_3 = false;
-  myThemesToggleBtn_2.onclick = () => {
-    isHidden_3 = !isHidden_3;
-    themesSection_3.style.display = isHidden_3 ? "block" : "none";
-    themesArrow_2.textContent = isHidden_3 ? "▲" : "▼";
-    if (isHidden_3) {
-      renderCustomThemes();
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", stopDraggingTools);
+  });
+  settingsPanelElement.addEventListener("click", (event) => {
+    if (isActive) {
+      event.stopImmediatePropagation();
     }
-  };
-  makeDraggable(settingsPanel);
-  return settingsPanel;
+  });
+  return settingsPanelElement;
 }
-function createMusicPanel() {
-  const musicPanel = document.createElement("div");
-  musicPanel.id = "music-panel";
-  musicPanel.className = "ast-panel";
-  musicPanel.style.cssText = "bottom:20px;left:510px;width:240px;";
-  musicPanel.innerHTML =
-    '\n      <div class="ast-header"><span class="ast-header-title">Music Player</span><button class="ast-header-min" id="musicMin">−</button></div>\n      <div class="ast-body" id="musicBody">\n        <div id="musicTrackName" style="font-size:11px;color:var(--acc,#888);text-align:center;padding:4px 2px 8px 2px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">No tracks</div>\n\n        <div style="display:flex;gap:4px;justify-content:center;margin-bottom:8px;flex-wrap:wrap;">\n          <button class="ast-btn" id="musicPrevBtn" style="width:48px;margin:0;text-align:center;padding:6px 4px;">Prev</button>\n          <button class="ast-btn" id="musicPlayBtn" style="width:48px;margin:0;text-align:center;padding:6px 4px;">Play</button>\n          <button class="ast-btn" id="musicStopBtn" style="width:48px;margin:0;text-align:center;padding:6px 4px;">Stop</button>\n          <button class="ast-btn" id="musicNextBtn" style="width:48px;margin:0;text-align:center;padding:6px 4px;">Next</button>\n        </div>\n\n        <div style="display:flex;gap:4px;justify-content:center;margin-bottom:8px;">\n          <button class="ast-btn" id="musicLoopBtn" style="width:70px;margin:0;text-align:center;padding:6px 4px;">Loop</button>\n          <button class="ast-btn" id="musicShuffleBtn" style="width:70px;margin:0;text-align:center;padding:6px 4px;">Shuffle</button>\n        </div>\n\n        <div class="ast-key-row" style="margin-bottom:6px;">\n          <span>Volume</span>\n          <input type="range" id="musicVolume" min="0" max="1" step="0.05" value="0.5" style="width:120px;accent-color:var(--acc,#888);">\n        </div>\n\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Add Track</span>\n        <input class="ast-input" type="text" id="musicUrlInput" placeholder="Audio or YouTube URL..." style="width:100%;box-sizing:border-box;margin-bottom:4px;">\n        <input class="ast-input" type="text" id="musicNameInput" placeholder="Track name (optional)" style="width:100%;box-sizing:border-box;margin-bottom:4px;">\n        <button class="ast-btn" id="musicAddBtn">Add Track</button>\n\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Playlist</span>\n        <div id="musicTrackList" style="max-height:150px;overflow-y:auto;"></div>\n      </div>';
-  document.body.appendChild(musicPanel);
-  const musicBody = musicPanel.querySelector("#musicBody");
-  let isHidden = false;
-  musicPanel.querySelector("#musicMin").onclick = (event) => {
-    event.stopPropagation();
-    isHidden = !isHidden;
-    musicBody.style.display = isHidden ? "none" : "block";
-    musicPanel.querySelector("#musicMin").textContent = isHidden ? "+" : "−";
-  };
-  musicPanel.querySelector("#musicPrevBtn").onclick = () => playPrevious();
-  musicPanel.querySelector("#musicStopBtn").onclick = () => stopPlayback();
-  musicPanel.querySelector("#musicNextBtn").onclick = () => playNextOrRandom();
-  const musicPlayButton = musicPanel.querySelector("#musicPlayBtn");
-  musicPlayButton.onclick = () => {
-    if (!musicPlaylist.length) {
-      showNotification("Add a track first");
-      return;
-    }
-    if (isPlaying()) {
-      pausePlayback();
-    } else {
-      resumePlayback();
-    }
-  };
-  const musicShuffleButton = musicPanel.querySelector("#musicLoopBtn");
-  musicShuffleButton.classList.toggle("toggle-on", state.isMusicShuffleEnabled);
-  musicShuffleButton.onclick = () => {
-    state.isMusicShuffleEnabled = !state.isMusicShuffleEnabled;
-    localStorage.setItem("musicLoop", state.isMusicShuffleEnabled);
-    musicShuffleButton.classList.toggle(
-      "toggle-on",
-      state.isMusicShuffleEnabled,
-    );
-    showNotification(state.isMusicShuffleEnabled ? "Loop ON" : "Loop OFF");
-  };
-  const musicShuffleButton_2 = musicPanel.querySelector("#musicShuffleBtn");
-  musicShuffleButton_2.classList.toggle(
-    "toggle-on",
-    state.isMusicShuffleEnabled_2,
-  );
-  musicShuffleButton_2.onclick = () => {
-    state.isMusicShuffleEnabled_2 = !state.isMusicShuffleEnabled_2;
-    localStorage.setItem("musicShuffle", state.isMusicShuffleEnabled_2);
-    musicShuffleButton_2.classList.toggle(
-      "toggle-on",
-      state.isMusicShuffleEnabled_2,
-    );
-    showNotification(
-      state.isMusicShuffleEnabled_2 ? "Shuffle ON" : "Shuffle OFF",
-    );
-  };
-  const musicVolumeControl = musicPanel.querySelector("#musicVolume");
-  musicVolumeControl.value = state.musicVolume;
-  musicVolumeControl.oninput = (volumeEvent) => {
-    state.musicVolume = parseFloat(volumeEvent.target.value);
-    localStorage.setItem("musicVolume", state.musicVolume);
-    if (state.audioPlayer) {
-      state.audioPlayer.volume = state.musicVolume;
-    }
-    if (state.youtubePlayer) {
-      try {
-        state.youtubePlayer.setVolume(Math.round(state.musicVolume * 100));
-      } catch (unusedVariable) {}
-    }
-  };
-  musicPanel.querySelector("#musicAddBtn").onclick = () => {
-    const musicUrl = musicPanel.querySelector("#musicUrlInput").value.trim();
-    const musicName = musicPanel.querySelector("#musicNameInput").value.trim();
-    if (!musicUrl) {
-      showNotification("Enter a URL");
-      return;
-    }
-    musicPanel.querySelector("#musicUrlInput").value = "";
-    musicPanel.querySelector("#musicNameInput").value = "";
-    addTrackToPlaylist(musicUrl, musicName);
-  };
-  updateMusicPanel();
-  makeDraggable(musicPanel);
-  return musicPanel;
-}
-function createUpdatePanel() {
-  const updatePanel = document.createElement("div");
-  updatePanel.id = "update-history";
-  updatePanel.className = "ast-panel";
-  updatePanel.style.cssText =
-    "bottom:20px;left:20px;width:230px;max-height:280px;";
-  updatePanel.innerHTML =
-    '\n      <div class="ast-header"><span class="ast-header-title">Updates</span><button class="ast-header-min" id="updateMin">−</button></div>\n      <div class="ast-body" id="updateBody" style="overflow-y:auto;max-height:220px;">\n        <ul class="ast-update-list">\n        <li><strong>v1.9</strong> — Fixed ESP not fully working, added music player, and added auto-name (saves locally).</li>\n         <li><strong>v1.8</strong> — Fixed Astra-Vision (Shadows not being Removed), added Custom Themes Feature, fixed enable/disable for sliders, fixed ESP not working properly/gltiched.</li>\n          <li><strong>v1.7</strong> — New Features and Organization.</li>\n        </ul>\n      </div>';
-  document.body.appendChild(updatePanel);
-  const updateBody = updatePanel.querySelector("#updateBody");
-  let isMinimized = false;
-  updatePanel.querySelector("#updateMin").onclick = (event) => {
-    event.stopPropagation();
-    isMinimized = !isMinimized;
-    updateBody.style.display = isMinimized ? "none" : "block";
-    updatePanel.querySelector("#updateMin").textContent = isMinimized
-      ? "+"
-      : "−";
-  };
-  makeDraggable(updatePanel);
-  return updatePanel;
-}
-function togglePanelsVisibility() {
-  const panelIds = [
-    "deep-tools-panel",
-    "vision-panel",
-    "combat-panel",
-    "automation-panel",
-    "update-history",
-    "settings-panel",
-    "music-panel",
-  ];
+function togglePanels() {
   const deepToolsPanel = document.getElementById("deep-tools-panel");
-  if (!deepToolsPanel) {
-    return;
-  }
-  const isVisible = deepToolsPanel.style.display !== "none";
-  panelIds.forEach((elementId) => {
-    const targetElement = document.getElementById(elementId);
-    if (targetElement) {
-      targetElement.style.display = isVisible ? "none" : "block";
-    }
-  });
+  const updateHistoryPanel = document.getElementById("update-history");
+  const settingsPanel = document.getElementById("settings-panel");
+  const plusPanel = document.getElementById("plus-panel");
+  const currentDisplay = deepToolsPanel.style.display;
+  const newDisplay = currentDisplay === "none" ? "block" : "none";
+  deepToolsPanel.style.display = newDisplay;
+  updateHistoryPanel.style.display = newDisplay;
+  settingsPanel.style.display = newDisplay;
+  plusPanel.style.display = newDisplay;
 }
 
 export {
-  refreshUI,
-  showHalloweenCodeModal,
-  makeDraggable,
+  createUpdateHistoryPanel,
   createToolsPanel,
-  createVisionPanel,
-  createCombatPanel,
-  createAutomationPanel,
-  createSettingsPanel,
-  createMusicPanel,
-  createUpdatePanel,
-  togglePanelsVisibility,
+  initPlusPanel,
+  initSettingsPanel,
+  togglePanels,
 };

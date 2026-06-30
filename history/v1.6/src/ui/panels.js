@@ -2,7 +2,7 @@ import {
   radius,
   config,
   hookTextEncoder,
-  isProcessed_3,
+  isProcessed_skx,
   initAutoFarm,
   initializeAntiDetection,
   initializeViewportSettings,
@@ -12,8 +12,8 @@ import {
 import {
   toggleEsp,
   trackPlayer,
-  toggleEsp_2,
-  toggleEsp_3,
+  toggleEsp_sdk,
+  toggleEsp_sl9,
   toggleMinimapSize,
 } from "../features/esp.js";
 import {
@@ -116,9 +116,9 @@ function makeDraggable(element) {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   });
-  element.addEventListener("click", (event_2) => {
+  element.addEventListener("click", (event_a8f) => {
     if (hasMoved) {
-      event_2.stopImmediatePropagation();
+      event_a8f.stopImmediatePropagation();
     }
   });
 }
@@ -180,15 +180,15 @@ function createToolsPanel() {
       showToast("No name input found");
     }
   };
-  const spinBtn_2 = panelElement.querySelector("#spinBtn");
-  spinBtn_2.onclick = () => {
+  const spinBtn_jno = panelElement.querySelector("#spinBtn");
+  spinBtn_jno.onclick = () => {
     toggleMouseSimulation();
-    if (featuresentitytrailState.entityTrailInterval_2) {
-      spinBtn_2.textContent = "Stop Spin";
-      spinBtn_2.classList.add("toggle-on");
+    if (featuresentitytrailState.entityTrailInterval_rfg) {
+      spinBtn_jno.textContent = "Stop Spin";
+      spinBtn_jno.classList.add("toggle-on");
     } else {
-      spinBtn_2.textContent = "Auto Spin";
-      spinBtn_2.classList.remove("toggle-on");
+      spinBtn_jno.textContent = "Auto Spin";
+      spinBtn_jno.classList.remove("toggle-on");
     }
   };
   const turnRightKeyInput = panelElement.querySelector("#spinKeyInput");
@@ -206,31 +206,32 @@ function createToolsPanel() {
     ) {
       keyboardEvent.preventDefault();
       toggleMouseSimulation();
-      if (featuresentitytrailState.entityTrailInterval_2) {
-        spinBtn_2.textContent = "Stop Spin";
-        spinBtn_2.classList.add("toggle-on");
+      if (featuresentitytrailState.entityTrailInterval_rfg) {
+        spinBtn_jno.textContent = "Stop Spin";
+        spinBtn_jno.classList.add("toggle-on");
       } else {
-        spinBtn_2.textContent = "Auto Spin";
-        spinBtn_2.classList.remove("toggle-on");
+        spinBtn_jno.textContent = "Auto Spin";
+        spinBtn_jno.classList.remove("toggle-on");
       }
     }
   });
-  const turnRightKeyInput_2 = panelElement.querySelector("#turnLeftKeyInput");
-  const turnRightKeyInput_3 = panelElement.querySelector("#turnRightKeyInput");
-  turnRightKeyInput_2.value = state.keyQ.toUpperCase();
-  turnRightKeyInput_3.value = state.keyE.toUpperCase();
-  turnRightKeyInput_2.addEventListener("keydown", (uiEvent) => {
+  const turnRightKeyInput_hid = panelElement.querySelector("#turnLeftKeyInput");
+  const turnRightKeyInput_ij7 =
+    panelElement.querySelector("#turnRightKeyInput");
+  turnRightKeyInput_hid.value = state.keyQ.toUpperCase();
+  turnRightKeyInput_ij7.value = state.keyE.toUpperCase();
+  turnRightKeyInput_hid.addEventListener("keydown", (uiEvent) => {
     uiEvent.preventDefault();
     uiEvent.stopPropagation();
     state.keyQ = uiEvent.key;
-    turnRightKeyInput_2.value =
+    turnRightKeyInput_hid.value =
       uiEvent.key.length === 1 ? uiEvent.key.toUpperCase() : uiEvent.key;
   });
-  turnRightKeyInput_3.addEventListener("keydown", (inputEvent) => {
+  turnRightKeyInput_ij7.addEventListener("keydown", (inputEvent) => {
     inputEvent.preventDefault();
     inputEvent.stopPropagation();
     state.keyE = inputEvent.key;
-    turnRightKeyInput_3.value =
+    turnRightKeyInput_ij7.value =
       inputEvent.key.length === 1
         ? inputEvent.key.toUpperCase()
         : inputEvent.key;
@@ -260,7 +261,7 @@ function createPlusPanel() {
   };
   const astraVisionBtn = plusPanel.querySelector("#astraVisionBtn");
   astraVisionBtn.onclick = () => {
-    if (isProcessed_3) {
+    if (isProcessed_skx) {
       showToast("Already active");
       return;
     }
@@ -274,7 +275,7 @@ function createPlusPanel() {
   autoDodgeBtn.onclick = () => {
     initializeAntiDetection();
     toggleMinimapSize();
-    if (state.isToggled_2) {
+    if (state.isToggled_sak) {
       autoDodgeBtn.textContent = "Minimap: Small";
       autoDodgeBtn.classList.add("toggle-on");
     } else {
@@ -282,15 +283,15 @@ function createPlusPanel() {
       autoDodgeBtn.classList.remove("toggle-on");
     }
   };
-  const autoDodgeBtn_2 = plusPanel.querySelector("#espBtn");
-  autoDodgeBtn_2.onclick = () => {
+  const autoDodgeBtn_w1m = plusPanel.querySelector("#espBtn");
+  autoDodgeBtn_w1m.onclick = () => {
     toggleEsp();
     if (window.espEnabled) {
-      autoDodgeBtn_2.textContent = "ESP ✓";
-      autoDodgeBtn_2.classList.add("toggle-on");
+      autoDodgeBtn_w1m.textContent = "ESP ✓";
+      autoDodgeBtn_w1m.classList.add("toggle-on");
     } else {
-      autoDodgeBtn_2.textContent = "ESP";
-      autoDodgeBtn_2.classList.remove("toggle-on");
+      autoDodgeBtn_w1m.textContent = "ESP";
+      autoDodgeBtn_w1m.classList.remove("toggle-on");
     }
   };
   const farmModeSelect = plusPanel.querySelector("#espModeSelect");
@@ -300,34 +301,34 @@ function createPlusPanel() {
     showToast("ESP: " + espModeEvent.target.value);
   };
   plusPanel.querySelector("#trackNearestBtn").onclick = () => trackPlayer();
-  plusPanel.querySelector("#untrackBtn").onclick = () => toggleEsp_2();
-  const autoDodgeBtn_3 = plusPanel.querySelector("#autoDodgeBtn");
-  autoDodgeBtn_3.onclick = () => {
+  plusPanel.querySelector("#untrackBtn").onclick = () => toggleEsp_sdk();
+  const autoDodgeBtn_gu6 = plusPanel.querySelector("#autoDodgeBtn");
+  autoDodgeBtn_gu6.onclick = () => {
     if (window.autoDodgeEnabled) {
-      toggleEsp_3();
-      autoDodgeBtn_3.textContent = "Auto Dodge";
-      autoDodgeBtn_3.classList.remove("toggle-on");
+      toggleEsp_sl9();
+      autoDodgeBtn_gu6.textContent = "Auto Dodge";
+      autoDodgeBtn_gu6.classList.remove("toggle-on");
     } else {
       enableAutoDodge();
-      autoDodgeBtn_3.textContent = "Dodging ✓";
-      autoDodgeBtn_3.classList.add("toggle-on");
+      autoDodgeBtn_gu6.textContent = "Dodging ✓";
+      autoDodgeBtn_gu6.classList.add("toggle-on");
     }
   };
   const autoFarmBtn = plusPanel.querySelector("#autoFarmBtn");
   autoFarmBtn.id = "autoFarmBtn";
-  const farmModeSelect_2 = plusPanel.querySelector("#farmModeSelect");
+  const farmModeSelect_wjb = plusPanel.querySelector("#farmModeSelect");
   autoFarmBtn.onclick = () => {
     if (window.autoFarmActive) {
       stopAutoFarm();
       autoFarmBtn.textContent = "Auto Farm (F5)";
       autoFarmBtn.classList.remove("toggle-on");
     } else {
-      initAutoFarm(farmModeSelect_2.value);
+      initAutoFarm(farmModeSelect_wjb.value);
       autoFarmBtn.textContent = "Stop Farm (F5)";
       autoFarmBtn.classList.add("toggle-on");
     }
   };
-  farmModeSelect_2.onchange = (autoFarmModeEvent) => {
+  farmModeSelect_wjb.onchange = (autoFarmModeEvent) => {
     if (window.autoFarmActive) {
       window.autoFarmMode = autoFarmModeEvent.target.value;
       if (autoFarmModeEvent.target.value === "patrol") {

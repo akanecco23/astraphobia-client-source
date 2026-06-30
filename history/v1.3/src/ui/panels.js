@@ -4,7 +4,7 @@ import {
   config,
   radius,
   hookTextEncoder,
-  isProcessed_2,
+  isProcessed_qlz,
   initHooks,
   disableGameRestrictions,
   state,
@@ -21,9 +21,9 @@ import { handleAnimalAction } from "../features/autofarm.js";
 import { toggleMinimapSize } from "../features/esp.js";
 import { generateRandomString } from "../utils.js";
 
-let isProcessed_3 = false;
+let isProcessed_s2l = false;
 const initControlOverlay = () => {
-  if (isProcessed_3) {
+  if (isProcessed_s2l) {
     return;
   }
   function sendActionSequence() {
@@ -118,7 +118,7 @@ const initControlOverlay = () => {
       document.getElementById("ctrl-overlay").style.pointerEvents = "none";
     } catch {}
   });
-  isProcessed_3 = true;
+  isProcessed_s2l = true;
 };
 function createUpdateHistoryPanel() {
   const historyStyle = document.createElement("style");
@@ -143,7 +143,7 @@ function createUpdateHistoryPanel() {
   let offsetX;
   let offsetY;
   let isActive = false;
-  let isActive_2 = false;
+  let isActive_70l = false;
   historyPanel.addEventListener("mousedown", (clickEvent) => {
     if (
       ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(clickEvent.target.tagName)
@@ -151,15 +151,15 @@ function createUpdateHistoryPanel() {
       return;
     }
     isActive = true;
-    isActive_2 = false;
+    isActive_70l = false;
     offsetX = clickEvent.clientX - historyPanel.getBoundingClientRect().left;
     offsetY = clickEvent.clientY - historyPanel.getBoundingClientRect().top;
     historyPanel.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
       const deltaX = mouseEvent.clientX - clickEvent.clientX;
       const deltaY = mouseEvent.clientY - clickEvent.clientY;
-      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isActive_2 = true;
+      if (!isActive_70l && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+        isActive_70l = true;
       }
       if (isActive) {
         historyPanel.style.left = mouseEvent.clientX - offsetX + "px";
@@ -178,7 +178,7 @@ function createUpdateHistoryPanel() {
     document.addEventListener("mouseup", handleMouseUp);
   });
   historyPanel.addEventListener("click", (interceptEvent) => {
-    if (isActive_2) {
+    if (isActive_70l) {
       interceptEvent.stopImmediatePropagation();
     }
   });
@@ -215,8 +215,8 @@ function createDeepToolsPanel() {
   };
   const spoofButton = container.querySelector("#patchBtn");
   spoofButton.onclick = () => hookTextEncoder(spoofButton);
-  const spoofButton_2 = container.querySelector("#spoofBtn");
-  spoofButton_2.onclick = () => {
+  const spoofButton_9m4 = container.querySelector("#spoofBtn");
+  spoofButton_9m4.onclick = () => {
     const maxLength = generateRandomString(8);
     if (simulateTyping(".play-game .el-input__inner", maxLength)) {
       showNotification("Spoofed name!");
@@ -229,7 +229,7 @@ function createDeepToolsPanel() {
   const autoChatButton = container.querySelector("#spinBtn");
   autoChatButton.onclick = () => {
     toggleMouseSimulation();
-    if (featuresentitytrailState.entityTrailInterval_2) {
+    if (featuresentitytrailState.entityTrailInterval_qpd) {
       autoChatButton.textContent = "Disable Auto Spin";
       autoChatButton.style.color = "#27ae60";
     } else {
@@ -252,7 +252,7 @@ function createDeepToolsPanel() {
     ) {
       keyEvent.preventDefault();
       toggleMouseSimulation();
-      if (featuresentitytrailState.entityTrailInterval_2) {
+      if (featuresentitytrailState.entityTrailInterval_qpd) {
         autoChatButton.textContent = "Disable Auto Spin";
         autoChatButton.style.color = "#27ae60";
       } else {
@@ -261,8 +261,8 @@ function createDeepToolsPanel() {
       }
     }
   });
-  const autoChatButton_2 = container.querySelector("#autoChatBtn");
-  autoChatButton_2.onclick = () => {
+  const autoChatButton_8fc = container.querySelector("#autoChatBtn");
+  autoChatButton_8fc.onclick = () => {
     const chatMessageValue = container.querySelector("#chatMsg").value;
     const delayInput = container.querySelector("#delayInput");
     const delayValue = parseInt(delayInput.value) || 10;
@@ -272,18 +272,18 @@ function createDeepToolsPanel() {
     }
     if (state.isToggled) {
       stopInterval();
-      autoChatButton_2.textContent = "Enable Auto Chat";
-      autoChatButton_2.style.color = "var(--accent)";
+      autoChatButton_8fc.textContent = "Enable Auto Chat";
+      autoChatButton_8fc.style.color = "var(--accent)";
     } else {
       startScheduledTask(chatMessageValue, delayValue);
-      autoChatButton_2.textContent = "Disable Auto Chat";
-      autoChatButton_2.style.color = "#27ae60";
+      autoChatButton_8fc.textContent = "Disable Auto Chat";
+      autoChatButton_8fc.style.color = "#27ae60";
     }
   };
   let offsetX;
   let offsetY;
   let isActive = false;
-  let isActive_2 = false;
+  let isActive_7fb = false;
   container.addEventListener("mousedown", (clickEvent) => {
     if (
       clickEvent.target.tagName === "BUTTON" ||
@@ -294,15 +294,15 @@ function createDeepToolsPanel() {
       return;
     }
     isActive = true;
-    isActive_2 = false;
+    isActive_7fb = false;
     offsetX = clickEvent.clientX - container.getBoundingClientRect().left;
     offsetY = clickEvent.clientY - container.getBoundingClientRect().top;
     container.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
       const deltaX = mouseEvent.clientX - clickEvent.clientX;
       const deltaY = mouseEvent.clientY - clickEvent.clientY;
-      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isActive_2 = true;
+      if (!isActive_7fb && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+        isActive_7fb = true;
       }
       if (isActive) {
         container.style.left = mouseEvent.clientX - offsetX + "px";
@@ -321,7 +321,7 @@ function createDeepToolsPanel() {
     document.addEventListener("mouseup", handleMouseUp);
   });
   container.addEventListener("click", (eventToStop) => {
-    if (isActive_2) {
+    if (isActive_7fb) {
       eventToStop.stopImmediatePropagation();
     }
   });
@@ -352,7 +352,7 @@ function injectPlusPanelStyles() {
   document.body.appendChild(container);
   const astraVisionButton = container.querySelector("#thresherBtn");
   astraVisionButton.onclick = () => {
-    if (isProcessed_3) {
+    if (isProcessed_s2l) {
       showNotification("Thresher Super Boost is already active!");
       return;
     }
@@ -361,17 +361,17 @@ function injectPlusPanelStyles() {
     astraVisionButton.style.color = "#27ae60";
     astraVisionButton.disabled = true;
   };
-  const astraVisionButton_2 = container.querySelector("#astraVisionBtn");
-  astraVisionButton_2.onclick = () => {
-    if (isProcessed_2) {
+  const astraVisionButton_l1x = container.querySelector("#astraVisionBtn");
+  astraVisionButton_l1x.onclick = () => {
+    if (isProcessed_qlz) {
       showNotification("Astra-Vision already enabled!");
       return;
     }
     initHooks();
     disableGameRestrictions();
-    astraVisionButton_2.textContent = "Astra-Vision Active";
-    astraVisionButton_2.style.color = "#27ae60";
-    astraVisionButton_2.disabled = true;
+    astraVisionButton_l1x.textContent = "Astra-Vision Active";
+    astraVisionButton_l1x.style.color = "#27ae60";
+    astraVisionButton_l1x.disabled = true;
     showNotification(
       "👁️ Astra-Vision enabled! (zoom-limit unlocked, no ink-flash or deep darkness effects)",
     );
@@ -380,7 +380,7 @@ function injectPlusPanelStyles() {
   smallMinimapButton.onclick = () => {
     initHooks();
     toggleMinimapSize();
-    if (state.isToggled_2) {
+    if (state.isToggled_r45) {
       smallMinimapButton.textContent = "Disable Small Minimap";
       smallMinimapButton.style.color = "#27ae60";
     } else {
@@ -391,7 +391,7 @@ function injectPlusPanelStyles() {
   let offsetX;
   let offsetY;
   let isActive = false;
-  let isActive_2 = false;
+  let isActive_zo5 = false;
   container.addEventListener("mousedown", (event) => {
     if (
       event.target.tagName === "BUTTON" ||
@@ -402,15 +402,15 @@ function injectPlusPanelStyles() {
       return;
     }
     isActive = true;
-    isActive_2 = false;
+    isActive_zo5 = false;
     offsetX = event.clientX - container.getBoundingClientRect().left;
     offsetY = event.clientY - container.getBoundingClientRect().top;
     container.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
       const deltaX = mouseEvent.clientX - event.clientX;
       const deltaY = mouseEvent.clientY - event.clientY;
-      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isActive_2 = true;
+      if (!isActive_zo5 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+        isActive_zo5 = true;
       }
       if (isActive) {
         container.style.left = mouseEvent.clientX - offsetX + "px";
@@ -428,9 +428,9 @@ function injectPlusPanelStyles() {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   });
-  container.addEventListener("click", (event_2) => {
-    if (isActive_2) {
-      event_2.stopImmediatePropagation();
+  container.addEventListener("click", (event_x5a) => {
+    if (isActive_zo5) {
+      event_x5a.stopImmediatePropagation();
     }
   });
   return container;
@@ -486,25 +486,25 @@ function injectSettingsStyles() {
   let offsetX;
   let offsetY;
   let isActive = false;
-  let isActive_2 = false;
-  container.addEventListener("mousedown", (event_2) => {
+  let isActive_why = false;
+  container.addEventListener("mousedown", (event_mvj) => {
     if (
-      event_2.target.tagName === "BUTTON" ||
-      event_2.target.tagName === "INPUT" ||
-      event_2.target.classList.contains("credits")
+      event_mvj.target.tagName === "BUTTON" ||
+      event_mvj.target.tagName === "INPUT" ||
+      event_mvj.target.classList.contains("credits")
     ) {
       return;
     }
     isActive = true;
-    isActive_2 = false;
-    offsetX = event_2.clientX - container.getBoundingClientRect().left;
-    offsetY = event_2.clientY - container.getBoundingClientRect().top;
+    isActive_why = false;
+    offsetX = event_mvj.clientX - container.getBoundingClientRect().left;
+    offsetY = event_mvj.clientY - container.getBoundingClientRect().top;
     container.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
-      const deltaX = mouseEvent.clientX - event_2.clientX;
-      const deltaY = mouseEvent.clientY - event_2.clientY;
-      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isActive_2 = true;
+      const deltaX = mouseEvent.clientX - event_mvj.clientX;
+      const deltaY = mouseEvent.clientY - event_mvj.clientY;
+      if (!isActive_why && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+        isActive_why = true;
       }
       if (isActive) {
         container.style.left = mouseEvent.clientX - offsetX + "px";
@@ -522,9 +522,9 @@ function injectSettingsStyles() {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   });
-  container.addEventListener("click", (event_3) => {
-    if (isActive_2) {
-      event_3.stopImmediatePropagation();
+  container.addEventListener("click", (event_ns9) => {
+    if (isActive_why) {
+      event_ns9.stopImmediatePropagation();
     }
   });
   return container;

@@ -1,7 +1,7 @@
 import {
   radius,
   setupTextEncoderHook,
-  isProcessed_3,
+  isProcessed_t1s,
   initHooks,
   state,
 } from "../core.js";
@@ -116,8 +116,8 @@ function createToolsPanel() {
   };
   const spoofBtn = toolsPanel.querySelector("#patchBtn");
   spoofBtn.onclick = () => setupTextEncoderHook(spoofBtn);
-  const spoofBtn_2 = toolsPanel.querySelector("#spoofBtn");
-  spoofBtn_2.onclick = () => {
+  const spoofBtn_o7w = toolsPanel.querySelector("#spoofBtn");
+  spoofBtn_o7w.onclick = () => {
     const generatedValue = generateRandomString(8);
     if (simulateTyping(".play-game .el-input__inner", generatedValue)) {
       showToast("Spoofed name!");
@@ -130,7 +130,7 @@ function createToolsPanel() {
   const autoChatBtn = toolsPanel.querySelector("#spinBtn");
   autoChatBtn.onclick = () => {
     toggleMouseSimulation();
-    if (featuresentitytrailState.entityTrailInterval_2) {
+    if (featuresentitytrailState.entityTrailInterval_rkn) {
       autoChatBtn.textContent = "Disable Auto Spin";
       autoChatBtn.style.color = "#4dff4d";
     } else {
@@ -153,7 +153,7 @@ function createToolsPanel() {
     ) {
       keyEvent.preventDefault();
       toggleMouseSimulation();
-      if (featuresentitytrailState.entityTrailInterval_2) {
+      if (featuresentitytrailState.entityTrailInterval_rkn) {
         autoChatBtn.textContent = "Disable Auto Spin";
         autoChatBtn.style.color = "#4dff4d";
       } else {
@@ -162,8 +162,8 @@ function createToolsPanel() {
       }
     }
   });
-  const autoChatBtn_2 = toolsPanel.querySelector("#autoChatBtn");
-  autoChatBtn_2.onclick = () => {
+  const autoChatBtn_o0p = toolsPanel.querySelector("#autoChatBtn");
+  autoChatBtn_o0p.onclick = () => {
     const chatMessageText = toolsPanel.querySelector("#chatMsg").value;
     const delayInput = toolsPanel.querySelector("#delayInput");
     const delayValue = parseInt(delayInput.value) || 10;
@@ -173,12 +173,12 @@ function createToolsPanel() {
     }
     if (state.isToggled) {
       stopInterval();
-      autoChatBtn_2.textContent = "Enable Auto Chat";
-      autoChatBtn_2.style.color = "#ff4d4d";
+      autoChatBtn_o0p.textContent = "Enable Auto Chat";
+      autoChatBtn_o0p.style.color = "#ff4d4d";
     } else {
       startScheduledTask(chatMessageText, delayValue);
-      autoChatBtn_2.textContent = "Disable Auto Chat";
-      autoChatBtn_2.style.color = "#4dff4d";
+      autoChatBtn_o0p.textContent = "Disable Auto Chat";
+      autoChatBtn_o0p.style.color = "#4dff4d";
     }
   };
   let offsetX;
@@ -263,7 +263,7 @@ function initPlusPanel() {
   };
   const thresherBtn = plusPanelElement.querySelector("#thresherBtn");
   thresherBtn.onclick = () => {
-    if (isProcessed_3) {
+    if (isProcessed_t1s) {
       showToast("Thresher Super Boost is already active!");
       return;
     }

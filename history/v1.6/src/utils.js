@@ -125,10 +125,10 @@ function getNearbyEntities() {
       (entityA, entityB) => entityA.distance - entityB.distance,
     );
     gameData.players.sort(
-      (entityA_2, entityB_2) => entityA_2.distance - entityB_2.distance,
+      (entityA_edv, entityB_f6f) => entityA_edv.distance - entityB_f6f.distance,
     );
     gameData.food.sort(
-      (entityA_3, otherItem) => entityA_3.distance - otherItem.distance,
+      (entityA_e8a, otherItem) => entityA_e8a.distance - otherItem.distance,
     );
     return gameData;
   } catch (error) {

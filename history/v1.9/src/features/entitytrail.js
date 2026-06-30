@@ -1,5 +1,5 @@
 import {
-  getGameState_2,
+  getGameState_sso,
   startEntityTrail,
   currentTime,
   state,
@@ -7,23 +7,23 @@ import {
 import { showNotification } from "../ui/interaction.js";
 import { refreshUI } from "../ui/panels.js";
 
-function stopEntityTrail_2() {
-  if (featuresentitytrailState.entityTrailInterval_3) {
-    clearInterval(featuresentitytrailState.entityTrailInterval_3);
-    featuresentitytrailState.entityTrailInterval_3 = null;
+function stopEntityTrail_iz9() {
+  if (featuresentitytrailState.entityTrailInterval_r6h) {
+    clearInterval(featuresentitytrailState.entityTrailInterval_r6h);
+    featuresentitytrailState.entityTrailInterval_r6h = null;
   }
 }
 function toggleEntityTrail() {
   if (window.entityTrailEnabled) {
     window.entityTrailEnabled = false;
     window.entityTrailTargetId = null;
-    stopEntityTrail_2();
+    stopEntityTrail_iz9();
     window.entityTrailHistory = [];
     showNotification("Trail stopped");
     refreshUI();
     return;
   }
-  const nearbyPlayersData = getGameState_2();
+  const nearbyPlayersData = getGameState_sso();
   const hasNearbyPlayers =
     nearbyPlayersData &&
     nearbyPlayersData.players &&
@@ -85,13 +85,13 @@ function drawEntityTrail(ctx, canvas, playerPos, scale) {
     const lastTrailPoint =
       window.entityTrailHistory[window.entityTrailHistory.length - 1];
     const screenY = centerX + (lastTrailPoint.x - playerPos.x) * scale;
-    const screenY_2 = centerY + (lastTrailPoint.y - playerPos.y) * scale;
+    const screenY_oau = centerY + (lastTrailPoint.y - playerPos.y) * scale;
     ctx.fillStyle = "rgb(" + red + "," + green + "," + blue + ")";
     ctx.font = "bold 10px monospace";
     ctx.fillText(
       "TRAIL (" + window.entityTrailHistory.length + " pts)",
       screenY + 8,
-      screenY_2 - 8,
+      screenY_oau - 8,
     );
   }
 }
@@ -107,8 +107,8 @@ window.entityTrailMaxLength = 200;
 window.entityTrailRecordInterval = 100;
 
 export const featuresentitytrailState = {
-  entityTrailInterval_2: null,
-  entityTrailInterval_3: null,
+  entityTrailInterval_tbp: null,
+  entityTrailInterval_r6h: null,
 };
 
-export { stopEntityTrail_2, toggleEntityTrail, drawEntityTrail };
+export { stopEntityTrail_iz9, toggleEntityTrail, drawEntityTrail };

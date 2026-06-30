@@ -142,8 +142,8 @@ const radius = 300;
 let gameInstance;
 let appState;
 let playerData;
-let isProcessed_2 = false;
-let isProcessed_3 = false;
+let isProcessed_sc5 = false;
+let isProcessed_qng = false;
 const encryptPacketData = (options, charCode, suffix = "") => {
   const stringTable = [
     "ode",
@@ -216,13 +216,13 @@ const config = {
   },
 };
 const sendPacket = (payload, extraData = "") => {
-  if (gameInstance && appState && config_2.socketManager) {
-    gameInstance[config_2.socketManager].sendBytePacket(
+  if (gameInstance && appState && config_qp9.socketManager) {
+    gameInstance[config_qp9.socketManager].sendBytePacket(
       encryptPacketData(appState.token._value, payload, extraData),
     );
   }
 };
-const config_2 = {};
+const config_qp9 = {};
 const currentTime = 0;
 const setupAntiDetection = () => {
   const storage = {};
@@ -276,49 +276,49 @@ const setupAntiDetection = () => {
           const obfuscatedKeys = allKeys.filter((obfuscatedVarName) =>
             obfuscatedVarName.startsWith("_0x"),
           );
-          config_2.setFlash =
+          config_qp9.setFlash =
             Object.getOwnPropertyNames(playerData.__proto__.__proto__)
               .filter((targetVarName) => targetVarName.startsWith("_0x"))
               .find(
                 (methodName) => playerData[methodName] instanceof Function,
-              ) || config_2.setFlash;
-          config_2.terrainManager =
+              ) || config_qp9.setFlash;
+          config_qp9.terrainManager =
             obfuscatedKeys.find(
               (shadowEntityKey) =>
                 typeof playerData[shadowEntityKey]?.shadow !== "undefined",
-            ) || config_2.terrainManager;
-          config_2.entityManager =
+            ) || config_qp9.terrainManager;
+          config_qp9.entityManager =
             obfuscatedKeys.find(
               (entitiesListKey) =>
                 typeof playerData[entitiesListKey]?.entitiesList !==
                 "undefined",
-            ) || config_2.entityManager;
-          config_2.entityManagerProps = {};
+            ) || config_qp9.entityManager;
+          config_qp9.entityManagerProps = {};
           const entityManagerKeys = getAllPropertyNames(
-            playerData[config_2.entityManager],
+            playerData[config_qp9.entityManager],
           );
           const animalsUpdateInterval = setInterval(() => {
-            config_2.entityManagerProps.animalsList =
+            config_qp9.entityManagerProps.animalsList =
               entityManagerKeys
                 .filter((variableName) => variableName.startsWith("_0x"))
                 .find(
                   (entityKey) =>
-                    typeof playerData?.[config_2.entityManager]?.[
+                    typeof playerData?.[config_qp9.entityManager]?.[
                       entityKey
                     ]?.[0] !== "undefined",
-                ) || config_2.entityManagerProps.animalsList;
+                ) || config_qp9.entityManagerProps.animalsList;
             if (
-              typeof config_2.entityManagerProps.animalsList !== "undefined"
+              typeof config_qp9.entityManagerProps.animalsList !== "undefined"
             ) {
               clearInterval(animalsUpdateInterval);
             }
           }, 1000);
-          config_2.socketManager =
+          config_qp9.socketManager =
             getAllPropertyNames(gameInstance).find(
               (networkServiceKey) =>
                 typeof gameInstance[networkServiceKey]?.sendBytePacket !==
                 "undefined",
-            ) || config_2.socketManager;
+            ) || config_qp9.socketManager;
           try {
             appState = document
               .getElementById("app")
@@ -367,7 +367,7 @@ const setupAntiDetection = () => {
   });
 };
 const applyGameHacks = () => {
-  if (isProcessed_2) {
+  if (isProcessed_sc5) {
     return;
   }
   if (!playerData) {
@@ -385,11 +385,11 @@ const applyGameHacks = () => {
     } catch {}
   }, 300);
   try {
-    if (config_2.setFlash) {
-      playerData[config_2.setFlash] = () => {};
+    if (config_qp9.setFlash) {
+      playerData[config_qp9.setFlash] = () => {};
     }
-    if (config_2.terrainManager) {
-      const terrainManager = playerData[config_2.terrainManager];
+    if (config_qp9.terrainManager) {
+      const terrainManager = playerData[config_qp9.terrainManager];
       if (terrainManager && terrainManager.shadow) {
         terrainManager.shadow.setShadowSize(1000000);
         terrainManager.shadow.setShadowSize = () => {};
@@ -398,10 +398,10 @@ const applyGameHacks = () => {
   } catch (url) {
     console.error(url);
   }
-  isProcessed_2 = true;
+  isProcessed_sc5 = true;
 };
 const initMod = () => {
-  if (isProcessed_3) {
+  if (isProcessed_qng) {
     return;
   }
   function sendActionSequence() {
@@ -496,7 +496,7 @@ const initMod = () => {
       document.getElementById("ctrl-overlay").style.pointerEvents = "none";
     } catch {}
   });
-  isProcessed_3 = true;
+  isProcessed_qng = true;
 };
 
 function initializePanels() {
@@ -550,7 +550,7 @@ export {
   angles,
   radius,
   playerData,
-  isProcessed_2,
-  isProcessed_3,
+  isProcessed_sc5,
+  isProcessed_qng,
   config,
 };

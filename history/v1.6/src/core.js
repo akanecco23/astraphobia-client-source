@@ -9,7 +9,7 @@ import {
   generatePatrolPoints,
   startAutoFarmLoop,
 } from "./features/autofarm.js";
-import { renderEspLoop, trackPlayer, toggleEsp_2 } from "./features/esp.js";
+import { renderEspLoop, trackPlayer, toggleEsp_sdk } from "./features/esp.js";
 import { applyTheme, initBackground, injectStyles } from "./ui/theme.js";
 import { showToast, restoreUIInteractivity } from "./ui/interaction.js";
 import { calculateDistance, getAllPropertyNames } from "./utils.js";
@@ -25,9 +25,9 @@ function wrapWithProxy(targetObject, propertyKey, handler) {
   targetObject[propertyKey] = proxyValue;
 }
 let currentTime = 0;
-let isProcessed_2 = false;
+let isProcessed_ln9 = false;
 function hookTextEncoder() {
-  if (isProcessed_2) {
+  if (isProcessed_ln9) {
     return;
   }
   function unescapeString(inputString) {
@@ -134,7 +134,7 @@ function hookTextEncoder() {
     childList: true,
     subtree: true,
   });
-  isProcessed_2 = true;
+  isProcessed_ln9 = true;
   showToast("Special characters enabled");
 }
 const angles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
@@ -143,7 +143,7 @@ const offsetValue = 400;
 let gameInstance;
 let appState;
 let playerData;
-let isProcessed_3 = false;
+let isProcessed_skx = false;
 const config = {};
 function getGameState() {
   try {
@@ -304,7 +304,7 @@ const tickInterval = 600;
 const deltaThreshold = 800;
 const maxFailCount = 2;
 const timeoutLimit = 20000;
-function isAreaSkipped_2(x, y) {
+function isAreaSkipped_sc8(x, y) {
   const currentTime = Date.now();
   window.autoFarmSkipAreas = window.autoFarmSkipAreas.filter(
     (timerState) => currentTime - timerState.time < timeoutLimit,
@@ -326,22 +326,22 @@ function initAutoFarm(farmMode) {
   window.autoFarmSkipIds.clear();
   window.autoFarmSkipAreas = [];
   window.autoFarmSkipClearTime = Date.now();
-  state.position_2 = null;
-  state.counter_3 = 0;
-  state.counter_4 = 0;
-  state.counter_2 = 0;
+  state.position_t9s = null;
+  state.counter_sm3 = 0;
+  state.counter_tkq = 0;
+  state.counter_agp = 0;
   if (farmMode === "patrol") {
     generatePatrolPoints();
   }
   showToast("Auto farm started (" + window.autoFarmMode + ")");
   startAutoFarmLoop();
 }
-let isProcessed_5 = false;
+let isProcessed_k73 = false;
 const initializeAntiDetection = () => {
-  if (isProcessed_5) {
+  if (isProcessed_k73) {
     return;
   }
-  isProcessed_5 = true;
+  isProcessed_k73 = true;
   const cache = {};
   for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
     cache[propertyKey] = Reflect[propertyKey];
@@ -461,7 +461,7 @@ const initializeAntiDetection = () => {
   });
 };
 const initializeViewportSettings = () => {
-  if (isProcessed_3) {
+  if (isProcessed_skx) {
     return;
   }
   if (!playerData) {
@@ -492,14 +492,14 @@ const initializeViewportSettings = () => {
   } catch (url) {
     console.error(url);
   }
-  isProcessed_3 = true;
+  isProcessed_skx = true;
 };
-let isProcessed_6 = false;
+let isProcessed_sby = false;
 function initializeClient() {
-  if (isProcessed_6) {
+  if (isProcessed_sby) {
     return;
   }
-  isProcessed_6 = true;
+  isProcessed_sby = true;
   setTimeout(() => {
     injectStyles();
     const myY = localStorage.getItem("theme") || "grey";
@@ -513,7 +513,7 @@ function initializeClient() {
     restoreUIInteractivity();
     initRadarDrag();
     renderEspLoop();
-    state.isProcessed_4 = true;
+    state.isProcessed_rdh = true;
     autoDodgeLoop();
   }, 1000);
 }
@@ -539,26 +539,26 @@ document.addEventListener(
   },
   true,
 );
-document.addEventListener("keydown", (event_2) => {
-  if (event_2.target.matches("input,textarea,select")) {
+document.addEventListener("keydown", (event_4pb) => {
+  if (event_4pb.target.matches("input,textarea,select")) {
     return;
   }
-  if (event_2.key === "F3") {
-    event_2.preventDefault();
+  if (event_4pb.key === "F3") {
+    event_4pb.preventDefault();
     trackPlayer();
   }
-  if (event_2.key === "F4") {
-    event_2.preventDefault();
-    toggleEsp_2();
+  if (event_4pb.key === "F4") {
+    event_4pb.preventDefault();
+    toggleEsp_sdk();
   }
 });
-document.addEventListener("keydown", (event_4) => {
+document.addEventListener("keydown", (event_4kz) => {
   if (
-    event_4.key === state.activeKey &&
-    !event_4.repeat &&
-    !event_4.target.matches("input,textarea,button,select")
+    event_4kz.key === state.activeKey &&
+    !event_4kz.repeat &&
+    !event_4kz.target.matches("input,textarea,button,select")
   ) {
-    event_4.preventDefault();
+    event_4kz.preventDefault();
     toggleUiVisibility();
   }
 });
@@ -576,15 +576,15 @@ export const state = {
   angleIndex: 0,
   keyQ: "q",
   keyE: "e",
-  isToggled_2: false,
-  isProcessed_4: false,
+  isToggled_sak: false,
+  isProcessed_rdh: false,
   position: null,
   counter: 0,
   dataList: [],
-  counter_2: 0,
-  position_2: null,
-  counter_3: 0,
-  counter_4: 0,
+  counter_agp: 0,
+  position_t9s: null,
+  counter_sm3: 0,
+  counter_tkq: 0,
   activeKey: "Shift",
 };
 export {
@@ -596,7 +596,7 @@ export {
   getEntityPosition,
   calculateDirection,
   findEntityById,
-  isAreaSkipped_2,
+  isAreaSkipped_sc8,
   initAutoFarm,
   initializeAntiDetection,
   initializeViewportSettings,
@@ -607,7 +607,7 @@ export {
   offsetValue,
   gameInstance,
   playerData,
-  isProcessed_3,
+  isProcessed_skx,
   config,
   dragState,
   tickInterval,

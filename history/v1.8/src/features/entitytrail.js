@@ -12,17 +12,17 @@ import {
 import { showNotification } from "../ui/interaction.js";
 import { refreshUI } from "../ui/panels.js";
 
-function stopEntityTrail_2() {
-  if (featuresentitytrailState.entityTrailInterval_3) {
-    clearInterval(featuresentitytrailState.entityTrailInterval_3);
-    featuresentitytrailState.entityTrailInterval_3 = null;
+function stopEntityTrail_sl0() {
+  if (featuresentitytrailState.entityTrailInterval_rf6) {
+    clearInterval(featuresentitytrailState.entityTrailInterval_rf6);
+    featuresentitytrailState.entityTrailInterval_rf6 = null;
   }
 }
 function toggleEntityTrail() {
   if (window.entityTrailEnabled) {
     window.entityTrailEnabled = false;
     window.entityTrailTargetId = null;
-    stopEntityTrail_2();
+    stopEntityTrail_sl0();
     window.entityTrailHistory = [];
     showNotification("Trail stopped");
     refreshUI();
@@ -90,13 +90,14 @@ function drawEntityTrail(ctx, canvas, originPos, zoomScale) {
     const lastTrailPoint =
       window.entityTrailHistory[window.entityTrailHistory.length - 1];
     const screenY = halfWidth + (lastTrailPoint.x - originPos.x) * zoomScale;
-    const screenY_2 = halfHeight + (lastTrailPoint.y - originPos.y) * zoomScale;
+    const screenY_vbc =
+      halfHeight + (lastTrailPoint.y - originPos.y) * zoomScale;
     ctx.fillStyle = "rgb(" + red + "," + green + "," + blue + ")";
     ctx.font = "bold 10px monospace";
     ctx.fillText(
       "TRAIL (" + window.entityTrailHistory.length + " pts)",
       screenY + 8,
-      screenY_2 - 8,
+      screenY_vbc - 8,
     );
   }
 }
@@ -122,8 +123,13 @@ window.entityTrailMaxLength = 200;
 window.entityTrailRecordInterval = 100;
 
 export const featuresentitytrailState = {
-  entityTrailInterval_2: null,
-  entityTrailInterval_3: null,
+  entityTrailInterval_sje: null,
+  entityTrailInterval_rf6: null,
 };
 
-export { stopEntityTrail_2, toggleEntityTrail, drawEntityTrail, renderOverlay };
+export {
+  stopEntityTrail_sl0,
+  toggleEntityTrail,
+  drawEntityTrail,
+  renderOverlay,
+};

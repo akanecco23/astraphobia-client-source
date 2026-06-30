@@ -4,7 +4,7 @@ function startScheduledTask(taskData, intervalSeconds) {
   if (state.entityTrailInterval) {
     clearInterval(state.entityTrailInterval);
   }
-  state.isToggled_2 = true;
+  state.isToggled_t9m = true;
   state.entityTrailInterval = setInterval(() => {
     simulateChatInput(taskData);
   }, intervalSeconds * 1000);
@@ -14,7 +14,7 @@ function stopInterval() {
     clearInterval(state.entityTrailInterval);
     state.entityTrailInterval = null;
   }
-  state.isToggled_2 = false;
+  state.isToggled_t9m = false;
 }
 function simulateChatInput(textToType) {
   const chatInput =

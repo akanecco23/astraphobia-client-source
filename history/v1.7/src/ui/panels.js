@@ -1,9 +1,9 @@
 import {
   toggleEsp,
   trackPlayer,
-  toggleEsp_2,
+  toggleEsp_tia,
   toggleMinimapSize,
-  toggleEsp_3,
+  toggleEsp_sl0,
 } from "../features/esp.js";
 import {
   radius,
@@ -116,9 +116,9 @@ function makeDraggable(element) {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   });
-  element.addEventListener("click", (event_2) => {
+  element.addEventListener("click", (event_v9h) => {
     if (hasMoved) {
-      event_2.stopImmediatePropagation();
+      event_v9h.stopImmediatePropagation();
     }
   });
 }
@@ -146,9 +146,9 @@ function createToolsPanel() {
   };
   const spinButton = toolsPanel.querySelector("#autoChatBtn");
   spinButton.onclick = () => {
-    const chatMessage_2 = toolsPanel.querySelector("#chatMsg").value;
+    const chatMessage_axv = toolsPanel.querySelector("#chatMsg").value;
     const delay = parseInt(toolsPanel.querySelector("#delayInput").value) || 10;
-    if (!chatMessage_2) {
+    if (!chatMessage_axv) {
       showNotification("Enter a message first");
       return;
     }
@@ -157,7 +157,7 @@ function createToolsPanel() {
       spinButton.textContent = "Auto Chat";
       spinButton.classList.remove("toggle-on");
     } else {
-      startScheduledTask(chatMessage_2, delay);
+      startScheduledTask(chatMessage_axv, delay);
       spinButton.textContent = "Stop Chat";
       spinButton.classList.add("toggle-on");
     }
@@ -179,15 +179,16 @@ function createToolsPanel() {
       showNotification("No name input found");
     }
   };
-  const spinButton_2 = toolsPanel.querySelector("#spinBtn");
-  spinButton_2.onclick = () => {
+  const spinButton_t2b = toolsPanel.querySelector("#spinBtn");
+  spinButton_t2b.onclick = () => {
     toggleMouseSimulation();
-    spinButton_2.textContent = featuresentitytrailState.entityTrailInterval_2
-      ? "Stop Spin"
-      : "Auto Spin";
-    spinButton_2.classList.toggle(
+    spinButton_t2b.textContent =
+      featuresentitytrailState.entityTrailInterval_rdg
+        ? "Stop Spin"
+        : "Auto Spin";
+    spinButton_t2b.classList.toggle(
       "toggle-on",
-      !!featuresentitytrailState.entityTrailInterval_2,
+      !!featuresentitytrailState.entityTrailInterval_rdg,
     );
   };
   const turnRightKeyInput = toolsPanel.querySelector("#spinKeyInput");
@@ -205,32 +206,33 @@ function createToolsPanel() {
     ) {
       keyupEvent.preventDefault();
       toggleMouseSimulation();
-      spinButton_2.textContent = featuresentitytrailState.entityTrailInterval_2
-        ? "Stop Spin"
-        : "Auto Spin";
-      spinButton_2.classList.toggle(
+      spinButton_t2b.textContent =
+        featuresentitytrailState.entityTrailInterval_rdg
+          ? "Stop Spin"
+          : "Auto Spin";
+      spinButton_t2b.classList.toggle(
         "toggle-on",
-        !!featuresentitytrailState.entityTrailInterval_2,
+        !!featuresentitytrailState.entityTrailInterval_rdg,
       );
     }
   });
-  const turnRightKeyInput_2 = toolsPanel.querySelector("#turnLeftKeyInput");
-  const turnRightKeyInput_3 = toolsPanel.querySelector("#turnRightKeyInput");
-  turnRightKeyInput_2.value = state.keyQ.toUpperCase();
-  turnRightKeyInput_3.value = state.keyE.toUpperCase();
-  turnRightKeyInput_2.addEventListener("keydown", (event) => {
+  const turnRightKeyInput_uix = toolsPanel.querySelector("#turnLeftKeyInput");
+  const turnRightKeyInput_uh3 = toolsPanel.querySelector("#turnRightKeyInput");
+  turnRightKeyInput_uix.value = state.keyQ.toUpperCase();
+  turnRightKeyInput_uh3.value = state.keyE.toUpperCase();
+  turnRightKeyInput_uix.addEventListener("keydown", (event) => {
     event.preventDefault();
     event.stopPropagation();
     state.keyQ = event.key;
-    turnRightKeyInput_2.value =
+    turnRightKeyInput_uix.value =
       event.key.length === 1 ? event.key.toUpperCase() : event.key;
   });
-  turnRightKeyInput_3.addEventListener("keydown", (event_2) => {
-    event_2.preventDefault();
-    event_2.stopPropagation();
-    state.keyE = event_2.key;
-    turnRightKeyInput_3.value =
-      event_2.key.length === 1 ? event_2.key.toUpperCase() : event_2.key;
+  turnRightKeyInput_uh3.addEventListener("keydown", (event_98m) => {
+    event_98m.preventDefault();
+    event_98m.stopPropagation();
+    state.keyE = event_98m.key;
+    turnRightKeyInput_uh3.value =
+      event_98m.key.length === 1 ? event_98m.key.toUpperCase() : event_98m.key;
   });
   makeDraggable(toolsPanel);
   return toolsPanel;
@@ -257,7 +259,7 @@ function createVisionPanel() {
   };
   const astraVisionBtn = visionPanel.querySelector("#astraVisionBtn");
   astraVisionBtn.onclick = () => {
-    if (state.isProcessed_3) {
+    if (state.isProcessed_rnh) {
       showNotification("Already active");
       return;
     }
@@ -271,14 +273,16 @@ function createVisionPanel() {
   espBtn.onclick = () => {
     initAntiTamper();
     toggleMinimapSize();
-    espBtn.textContent = state.isToggled_2 ? "Minimap: Small" : "Small Minimap";
-    espBtn.classList.toggle("toggle-on", state.isToggled_2);
+    espBtn.textContent = state.isToggled_r8c
+      ? "Minimap: Small"
+      : "Small Minimap";
+    espBtn.classList.toggle("toggle-on", state.isToggled_r8c);
   };
-  const espBtn_2 = visionPanel.querySelector("#espBtn");
-  espBtn_2.onclick = () => {
+  const espBtn_x1p = visionPanel.querySelector("#espBtn");
+  espBtn_x1p.onclick = () => {
     toggleEsp();
-    espBtn_2.textContent = window.espEnabled ? "ESP ✓" : "ESP";
-    espBtn_2.classList.toggle("toggle-on", window.espEnabled);
+    espBtn_x1p.textContent = window.espEnabled ? "ESP ✓" : "ESP";
+    espBtn_x1p.classList.toggle("toggle-on", window.espEnabled);
   };
   const espModeSelect = visionPanel.querySelector("#espModeSelect");
   espModeSelect.value = window.espMode || "players";
@@ -287,15 +291,15 @@ function createVisionPanel() {
     showNotification("ESP: " + changeEvent.target.value);
   };
   visionPanel.querySelector("#trackNearestBtn").onclick = () => trackPlayer();
-  visionPanel.querySelector("#untrackBtn").onclick = () => toggleEsp_2();
+  visionPanel.querySelector("#untrackBtn").onclick = () => toggleEsp_tia();
   const espColorsToggleBtn = visionPanel.querySelector("#espColorsToggleBtn");
-  const espColorsSection_2 = visionPanel.querySelector("#espColorsSection");
+  const espColorsSection_xk6 = visionPanel.querySelector("#espColorsSection");
   const espColorsArrow = visionPanel.querySelector("#espColorsArrow");
-  let isHidden_2 = false;
+  let isHidden_y6z = false;
   espColorsToggleBtn.onclick = () => {
-    isHidden_2 = !isHidden_2;
-    espColorsSection_2.style.display = isHidden_2 ? "block" : "none";
-    espColorsArrow.textContent = isHidden_2 ? "▲" : "▼";
+    isHidden_y6z = !isHidden_y6z;
+    espColorsSection_xk6.style.display = isHidden_y6z ? "block" : "none";
+    espColorsArrow.textContent = isHidden_y6z ? "▲" : "▼";
   };
   const eventInit = {
     espColorClose: "close",
@@ -392,7 +396,7 @@ function createAutomationPanel() {
   const autoDodgeButton = automationPanel.querySelector("#autoDodgeBtn");
   autoDodgeButton.onclick = () => {
     if (window.autoDodgeEnabled) {
-      toggleEsp_3();
+      toggleEsp_sl0();
       autoDodgeButton.textContent = "Auto Dodge";
       autoDodgeButton.classList.remove("toggle-on");
     } else {
@@ -425,16 +429,17 @@ function createAutomationPanel() {
     }
   };
   const farmAvoidToggle = automationPanel.querySelector("#farmBoostToggle");
-  const farmAvoidToggle_2 = automationPanel.querySelector("#farmEvolveToggle");
-  const farmAvoidToggle_3 = automationPanel.querySelector("#farmAvoidToggle");
+  const farmAvoidToggle_ovg =
+    automationPanel.querySelector("#farmEvolveToggle");
+  const farmAvoidToggle_qnq = automationPanel.querySelector("#farmAvoidToggle");
   farmAvoidToggle.checked = window.autoFarmBoost;
-  farmAvoidToggle_2.checked = window.autoFarmEvolve;
-  farmAvoidToggle_3.checked = window.autoFarmAvoidPlayers;
+  farmAvoidToggle_ovg.checked = window.autoFarmEvolve;
+  farmAvoidToggle_qnq.checked = window.autoFarmAvoidPlayers;
   farmAvoidToggle.onchange = (boostEvent) =>
     (window.autoFarmBoost = boostEvent.target.checked);
-  farmAvoidToggle_2.onchange = (evolveEvent) =>
+  farmAvoidToggle_ovg.onchange = (evolveEvent) =>
     (window.autoFarmEvolve = evolveEvent.target.checked);
-  farmAvoidToggle_3.onchange = (avoidPlayersEvent) =>
+  farmAvoidToggle_qnq.onchange = (avoidPlayersEvent) =>
     (window.autoFarmAvoidPlayers = avoidPlayersEvent.target.checked);
   makeDraggable(automationPanel);
   return automationPanel;

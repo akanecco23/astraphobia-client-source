@@ -1,8 +1,8 @@
 import { musicPlaylist, currentTime, state } from "../core.js";
 import { showNotification } from "./interaction.js";
 
-let isProcessed_3 = false;
-let isProcessed_4 = false;
+let isProcessed_s4h = false;
+let isProcessed_rux = false;
 function isYouTubeUrl(url) {
   return /(?:youtube\.com|youtu\.be)/i.test(url || "");
 }
@@ -30,7 +30,7 @@ function extractYouTubeId(url) {
   return null;
 }
 function ensureYouTubeApiReady(callback) {
-  if (isProcessed_3 && window.YT && window.YT.Player) {
+  if (isProcessed_s4h && window.YT && window.YT.Player) {
     callback();
     return;
   }
@@ -38,10 +38,10 @@ function ensureYouTubeApiReady(callback) {
     window._astYtReadyCallbacks = [];
   }
   window._astYtReadyCallbacks.push(callback);
-  if (isProcessed_4) {
+  if (isProcessed_rux) {
     return;
   }
-  isProcessed_4 = true;
+  isProcessed_rux = true;
   if (!document.getElementById("ast-yt-api")) {
     const scriptElement = document.createElement("script");
     scriptElement.id = "ast-yt-api";
@@ -50,7 +50,7 @@ function ensureYouTubeApiReady(callback) {
   }
   const originalReadyHandler = window.onYouTubeIframeAPIReady;
   window.onYouTubeIframeAPIReady = function () {
-    isProcessed_3 = true;
+    isProcessed_s4h = true;
     if (typeof originalReadyHandler === "function") {
       try {
         originalReadyHandler();
@@ -117,7 +117,7 @@ function playYouTubeVideo(videoId) {
             return;
           }
           if (ytPlayerEvent.data === YT.PlayerState.ENDED) {
-            if (state.isMusicShuffleEnabled_2) {
+            if (state.isMusicShuffleEnabled_rdv) {
               playTrack(Math.floor(Math.random() * musicPlaylist.length));
             } else if (state.isMusicShuffleEnabled) {
               playTrack(state.currentTrackIndex + 1);
@@ -187,7 +187,7 @@ function playTrack(trackIndex) {
     showNotification("Cannot play audio URL");
   });
   state.audioPlayer.onended = () => {
-    if (state.isMusicShuffleEnabled_2) {
+    if (state.isMusicShuffleEnabled_rdv) {
       playTrack(Math.floor(Math.random() * musicPlaylist.length));
     } else if (state.isMusicShuffleEnabled) {
       playTrack(state.currentTrackIndex + 1);
@@ -249,7 +249,7 @@ function playNextOrRandom() {
     return;
   }
   playTrack(
-    state.isMusicShuffleEnabled_2
+    state.isMusicShuffleEnabled_rdv
       ? Math.floor(Math.random() * musicPlaylist.length)
       : state.currentTrackIndex + 1,
   );
@@ -305,7 +305,7 @@ function updateMusicPanel() {
     loopBtn.classList.toggle("toggle-on", state.isMusicShuffleEnabled);
   }
   if (shuffleBtn) {
-    shuffleBtn.classList.toggle("toggle-on", state.isMusicShuffleEnabled_2);
+    shuffleBtn.classList.toggle("toggle-on", state.isMusicShuffleEnabled_rdv);
   }
   if (trackNameDisplay) {
     trackNameDisplay.textContent = musicPlaylist.length

@@ -143,7 +143,7 @@ const radius = 300;
 let gameInstance;
 let appState;
 let playerData;
-let isProcessed_2 = false;
+let isProcessed_jat = false;
 
 const encryptPacketData = (url, byteValue, suffix = "") => {
   const stringPool = [
@@ -215,13 +215,13 @@ const config = {
   },
 };
 const sendPacket = (payload, metadata = "") => {
-  if (gameInstance && appState && config_2.socketManager) {
-    gameInstance[config_2.socketManager].sendBytePacket(
+  if (gameInstance && appState && config_rl9.socketManager) {
+    gameInstance[config_rl9.socketManager].sendBytePacket(
       encryptPacketData(appState.token._value, payload, metadata),
     );
   }
 };
-const config_2 = {};
+const config_rl9 = {};
 const currentTime = 0;
 const setupProxyHooks = () => {
   const propertyCache = {};
@@ -281,51 +281,51 @@ const setupProxyHooks = () => {
           const obfuscatedKeys = allKeys.filter((obfuscatedVarName) =>
             obfuscatedVarName.startsWith("_0x"),
           );
-          config_2.setFlash =
+          config_rl9.setFlash =
             Object.getOwnPropertyNames(playerData.__proto__.__proto__)
               .filter((obfuscatedPropName) =>
                 obfuscatedPropName.startsWith("_0x"),
               )
               .find(
                 (functionKey) => playerData[functionKey] instanceof Function,
-              ) || config_2.setFlash;
-          config_2.terrainManager =
+              ) || config_rl9.setFlash;
+          config_rl9.terrainManager =
             obfuscatedKeys.find(
               (shadowObjectKey) =>
                 typeof playerData[shadowObjectKey]?.shadow !== "undefined",
-            ) || config_2.terrainManager;
-          config_2.entityManager =
+            ) || config_rl9.terrainManager;
+          config_rl9.entityManager =
             obfuscatedKeys.find(
               (entitiesListKey) =>
                 typeof playerData[entitiesListKey]?.entitiesList !==
                 "undefined",
-            ) || config_2.entityManager;
-          config_2.entityManagerProps = {};
+            ) || config_rl9.entityManager;
+          config_rl9.entityManagerProps = {};
           const entityManagerKeys = getAllPropertyNames(
-            playerData[config_2.entityManager],
+            playerData[config_rl9.entityManager],
           );
           const animalsListInterval = setInterval(() => {
-            config_2.entityManagerProps.animalsList =
+            config_rl9.entityManagerProps.animalsList =
               entityManagerKeys
                 .filter((variableName) => variableName.startsWith("_0x"))
                 .find(
                   (entityName) =>
-                    typeof playerData?.[config_2.entityManager]?.[
+                    typeof playerData?.[config_rl9.entityManager]?.[
                       entityName
                     ]?.[0] !== "undefined",
-                ) || config_2.entityManagerProps.animalsList;
+                ) || config_rl9.entityManagerProps.animalsList;
             if (
-              typeof config_2.entityManagerProps.animalsList !== "undefined"
+              typeof config_rl9.entityManagerProps.animalsList !== "undefined"
             ) {
               clearInterval(animalsListInterval);
             }
           }, 1000);
-          config_2.socketManager =
+          config_rl9.socketManager =
             getAllPropertyNames(gameInstance).find(
               (networkClientKey) =>
                 typeof gameInstance[networkClientKey]?.sendBytePacket !==
                 "undefined",
-            ) || config_2.socketManager;
+            ) || config_rl9.socketManager;
           try {
             appState = document
               .getElementById("app")
@@ -374,7 +374,7 @@ const setupProxyHooks = () => {
   });
 };
 const disableGameRestrictions = () => {
-  if (isProcessed_2) {
+  if (isProcessed_jat) {
     return;
   }
   if (!playerData) {
@@ -392,20 +392,20 @@ const disableGameRestrictions = () => {
     } catch {}
   }, 300);
   try {
-    if (config_2.setFlash) {
-      playerData[config_2.setFlash] = () => {};
+    if (config_rl9.setFlash) {
+      playerData[config_rl9.setFlash] = () => {};
     }
-    if (config_2.terrainManager) {
-      const terrainManager = playerData[config_2.terrainManager];
+    if (config_rl9.terrainManager) {
+      const terrainManager = playerData[config_rl9.terrainManager];
       if (terrainManager && terrainManager.shadow) {
         terrainManager.shadow.setShadowSize(1000000);
         terrainManager.shadow.setShadowSize = () => {};
       }
     }
-  } catch (url_2) {
-    console.error(url_2);
+  } catch (url_6bc) {
+    console.error(url_6bc);
   }
-  isProcessed_2 = true;
+  isProcessed_jat = true;
 };
 function setupToolsPanel() {
   const toolsStyle = document.createElement("style");
@@ -438,8 +438,8 @@ function setupToolsPanel() {
   };
   const spoofButton = container.querySelector("#patchBtn");
   spoofButton.onclick = () => initPacketInterceptor(spoofButton);
-  const spoofButton_2 = container.querySelector("#spoofBtn");
-  spoofButton_2.onclick = () => {
+  const spoofButton_x76 = container.querySelector("#spoofBtn");
+  spoofButton_x76.onclick = () => {
     const randomValue = generateRandomString(8);
     if (simulateTyping(".play-game .el-input__inner", randomValue)) {
       showNotification("Spoofed name!");
@@ -452,7 +452,7 @@ function setupToolsPanel() {
   const autoChatButton = container.querySelector("#spinBtn");
   autoChatButton.onclick = () => {
     toggleMouseSimulation();
-    if (featuresentitytrailState.entityTrailInterval_2) {
+    if (featuresentitytrailState.entityTrailInterval_qn3) {
       autoChatButton.textContent = "Disable Auto Spin";
       autoChatButton.style.color = "var(--accent)";
       autoChatButton.style.opacity = "0.6";
@@ -469,15 +469,15 @@ function setupToolsPanel() {
     lastPressedKey = keyboardEvent.code || keyboardEvent.key;
     spinKeyInput.value = lastPressedKey.replace("Key", "").toLowerCase();
   });
-  document.addEventListener("keydown", (keyboardEvent_2) => {
+  document.addEventListener("keydown", (keyboardEvent_epo) => {
     if (
       lastPressedKey &&
-      keyboardEvent_2.code === lastPressedKey &&
-      !keyboardEvent_2.target.matches("input, textarea, button")
+      keyboardEvent_epo.code === lastPressedKey &&
+      !keyboardEvent_epo.target.matches("input, textarea, button")
     ) {
-      keyboardEvent_2.preventDefault();
+      keyboardEvent_epo.preventDefault();
       toggleMouseSimulation();
-      if (featuresentitytrailState.entityTrailInterval_2) {
+      if (featuresentitytrailState.entityTrailInterval_qn3) {
         autoChatButton.textContent = "Disable Auto Spin";
         autoChatButton.style.color = "var(--accent)";
         autoChatButton.style.opacity = "0.6";
@@ -488,31 +488,31 @@ function setupToolsPanel() {
       }
     }
   });
-  const autoChatButton_2 = container.querySelector("#autoChatBtn");
-  autoChatButton_2.onclick = () => {
-    const chatMessage_2 = container.querySelector("#chatMsg").value;
+  const autoChatButton_wym = container.querySelector("#autoChatBtn");
+  autoChatButton_wym.onclick = () => {
+    const chatMessage_sbd = container.querySelector("#chatMsg").value;
     const delayInput = container.querySelector("#delayInput");
     const delayValue = parseInt(delayInput.value) || 10;
-    if (!chatMessage_2) {
+    if (!chatMessage_sbd) {
       showNotification("⚠️ Enter a message first!");
       return;
     }
     if (state.isToggled) {
       stopInterval();
-      autoChatButton_2.textContent = "Enable Auto Chat";
-      autoChatButton_2.style.color = "var(--accent)";
-      autoChatButton_2.style.opacity = "1";
+      autoChatButton_wym.textContent = "Enable Auto Chat";
+      autoChatButton_wym.style.color = "var(--accent)";
+      autoChatButton_wym.style.opacity = "1";
     } else {
-      startScheduledTask(chatMessage_2, delayValue);
-      autoChatButton_2.textContent = "Disable Auto Chat";
-      autoChatButton_2.style.color = "var(--accent)";
-      autoChatButton_2.style.opacity = "0.6";
+      startScheduledTask(chatMessage_sbd, delayValue);
+      autoChatButton_wym.textContent = "Disable Auto Chat";
+      autoChatButton_wym.style.color = "var(--accent)";
+      autoChatButton_wym.style.opacity = "0.6";
     }
   };
   let offsetX;
   let offsetY;
   let isActive = false;
-  let isActive_2 = false;
+  let isActive_xm1 = false;
   container.addEventListener("mousedown", (clickEvent) => {
     if (
       clickEvent.target.tagName === "BUTTON" ||
@@ -523,15 +523,15 @@ function setupToolsPanel() {
       return;
     }
     isActive = true;
-    isActive_2 = false;
+    isActive_xm1 = false;
     offsetX = clickEvent.clientX - container.getBoundingClientRect().left;
     offsetY = clickEvent.clientY - container.getBoundingClientRect().top;
     container.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
       const deltaX = mouseEvent.clientX - clickEvent.clientX;
       const deltaY = mouseEvent.clientY - clickEvent.clientY;
-      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isActive_2 = true;
+      if (!isActive_xm1 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+        isActive_xm1 = true;
       }
       if (isActive) {
         container.style.left = mouseEvent.clientX - offsetX + "px";
@@ -550,7 +550,7 @@ function setupToolsPanel() {
     document.addEventListener("mouseup", handleMouseUp);
   });
   container.addEventListener("click", (event) => {
-    if (isActive_2) {
+    if (isActive_xm1) {
       event.stopImmediatePropagation();
     }
   });
@@ -593,7 +593,7 @@ export const state = {
   entityTrailInterval: null,
   isToggled: false,
   angleIndex: 0,
-  isToggled_2: false,
+  isToggled_qpw: false,
   activeKey: "Shift",
 };
 
@@ -610,6 +610,6 @@ export {
   radius,
   gameInstance,
   playerData,
-  isProcessed_2,
+  isProcessed_jat,
   config,
 };

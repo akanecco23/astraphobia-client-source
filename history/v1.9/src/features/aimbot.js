@@ -2,9 +2,9 @@ import {
   getFirstAnimalPosition,
   getEntityPosition,
   findEntityById,
-  isProcessed_6,
+  isProcessed_s0n,
   angle,
-  getGameState_2,
+  getGameState_sso,
   currentTime,
   isValidEntity,
   getGameState,
@@ -19,7 +19,7 @@ import { moveAndClickTarget } from "./movement.js";
 import { updateLockButton } from "../ui/radar.js";
 
 function updateLockTarget() {
-  if (!isProcessed_6) {
+  if (!isProcessed_s0n) {
     return;
   }
   requestAnimationFrame(updateLockTarget);
@@ -95,7 +95,7 @@ function toggleLock() {
     window.lockTargetId = null;
     showNotification("Lock released");
   } else {
-    const gameState = getGameState_2();
+    const gameState = getGameState_sso();
     if (gameState && gameState.players && gameState.players.length > 0) {
       window.lockEnabled = true;
       window.lockTargetId = gameState.players[0].id;
@@ -108,9 +108,9 @@ function toggleLock() {
   }
   updateLockButton();
 }
-let previousTimestamp_2 = 0;
+let previousTimestamp_ss8 = 0;
 function autoDodgeLoop() {
-  if (!state.isProcessed_7) {
+  if (!state.isProcessed_roa) {
     return;
   }
   setTimeout(autoDodgeLoop, 80);
@@ -170,8 +170,8 @@ function autoDodgeLoop() {
     }
     const currentTime = Date.now();
     let isDodging = false;
-    if (currentTime - previousTimestamp_2 > 600) {
-      previousTimestamp_2 = currentTime;
+    if (currentTime - previousTimestamp_ss8 > 600) {
+      previousTimestamp_ss8 = currentTime;
       if (state.position) {
         const prevDist = calculateDistance(
           playerPos.x,
@@ -256,14 +256,14 @@ function autoDodgeLoop() {
         state.dataList = [];
       }
     }
-    const angle_2 = currentTime - state.previousTimestamp > deltaThreshold;
-    if (angle_2) {
+    const angle_joe = currentTime - state.previousTimestamp > deltaThreshold;
+    if (angle_joe) {
       state.previousTimestamp = currentTime;
     }
     moveAndClickTarget(
       playerPos.x + Math.cos(angle) * 2000,
       playerPos.y + Math.sin(angle) * 2000,
-      angle_2,
+      angle_joe,
     );
   } catch (data) {}
 }
@@ -272,8 +272,8 @@ function enableAutoDodge() {
   state.position = null;
   state.counter = 0;
   state.dataList = [];
-  if (!state.isProcessed_7) {
-    state.isProcessed_7 = true;
+  if (!state.isProcessed_roa) {
+    state.isProcessed_roa = true;
     autoDodgeLoop();
   }
   showNotification("Auto dodge enabled");

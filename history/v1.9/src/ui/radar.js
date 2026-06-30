@@ -125,7 +125,7 @@ function drawRadar(ctx, canvas, gameData) {
       const targetEntityPos = getEntityPosition(targetEntityId);
       if (targetEntityPos) {
         const deltaY = targetEntityPos.x - gameData.myPos.x;
-        const deltaY_2 = targetEntityPos.y - gameData.myPos.y;
+        const deltaY_l9z = targetEntityPos.y - gameData.myPos.y;
         const drawY = Math.max(
           radarX + 2,
           Math.min(
@@ -133,29 +133,29 @@ function drawRadar(ctx, canvas, gameData) {
             radarX + radarSize / 2 + deltaY * pixelPerUnit,
           ),
         );
-        const drawY_2 = Math.max(
+        const drawY_mb4 = Math.max(
           radarY + 2,
           Math.min(
             radarY + radarSize - 2,
-            radarY + radarSize / 2 + deltaY_2 * pixelPerUnit,
+            radarY + radarSize / 2 + deltaY_l9z * pixelPerUnit,
           ),
         );
         const alpha = Math.sin(Date.now() / 200) * 0.3 + 0.7;
-        const { r: red, g: blue, b: blue_2 } = window.entityTrailColor;
-        const rgbValue = red + "," + blue + "," + blue_2;
+        const { r: red, g: blue, b: blue_m3y } = window.entityTrailColor;
+        const rgbValue = red + "," + blue + "," + blue_m3y;
         ctx.strokeStyle = "rgba(" + rgbValue + "," + alpha + ")";
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(drawY, drawY_2, 7, 0, Math.PI * 2);
+        ctx.arc(drawY, drawY_mb4, 7, 0, Math.PI * 2);
         ctx.stroke();
         ctx.strokeStyle = "rgba(" + rgbValue + "," + alpha * 0.5 + ")";
         ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.arc(drawY, drawY_2, 10, 0, Math.PI * 2);
+        ctx.arc(drawY, drawY_mb4, 10, 0, Math.PI * 2);
         ctx.stroke();
         ctx.fillStyle = "rgb(" + rgbValue + ")";
         ctx.beginPath();
-        ctx.arc(drawY, drawY_2, 3, 0, Math.PI * 2);
+        ctx.arc(drawY, drawY_mb4, 3, 0, Math.PI * 2);
         ctx.fill();
         if (window.entityTrailHistory.length > 1) {
           ctx.strokeStyle = "rgba(" + rgbValue + ",0.3)";

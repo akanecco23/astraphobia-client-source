@@ -10,7 +10,7 @@ import { showToast } from "../ui/interaction.js";
 import { getGameCanvas } from "../utils.js";
 
 function startCircularMovement() {
-  if (featuresentitytrailState.entityTrailInterval_2) {
+  if (featuresentitytrailState.entityTrailInterval_rfg) {
     return;
   }
   const canvas = getGameCanvas();
@@ -18,7 +18,7 @@ function startCircularMovement() {
     showToast("Canvas not found");
     return;
   }
-  featuresentitytrailState.entityTrailInterval_2 = setInterval(() => {
+  featuresentitytrailState.entityTrailInterval_rfg = setInterval(() => {
     const angleDegrees = angles[state.angleIndex];
     const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
     const offsetX = Math.round(radius * Math.sin(angleRadians));
@@ -34,13 +34,13 @@ function startCircularMovement() {
   }, 15);
 }
 function stopEntityTrail() {
-  if (featuresentitytrailState.entityTrailInterval_2) {
-    clearInterval(featuresentitytrailState.entityTrailInterval_2);
-    featuresentitytrailState.entityTrailInterval_2 = null;
+  if (featuresentitytrailState.entityTrailInterval_rfg) {
+    clearInterval(featuresentitytrailState.entityTrailInterval_rfg);
+    featuresentitytrailState.entityTrailInterval_rfg = null;
   }
 }
 function toggleMouseSimulation() {
-  if (featuresentitytrailState.entityTrailInterval_2) {
+  if (featuresentitytrailState.entityTrailInterval_rfg) {
     stopEntityTrail();
   } else {
     startCircularMovement();

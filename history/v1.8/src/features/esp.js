@@ -346,11 +346,11 @@ function trackPlayer() {
     showNotification("No players nearby");
   }
 }
-function toggleEsp_2() {
+function toggleEsp_qot() {
   window.espTrackedEntityId = null;
   showNotification("Tracking cleared");
 }
-function toggleEsp_3() {
+function toggleEsp_slh() {
   window.autoDodgeEnabled = false;
   showNotification("Auto dodge disabled");
 }
@@ -359,15 +359,15 @@ function toggleMinimapSize() {
     showNotification("Minimap not available");
     return;
   }
-  if (state.isToggled_2) {
+  if (state.isToggled_sl0) {
     playerData.minimap.scale.set(1);
     playerData.minimap.pivot.set(0, 0);
-    state.isToggled_2 = false;
+    state.isToggled_sl0 = false;
     showNotification("Minimap restored");
   } else {
     playerData.minimap.scale.set(0.5);
     playerData.minimap.pivot.set(-70, -45);
-    state.isToggled_2 = true;
+    state.isToggled_sl0 = true;
     showNotification("Small minimap enabled");
   }
 }
@@ -378,7 +378,7 @@ export {
   renderEspLoop,
   toggleEsp,
   trackPlayer,
-  toggleEsp_2,
-  toggleEsp_3,
+  toggleEsp_qot,
+  toggleEsp_slh,
   toggleMinimapSize,
 };

@@ -2,7 +2,7 @@ Index: content.js
 ===================================================================
 --- content.js	v1.8
 +++ content.js	v1.9
-@@ -1,68 +1,92 @@
+@@ -1,109 +1,136 @@
  import {
 -  wrapWithProxy,
 -  interceptTextEncoder,
@@ -16,7 +16,7 @@ Index: content.js
    getEntityPosition,
    calculateDirection,
    findEntityById,
-+  getGameState_2,
++  getGameState_sso,
 +  getViewportScale,
    startEntityTrail,
 +  renderLoop,
@@ -32,13 +32,12 @@ Index: content.js
    offsetValue,
    gameInstance,
    playerData,
--  isProcessed_4,
-+  isProcessed_6,
+-  isProcessed_rjo,
++  isProcessed_s0n,
    dragState,
 -  tickInterval,
 +  maxDistance,
    deltaThreshold,
-+  maxDistance_2,
    maxFailCount,
    timeoutLimit,
 +  tickInterval,
@@ -115,9 +114,17 @@ Index: content.js
    drawEsp,
    drawTrackedEntity,
    renderEspLoop,
-@@ -75,35 +99,39 @@
+   toggleEsp,
+   trackPlayer,
+-  toggleEsp_qot,
+-  toggleEsp_slh,
++  toggleEsp_s2u,
++  toggleEsp_qmn,
+   toggleMinimapSize,
+ } from "./src/features/esp.js";
  import {
-   stopEntityTrail_2,
+-  stopEntityTrail_sl0,
++  stopEntityTrail_iz9,
    toggleEntityTrail,
    drawEntityTrail,
 -  renderOverlay,
@@ -192,7 +199,7 @@ Index: src/core.js
 ===================================================================
 --- src/core.js	v1.8
 +++ src/core.js	v1.9
-@@ -3,43 +3,44 @@
+@@ -3,54 +3,55 @@
    createVisionPanel,
    createCombatPanel,
    createAutomationPanel,
@@ -220,8 +227,9 @@ Index: src/core.js
    autoDodgeLoop,
    toggleLock,
  } from "./features/aimbot.js";
+-import { renderEspLoop, trackPlayer, toggleEsp_qot } from "./features/esp.js";
++import { renderEspLoop, trackPlayer, toggleEsp_s2u } from "./features/esp.js";
 +import { applyTheme, initBackgroundImage, injectStyles } from "./ui/theme.js";
- import { renderEspLoop, trackPlayer, toggleEsp_2 } from "./features/esp.js";
  import { setupPatrolPoints, autoFarmLoop } from "./features/autofarm.js";
 -import { applyTheme, initBackground, injectStyles } from "./ui/theme.js";
 -import { moveMouseSide } from "./features/movement.js";
@@ -241,14 +249,16 @@ Index: src/core.js
 +  targetObject[propertyName] = proxyValue;
  }
  let currentTime = 0;
- let isProcessed_2 = false;
+-let isProcessed_tbm = false;
 -function interceptTextEncoder() {
+-  if (isProcessed_tbm) {
++let isProcessed_rma = false;
 +function initNetworkInterceptor() {
-   if (isProcessed_2) {
++  if (isProcessed_rma) {
      return;
    }
    function unescapeString(inputString) {
-@@ -47,10 +48,10 @@
+     if (typeof inputString !== "string") {
        return inputString;
      }
      return inputString.replace(
@@ -342,9 +352,13 @@ Index: src/core.js
    const observer = new MutationObserver(() => {
      document
        .querySelector(".play-game .el-input__inner")
-@@ -146,15 +147,34 @@
+@@ -143,18 +144,37 @@
+   observer.observe(document.body, {
+     childList: true,
+     subtree: true,
    });
-   isProcessed_2 = true;
+-  isProcessed_tbm = true;
++  isProcessed_rma = true;
    showNotification("Special characters enabled");
  }
 +let musicPlaylist = JSON.parse(localStorage.getItem("musicPlaylist") || "[]");
@@ -377,7 +391,7 @@ Index: src/core.js
    try {
      if (playerData && playerData.myAnimals && playerData.myAnimals.length > 0) {
        return playerData;
-@@ -286,43 +306,120 @@
+@@ -286,55 +306,132 @@
    };
  }
  function findEntityById(entityId) {
@@ -432,8 +446,8 @@ Index: src/core.js
      return null;
    }
  }
--let isProcessed_4 = false;
-+function getGameState_2() {
+-let isProcessed_rjo = false;
++function getGameState_sso() {
 +  try {
 +    const stateData = getGameState();
 +    const parsedState = getEntityManager(stateData);
@@ -488,7 +502,7 @@ Index: src/core.js
 +    }
 +    gameState.players.sort((itemA, itemB) => itemA.distance - itemB.distance);
 +    gameState.food.sort(
-+      (itemA_2, itemB_2) => itemA_2.distance - itemB_2.distance,
++      (itemA_qk0, itemB_pvs) => itemA_qk0.distance - itemB_pvs.distance,
 +    );
 +    return gameState;
 +  } catch (error) {
@@ -508,23 +522,29 @@ Index: src/core.js
 +  } catch (error) {}
 +  return 0.554;
 +}
-+let isProcessed_6 = false;
++let isProcessed_s0n = false;
  function startEntityTrail() {
-   if (featuresentitytrailState.entityTrailInterval_3) {
-     clearInterval(featuresentitytrailState.entityTrailInterval_3);
-     featuresentitytrailState.entityTrailInterval_3 = null;
-@@ -332,9 +429,9 @@
+-  if (featuresentitytrailState.entityTrailInterval_rf6) {
+-    clearInterval(featuresentitytrailState.entityTrailInterval_rf6);
+-    featuresentitytrailState.entityTrailInterval_rf6 = null;
++  if (featuresentitytrailState.entityTrailInterval_r6h) {
++    clearInterval(featuresentitytrailState.entityTrailInterval_r6h);
++    featuresentitytrailState.entityTrailInterval_r6h = null;
+   }
+-  featuresentitytrailState.entityTrailInterval_rf6 = setInterval(() => {
++  featuresentitytrailState.entityTrailInterval_r6h = setInterval(() => {
+     if (!window.entityTrailEnabled || !window.entityTrailTargetId) {
        return;
      }
      const targetEntityId = findEntityById(window.entityTrailTargetId);
      if (!targetEntityId) {
 -      const gameData = getNearbyEntities();
-+      const gameData = getGameState_2();
++      const gameData = getGameState_sso();
        if (gameData && gameData.players && gameData.players.length > 0) {
          window.entityTrailTargetId = gameData.players[0].id;
        }
        return;
-@@ -365,19 +462,31 @@
+@@ -365,19 +462,30 @@
        window.entityTrailHistory.shift();
      }
    }, window.entityTrailRecordInterval);
@@ -549,7 +569,6 @@ Index: src/core.js
 -const tickInterval = 600;
 +const maxDistance = 600;
  const deltaThreshold = 800;
-+const maxDistance_2 = 400;
  const maxFailCount = 2;
  const timeoutLimit = 20000;
 +const tickInterval = 600;
@@ -557,37 +576,40 @@ Index: src/core.js
  function startAutoFarm(farmMode) {
    window.autoFarmMode = farmMode || "nearest";
    window.autoFarmActive = true;
-@@ -388,77 +497,76 @@
+@@ -387,78 +495,77 @@
+   window.autoFarmTargetStartTime = 0;
    window.autoFarmSkipIds.clear();
    window.autoFarmSkipAreas = [];
    window.autoFarmSkipClearTime = Date.now();
-   state.position_2 = null;
--  state.counter_3 = 0;
--  state.counter_4 = 0;
-   state.counter_2 = 0;
+-  state.position_r79 = null;
+-  state.counter_ss2 = 0;
+-  state.counter_rlc = 0;
+-  state.counter_ta8 = 0;
++  state.position_s2v = null;
++  state.counter_qpz = 0;
 +  state.lastValue = 0;
 +  state.lastTickTime = 0;
    if (farmMode === "patrol") {
      setupPatrolPoints();
    }
    showNotification("Auto farm started (" + window.autoFarmMode + ")");
--  if (!state.isToggled_3) {
--    state.isToggled_3 = true;
-+  if (!state.isToggled_4) {
-+    state.isToggled_4 = true;
+-  if (!state.isToggled_suc) {
+-    state.isToggled_suc = true;
++  if (!state.isToggled_s1e) {
++    state.isToggled_s1e = true;
      autoFarmLoop();
    }
  }
--let isProcessed_6 = false;
+-let isProcessed_js3 = false;
 -const initGameHooks = () => {
--  if (isProcessed_6) {
-+let isProcessed_8 = false;
+-  if (isProcessed_js3) {
++let isProcessed_qq8 = false;
 +const initAntiDetection = () => {
-+  if (isProcessed_8) {
++  if (isProcessed_qq8) {
      return;
    }
--  isProcessed_6 = true;
-+  isProcessed_8 = true;
+-  isProcessed_js3 = true;
++  isProcessed_qq8 = true;
    const cache = {};
    for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
      cache[propertyKey] = Reflect[propertyKey];
@@ -627,8 +649,8 @@ Index: src/core.js
 -  let lastTimestamp = 0;
 +  let lastExecutionTime = 0;
    wrapValue(Function.prototype, "bind", {
--    apply(thisContext, argsArray_2, extraParam) {
-+    apply(thisContext, args_2, extraArgs) {
+-    apply(thisContext, argsArray_cn2, extraParam) {
++    apply(thisContext, args_db9, extraArgs) {
        try {
          try {
            if (
@@ -636,8 +658,8 @@ Index: src/core.js
 -            null
 +            lookupGetter.call(extraArgs[0], "aboveBgPlatformsContainer") != null
            ) {
--            return cache.apply(thisContext, argsArray_2, extraParam);
-+            return cache.apply(thisContext, args_2, extraArgs);
+-            return cache.apply(thisContext, argsArray_cn2, extraParam);
++            return cache.apply(thisContext, args_db9, extraArgs);
            }
          } catch {}
 -        if (extraParam[0] && extraParam[0].aboveBgPlatformsContainer != null) {
@@ -662,7 +684,7 @@ Index: src/core.js
            config.terrainManager =
              obfuscatedKeys.find(
                (shadowKey) =>
-@@ -491,9 +599,9 @@
+@@ -491,9 +598,9 @@
                  return;
                }
                const firstAnimal = playerData.myAnimals[0];
@@ -673,7 +695,7 @@ Index: src/core.js
                    "enable",
                    {
                      apply() {},
-@@ -511,41 +619,43 @@
+@@ -511,41 +618,43 @@
                }
                clearInterval(intervalId);
              } catch {}
@@ -686,21 +708,21 @@ Index: src/core.js
            }
          }
        } catch {}
--      return cache.apply(thisContext, argsArray_2, extraParam);
-+      return cache.apply(thisContext, args_2, extraArgs);
+-      return cache.apply(thisContext, argsArray_cn2, extraParam);
++      return cache.apply(thisContext, args_db9, extraArgs);
      },
    });
  };
--let isProcessed_7 = false;
+-let isProcessed_qmj = false;
 -function initializeApp() {
--  if (isProcessed_7) {
-+let isProcessed_9 = false;
+-  if (isProcessed_qmj) {
++let isProcessed_rnp = false;
 +function initializeApplication() {
-+  if (isProcessed_9) {
++  if (isProcessed_rnp) {
      return;
    }
--  isProcessed_7 = true;
-+  isProcessed_9 = true;
+-  isProcessed_qmj = true;
++  isProcessed_rnp = true;
    setTimeout(() => {
      injectStyles();
      applyTheme(localStorage.getItem("theme") || "grey");
@@ -719,18 +741,18 @@ Index: src/core.js
 +    initNameAutofill();
      renderEspLoop();
 -    renderOverlay();
--    isProcessed_4 = true;
+-    isProcessed_rjo = true;
 -    updateLockOnTarget();
--    state.isProcessed_5 = true;
+-    state.isProcessed_r5v = true;
 +    renderLoop();
-+    isProcessed_6 = true;
++    isProcessed_s0n = true;
 +    updateLockTarget();
-+    state.isProcessed_7 = true;
++    state.isProcessed_roa = true;
      autoDodgeLoop();
    }, 1000);
  }
  document.addEventListener(
-@@ -559,14 +669,14 @@
+@@ -559,68 +668,68 @@
      }
      if (event.key.toLowerCase() === state.keyQ.toLowerCase()) {
        event.preventDefault();
@@ -747,7 +769,79 @@ Index: src/core.js
    },
    true,
  );
-@@ -633,57 +743,87 @@
+ document.addEventListener(
+   "keydown",
+-  (event_6lj) => {
+-    if (event_6lj.target.matches("input,textarea,select,[contenteditable]")) {
++  (event_4ji) => {
++    if (event_4ji.target.matches("input,textarea,select,[contenteditable]")) {
+       return;
+     }
+-    if (event_6lj.repeat) {
++    if (event_4ji.repeat) {
+       return;
+     }
+-    if (event_6lj.key.toLowerCase() === window.lockKey.toLowerCase()) {
+-      event_6lj.preventDefault();
++    if (event_4ji.key.toLowerCase() === window.lockKey.toLowerCase()) {
++      event_4ji.preventDefault();
+       toggleLock();
+     }
+   },
+   true,
+ );
+ document.addEventListener(
+   "keydown",
+-  (event_6hz) => {
+-    if (event_6hz.target.matches("input,textarea,select,[contenteditable]")) {
++  (event_5u9) => {
++    if (event_5u9.target.matches("input,textarea,select,[contenteditable]")) {
+       return;
+     }
+-    if (event_6hz.repeat) {
++    if (event_5u9.repeat) {
+       return;
+     }
+     const entityTraceKey = window.entityTraceKey.toLowerCase();
+-    const entityKey = event_6hz.key.toLowerCase();
+-    const entityCode = event_6hz.code.toLowerCase();
++    const entityKey = event_5u9.key.toLowerCase();
++    const entityCode = event_5u9.code.toLowerCase();
+     if (
+       entityKey === entityTraceKey ||
+       entityCode === entityTraceKey ||
+       entityCode === "key" + entityTraceKey
+     ) {
+-      event_6hz.preventDefault();
++      event_5u9.preventDefault();
+       toggleEntityTrail();
+     }
+   },
+   true,
+ );
+-document.addEventListener("keydown", (event_6wr) => {
+-  if (event_6wr.target.matches("input,textarea,select")) {
++document.addEventListener("keydown", (event_6l0) => {
++  if (event_6l0.target.matches("input,textarea,select")) {
+     return;
+   }
+-  if (event_6wr.key === "F3") {
+-    event_6wr.preventDefault();
++  if (event_6l0.key === "F3") {
++    event_6l0.preventDefault();
+     trackPlayer();
+   }
+-  if (event_6wr.key === "F4") {
+-    event_6wr.preventDefault();
+-    toggleEsp_qot();
++  if (event_6l0.key === "F4") {
++    event_6l0.preventDefault();
++    toggleEsp_s2u();
+   }
+ });
+ document.addEventListener("keydown", (keyboardEvent) => {
+   if (
+@@ -633,57 +742,86 @@
    }
  });
  window.addEventListener("load", () => {
@@ -776,35 +870,37 @@ Index: src/core.js
 -  entityTrailInterval: null,
    isToggled: false,
 +  entityTrailInterval: null,
-+  isToggled_2: false,
++  isToggled_t9m: false,
 +  audioPlayer: null,
 +  currentTrackIndex: 0,
 +  musicVolume: parseFloat(localStorage.getItem("musicVolume") || "0.5"),
 +  isMusicShuffleEnabled: localStorage.getItem("musicLoop") !== "false",
-+  isMusicShuffleEnabled_2: localStorage.getItem("musicShuffle") === "true",
++  isMusicShuffleEnabled_rdv: localStorage.getItem("musicShuffle") === "true",
 +  youtubePlayer: null,
 +  audioSourceType: null,
    angleIndex: 0,
    keyQ: "q",
    keyE: "e",
--  isProcessed_3: false,
--  isToggled_2: false,
-   isProcessed_5: false,
-+  isToggled_3: false,
-+  isProcessed_7: false,
+-  isProcessed_rjn: false,
+-  isToggled_sl0: false,
+-  isProcessed_r5v: false,
++  isProcessed_skw: false,
++  isToggled_s33: false,
++  isProcessed_roa: false,
 +  previousTimestamp: 0,
    position: null,
    counter: 0,
    dataList: [],
--  counter_2: 0,
--  isToggled_3: false,
+-  counter_ta8: 0,
+-  isToggled_suc: false,
+-  position_r79: null,
+-  counter_ss2: 0,
+-  counter_rlc: 0,
 +  lastTickTime: 0,
 +  lastEventTime: 0,
-+  isToggled_4: false,
-   position_2: null,
--  counter_3: 0,
--  counter_4: 0,
-+  counter_2: 0,
++  isToggled_s1e: false,
++  position_s2v: null,
++  counter_qpz: 0,
 +  lastValue: 0,
 +  previousValue: 0,
    activeKey: "Shift",
@@ -822,7 +918,7 @@ Index: src/core.js
    getEntityPosition,
    calculateDirection,
    findEntityById,
-+  getGameState_2,
++  getGameState_sso,
 +  getViewportScale,
    startEntityTrail,
 +  renderLoop,
@@ -838,13 +934,12 @@ Index: src/core.js
    offsetValue,
    gameInstance,
    playerData,
--  isProcessed_4,
-+  isProcessed_6,
+-  isProcessed_rjo,
++  isProcessed_s0n,
    dragState,
 -  tickInterval,
 +  maxDistance,
    deltaThreshold,
-+  maxDistance_2,
    maxFailCount,
    timeoutLimit,
 +  tickInterval,
@@ -897,10 +992,10 @@ Index: src/features/aimbot.js
    getFirstAnimalPosition,
    getEntityPosition,
    findEntityById,
--  isProcessed_4,
-+  isProcessed_6,
+-  isProcessed_rjo,
++  isProcessed_s0n,
    angle,
-+  getGameState_2,
++  getGameState_sso,
 +  currentTime,
 +  isValidEntity,
    getGameState,
@@ -924,9 +1019,9 @@ Index: src/features/aimbot.js
 +import { updateLockButton } from "../ui/radar.js";
  
 -function updateLockOnTarget() {
--  if (!isProcessed_4) {
+-  if (!isProcessed_rjo) {
 +function updateLockTarget() {
-+  if (!isProcessed_6) {
++  if (!isProcessed_s0n) {
      return;
    }
 -  requestAnimationFrame(updateLockOnTarget);
@@ -1036,7 +1131,7 @@ Index: src/features/aimbot.js
      showNotification("Lock released");
    } else {
 -    const gameState = getNearbyEntities();
-+    const gameState = getGameState_2();
++    const gameState = getGameState_sso();
      if (gameState && gameState.players && gameState.players.length > 0) {
        window.lockEnabled = true;
        window.lockTargetId = gameState.players[0].id;
@@ -1101,12 +1196,12 @@ Index: src/features/aimbot.js
 -    simulateClick(finalX, finalY);
 -  }
 -}
--let currentTime_2 = 0;
--let currentTime_3 = 0;
-+let previousTimestamp_2 = 0;
+-let currentTime_qmc = 0;
+-let currentTime_trw = 0;
++let previousTimestamp_ss8 = 0;
  function autoDodgeLoop() {
--  if (!state.isProcessed_5) {
-+  if (!state.isProcessed_7) {
+-  if (!state.isProcessed_r5v) {
++  if (!state.isProcessed_roa) {
      return;
    }
    setTimeout(autoDodgeLoop, 80);
@@ -1154,10 +1249,10 @@ Index: src/features/aimbot.js
 -    const now = Date.now();
 +    const currentTime = Date.now();
      let isDodging = false;
--    if (now - currentTime_3 > 600) {
--      currentTime_3 = now;
-+    if (currentTime - previousTimestamp_2 > 600) {
-+      previousTimestamp_2 = currentTime;
+-    if (now - currentTime_trw > 600) {
+-      currentTime_trw = now;
++    if (currentTime - previousTimestamp_ss8 > 600) {
++      previousTimestamp_ss8 = currentTime;
        if (state.position) {
 -        const moveDist = calculateDistance(
 +        const prevDist = calculateDistance(
@@ -1200,7 +1295,7 @@ Index: src/features/aimbot.js
 +        const adjustedAngle = angle + angleOffset;
          if (
            state.dataList.some(
--            (myY_2) => Math.abs(myY_2 - rotatedAngle) < 0.3,
+-            (myY_9nl) => Math.abs(myY_9nl - rotatedAngle) < 0.3,
 +            (currentAngle) => Math.abs(currentAngle - adjustedAngle) < 0.3,
            ) &&
            state.counter < 5
@@ -1232,32 +1327,36 @@ Index: src/features/aimbot.js
        if (state.dataList.length > 8) {
          state.dataList.shift();
        }
-@@ -312,13 +255,13 @@
+@@ -312,34 +255,28 @@
          state.counter = 0;
          state.dataList = [];
        }
      }
--    const angle_2 = now - currentTime_2 > deltaThreshold;
-+    const angle_2 = currentTime - state.previousTimestamp > deltaThreshold;
-     if (angle_2) {
--      currentTime_2 = now;
+-    const angle_98u = now - currentTime_qmc > deltaThreshold;
+-    if (angle_98u) {
+-      currentTime_qmc = now;
++    const angle_joe = currentTime - state.previousTimestamp > deltaThreshold;
++    if (angle_joe) {
 +      state.previousTimestamp = currentTime;
      }
 -    aimAtTarget(
 +    moveAndClickTarget(
        playerPos.x + Math.cos(angle) * 2000,
        playerPos.y + Math.sin(angle) * 2000,
-       angle_2,
+-      angle_98u,
++      angle_joe,
      );
-@@ -328,18 +271,12 @@
+   } catch (data) {}
+ }
+ function enableAutoDodge() {
    window.autoDodgeEnabled = true;
    state.position = null;
    state.counter = 0;
    state.dataList = [];
--  if (!state.isProcessed_5) {
--    state.isProcessed_5 = true;
-+  if (!state.isProcessed_7) {
-+    state.isProcessed_7 = true;
+-  if (!state.isProcessed_r5v) {
+-    state.isProcessed_r5v = true;
++  if (!state.isProcessed_roa) {
++    state.isProcessed_roa = true;
      autoDodgeLoop();
    }
    showNotification("Auto dodge enabled");
@@ -1275,11 +1374,9 @@ Index: src/features/autofarm.js
 ===================================================================
 --- src/features/autofarm.js	v1.8
 +++ src/features/autofarm.js	v1.9
-@@ -1,19 +1,22 @@
- import {
+@@ -2,18 +2,20 @@
    currentTime,
    radius,
-+  maxDistance_2,
    maxFailCount,
    timeoutLimit,
 +  isValidEntity,
@@ -1300,13 +1397,14 @@ Index: src/features/autofarm.js
  window.autoFarmActive = false;
  window.autoFarmMode = "nearest";
  window.autoFarmRange = 3000;
-@@ -32,19 +35,17 @@
+@@ -32,19 +34,18 @@
  window.autoFarmSkipIds = new Set();
  window.autoFarmSkipClearTime = 0;
  window.autoFarmSkipAreas = [];
  
--const offsetValue_2 = 400;
--const tickInterval_2 = 600;
+-const offsetValue_qn6 = 400;
+-const tickInterval_st4 = 600;
++const maxDistance_tas = 400;
  function handleFarmFailure(x, y) {
    const currentTime = Date.now();
    window.autoFarmSkipAreas = window.autoFarmSkipAreas.filter(
@@ -1316,8 +1414,8 @@ Index: src/features/autofarm.js
    let existingArea = window.autoFarmSkipAreas.find(
      (position) =>
        calculateDistance(x, y, state.position.x, state.position.y) <
--      offsetValue_2,
-+      maxDistance_2,
+-      offsetValue_qn6,
++      maxDistance_tas,
    );
    if (existingArea) {
      existingArea.failCount++;
@@ -1327,8 +1425,8 @@ Index: src/features/autofarm.js
      window.autoFarmSkipAreas.push({
        x: x,
        y: y,
--      radius: offsetValue_2,
-+      radius: maxDistance_2,
+-      radius: offsetValue_qn6,
++      radius: maxDistance_tas,
        time: currentTime,
        failCount: 1,
        skipped: false,
@@ -1544,23 +1642,23 @@ Index: src/features/autofarm.js
        }
      });
    } catch (data) {}
-@@ -298,53 +302,49 @@
+@@ -298,90 +302,86 @@
      x: avoidX,
      y: avoidY,
    };
  }
--let currentTime_4 = 0;
+-let currentTime_r3o = 0;
 -function simulateEvolveKey() {
 +function triggerRandomEvolution() {
    if (!window.autoFarmEvolve) {
      return;
    }
    const currentTime = Date.now();
--  if (currentTime - currentTime_4 < 5000) {
+-  if (currentTime - currentTime_r3o < 5000) {
 +  if (currentTime - state.lastEventTime < 5000) {
      return;
    }
--  currentTime_4 = currentTime;
+-  currentTime_r3o = currentTime;
 -  const gameCanvas = getGameCanvas();
 +  state.lastEventTime = currentTime;
 +  const targetElement = getGameCanvas();
@@ -1597,28 +1695,31 @@ Index: src/features/autofarm.js
      } catch (data) {}
    });
  }
--let currentTime_5 = 0;
+-let currentTime_sz8 = 0;
  function detectAndHandleStuck(currentPos) {
    const now = Date.now();
--  if (now - state.counter_4 < 1500) {
+-  if (now - state.counter_rlc < 1500) {
 +  if (now - state.lastValue < 1500) {
      return false;
    }
--  state.counter_4 = now;
+-  state.counter_rlc = now;
+-  if (state.position_r79) {
 +  state.lastValue = now;
-   if (state.position_2) {
++  if (state.position_s2v) {
      if (
        calculateDistance(
          currentPos.x,
-@@ -352,33 +352,33 @@
-         state.position_2.x,
-         state.position_2.y,
+         currentPos.y,
+-        state.position_r79.x,
+-        state.position_r79.y,
++        state.position_s2v.x,
++        state.position_s2v.y,
        ) < 25
      ) {
--      state.counter_3++;
--      if (state.counter_3 >= 1 && window.autoFarmCurrentTarget) {
-+      state.counter_2++;
-+      if (state.counter_2 >= 1 && window.autoFarmCurrentTarget) {
+-      state.counter_ss2++;
+-      if (state.counter_ss2 >= 1 && window.autoFarmCurrentTarget) {
++      state.counter_qpz++;
++      if (state.counter_qpz >= 1 && window.autoFarmCurrentTarget) {
          handleFarmFailure(
            window.autoFarmCurrentTarget.x,
            window.autoFarmCurrentTarget.y,
@@ -1626,13 +1727,13 @@ Index: src/features/autofarm.js
          window.autoFarmSkipIds.add(window.autoFarmCurrentTarget.id);
          window.autoFarmCurrentTarget = null;
          window.autoFarmTargetStartTime = 0;
--        state.counter_3 = 0;
-+        state.counter_2 = 0;
+-        state.counter_ss2 = 0;
++        state.counter_qpz = 0;
        }
--      if (state.counter_3 >= 2) {
--        state.counter_3 = 0;
-+      if (state.counter_2 >= 2) {
-+        state.counter_2 = 0;
+-      if (state.counter_ss2 >= 2) {
+-        state.counter_ss2 = 0;
++      if (state.counter_qpz >= 2) {
++        state.counter_qpz = 0;
          window.autoFarmCurrentTarget = null;
          window.autoFarmTargetStartTime = 0;
          const randomAngle = Math.random() * Math.PI * 2;
@@ -1645,19 +1746,23 @@ Index: src/features/autofarm.js
          return true;
        }
      } else {
--      state.counter_3 = 0;
-+      state.counter_2 = 0;
+-      state.counter_ss2 = 0;
++      state.counter_qpz = 0;
      }
    }
-   state.position_2 = {
+-  state.position_r79 = {
++  state.position_s2v = {
      x: currentPos.x,
+     y: currentPos.y,
+   };
+   return false;
 @@ -402,20 +402,20 @@
    window.autoFarmPatrolIndex = 0;
  }
  function autoFarmLoop() {
    if (!window.autoFarmActive) {
--    state.isToggled_3 = false;
-+    state.isToggled_4 = false;
+-    state.isToggled_suc = false;
++    state.isToggled_s1e = false;
      return;
    }
 -  const now = Date.now();
@@ -1687,12 +1792,12 @@ Index: src/features/autofarm.js
 +    const currentTarget = getFirstAnimalPosition();
 +    if (!currentTarget) {
        window.autoFarmActive = false;
--      state.isToggled_3 = false;
+-      state.isToggled_suc = false;
 -      const autoFarmBtnElement = document.getElementById("autoFarmBtn");
 -      if (autoFarmBtnElement) {
 -        autoFarmBtnElement.textContent = "Auto Farm";
 -        autoFarmBtnElement.classList.remove("toggle-on");
-+      state.isToggled_4 = false;
++      state.isToggled_s1e = false;
 +      const autoFarmButton = document.getElementById("autoFarmBtn");
 +      if (autoFarmButton) {
 +        autoFarmButton.textContent = "Auto Farm";
@@ -1715,9 +1820,9 @@ Index: src/features/autofarm.js
        window.autoFarmAvoidPlayers
      ) {
 -      const canBoost =
--        window.autoFarmBoost && now - state.counter_2 > tickInterval_2;
+-        window.autoFarmBoost && now - state.counter_ta8 > tickInterval_st4;
 -      if (canBoost) {
--        state.counter_2 = now;
+-        state.counter_ta8 = now;
 +      const shouldBoost =
 +        window.autoFarmBoost && currentTime - state.lastTickTime > tickInterval;
 +      if (shouldBoost) {
@@ -1741,9 +1846,9 @@ Index: src/features/autofarm.js
            }
            window.autoFarmCurrentTarget = nearestTarget;
 -          window.autoFarmTargetStartTime = now;
--          state.counter_3 = 0;
+-          state.counter_ss2 = 0;
 +          window.autoFarmTargetStartTime = currentTime;
-+          state.counter_2 = 0;
++          state.counter_qpz = 0;
          }
          if (nearestTarget.distance < 40) {
            targetX += (Math.random() - 0.5) * 80;
@@ -1752,10 +1857,10 @@ Index: src/features/autofarm.js
        } else {
          window.autoFarmCurrentTarget = null;
          window.autoFarmTargetStartTime = 0;
--        if (now - currentTime_5 > 2500) {
+-        if (now - currentTime_sz8 > 2500) {
 +        if (currentTime - state.previousValue > 2500) {
            angle = Math.random() * Math.PI * 2;
--          currentTime_5 = now;
+-          currentTime_sz8 = now;
 +          state.previousValue = currentTime;
          }
 -        targetX = player.x + Math.cos(angle) * 1000;
@@ -1786,7 +1891,7 @@ Index: src/features/autofarm.js
        } else {
          const selectedTarget = findClosestFarmableEntity();
          if (selectedTarget) {
-@@ -519,19 +519,19 @@
+@@ -519,47 +519,47 @@
              !window.autoFarmCurrentTarget ||
              window.autoFarmCurrentTarget.id !== selectedTarget.id
            ) {
@@ -1797,10 +1902,10 @@ Index: src/features/autofarm.js
          } else {
            window.autoFarmCurrentTarget = null;
            window.autoFarmTargetStartTime = 0;
--          if (now - currentTime_5 > 2500) {
+-          if (now - currentTime_sz8 > 2500) {
 +          if (currentTime - state.previousValue > 2500) {
              angle = Math.random() * Math.PI * 2;
--            currentTime_5 = now;
+-            currentTime_sz8 = now;
 +            state.previousValue = currentTime;
            }
 -          targetX = player.x + Math.cos(angle) * 1000;
@@ -1811,12 +1916,27 @@ Index: src/features/autofarm.js
          }
        }
      } else if (window.autoFarmMode === "patrol") {
-@@ -547,19 +547,19 @@
+       if (!window.autoFarmPatrolPoints.length) {
+         setupPatrolPoints();
+       }
+-      const selectedTarget_1m3 = findClosestFarmableEntity(800);
+-      if (selectedTarget_1m3) {
+-        targetX = selectedTarget_1m3.x;
+-        targetY = selectedTarget_1m3.y;
+-        minDistance = selectedTarget_1m3.distance;
++      const selectedTarget_zfk = findClosestFarmableEntity(800);
++      if (selectedTarget_zfk) {
++        targetX = selectedTarget_zfk.x;
++        targetY = selectedTarget_zfk.y;
++        minDistance = selectedTarget_zfk.distance;
+         if (
            !window.autoFarmCurrentTarget ||
-           window.autoFarmCurrentTarget.id !== selectedTarget_2.id
+-          window.autoFarmCurrentTarget.id !== selectedTarget_1m3.id
++          window.autoFarmCurrentTarget.id !== selectedTarget_zfk.id
          ) {
-           window.autoFarmCurrentTarget = selectedTarget_2;
+-          window.autoFarmCurrentTarget = selectedTarget_1m3;
 -          window.autoFarmTargetStartTime = now;
++          window.autoFarmCurrentTarget = selectedTarget_zfk;
 +          window.autoFarmTargetStartTime = currentTime;
          }
        } else {
@@ -1834,15 +1954,15 @@ Index: src/features/autofarm.js
              currentPatrolPoint.y,
            );
            if (minDistance < 200) {
-@@ -575,22 +575,22 @@
+@@ -575,50 +575,50 @@
      if (targetX != null) {
        const angle =
          window.autoFarmBoost &&
          minDistance > 350 &&
--        now - state.counter_2 > tickInterval_2;
+-        now - state.counter_ta8 > tickInterval_st4;
 +        currentTime - state.lastTickTime > tickInterval;
        if (angle) {
--        state.counter_2 = now;
+-        state.counter_ta8 = now;
 +        state.lastTickTime = currentTime;
        }
 -      aimAtTarget(targetX, targetY, angle);
@@ -1855,15 +1975,26 @@ Index: src/features/autofarm.js
  }
  function stopAutoFarm() {
    window.autoFarmActive = false;
--  state.isToggled_3 = false;
-+  state.isToggled_4 = false;
+-  state.isToggled_suc = false;
++  state.isToggled_s1e = false;
    showNotification(
      "Farm stopped. ~" +
        window.autoFarmStats.collected +
        " food in " +
-@@ -605,20 +605,20 @@
-   if (event_5.key === "F5") {
-     event_5.preventDefault();
+       ((Date.now() - window.autoFarmStats.startTime) / 1000).toFixed(0) +
+       "s",
+   );
+ }
+-document.addEventListener("keydown", (event_6s3) => {
+-  if (event_6s3.target.matches("input,textarea,select")) {
++document.addEventListener("keydown", (event_6gv) => {
++  if (event_6gv.target.matches("input,textarea,select")) {
+     return;
+   }
+-  if (event_6s3.key === "F5") {
+-    event_6s3.preventDefault();
++  if (event_6gv.key === "F5") {
++    event_6gv.preventDefault();
      if (window.autoFarmActive) {
        stopAutoFarm();
 -      const farmBtn = document.getElementById("autoFarmBtn");
@@ -1878,14 +2009,14 @@ Index: src/features/autofarm.js
      } else {
        const farmModeSelect = document.getElementById("farmModeSelect");
        startAutoFarm(farmModeSelect ? farmModeSelect.value : "nearest");
--      const autoFarmButton_2 = document.getElementById("autoFarmBtn");
--      if (autoFarmButton_2) {
--        autoFarmButton_2.textContent = "Stop Farm";
--        autoFarmButton_2.classList.add("toggle-on");
-+      const autoFarmBtn_2 = document.getElementById("autoFarmBtn");
-+      if (autoFarmBtn_2) {
-+        autoFarmBtn_2.textContent = "Stop Farm";
-+        autoFarmBtn_2.classList.add("toggle-on");
+-      const autoFarmButton = document.getElementById("autoFarmBtn");
+-      if (autoFarmButton) {
+-        autoFarmButton.textContent = "Stop Farm";
+-        autoFarmButton.classList.add("toggle-on");
++      const autoFarmBtn_6li = document.getElementById("autoFarmBtn");
++      if (autoFarmBtn_6li) {
++        autoFarmBtn_6li.textContent = "Stop Farm";
++        autoFarmBtn_6li.classList.add("toggle-on");
        }
      }
    }
@@ -1916,7 +2047,7 @@ Index: src/features/chat.js
      clearInterval(state.entityTrailInterval);
    }
 -  state.isToggled = true;
-+  state.isToggled_2 = true;
++  state.isToggled_t9m = true;
    state.entityTrailInterval = setInterval(() => {
 -    typeAndSendMessage(taskData);
 +    simulateChatInput(taskData);
@@ -1928,7 +2059,7 @@ Index: src/features/chat.js
      state.entityTrailInterval = null;
    }
 -  state.isToggled = false;
-+  state.isToggled_2 = false;
++  state.isToggled_t9m = false;
  }
 -function typeAndSendMessage(textToType) {
 +function simulateChatInput(textToType) {
@@ -1978,9 +2109,9 @@ Index: src/features/entitytrail.js
 ===================================================================
 --- src/features/entitytrail.js	v1.8
 +++ src/features/entitytrail.js	v1.9
-@@ -1,15 +1,10 @@
+@@ -1,35 +1,30 @@
  import {
-+  getGameState_2,
++  getGameState_sso,
    startEntityTrail,
    currentTime,
 -  getFirstAnimalPosition,
@@ -1994,14 +2125,29 @@ Index: src/features/entitytrail.js
  import { showNotification } from "../ui/interaction.js";
  import { refreshUI } from "../ui/panels.js";
  
- function stopEntityTrail_2() {
-@@ -27,9 +22,9 @@
+-function stopEntityTrail_sl0() {
+-  if (featuresentitytrailState.entityTrailInterval_rf6) {
+-    clearInterval(featuresentitytrailState.entityTrailInterval_rf6);
+-    featuresentitytrailState.entityTrailInterval_rf6 = null;
++function stopEntityTrail_iz9() {
++  if (featuresentitytrailState.entityTrailInterval_r6h) {
++    clearInterval(featuresentitytrailState.entityTrailInterval_r6h);
++    featuresentitytrailState.entityTrailInterval_r6h = null;
+   }
+ }
+ function toggleEntityTrail() {
+   if (window.entityTrailEnabled) {
+     window.entityTrailEnabled = false;
+     window.entityTrailTargetId = null;
+-    stopEntityTrail_sl0();
++    stopEntityTrail_iz9();
+     window.entityTrailHistory = [];
      showNotification("Trail stopped");
      refreshUI();
      return;
    }
 -  const nearbyPlayersData = getNearbyEntities();
-+  const nearbyPlayersData = getGameState_2();
++  const nearbyPlayersData = getGameState_sso();
    const hasNearbyPlayers =
      nearbyPlayersData &&
      nearbyPlayersData.players &&
@@ -2058,21 +2204,23 @@ Index: src/features/entitytrail.js
        "rgba(" + red + "," + green + "," + blue + "," + pointOpacity + ")";
      ctx.beginPath();
      ctx.arc(pointX, pointY, 2, 0, Math.PI * 2);
-@@ -88,10 +83,10 @@
+@@ -88,30 +83,19 @@
    }
    if (window.entityTrailHistory.length > 0) {
      const lastTrailPoint =
        window.entityTrailHistory[window.entityTrailHistory.length - 1];
 -    const screenY = halfWidth + (lastTrailPoint.x - originPos.x) * zoomScale;
--    const screenY_2 = halfHeight + (lastTrailPoint.y - originPos.y) * zoomScale;
+-    const screenY_vbc =
+-      halfHeight + (lastTrailPoint.y - originPos.y) * zoomScale;
 +    const screenY = centerX + (lastTrailPoint.x - playerPos.x) * scale;
-+    const screenY_2 = centerY + (lastTrailPoint.y - playerPos.y) * scale;
++    const screenY_oau = centerY + (lastTrailPoint.y - playerPos.y) * scale;
      ctx.fillStyle = "rgb(" + red + "," + green + "," + blue + ")";
      ctx.font = "bold 10px monospace";
      ctx.fillText(
        "TRAIL (" + window.entityTrailHistory.length + " pts)",
-@@ -99,18 +94,8 @@
-       screenY_2 - 8,
+       screenY + 8,
+-      screenY_vbc - 8,
++      screenY_oau - 8,
      );
    }
  }
@@ -2090,13 +2238,24 @@ Index: src/features/entitytrail.js
    r: 255,
    g: 150,
    b: 0,
-@@ -125,5 +110,5 @@
-   entityTrailInterval_2: null,
-   entityTrailInterval_3: null,
+@@ -122,14 +106,9 @@
+ window.entityTrailMaxLength = 200;
+ window.entityTrailRecordInterval = 100;
+ 
+ export const featuresentitytrailState = {
+-  entityTrailInterval_sje: null,
+-  entityTrailInterval_rf6: null,
++  entityTrailInterval_tbp: null,
++  entityTrailInterval_r6h: null,
  };
  
--export { stopEntityTrail_2, toggleEntityTrail, drawEntityTrail, renderOverlay };
-+export { stopEntityTrail_2, toggleEntityTrail, drawEntityTrail };
+-export {
+-  stopEntityTrail_sl0,
+-  toggleEntityTrail,
+-  drawEntityTrail,
+-  renderOverlay,
+-};
++export { stopEntityTrail_iz9, toggleEntityTrail, drawEntityTrail };
 Index: src/features/esp.js
 ===================================================================
 --- src/features/esp.js	v1.8
@@ -2110,7 +2269,7 @@ Index: src/features/esp.js
    findEntityById,
    angle,
    getFirstAnimalPosition,
-+  getGameState_2,
++  getGameState_sso,
 +  getViewportScale,
    playerData,
    state,
@@ -2437,7 +2596,7 @@ Index: src/features/esp.js
 +  const canvas = getOrCreateCanvas("esp-overlay", 999998);
 +  const ctx = canvas.getContext("2d");
 +  ctx.clearRect(0, 0, canvas.width, canvas.height);
-+  const gameData = getGameState_2();
++  const gameData = getGameState_sso();
 +  const localPlayer = getFirstAnimalPosition();
 +  const settings = getViewportScale();
 +  drawEsp(ctx, gameData, canvas.width / 2, canvas.height / 2, settings);
@@ -2451,37 +2610,63 @@ Index: src/features/esp.js
  }
  function trackPlayer() {
 -  const gameData = getNearbyEntities();
-+  const gameData = getGameState_2();
++  const gameData = getGameState_sso();
    if (gameData && gameData.players && gameData.players.length > 0) {
      window.espTrackedEntityId = gameData.players[0].id;
      showNotification(
        "Tracking: " +
-@@ -358,17 +349,17 @@
+@@ -345,30 +336,30 @@
+   } else {
+     showNotification("No players nearby");
+   }
+ }
+-function toggleEsp_qot() {
++function toggleEsp_s2u() {
+   window.espTrackedEntityId = null;
+   showNotification("Tracking cleared");
+ }
+-function toggleEsp_slh() {
++function toggleEsp_qmn() {
+   window.autoDodgeEnabled = false;
+   showNotification("Auto dodge disabled");
+ }
+ function toggleMinimapSize() {
    if (!playerData || !playerData.minimap) {
      showNotification("Minimap not available");
      return;
    }
--  if (state.isToggled_2) {
-+  if (state.isToggled_3) {
+-  if (state.isToggled_sl0) {
++  if (state.isToggled_s33) {
      playerData.minimap.scale.set(1);
      playerData.minimap.pivot.set(0, 0);
--    state.isToggled_2 = false;
-+    state.isToggled_3 = false;
+-    state.isToggled_sl0 = false;
++    state.isToggled_s33 = false;
      showNotification("Minimap restored");
    } else {
      playerData.minimap.scale.set(0.5);
      playerData.minimap.pivot.set(-70, -45);
--    state.isToggled_2 = true;
-+    state.isToggled_3 = true;
+-    state.isToggled_sl0 = true;
++    state.isToggled_s33 = true;
      showNotification("Small minimap enabled");
    }
  }
  
+@@ -377,8 +368,8 @@
+   drawTrackedEntity,
+   renderEspLoop,
+   toggleEsp,
+   trackPlayer,
+-  toggleEsp_qot,
+-  toggleEsp_slh,
++  toggleEsp_s2u,
++  toggleEsp_qmn,
+   toggleMinimapSize,
+ };
 Index: src/features/movement.js
 ===================================================================
 --- src/features/movement.js	v1.8
 +++ src/features/movement.js	v1.9
-@@ -1,10 +1,16 @@
+@@ -1,19 +1,25 @@
 -import { angles, radius, offsetValue, state } from "../core.js";
 +import {
 +  angles,
@@ -2495,14 +2680,38 @@ Index: src/features/movement.js
  import { getGameCanvas } from "../utils.js";
  
 -function startCircularMovement() {
+-  if (featuresentitytrailState.entityTrailInterval_sje) {
 +function startMouseSimulation() {
-   if (featuresentitytrailState.entityTrailInterval_2) {
++  if (featuresentitytrailState.entityTrailInterval_tbp) {
      return;
    }
    const canvas = getGameCanvas();
-@@ -36,22 +42,22 @@
+   if (!canvas) {
+     showNotification("Canvas not found");
+     return;
+   }
+-  featuresentitytrailState.entityTrailInterval_sje = setInterval(() => {
++  featuresentitytrailState.entityTrailInterval_tbp = setInterval(() => {
+     const angleDegrees = angles[state.angleIndex];
+     const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
+     const offsetX = Math.round(radius * Math.sin(angleRadians));
+     const offsetY = Math.round(radius * Math.cos(angleRadians));
+@@ -27,31 +33,31 @@
+     state.angleIndex = (state.angleIndex + 1) % angles.length;
+   }, 15);
+ }
+ function stopEntityTrail() {
+-  if (featuresentitytrailState.entityTrailInterval_sje) {
+-    clearInterval(featuresentitytrailState.entityTrailInterval_sje);
+-    featuresentitytrailState.entityTrailInterval_sje = null;
++  if (featuresentitytrailState.entityTrailInterval_tbp) {
++    clearInterval(featuresentitytrailState.entityTrailInterval_tbp);
++    featuresentitytrailState.entityTrailInterval_tbp = null;
+   }
+ }
  function toggleMouseSimulation() {
-   if (featuresentitytrailState.entityTrailInterval_2) {
+-  if (featuresentitytrailState.entityTrailInterval_sje) {
++  if (featuresentitytrailState.entityTrailInterval_tbp) {
      stopEntityTrail();
    } else {
 -    startCircularMovement();
@@ -2635,9 +2844,9 @@ Index: src/features/xray.js
  import { showNotification } from "../ui/interaction.js";
  
 -const initializeAstraVision = () => {
--  if (state.isProcessed_3) {
+-  if (state.isProcessed_rjn) {
 +const activateAstraVision = () => {
-+  if (state.isProcessed_5) {
++  if (state.isProcessed_skw) {
      return;
    }
    if (!playerData) {
@@ -2652,8 +2861,8 @@ Index: src/features/xray.js
    } catch (url) {
      console.error("AstraVision Error:", url);
    }
--  state.isProcessed_3 = true;
-+  state.isProcessed_5 = true;
+-  state.isProcessed_rjn = true;
++  state.isProcessed_skw = true;
  };
  
 -export { initializeAstraVision };
@@ -2666,8 +2875,8 @@ Index: src/ui/audio.js
 +import { musicPlaylist, currentTime, state } from "../core.js";
 +import { showNotification } from "./interaction.js";
 +
-+let isProcessed_3 = false;
-+let isProcessed_4 = false;
++let isProcessed_s4h = false;
++let isProcessed_rux = false;
 +function isYouTubeUrl(url) {
 +  return /(?:youtube\.com|youtu\.be)/i.test(url || "");
 +}
@@ -2695,7 +2904,7 @@ Index: src/ui/audio.js
 +  return null;
 +}
 +function ensureYouTubeApiReady(callback) {
-+  if (isProcessed_3 && window.YT && window.YT.Player) {
++  if (isProcessed_s4h && window.YT && window.YT.Player) {
 +    callback();
 +    return;
 +  }
@@ -2703,10 +2912,10 @@ Index: src/ui/audio.js
 +    window._astYtReadyCallbacks = [];
 +  }
 +  window._astYtReadyCallbacks.push(callback);
-+  if (isProcessed_4) {
++  if (isProcessed_rux) {
 +    return;
 +  }
-+  isProcessed_4 = true;
++  isProcessed_rux = true;
 +  if (!document.getElementById("ast-yt-api")) {
 +    const scriptElement = document.createElement("script");
 +    scriptElement.id = "ast-yt-api";
@@ -2715,7 +2924,7 @@ Index: src/ui/audio.js
 +  }
 +  const originalReadyHandler = window.onYouTubeIframeAPIReady;
 +  window.onYouTubeIframeAPIReady = function () {
-+    isProcessed_3 = true;
++    isProcessed_s4h = true;
 +    if (typeof originalReadyHandler === "function") {
 +      try {
 +        originalReadyHandler();
@@ -2782,7 +2991,7 @@ Index: src/ui/audio.js
 +            return;
 +          }
 +          if (ytPlayerEvent.data === YT.PlayerState.ENDED) {
-+            if (state.isMusicShuffleEnabled_2) {
++            if (state.isMusicShuffleEnabled_rdv) {
 +              playTrack(Math.floor(Math.random() * musicPlaylist.length));
 +            } else if (state.isMusicShuffleEnabled) {
 +              playTrack(state.currentTrackIndex + 1);
@@ -2852,7 +3061,7 @@ Index: src/ui/audio.js
 +    showNotification("Cannot play audio URL");
 +  });
 +  state.audioPlayer.onended = () => {
-+    if (state.isMusicShuffleEnabled_2) {
++    if (state.isMusicShuffleEnabled_rdv) {
 +      playTrack(Math.floor(Math.random() * musicPlaylist.length));
 +    } else if (state.isMusicShuffleEnabled) {
 +      playTrack(state.currentTrackIndex + 1);
@@ -2914,7 +3123,7 @@ Index: src/ui/audio.js
 +    return;
 +  }
 +  playTrack(
-+    state.isMusicShuffleEnabled_2
++    state.isMusicShuffleEnabled_rdv
 +      ? Math.floor(Math.random() * musicPlaylist.length)
 +      : state.currentTrackIndex + 1,
 +  );
@@ -2970,7 +3179,7 @@ Index: src/ui/audio.js
 +    loopBtn.classList.toggle("toggle-on", state.isMusicShuffleEnabled);
 +  }
 +  if (shuffleBtn) {
-+    shuffleBtn.classList.toggle("toggle-on", state.isMusicShuffleEnabled_2);
++    shuffleBtn.classList.toggle("toggle-on", state.isMusicShuffleEnabled_rdv);
 +  }
 +  if (trackNameDisplay) {
 +    trackNameDisplay.textContent = musicPlaylist.length
@@ -3154,9 +3363,9 @@ Index: src/ui/panels.js
  import {
 -  toggleEsp,
 -  trackPlayer,
--  toggleEsp_2,
+-  toggleEsp_qot,
 -  toggleMinimapSize,
--  toggleEsp_3,
+-  toggleEsp_slh,
 -} from "../features/esp.js";
 +  pausePlayback,
 +  resumePlayback,
@@ -3182,9 +3391,9 @@ Index: src/ui/panels.js
  import {
 +  toggleEsp,
 +  trackPlayer,
-+  toggleEsp_2,
++  toggleEsp_s2u,
 +  toggleMinimapSize,
-+  toggleEsp_3,
++  toggleEsp_qmn,
 +} from "../features/esp.js";
 +import {
    startScheduledTask,
@@ -3292,7 +3501,21 @@ Index: src/ui/panels.js
          element.style.right = "auto";
        }
      };
-@@ -128,55 +147,55 @@
+@@ -116,11 +135,11 @@
+     };
+     document.addEventListener("mousemove", handleMouseMove);
+     document.addEventListener("mouseup", handleMouseUp);
+   });
+-  element.addEventListener("click", (event_re9) => {
++  element.addEventListener("click", (event_faj) => {
+     if (hasMoved) {
+-      event_re9.stopImmediatePropagation();
++      event_faj.stopImmediatePropagation();
+     }
+   });
+ }
+ function createToolsPanel() {
+@@ -128,115 +147,144 @@
    toolsPanel.id = "deep-tools-panel";
    toolsPanel.className = "ast-panel";
    toolsPanel.style.cssText = "bottom:20px;right:20px;width:230px;";
@@ -3330,7 +3553,7 @@ Index: src/ui/panels.js
        return;
      }
 -    if (state.isToggled) {
-+    if (state.isToggled_2) {
++    if (state.isToggled_t9m) {
        stopInterval();
        spinBtn.textContent = "Auto Chat";
        spinBtn.classList.remove("toggle-on");
@@ -3361,7 +3584,21 @@ Index: src/ui/panels.js
      } else {
        showNotification("No name input found");
      }
-@@ -193,20 +212,20 @@
+   };
+-  const spinBtn_oj8 = toolsPanel.querySelector("#spinBtn");
+-  spinBtn_oj8.onclick = () => {
++  const spinBtn_whx = toolsPanel.querySelector("#spinBtn");
++  spinBtn_whx.onclick = () => {
+     toggleMouseSimulation();
+-    spinBtn_oj8.textContent = featuresentitytrailState.entityTrailInterval_sje
++    spinBtn_whx.textContent = featuresentitytrailState.entityTrailInterval_tbp
+       ? "Stop Spin"
+       : "Auto Spin";
+-    spinBtn_oj8.classList.toggle(
++    spinBtn_whx.classList.toggle(
+       "toggle-on",
+-      !!featuresentitytrailState.entityTrailInterval_sje,
++      !!featuresentitytrailState.entityTrailInterval_tbp,
      );
    };
    const turnRightKeyInput = toolsPanel.querySelector("#spinKeyInput");
@@ -3386,47 +3623,61 @@ Index: src/ui/panels.js
 -      shortcutEvent.preventDefault();
 +      keyupEvent.preventDefault();
        toggleMouseSimulation();
-       spinBtn_2.textContent = featuresentitytrailState.entityTrailInterval_2
+-      spinBtn_oj8.textContent = featuresentitytrailState.entityTrailInterval_sje
++      spinBtn_whx.textContent = featuresentitytrailState.entityTrailInterval_tbp
          ? "Stop Spin"
          : "Auto Spin";
-@@ -219,24 +238,53 @@
-   const turnRightKeyInput_2 = toolsPanel.querySelector("#turnLeftKeyInput");
-   const turnRightKeyInput_3 = toolsPanel.querySelector("#turnRightKeyInput");
-   turnRightKeyInput_2.value = state.keyQ.toUpperCase();
-   turnRightKeyInput_3.value = state.keyE.toUpperCase();
--  turnRightKeyInput_2.addEventListener("keydown", (contextMenuEvent) => {
+-      spinBtn_oj8.classList.toggle(
++      spinBtn_whx.classList.toggle(
+         "toggle-on",
+-        !!featuresentitytrailState.entityTrailInterval_sje,
++        !!featuresentitytrailState.entityTrailInterval_tbp,
+       );
+     }
+   });
+-  const turnRightKeyInput_q3j = toolsPanel.querySelector("#turnLeftKeyInput");
+-  const turnRightKeyInput_n9e = toolsPanel.querySelector("#turnRightKeyInput");
+-  turnRightKeyInput_q3j.value = state.keyQ.toUpperCase();
+-  turnRightKeyInput_n9e.value = state.keyE.toUpperCase();
+-  turnRightKeyInput_q3j.addEventListener("keydown", (contextMenuEvent) => {
 -    contextMenuEvent.preventDefault();
 -    contextMenuEvent.stopPropagation();
 -    state.keyQ = contextMenuEvent.key;
-+  turnRightKeyInput_2.addEventListener("keydown", (clickEvent) => {
-+    clickEvent.preventDefault();
-+    clickEvent.stopPropagation();
-+    state.keyQ = clickEvent.key;
-     turnRightKeyInput_2.value =
+-    turnRightKeyInput_q3j.value =
 -      contextMenuEvent.key.length === 1
 -        ? contextMenuEvent.key.toUpperCase()
 -        : contextMenuEvent.key;
++  const turnRightKeyInput_txu = toolsPanel.querySelector("#turnLeftKeyInput");
++  const turnRightKeyInput_v44 = toolsPanel.querySelector("#turnRightKeyInput");
++  turnRightKeyInput_txu.value = state.keyQ.toUpperCase();
++  turnRightKeyInput_v44.value = state.keyE.toUpperCase();
++  turnRightKeyInput_txu.addEventListener("keydown", (clickEvent) => {
++    clickEvent.preventDefault();
++    clickEvent.stopPropagation();
++    state.keyQ = clickEvent.key;
++    turnRightKeyInput_txu.value =
 +      clickEvent.key.length === 1
 +        ? clickEvent.key.toUpperCase()
 +        : clickEvent.key;
    });
--  turnRightKeyInput_3.addEventListener("keydown", (dragEvent) => {
+-  turnRightKeyInput_n9e.addEventListener("keydown", (dragEvent) => {
 -    dragEvent.preventDefault();
 -    dragEvent.stopPropagation();
 -    state.keyE = dragEvent.key;
-+  turnRightKeyInput_3.addEventListener("keydown", (contextEvent) => {
+-    turnRightKeyInput_n9e.value =
+-      dragEvent.key.length === 1 ? dragEvent.key.toUpperCase() : dragEvent.key;
++  turnRightKeyInput_v44.addEventListener("keydown", (contextEvent) => {
 +    contextEvent.preventDefault();
 +    contextEvent.stopPropagation();
 +    state.keyE = contextEvent.key;
-     turnRightKeyInput_3.value =
--      dragEvent.key.length === 1 ? dragEvent.key.toUpperCase() : dragEvent.key;
++    turnRightKeyInput_v44.value =
 +      contextEvent.key.length === 1
 +        ? contextEvent.key.toUpperCase()
 +        : contextEvent.key;
    });
 +  const savedNameDisplay = toolsPanel.querySelector("#savedNameDisplay");
 +  const clearNameBtn = toolsPanel.querySelector("#setNameBtn");
-+  const clearNameBtn_2 = toolsPanel.querySelector("#clearNameBtn");
++  const clearNameBtn_vna = toolsPanel.querySelector("#clearNameBtn");
 +  if (savedNameDisplay) {
 +    savedNameDisplay.value = localStorage.getItem("autofill_name") || "";
 +  }
@@ -3441,8 +3692,8 @@ Index: src/ui/panels.js
 +      }
 +    };
 +  }
-+  if (clearNameBtn_2) {
-+    clearNameBtn_2.onclick = () => {
++  if (clearNameBtn_vna) {
++    clearNameBtn_vna.onclick = () => {
 +      localStorage.removeItem("autofill_name");
 +      state.isToggled = false;
 +      if (savedNameDisplay) {
@@ -3455,7 +3706,7 @@ Index: src/ui/panels.js
    return toolsPanel;
  }
  function createVisionPanel() {
-@@ -254,30 +302,48 @@
+@@ -254,55 +302,73 @@
      isHidden = !isHidden;
      espColorsSection.style.display = isHidden ? "none" : "block";
      visionPanel.querySelector("#visionMin").textContent = isHidden ? "+" : "−";
@@ -3468,8 +3719,8 @@ Index: src/ui/panels.js
    };
    const astraVisionBtn = visionPanel.querySelector("#astraVisionBtn");
    astraVisionBtn.onclick = () => {
--    if (state.isProcessed_3) {
-+    if (state.isProcessed_5) {
+-    if (state.isProcessed_rjn) {
++    if (state.isProcessed_skw) {
        showNotification("Already active");
        return;
      }
@@ -3504,16 +3755,22 @@ Index: src/ui/panels.js
 +      return;
 +    }
      toggleMinimapSize();
--    espBtn.textContent = state.isToggled_2 ? "Minimap: Small" : "Small Minimap";
--    espBtn.classList.toggle("toggle-on", state.isToggled_2);
-+    espBtn.textContent = state.isToggled_3 ? "Minimap: Small" : "Small Minimap";
-+    espBtn.classList.toggle("toggle-on", state.isToggled_3);
+-    espBtn.textContent = state.isToggled_sl0
++    espBtn.textContent = state.isToggled_s33
+       ? "Minimap: Small"
+       : "Small Minimap";
+-    espBtn.classList.toggle("toggle-on", state.isToggled_sl0);
++    espBtn.classList.toggle("toggle-on", state.isToggled_s33);
    };
-   const espBtn_2 = visionPanel.querySelector("#espBtn");
-   espBtn_2.onclick = () => {
+-  const espBtn_6rn = visionPanel.querySelector("#espBtn");
+-  espBtn_6rn.onclick = () => {
++  const espBtn_7zb = visionPanel.querySelector("#espBtn");
++  espBtn_7zb.onclick = () => {
      toggleEsp();
-@@ -285,11 +351,11 @@
-     espBtn_2.classList.toggle("toggle-on", window.espEnabled);
+-    espBtn_6rn.textContent = window.espEnabled ? "ESP ✓" : "ESP";
+-    espBtn_6rn.classList.toggle("toggle-on", window.espEnabled);
++    espBtn_7zb.textContent = window.espEnabled ? "ESP ✓" : "ESP";
++    espBtn_7zb.classList.toggle("toggle-on", window.espEnabled);
    };
    const espModeSelect = visionPanel.querySelector("#espModeSelect");
    espModeSelect.value = window.espMode || "players";
@@ -3525,9 +3782,26 @@ Index: src/ui/panels.js
 +    showNotification("ESP: " + changeEvent.target.value);
    };
    visionPanel.querySelector("#trackNearestBtn").onclick = () => trackPlayer();
-   visionPanel.querySelector("#untrackBtn").onclick = () => toggleEsp_2();
+-  visionPanel.querySelector("#untrackBtn").onclick = () => toggleEsp_qot();
++  visionPanel.querySelector("#untrackBtn").onclick = () => toggleEsp_s2u();
    const espColorsToggleBtn = visionPanel.querySelector("#espColorsToggleBtn");
-@@ -311,11 +377,11 @@
+-  const espColorsSection_68h = visionPanel.querySelector("#espColorsSection");
++  const espColorsSection_7jd = visionPanel.querySelector("#espColorsSection");
+   const espColorsArrow = visionPanel.querySelector("#espColorsArrow");
+-  let isHidden_6z4 = false;
++  let isHidden_80g = false;
+   espColorsToggleBtn.onclick = () => {
+-    isHidden_6z4 = !isHidden_6z4;
+-    espColorsSection_68h.style.display = isHidden_6z4 ? "block" : "none";
+-    espColorsArrow.textContent = isHidden_6z4 ? "▲" : "▼";
++    isHidden_80g = !isHidden_80g;
++    espColorsSection_7jd.style.display = isHidden_80g ? "block" : "none";
++    espColorsArrow.textContent = isHidden_80g ? "▲" : "▼";
+   };
+   const eventInit = {
+     espColorClose: "close",
+     espColorMedium: "medium",
+@@ -313,11 +379,11 @@
      espColorFoodMedium: "foodMedium",
      espColorFoodFar: "foodFar",
    };
@@ -3542,7 +3816,7 @@ Index: src/ui/panels.js
        });
      }
    });
-@@ -330,14 +396,14 @@
+@@ -332,14 +398,14 @@
    combatPanel.innerHTML =
      '\n      <div class="ast-header"><span class="ast-header-title">Astraphobia Client</span><button class="ast-header-min" id="combatMin">−</button></div>\n      <div class="ast-body" id="combatBody">\n        <span class="ast-section-label">Combat</span>\n        <button class="ast-btn" id="lockBtn">Lock Nearest</button>\n        <div class="ast-key-row"><span>Lock Key</span><input class="ast-key-capture" id="lockKeyInput" type="text" value="T" readonly></div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Tracking</span>\n        <div class="ast-key-row" style="margin-top:4px;">\n          <span>Trail Color</span>\n          <input type="color" id="trailColorPicker" value="#ff9600" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;background:var(--bg2,#242424);cursor:pointer;padding:0;">\n        </div>\n        <div class="ast-key-row"><span>Trace Key (re-targets)</span><input class="ast-key-capture" id="traceKeyInput" type="text" value="H" readonly></div>\n      </div>';
    document.body.appendChild(combatPanel);
@@ -3561,7 +3835,7 @@ Index: src/ui/panels.js
        : "−";
    };
    const lockButton = combatPanel.querySelector("#lockBtn");
-@@ -351,10 +417,10 @@
+@@ -353,10 +419,10 @@
      lockKeyInput.value =
        lockEvent.key.length === 1 ? lockEvent.key.toUpperCase() : lockEvent.key;
    });
@@ -3574,7 +3848,7 @@ Index: src/ui/panels.js
        r: parseInt(colorValue.slice(1, 3), 16),
        g: parseInt(colorValue.slice(3, 5), 16),
        b: parseInt(colorValue.slice(5, 7), 16),
-@@ -382,16 +448,17 @@
+@@ -384,21 +450,22 @@
    automationPanel.innerHTML =
      '\n      <div class="ast-header"><span class="ast-header-title">Astraphobia Client</span><button class="ast-header-min" id="autoMin">−</button></div>\n      <div class="ast-body" id="autoBody">\n        <span class="ast-section-label">Automation</span>\n        <button class="ast-btn" id="autoDodgeBtn">Auto Dodge</button>\n        <button class="ast-btn" id="autoFarmBtn">Auto Farm (F5)</button>\n        <select class="ast-select" id="farmModeSelect" style="margin-top:4px;">\n          <option value="nearest">Nearest Food</option>\n          <option value="cluster">Food Clusters</option>\n          <option value="patrol">Patrol Route</option>\n        </select>\n        <div class="ast-toggle-row"><span>Boost</span><div class="ast-switch"><input type="checkbox" id="farmBoostToggle" checked><span class="slider"></span></div></div>\n        <div class="ast-toggle-row"><span>Auto Evolve</span><div class="ast-switch"><input type="checkbox" id="farmEvolveToggle" checked><span class="slider"></span></div></div>\n        <div class="ast-toggle-row"><span>Avoid Players</span><div class="ast-switch"><input type="checkbox" id="farmAvoidToggle" checked><span class="slider"></span></div></div>\n      </div>';
    document.body.appendChild(automationPanel);
@@ -3598,10 +3872,27 @@ Index: src/ui/panels.js
    const autoDodgeButton = automationPanel.querySelector("#autoDodgeBtn");
    autoDodgeButton.onclick = () => {
      if (window.autoDodgeEnabled) {
-@@ -433,28 +500,28 @@
+-      toggleEsp_slh();
++      toggleEsp_qmn();
+       autoDodgeButton.textContent = "Auto Dodge";
+       autoDodgeButton.classList.remove("toggle-on");
+     } else {
+       enableAutoDodge();
+@@ -429,39 +496,39 @@
+       showNotification("Farm: " + farmModeChangeEvent.target.value);
+     }
+   };
+   const farmAvoidToggle = automationPanel.querySelector("#farmBoostToggle");
+-  const farmAvoidToggle_k0h =
++  const farmAvoidToggle_7tw =
+     automationPanel.querySelector("#farmEvolveToggle");
+-  const farmAvoidToggle_q6k = automationPanel.querySelector("#farmAvoidToggle");
++  const farmAvoidToggle_17s = automationPanel.querySelector("#farmAvoidToggle");
    farmAvoidToggle.checked = window.autoFarmBoost;
-   farmAvoidToggle_2.checked = window.autoFarmEvolve;
-   farmAvoidToggle_3.checked = window.autoFarmAvoidPlayers;
+-  farmAvoidToggle_k0h.checked = window.autoFarmEvolve;
+-  farmAvoidToggle_q6k.checked = window.autoFarmAvoidPlayers;
++  farmAvoidToggle_7tw.checked = window.autoFarmEvolve;
++  farmAvoidToggle_17s.checked = window.autoFarmAvoidPlayers;
    const farmBoostLabel = farmAvoidToggle.nextElementSibling;
 -  farmBoostLabel.addEventListener("click", (farmOptionEvent1) => {
 -    farmOptionEvent1.stopPropagation();
@@ -3613,27 +3904,39 @@ Index: src/ui/panels.js
        farmAvoidToggle.checked ? "Farm boost ON" : "Farm boost OFF",
      );
    });
-   const farmEvolveLabel = farmAvoidToggle_2.nextElementSibling;
+-  const farmEvolveLabel = farmAvoidToggle_k0h.nextElementSibling;
 -  farmEvolveLabel.addEventListener("click", (farmOptionEvent2) => {
 -    farmOptionEvent2.stopPropagation();
+-    farmAvoidToggle_k0h.checked = !farmAvoidToggle_k0h.checked;
+-    window.autoFarmEvolve = farmAvoidToggle_k0h.checked;
++  const farmEvolveLabel = farmAvoidToggle_7tw.nextElementSibling;
 +  farmEvolveLabel.addEventListener("click", (settingToggleEvent) => {
 +    settingToggleEvent.stopPropagation();
-     farmAvoidToggle_2.checked = !farmAvoidToggle_2.checked;
-     window.autoFarmEvolve = farmAvoidToggle_2.checked;
++    farmAvoidToggle_7tw.checked = !farmAvoidToggle_7tw.checked;
++    window.autoFarmEvolve = farmAvoidToggle_7tw.checked;
      showNotification(
-       farmAvoidToggle_2.checked ? "Auto evolve ON" : "Auto evolve OFF",
+-      farmAvoidToggle_k0h.checked ? "Auto evolve ON" : "Auto evolve OFF",
++      farmAvoidToggle_7tw.checked ? "Auto evolve ON" : "Auto evolve OFF",
      );
    });
-   const farmAvoidLabel = farmAvoidToggle_3.nextElementSibling;
+-  const farmAvoidLabel = farmAvoidToggle_q6k.nextElementSibling;
 -  farmAvoidLabel.addEventListener("click", (farmOptionEvent3) => {
 -    farmOptionEvent3.stopPropagation();
+-    farmAvoidToggle_q6k.checked = !farmAvoidToggle_q6k.checked;
+-    window.autoFarmAvoidPlayers = farmAvoidToggle_q6k.checked;
++  const farmAvoidLabel = farmAvoidToggle_17s.nextElementSibling;
 +  farmAvoidLabel.addEventListener("click", (optionToggleEvent) => {
 +    optionToggleEvent.stopPropagation();
-     farmAvoidToggle_3.checked = !farmAvoidToggle_3.checked;
-     window.autoFarmAvoidPlayers = farmAvoidToggle_3.checked;
++    farmAvoidToggle_17s.checked = !farmAvoidToggle_17s.checked;
++    window.autoFarmAvoidPlayers = farmAvoidToggle_17s.checked;
      showNotification(
-       farmAvoidToggle_3.checked ? "Avoid players ON" : "Avoid players OFF",
-@@ -470,27 +537,25 @@
+-      farmAvoidToggle_q6k.checked ? "Avoid players ON" : "Avoid players OFF",
++      farmAvoidToggle_17s.checked ? "Avoid players ON" : "Avoid players OFF",
+     );
+   });
+   makeDraggable(automationPanel);
+   return automationPanel;
+@@ -473,27 +540,25 @@
    settingsPanel.style.cssText = "top:20px;left:20px;width:220px;";
    settingsPanel.innerHTML =
      '\n      <div class="ast-header"><span class="ast-header-title">Settings</span><button class="ast-header-min" id="settingsMin">−</button></div>\n      <div class="ast-body" id="settingsBody">\n        <div class="ast-key-row"><span>Toggle UI</span><input class="ast-key-capture" id="toggleKeyInput" type="text" value="SHIFT" readonly></div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Background</span>\n        <div class="ast-row"><input class="ast-input" type="text" id="bgUrl" placeholder="Image URL..." style="flex:1;"><button class="ast-btn" id="applyBg" style="width:auto;padding:6px 10px;margin:0;">Set</button></div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Theme</span>\n        <select class="ast-select" id="themeSelect">\n          <option value="grey">Grey</option><option value="blue">Blue</option><option value="red">Red</option>\n          <option value="green">Green</option><option value="pink">Pink</option><option value="starwars">Star Wars</option>\n          <option value="kfc">KFC</option><option value="halloween">Halloween 🔒</option>\n        </select>\n        <div class="ast-sep"></div>\n        <button class="ast-btn" id="customThemeToggleBtn" style="display:flex;align-items:center;justify-content:space-between;">\n          <span style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-sec,#888);">Create Theme</span>\n          <span id="customThemeArrow" style="color:var(--text-sec,#888);font-size:12px;">▼</span>\n        </button>\n        <div id="customThemeSection" style="display:none;padding-top:4px;">\n          <input class="ast-input" type="text" id="customThemeName" placeholder="Theme name..." style="width:100%;box-sizing:border-box;margin-bottom:4px;">\n<div class="ast-key-row"><span>Accent</span><input type="color" id="ctAcc" value="#888888" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n<div class="ast-key-row"><span>Background</span><input type="color" id="ctBg" value="#1a1a1a" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n<div class="ast-key-row"><span>Panel</span><input type="color" id="ctPanel" value="#242424" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n<button class="ast-btn" id="saveCustomTheme" style="margin-top:4px;">Save Theme</button>\n        </div>\n        <div class="ast-sep"></div>\n        <button class="ast-btn" id="myThemesToggleBtn" style="display:flex;align-items:center;justify-content:space-between;">\n          <span style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-sec,#888);">My Themes</span>\n          <span id="myThemesArrow" style="color:var(--text-sec,#888);font-size:12px;">▼</span>\n        </button>\n        <div id="myThemesSection" style="display:none;padding-top:4px;">\n          <div id="customThemeList"></div>\n          <div id="noThemesMsg" style="font-size:11px;color:#555;text-align:center;padding:8px 0;">No custom themes yet</div>\n        </div>\n      </div>';
@@ -3669,7 +3972,7 @@ Index: src/ui/panels.js
    const bgUrlInput = settingsPanel.querySelector("#bgUrl");
    bgUrlInput.value = localStorage.getItem("bgUrl") || "";
    settingsPanel.querySelector("#applyBg").onclick = () => {
-@@ -499,12 +564,12 @@
+@@ -502,12 +567,12 @@
        showNotification("Enter a URL");
        return;
      }
@@ -3684,7 +3987,7 @@ Index: src/ui/panels.js
    const customThemes = JSON.parse(localStorage.getItem("customThemes") || "{}");
    const presetThemes = [
      "grey",
-@@ -515,15 +580,15 @@
+@@ -518,15 +583,15 @@
      "starwars",
      "kfc",
      "halloween",
@@ -3704,7 +4007,7 @@ Index: src/ui/panels.js
          } else {
            themeChangeEvent.target.value =
              localStorage.getItem("theme") || "grey";
-@@ -534,60 +599,61 @@
+@@ -537,60 +602,61 @@
        showNotification("Theme: " + myY);
      }
    };
@@ -3790,7 +4093,7 @@ Index: src/ui/panels.js
        "blue",
        "red",
        "green",
-@@ -595,34 +661,34 @@
+@@ -598,34 +664,34 @@
        "starwars",
        "kfc",
        "halloween",
@@ -3836,17 +4139,17 @@ Index: src/ui/panels.js
        text: "#e0e0e0",
        textSec: "#888",
        bg1: themeBgColor,
-@@ -630,52 +696,139 @@
+@@ -633,55 +699,140 @@
        bg3: adjustColor(themePanelColor),
        border: "#333",
        hover: adjustColor(themePanelColor),
      };
--    const customThemes_2 = JSON.parse(
+-    const customThemes_wtz = JSON.parse(
 +    const customThemes = JSON.parse(
        localStorage.getItem("customThemes") || "{}",
      );
--    customThemes_2[customThemeName] = themeSettings;
--    localStorage.setItem("customThemes", JSON.stringify(customThemes_2));
+-    customThemes_wtz[customThemeName] = themeSettings;
+-    localStorage.setItem("customThemes", JSON.stringify(customThemes_wtz));
 -    applyTheme(customThemeName);
 +    customThemes[inputThemeName] = themeSettings;
 +    localStorage.setItem("customThemes", JSON.stringify(customThemes));
@@ -3859,31 +4162,41 @@ Index: src/ui/panels.js
    const myThemesToggleBtn = settingsPanel.querySelector(
      "#customThemeToggleBtn",
    );
--  const myThemesSection_2 = settingsPanel.querySelector("#customThemeSection");
+-  const myThemesSection_uwk = settingsPanel.querySelector(
+-    "#customThemeSection",
+-  );
 -  const myThemesArrow = settingsPanel.querySelector("#customThemeArrow");
-+  const themesSection_2 = settingsPanel.querySelector("#customThemeSection");
+-  let isHidden_9db = false;
++  const themesSection_umt = settingsPanel.querySelector("#customThemeSection");
 +  const themesArrow = settingsPanel.querySelector("#customThemeArrow");
-   let isHidden_2 = false;
++  let isHidden_szh = false;
    myThemesToggleBtn.onclick = () => {
-     isHidden_2 = !isHidden_2;
--    myThemesSection_2.style.display = isHidden_2 ? "block" : "none";
--    myThemesArrow.textContent = isHidden_2 ? "▲" : "▼";
-+    themesSection_2.style.display = isHidden_2 ? "block" : "none";
-+    themesArrow.textContent = isHidden_2 ? "▲" : "▼";
+-    isHidden_9db = !isHidden_9db;
+-    myThemesSection_uwk.style.display = isHidden_9db ? "block" : "none";
+-    myThemesArrow.textContent = isHidden_9db ? "▲" : "▼";
++    isHidden_szh = !isHidden_szh;
++    themesSection_umt.style.display = isHidden_szh ? "block" : "none";
++    themesArrow.textContent = isHidden_szh ? "▲" : "▼";
    };
-   const myThemesToggleBtn_2 = settingsPanel.querySelector("#myThemesToggleBtn");
--  const myThemesSection_3 = settingsPanel.querySelector("#myThemesSection");
--  const myThemesArrow_2 = settingsPanel.querySelector("#myThemesArrow");
-+  const themesSection_3 = settingsPanel.querySelector("#myThemesSection");
-+  const themesArrow_2 = settingsPanel.querySelector("#myThemesArrow");
-   let isHidden_3 = false;
-   myThemesToggleBtn_2.onclick = () => {
-     isHidden_3 = !isHidden_3;
--    myThemesSection_3.style.display = isHidden_3 ? "block" : "none";
--    myThemesArrow_2.textContent = isHidden_3 ? "▲" : "▼";
-+    themesSection_3.style.display = isHidden_3 ? "block" : "none";
-+    themesArrow_2.textContent = isHidden_3 ? "▲" : "▼";
-     if (isHidden_3) {
+-  const myThemesToggleBtn_8lc =
++  const myThemesToggleBtn_tfy =
+     settingsPanel.querySelector("#myThemesToggleBtn");
+-  const myThemesSection_u3r = settingsPanel.querySelector("#myThemesSection");
+-  const myThemesArrow_7x5 = settingsPanel.querySelector("#myThemesArrow");
+-  let isHidden_7uf = false;
+-  myThemesToggleBtn_8lc.onclick = () => {
+-    isHidden_7uf = !isHidden_7uf;
+-    myThemesSection_u3r.style.display = isHidden_7uf ? "block" : "none";
+-    myThemesArrow_7x5.textContent = isHidden_7uf ? "▲" : "▼";
+-    if (isHidden_7uf) {
++  const themesSection_tod = settingsPanel.querySelector("#myThemesSection");
++  const themesArrow_ssg = settingsPanel.querySelector("#myThemesArrow");
++  let isHidden_si9 = false;
++  myThemesToggleBtn_tfy.onclick = () => {
++    isHidden_si9 = !isHidden_si9;
++    themesSection_tod.style.display = isHidden_si9 ? "block" : "none";
++    themesArrow_ssg.textContent = isHidden_si9 ? "▲" : "▼";
++    if (isHidden_si9) {
        renderCustomThemes();
      }
    };
@@ -3933,20 +4246,20 @@ Index: src/ui/panels.js
 +    );
 +    showNotification(state.isMusicShuffleEnabled ? "Loop ON" : "Loop OFF");
 +  };
-+  const musicShuffleButton_2 = musicPanel.querySelector("#musicShuffleBtn");
-+  musicShuffleButton_2.classList.toggle(
++  const musicShuffleButton_pm1 = musicPanel.querySelector("#musicShuffleBtn");
++  musicShuffleButton_pm1.classList.toggle(
 +    "toggle-on",
-+    state.isMusicShuffleEnabled_2,
++    state.isMusicShuffleEnabled_rdv,
 +  );
-+  musicShuffleButton_2.onclick = () => {
-+    state.isMusicShuffleEnabled_2 = !state.isMusicShuffleEnabled_2;
-+    localStorage.setItem("musicShuffle", state.isMusicShuffleEnabled_2);
-+    musicShuffleButton_2.classList.toggle(
++  musicShuffleButton_pm1.onclick = () => {
++    state.isMusicShuffleEnabled_rdv = !state.isMusicShuffleEnabled_rdv;
++    localStorage.setItem("musicShuffle", state.isMusicShuffleEnabled_rdv);
++    musicShuffleButton_pm1.classList.toggle(
 +      "toggle-on",
-+      state.isMusicShuffleEnabled_2,
++      state.isMusicShuffleEnabled_rdv,
 +    );
 +    showNotification(
-+      state.isMusicShuffleEnabled_2 ? "Shuffle ON" : "Shuffle OFF",
++      state.isMusicShuffleEnabled_rdv ? "Shuffle ON" : "Shuffle OFF",
 +    );
 +  };
 +  const musicVolumeControl = musicPanel.querySelector("#musicVolume");
@@ -3991,7 +4304,7 @@ Index: src/ui/panels.js
    const updateBody = updatePanel.querySelector("#updateBody");
    let isMinimized = false;
    updatePanel.querySelector("#updateMin").onclick = (event) => {
-@@ -696,30 +849,32 @@
+@@ -702,30 +853,32 @@
      "combat-panel",
      "automation-panel",
      "update-history",
@@ -4077,7 +4390,7 @@ Index: src/ui/radar.js
      x: radarX,
      y: radarY,
      w: radarSize,
-@@ -52,97 +51,94 @@
+@@ -52,143 +51,140 @@
    ctx.lineTo(radarX + radarSize / 2, radarY + radarSize);
    ctx.moveTo(radarX, radarY + radarSize / 2);
    ctx.lineTo(radarX + radarSize, radarY + radarSize / 2);
@@ -4184,13 +4497,13 @@ Index: src/ui/radar.js
 -      const targetEntity = getEntityPosition(targetId);
 -      if (targetEntity) {
 -        const offsetY = targetEntity.x - gameState.myPos.x;
--        const offsetY_2 = targetEntity.y - gameState.myPos.y;
+-        const offsetY_n3y = targetEntity.y - gameState.myPos.y;
 +    const targetEntityId = findEntityById(window.entityTrailTargetId);
 +    if (targetEntityId) {
 +      const targetEntityPos = getEntityPosition(targetEntityId);
 +      if (targetEntityPos) {
 +        const deltaY = targetEntityPos.x - gameData.myPos.x;
-+        const deltaY_2 = targetEntityPos.y - gameData.myPos.y;
++        const deltaY_l9z = targetEntityPos.y - gameData.myPos.y;
          const drawY = Math.max(
            radarX + 2,
            Math.min(
@@ -4199,17 +4512,37 @@ Index: src/ui/radar.js
 +            radarX + radarSize / 2 + deltaY * pixelPerUnit,
            ),
          );
-         const drawY_2 = Math.max(
+-        const drawY_z3t = Math.max(
++        const drawY_mb4 = Math.max(
            radarY + 2,
            Math.min(
              radarY + radarSize - 2,
--            radarY + radarSize / 2 + offsetY_2 * radarScale,
-+            radarY + radarSize / 2 + deltaY_2 * pixelPerUnit,
+-            radarY + radarSize / 2 + offsetY_n3y * radarScale,
++            radarY + radarSize / 2 + deltaY_l9z * pixelPerUnit,
            ),
          );
          const alpha = Math.sin(Date.now() / 200) * 0.3 + 0.7;
-         const { r: red, g: blue, b: blue_2 } = window.entityTrailColor;
-@@ -164,31 +160,31 @@
+-        const { r: red, g: blue, b: blue_lnb } = window.entityTrailColor;
+-        const rgbValue = red + "," + blue + "," + blue_lnb;
++        const { r: red, g: blue, b: blue_m3y } = window.entityTrailColor;
++        const rgbValue = red + "," + blue + "," + blue_m3y;
+         ctx.strokeStyle = "rgba(" + rgbValue + "," + alpha + ")";
+         ctx.lineWidth = 2;
+         ctx.beginPath();
+-        ctx.arc(drawY, drawY_z3t, 7, 0, Math.PI * 2);
++        ctx.arc(drawY, drawY_mb4, 7, 0, Math.PI * 2);
+         ctx.stroke();
+         ctx.strokeStyle = "rgba(" + rgbValue + "," + alpha * 0.5 + ")";
+         ctx.lineWidth = 4;
+         ctx.beginPath();
+-        ctx.arc(drawY, drawY_z3t, 10, 0, Math.PI * 2);
++        ctx.arc(drawY, drawY_mb4, 10, 0, Math.PI * 2);
+         ctx.stroke();
+         ctx.fillStyle = "rgb(" + rgbValue + ")";
+         ctx.beginPath();
+-        ctx.arc(drawY, drawY_z3t, 3, 0, Math.PI * 2);
++        ctx.arc(drawY, drawY_mb4, 3, 0, Math.PI * 2);
+         ctx.fill();
          if (window.entityTrailHistory.length > 1) {
            ctx.strokeStyle = "rgba(" + rgbValue + ",0.3)";
            ctx.lineWidth = 1;

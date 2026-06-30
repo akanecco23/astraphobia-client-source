@@ -23,8 +23,8 @@ import {
   autoDodgeLoop,
   toggleLock,
 } from "./features/aimbot.js";
+import { renderEspLoop, trackPlayer, toggleEsp_s2u } from "./features/esp.js";
 import { applyTheme, initBackgroundImage, injectStyles } from "./ui/theme.js";
-import { renderEspLoop, trackPlayer, toggleEsp_2 } from "./features/esp.js";
 import { setupPatrolPoints, autoFarmLoop } from "./features/autofarm.js";
 import { showNotification, initNameAutofill } from "./ui/interaction.js";
 import { simulatePointerMove } from "./features/movement.js";
@@ -38,9 +38,9 @@ function wrapPropertyWithProxy(targetObject, propertyName, proxyHandler) {
   targetObject[propertyName] = proxyValue;
 }
 let currentTime = 0;
-let isProcessed_2 = false;
+let isProcessed_rma = false;
 function initNetworkInterceptor() {
-  if (isProcessed_2) {
+  if (isProcessed_rma) {
     return;
   }
   function unescapeString(inputString) {
@@ -145,7 +145,7 @@ function initNetworkInterceptor() {
     childList: true,
     subtree: true,
   });
-  isProcessed_2 = true;
+  isProcessed_rma = true;
   showNotification("Special characters enabled");
 }
 let musicPlaylist = JSON.parse(localStorage.getItem("musicPlaylist") || "[]");
@@ -343,7 +343,7 @@ function findEntityById(entityId) {
     return null;
   }
 }
-function getGameState_2() {
+function getGameState_sso() {
   try {
     const stateData = getGameState();
     const parsedState = getEntityManager(stateData);
@@ -398,7 +398,7 @@ function getGameState_2() {
     }
     gameState.players.sort((itemA, itemB) => itemA.distance - itemB.distance);
     gameState.food.sort(
-      (itemA_2, itemB_2) => itemA_2.distance - itemB_2.distance,
+      (itemA_qk0, itemB_pvs) => itemA_qk0.distance - itemB_pvs.distance,
     );
     return gameState;
   } catch (error) {
@@ -418,19 +418,19 @@ function getViewportScale() {
   } catch (error) {}
   return 0.554;
 }
-let isProcessed_6 = false;
+let isProcessed_s0n = false;
 function startEntityTrail() {
-  if (featuresentitytrailState.entityTrailInterval_3) {
-    clearInterval(featuresentitytrailState.entityTrailInterval_3);
-    featuresentitytrailState.entityTrailInterval_3 = null;
+  if (featuresentitytrailState.entityTrailInterval_r6h) {
+    clearInterval(featuresentitytrailState.entityTrailInterval_r6h);
+    featuresentitytrailState.entityTrailInterval_r6h = null;
   }
-  featuresentitytrailState.entityTrailInterval_3 = setInterval(() => {
+  featuresentitytrailState.entityTrailInterval_r6h = setInterval(() => {
     if (!window.entityTrailEnabled || !window.entityTrailTargetId) {
       return;
     }
     const targetEntityId = findEntityById(window.entityTrailTargetId);
     if (!targetEntityId) {
-      const gameData = getGameState_2();
+      const gameData = getGameState_sso();
       if (gameData && gameData.players && gameData.players.length > 0) {
         window.entityTrailTargetId = gameData.players[0].id;
       }
@@ -482,7 +482,6 @@ let dragState = {
 };
 const maxDistance = 600;
 const deltaThreshold = 800;
-const maxDistance_2 = 400;
 const maxFailCount = 2;
 const timeoutLimit = 20000;
 const tickInterval = 600;
@@ -497,25 +496,25 @@ function startAutoFarm(farmMode) {
   window.autoFarmSkipIds.clear();
   window.autoFarmSkipAreas = [];
   window.autoFarmSkipClearTime = Date.now();
-  state.position_2 = null;
-  state.counter_2 = 0;
+  state.position_s2v = null;
+  state.counter_qpz = 0;
   state.lastValue = 0;
   state.lastTickTime = 0;
   if (farmMode === "patrol") {
     setupPatrolPoints();
   }
   showNotification("Auto farm started (" + window.autoFarmMode + ")");
-  if (!state.isToggled_4) {
-    state.isToggled_4 = true;
+  if (!state.isToggled_s1e) {
+    state.isToggled_s1e = true;
     autoFarmLoop();
   }
 }
-let isProcessed_8 = false;
+let isProcessed_qq8 = false;
 const initAntiDetection = () => {
-  if (isProcessed_8) {
+  if (isProcessed_qq8) {
     return;
   }
-  isProcessed_8 = true;
+  isProcessed_qq8 = true;
   const cache = {};
   for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
     cache[propertyKey] = Reflect[propertyKey];
@@ -544,13 +543,13 @@ const initAntiDetection = () => {
   });
   let lastExecutionTime = 0;
   wrapValue(Function.prototype, "bind", {
-    apply(thisContext, args_2, extraArgs) {
+    apply(thisContext, args_db9, extraArgs) {
       try {
         try {
           if (
             lookupGetter.call(extraArgs[0], "aboveBgPlatformsContainer") != null
           ) {
-            return cache.apply(thisContext, args_2, extraArgs);
+            return cache.apply(thisContext, args_db9, extraArgs);
           }
         } catch {}
         if (extraArgs[0] && extraArgs[0].aboveBgPlatformsContainer != null) {
@@ -626,16 +625,16 @@ const initAntiDetection = () => {
           }
         }
       } catch {}
-      return cache.apply(thisContext, args_2, extraArgs);
+      return cache.apply(thisContext, args_db9, extraArgs);
     },
   });
 };
-let isProcessed_9 = false;
+let isProcessed_rnp = false;
 function initializeApplication() {
-  if (isProcessed_9) {
+  if (isProcessed_rnp) {
     return;
   }
-  isProcessed_9 = true;
+  isProcessed_rnp = true;
   setTimeout(() => {
     injectStyles();
     applyTheme(localStorage.getItem("theme") || "grey");
@@ -652,9 +651,9 @@ function initializeApplication() {
     initNameAutofill();
     renderEspLoop();
     renderLoop();
-    isProcessed_6 = true;
+    isProcessed_s0n = true;
     updateLockTarget();
-    state.isProcessed_7 = true;
+    state.isProcessed_roa = true;
     autoDodgeLoop();
   }, 1000);
 }
@@ -682,15 +681,15 @@ document.addEventListener(
 );
 document.addEventListener(
   "keydown",
-  (event_2) => {
-    if (event_2.target.matches("input,textarea,select,[contenteditable]")) {
+  (event_4ji) => {
+    if (event_4ji.target.matches("input,textarea,select,[contenteditable]")) {
       return;
     }
-    if (event_2.repeat) {
+    if (event_4ji.repeat) {
       return;
     }
-    if (event_2.key.toLowerCase() === window.lockKey.toLowerCase()) {
-      event_2.preventDefault();
+    if (event_4ji.key.toLowerCase() === window.lockKey.toLowerCase()) {
+      event_4ji.preventDefault();
       toggleLock();
     }
   },
@@ -698,38 +697,38 @@ document.addEventListener(
 );
 document.addEventListener(
   "keydown",
-  (event_3) => {
-    if (event_3.target.matches("input,textarea,select,[contenteditable]")) {
+  (event_5u9) => {
+    if (event_5u9.target.matches("input,textarea,select,[contenteditable]")) {
       return;
     }
-    if (event_3.repeat) {
+    if (event_5u9.repeat) {
       return;
     }
     const entityTraceKey = window.entityTraceKey.toLowerCase();
-    const entityKey = event_3.key.toLowerCase();
-    const entityCode = event_3.code.toLowerCase();
+    const entityKey = event_5u9.key.toLowerCase();
+    const entityCode = event_5u9.code.toLowerCase();
     if (
       entityKey === entityTraceKey ||
       entityCode === entityTraceKey ||
       entityCode === "key" + entityTraceKey
     ) {
-      event_3.preventDefault();
+      event_5u9.preventDefault();
       toggleEntityTrail();
     }
   },
   true,
 );
-document.addEventListener("keydown", (event_4) => {
-  if (event_4.target.matches("input,textarea,select")) {
+document.addEventListener("keydown", (event_6l0) => {
+  if (event_6l0.target.matches("input,textarea,select")) {
     return;
   }
-  if (event_4.key === "F3") {
-    event_4.preventDefault();
+  if (event_6l0.key === "F3") {
+    event_6l0.preventDefault();
     trackPlayer();
   }
-  if (event_4.key === "F4") {
-    event_4.preventDefault();
-    toggleEsp_2();
+  if (event_6l0.key === "F4") {
+    event_6l0.preventDefault();
+    toggleEsp_s2u();
   }
 });
 document.addEventListener("keydown", (keyboardEvent) => {
@@ -765,29 +764,29 @@ export const state = {
   isProcessed: false,
   isToggled: false,
   entityTrailInterval: null,
-  isToggled_2: false,
+  isToggled_t9m: false,
   audioPlayer: null,
   currentTrackIndex: 0,
   musicVolume: parseFloat(localStorage.getItem("musicVolume") || "0.5"),
   isMusicShuffleEnabled: localStorage.getItem("musicLoop") !== "false",
-  isMusicShuffleEnabled_2: localStorage.getItem("musicShuffle") === "true",
+  isMusicShuffleEnabled_rdv: localStorage.getItem("musicShuffle") === "true",
   youtubePlayer: null,
   audioSourceType: null,
   angleIndex: 0,
   keyQ: "q",
   keyE: "e",
-  isProcessed_5: false,
-  isToggled_3: false,
-  isProcessed_7: false,
+  isProcessed_skw: false,
+  isToggled_s33: false,
+  isProcessed_roa: false,
   previousTimestamp: 0,
   position: null,
   counter: 0,
   dataList: [],
   lastTickTime: 0,
   lastEventTime: 0,
-  isToggled_4: false,
-  position_2: null,
-  counter_2: 0,
+  isToggled_s1e: false,
+  position_s2v: null,
+  counter_qpz: 0,
   lastValue: 0,
   previousValue: 0,
   activeKey: "Shift",
@@ -803,7 +802,7 @@ export {
   getEntityPosition,
   calculateDirection,
   findEntityById,
-  getGameState_2,
+  getGameState_sso,
   getViewportScale,
   startEntityTrail,
   renderLoop,
@@ -817,11 +816,10 @@ export {
   offsetValue,
   gameInstance,
   playerData,
-  isProcessed_6,
+  isProcessed_s0n,
   dragState,
   maxDistance,
   deltaThreshold,
-  maxDistance_2,
   maxFailCount,
   timeoutLimit,
   tickInterval,

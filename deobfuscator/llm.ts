@@ -349,11 +349,21 @@ export class LLMClient {
 
   async renameVarBatchWithContext(
     vars: { name: string; declaration: string; usages: string[] }[],
+    alreadyUsedNames: string[] = [],
   ): Promise<Record<string, string>> {
     if (!this.enabled || this.apiKeys.length === 0) return {};
     const prompt = [
       "Below are obfuscated JavaScript variables and how they are declared/used.",
       "For each variable name shown, suggest ONE meaningful camelCase name that describes its PURPOSE/CONTENT.",
+      "IMPORTANT: All variable names must be UNIQUE. Do not assign the same name to two different variables.",
+      "If two variables have similar purposes, distinguish them with a more specific name (e.g., 'userName' vs 'adminName').",
+      ...(alreadyUsedNames.length > 0
+        ? [
+            "",
+            "The following names are ALREADY USED in this scope and must NOT be reused:",
+            ...alreadyUsedNames.map((n) => `  - ${n}`),
+          ]
+        : []),
       "Return ONLY a valid JSON object mapping each obfuscated name to its new name.",
       "No explanation, no markdown, just raw JSON.",
       "",
@@ -459,6 +469,86 @@ export class LLMClient {
     } catch (e) {
       log("error", `LLM chat error: ${(e as Error).message}`);
       return "";
+    }
+  }
+
+  async pickBestFunctionName(
+    candidateNames: string[],
+    codeContext?: string,
+  ): Promise<string | undefined> {
+    if (!this.enabled || this.apiKeys.length === 0) return undefined;
+    if (candidateNames.length === 0) return undefined;
+    if (candidateNames.length === 1) return candidateNames[0];
+
+    const prompt = [
+      "You are reviewing candidate names for the same JavaScript function.",
+      "Pick the SINGLE best camelCase name that most accurately describes the function's purpose.",
+      "You may also suggest a new name if none of the candidates are good.",
+      "Return ONLY the chosen name as a plain string, no quotes, no explanation.",
+      "",
+      "Candidate names:",
+      ...candidateNames.map((n) => `  - ${n}`),
+      ...(codeContext
+        ? ["", "Function code context:", codeContext.slice(0, 1200)]
+        : []),
+    ].join("\n");
+
+    try {
+      const text = await this.generateWithBackoff({
+        model: this.model,
+        contents: prompt,
+        config: {
+          systemInstruction:
+            "You are a JavaScript naming expert. You pick the best camelCase function name. You ONLY output a single identifier name, nothing else.",
+          maxOutputTokens: 50,
+          temperature: 0,
+        },
+      });
+      const name = text.trim().replace(/[^a-zA-Z0-9_$]/g, "");
+      return name || undefined;
+    } catch (e) {
+      log("error", `LLM pickBestFunctionName error: ${(e as Error).message}`);
+      return undefined;
+    }
+  }
+
+  async pickBestVariableName(
+    candidateNames: string[],
+    usageContext?: string,
+  ): Promise<string | undefined> {
+    if (!this.enabled || this.apiKeys.length === 0) return undefined;
+    if (candidateNames.length === 0) return undefined;
+    if (candidateNames.length === 1) return candidateNames[0];
+
+    const prompt = [
+      "You are reviewing candidate names for the same JavaScript variable.",
+      "Pick the SINGLE best camelCase name that most accurately describes the variable's purpose.",
+      "You may also suggest a new name if none of the candidates are good.",
+      "Return ONLY the chosen name as a plain string, no quotes, no explanation.",
+      "",
+      "Candidate names:",
+      ...candidateNames.map((n) => `  - ${n}`),
+      ...(usageContext
+        ? ["", "Usage context:", usageContext.slice(0, 800)]
+        : []),
+    ].join("\n");
+
+    try {
+      const text = await this.generateWithBackoff({
+        model: this.model,
+        contents: prompt,
+        config: {
+          systemInstruction:
+            "You are a JavaScript naming expert. You pick the best camelCase variable name. You ONLY output a single identifier name, nothing else.",
+          maxOutputTokens: 50,
+          temperature: 0,
+        },
+      });
+      const name = text.trim().replace(/[^a-zA-Z0-9_$]/g, "");
+      return name || undefined;
+    } catch (e) {
+      log("error", `LLM pickBestVariableName error: ${(e as Error).message}`);
+      return undefined;
     }
   }
 

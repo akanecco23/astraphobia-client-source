@@ -20,8 +20,9 @@ Index: content.js
    angles,
    radius,
    playerData,
-+  isProcessed_2,
-   isProcessed_3,
+-  isProcessed_t1s,
++  isProcessed_sc5,
++  isProcessed_qng,
    config,
    state,
  } from "./src/core.js";
@@ -195,7 +196,7 @@ Index: src/core.js
    const inputMaxLengthObserver = new MutationObserver(() => {
      document
        .querySelector(".play-game .el-input__inner")
-@@ -125,15 +127,15 @@
+@@ -125,26 +127,26 @@
      childList: true,
      subtree: true,
    });
@@ -217,13 +218,15 @@ Index: src/core.js
  
  const angles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
  const radius = 300;
-@@ -141,10 +143,10 @@
+ let gameInstance;
  let appState;
  let playerData;
- let isProcessed_2 = false;
- let isProcessed_3 = false;
+-let isProcessed_rot = false;
+-let isProcessed_t1s = false;
 -const encryptPacketData = (url, terminatorCode, suffix = "") => {
 -  const stringPool = [
++let isProcessed_sc5 = false;
++let isProcessed_qng = false;
 +const encryptPacketData = (options, charCode, suffix = "") => {
 +  const stringTable = [
      "ode",
@@ -313,21 +316,24 @@ Index: src/core.js
      hasSec: true,
      secLoadTime: 750,
      hasScaling: true,
-@@ -216,92 +214,79 @@
+@@ -216,125 +214,112 @@
      secLoadTime: 500,
      hasScaling: false,
    },
  };
 -const sendPacket = (payload, additionalData = "") => {
-+const sendPacket = (payload, extraData = "") => {
-   if (gameInstance && appState && config_2.socketManager) {
-     gameInstance[config_2.socketManager].sendBytePacket(
+-  if (gameInstance && appState && config_skh.socketManager) {
+-    gameInstance[config_skh.socketManager].sendBytePacket(
 -      encryptPacketData(appState.token, payload, additionalData),
++const sendPacket = (payload, extraData = "") => {
++  if (gameInstance && appState && config_qp9.socketManager) {
++    gameInstance[config_qp9.socketManager].sendBytePacket(
 +      encryptPacketData(appState.token._value, payload, extraData),
      );
    }
  };
- const config_2 = {};
+-const config_skh = {};
++const config_qp9 = {};
  const currentTime = 0;
 -const initHooks = () => {
 -  const propertyCache = {};
@@ -351,10 +357,10 @@ Index: src/core.js
 +    dataStore[storeIndex] = processedValue;
    };
    wrapWithProxy(Function.prototype, "toString", {
--    apply(thisContext, key_2, context) {
+-    apply(thisContext, key, context) {
 -      return propertyCache.apply(
 -        thisContext,
--        stateCache.get(key_2) || key_2,
+-        stateCache.get(key) || key,
 +    apply(context, functionKey, applyArgs) {
 +      return storage.apply(
          context,
@@ -422,51 +428,75 @@ Index: src/core.js
 +          const obfuscatedKeys = allKeys.filter((obfuscatedVarName) =>
 +            obfuscatedVarName.startsWith("_0x"),
            );
-           config_2.setFlash =
+-          config_skh.setFlash =
++          config_qp9.setFlash =
              Object.getOwnPropertyNames(playerData.__proto__.__proto__)
 -              .filter((obfuscatedName) => obfuscatedName.startsWith("_0x"))
 +              .filter((targetVarName) => targetVarName.startsWith("_0x"))
                .find(
 -                (functionKey) => playerData[functionKey] instanceof Function,
+-              ) || config_skh.setFlash;
+-          config_skh.terrainManager =
 +                (methodName) => playerData[methodName] instanceof Function,
-               ) || config_2.setFlash;
-           config_2.terrainManager =
++              ) || config_qp9.setFlash;
++          config_qp9.terrainManager =
              obfuscatedKeys.find(
 -              (shadowObjectKey) =>
 -                typeof playerData[shadowObjectKey]?.shadow !== "undefined",
+-            ) || config_skh.terrainManager;
+-          config_skh.entityManager =
 +              (shadowEntityKey) =>
 +                typeof playerData[shadowEntityKey]?.shadow !== "undefined",
-             ) || config_2.terrainManager;
-           config_2.entityManager =
++            ) || config_qp9.terrainManager;
++          config_qp9.entityManager =
              obfuscatedKeys.find(
                (entitiesListKey) =>
-@@ -316,11 +301,11 @@
-             config_2.entityManagerProps.animalsList =
+                 typeof playerData[entitiesListKey]?.entitiesList !==
+                 "undefined",
+-            ) || config_skh.entityManager;
+-          config_skh.entityManagerProps = {};
++            ) || config_qp9.entityManager;
++          config_qp9.entityManagerProps = {};
+           const entityManagerKeys = getAllPropertyNames(
+-            playerData[config_skh.entityManager],
++            playerData[config_qp9.entityManager],
+           );
+           const animalsUpdateInterval = setInterval(() => {
+-            config_skh.entityManagerProps.animalsList =
++            config_qp9.entityManagerProps.animalsList =
                entityManagerKeys
                  .filter((variableName) => variableName.startsWith("_0x"))
                  .find(
 -                  (entityType) =>
-+                  (entityKey) =>
-                     typeof playerData?.[config_2.entityManager]?.[
+-                    typeof playerData?.[config_skh.entityManager]?.[
 -                      entityType
++                  (entityKey) =>
++                    typeof playerData?.[config_qp9.entityManager]?.[
 +                      entityKey
                      ]?.[0] !== "undefined",
-                 ) || config_2.entityManagerProps.animalsList;
+-                ) || config_skh.entityManagerProps.animalsList;
++                ) || config_qp9.entityManagerProps.animalsList;
              if (
-               typeof config_2.entityManagerProps.animalsList !== "undefined"
-@@ -329,10 +314,10 @@
+-              typeof config_skh.entityManagerProps.animalsList !== "undefined"
++              typeof config_qp9.entityManagerProps.animalsList !== "undefined"
+             ) {
+               clearInterval(animalsUpdateInterval);
              }
            }, 1000);
-           config_2.socketManager =
+-          config_skh.socketManager =
++          config_qp9.socketManager =
              getAllPropertyNames(gameInstance).find(
 -              (packetSenderKey) =>
 -                typeof gameInstance[packetSenderKey]?.sendBytePacket !==
 +              (networkServiceKey) =>
 +                typeof gameInstance[networkServiceKey]?.sendBytePacket !==
                  "undefined",
-             ) || config_2.socketManager;
+-            ) || config_skh.socketManager;
++            ) || config_qp9.socketManager;
            try {
              appState = document
+               .getElementById("app")
+               ._vnode.appContext.config.globalProperties.$simpleState.states.find(
 @@ -351,46 +336,45 @@
                  return;
                }
@@ -516,8 +546,9 @@ Index: src/core.js
    });
  };
 -const disableZoomClamp = () => {
+-  if (isProcessed_rot) {
 +const applyGameHacks = () => {
-   if (isProcessed_2) {
++  if (isProcessed_sc5) {
      return;
    }
 +  if (!playerData) {
@@ -528,17 +559,18 @@ Index: src/core.js
      try {
        gameInstance.viewport.clampZoom({
          minWidth: 0,
-@@ -399,11 +383,25 @@
+@@ -399,12 +383,26 @@
        gameInstance.viewport.plugins.plugins.clamp = null;
        gameInstance.viewport.plugins.plugins["clamp-zoom"] = null;
      } catch {}
    }, 300);
+-  isProcessed_rot = true;
 +  try {
-+    if (config_2.setFlash) {
-+      playerData[config_2.setFlash] = () => {};
++    if (config_qp9.setFlash) {
++      playerData[config_qp9.setFlash] = () => {};
 +    }
-+    if (config_2.terrainManager) {
-+      const terrainManager = playerData[config_2.terrainManager];
++    if (config_qp9.terrainManager) {
++      const terrainManager = playerData[config_qp9.terrainManager];
 +      if (terrainManager && terrainManager.shadow) {
 +        terrainManager.shadow.setShadowSize(1000000);
 +        terrainManager.shadow.setShadowSize = () => {};
@@ -547,14 +579,16 @@ Index: src/core.js
 +  } catch (url) {
 +    console.error(url);
 +  }
-   isProcessed_2 = true;
++  isProcessed_sc5 = true;
  };
 -const initGameCheats = () => {
+-  if (isProcessed_t1s) {
 +const initMod = () => {
-   if (isProcessed_3) {
++  if (isProcessed_qng) {
      return;
    }
    function sendActionSequence() {
+     try {
 @@ -461,19 +459,15 @@
                Math.floor(Math.random() * 1647483648) + 500000000,
              );
@@ -595,9 +629,13 @@ Index: src/core.js
          }
        } catch {}
      },
-@@ -504,35 +498,37 @@
+@@ -501,38 +495,40 @@
+     try {
+       document.getElementById("ctrl-overlay").style.pointerEvents = "none";
+     } catch {}
    });
-   isProcessed_3 = true;
+-  isProcessed_t1s = true;
++  isProcessed_qng = true;
  };
  
 -function initAllPanels() {
@@ -668,8 +706,9 @@ Index: src/core.js
    angles,
    radius,
    playerData,
-+  isProcessed_2,
-   isProcessed_3,
+-  isProcessed_t1s,
++  isProcessed_sc5,
++  isProcessed_qng,
    config,
  };
 Index: src/features/adblock.js
@@ -713,7 +752,7 @@ Index: src/features/antidetection.js
 +import { getGameCanvas } from "../utils.js";
 +
 +function startAntiAfk() {
-+  if (featuresentitytrailState.entityTrailInterval_2) {
++  if (featuresentitytrailState.entityTrailInterval_9sd) {
 +    return;
 +  }
 +  const gameCanvas = getGameCanvas();
@@ -721,7 +760,7 @@ Index: src/features/antidetection.js
 +    showNotification("Game canvas not found!");
 +    return;
 +  }
-+  featuresentitytrailState.entityTrailInterval_2 = setInterval(() => {
++  featuresentitytrailState.entityTrailInterval_9sd = setInterval(() => {
 +    const angleDegrees = angles[state.angleIndex];
 +    const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
 +    const offsetX = Math.round(radius * Math.sin(angleRadians));
@@ -784,11 +823,22 @@ Index: src/features/autofarm.js
  };
  
  export { handleAnimalAction };
+Index: src/features/entitytrail.js
+===================================================================
+--- src/features/entitytrail.js	v1.1
++++ src/features/entitytrail.js	v1.2
+@@ -1,5 +1,5 @@
+ export const featuresentitytrailState = {
+-  entityTrailInterval_rkn: null,
++  entityTrailInterval_9sd: null,
+ };
+ 
+ export {};
 Index: src/features/movement.js
 ===================================================================
 --- src/features/movement.js	v1.1
 +++ src/features/movement.js	v1.2
-@@ -1,33 +1,7 @@
+@@ -1,44 +1,18 @@
  import { featuresentitytrailState } from "./entitytrail.js";
 -import { angles, radius, state } from "../core.js";
 -import { showToast } from "../ui/interaction.js";
@@ -796,7 +846,7 @@ Index: src/features/movement.js
 +import { startAntiAfk } from "./antidetection.js";
  
 -function startCircularMouseMovement() {
--  if (featuresentitytrailState.entityTrailInterval_2) {
+-  if (featuresentitytrailState.entityTrailInterval_rkn) {
 -    return;
 -  }
 -  const gameCanvas = getGameCanvas();
@@ -804,7 +854,7 @@ Index: src/features/movement.js
 -    showToast("Game canvas not found!");
 -    return;
 -  }
--  featuresentitytrailState.entityTrailInterval_2 = setInterval(() => {
+-  featuresentitytrailState.entityTrailInterval_rkn = setInterval(() => {
 -    const angleDegrees = angles[state.angleIndex];
 -    const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
 -    const offsetX = Math.round(radius * Math.sin(angleRadians));
@@ -820,12 +870,17 @@ Index: src/features/movement.js
 -  }, 15);
 -}
  function stopEntityTrail() {
-   if (featuresentitytrailState.entityTrailInterval_2) {
-     clearInterval(featuresentitytrailState.entityTrailInterval_2);
-     featuresentitytrailState.entityTrailInterval_2 = null;
-@@ -36,9 +10,9 @@
+-  if (featuresentitytrailState.entityTrailInterval_rkn) {
+-    clearInterval(featuresentitytrailState.entityTrailInterval_rkn);
+-    featuresentitytrailState.entityTrailInterval_rkn = null;
++  if (featuresentitytrailState.entityTrailInterval_9sd) {
++    clearInterval(featuresentitytrailState.entityTrailInterval_9sd);
++    featuresentitytrailState.entityTrailInterval_9sd = null;
+   }
+ }
  function toggleMouseSimulation() {
-   if (featuresentitytrailState.entityTrailInterval_2) {
+-  if (featuresentitytrailState.entityTrailInterval_rkn) {
++  if (featuresentitytrailState.entityTrailInterval_9sd) {
      stopEntityTrail();
    } else {
 -    startCircularMouseMovement();
@@ -915,14 +970,15 @@ Index: src/ui/panels.js
 ===================================================================
 --- src/ui/panels.js	v1.1
 +++ src/ui/panels.js	v1.2
-@@ -1,403 +1,343 @@
+@@ -1,403 +1,345 @@
  import {
    radius,
 -  setupTextEncoderHook,
-+  initNetworkHook,
-+  isProcessed_2,
-   isProcessed_3,
+-  isProcessed_t1s,
 -  initHooks,
++  initNetworkHook,
++  isProcessed_sc5,
++  isProcessed_qng,
 +  setupAntiDetection,
 +  applyGameHacks,
    state,
@@ -970,12 +1026,12 @@ Index: src/ui/panels.js
 -  let isDraggingHistory = false;
    let isActive = false;
 -  historyPanel.addEventListener("mousedown", (clickEvent) => {
--    if (
++  let isActive_fb8 = false;
++  historyPanel.addEventListener("mousedown", (event_z21) => {
+     if (
 -      ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(clickEvent.target.tagName)
--    ) {
-+  let isActive_2 = false;
-+  historyPanel.addEventListener("mousedown", (event_2) => {
-+    if (["BUTTON", "INPUT", "TEXTAREA", "A"].includes(event_2.target.tagName)) {
++      ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(event_z21.target.tagName)
+     ) {
        return;
      }
 -    isDraggingHistory = true;
@@ -983,19 +1039,19 @@ Index: src/ui/panels.js
 -    offsetX = clickEvent.clientX - historyPanel.getBoundingClientRect().left;
 -    offsetY = clickEvent.clientY - historyPanel.getBoundingClientRect().top;
 +    isActive = true;
-+    isActive_2 = false;
-+    offsetX = event_2.clientX - historyPanel.getBoundingClientRect().left;
-+    offsetY = event_2.clientY - historyPanel.getBoundingClientRect().top;
++    isActive_fb8 = false;
++    offsetX = event_z21.clientX - historyPanel.getBoundingClientRect().left;
++    offsetY = event_z21.clientY - historyPanel.getBoundingClientRect().top;
      historyPanel.style.transition = "none";
      const handleMouseMove = (mouseEvent) => {
 -      const deltaX = mouseEvent.clientX - clickEvent.clientX;
 -      const deltaY = mouseEvent.clientY - clickEvent.clientY;
 -      if (!isActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
 -        isActive = true;
-+      const deltaX = mouseEvent.clientX - event_2.clientX;
-+      const deltaY = mouseEvent.clientY - event_2.clientY;
-+      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-+        isActive_2 = true;
++      const deltaX = mouseEvent.clientX - event_z21.clientX;
++      const deltaY = mouseEvent.clientY - event_z21.clientY;
++      if (!isActive_fb8 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
++        isActive_fb8 = true;
        }
 -      if (isDraggingHistory) {
 +      if (isActive) {
@@ -1022,9 +1078,9 @@ Index: src/ui/panels.js
 -  historyPanel.addEventListener("click", (event) => {
 -    if (isActive) {
 -      event.stopImmediatePropagation();
-+  historyPanel.addEventListener("click", (event_3) => {
-+    if (isActive_2) {
-+      event_3.stopImmediatePropagation();
++  historyPanel.addEventListener("click", (event_cbo) => {
++    if (isActive_fb8) {
++      event_cbo.stopImmediatePropagation();
      }
    });
    return historyPanel;
@@ -1098,8 +1154,8 @@ Index: src/ui/panels.js
    };
 -  const spoofBtn = toolsPanel.querySelector("#patchBtn");
 -  spoofBtn.onclick = () => setupTextEncoderHook(spoofBtn);
--  const spoofBtn_2 = toolsPanel.querySelector("#spoofBtn");
--  spoofBtn_2.onclick = () => {
+-  const spoofBtn_o7w = toolsPanel.querySelector("#spoofBtn");
+-  spoofBtn_o7w.onclick = () => {
 -    const generatedValue = generateRandomString(8);
 -    if (simulateTyping(".play-game .el-input__inner", generatedValue)) {
 -      showToast("Spoofed name!");
@@ -1107,8 +1163,8 @@ Index: src/ui/panels.js
 -      showToast("Spoofed tribe name!");
 +  const spoofButton = container.querySelector("#patchBtn");
 +  spoofButton.onclick = () => initNetworkHook(spoofButton);
-+  const spoofButton_2 = container.querySelector("#spoofBtn");
-+  spoofButton_2.onclick = () => {
++  const spoofButton_iul = container.querySelector("#spoofBtn");
++  spoofButton_iul.onclick = () => {
 +    const maxLength = generateRandomString(8);
 +    if (simulateTyping(".play-game .el-input__inner", maxLength)) {
 +      showNotification("Spoofed name!");
@@ -1124,9 +1180,10 @@ Index: src/ui/panels.js
 +  const autoChatButton = container.querySelector("#spinBtn");
 +  autoChatButton.onclick = () => {
      toggleMouseSimulation();
-     if (featuresentitytrailState.entityTrailInterval_2) {
+-    if (featuresentitytrailState.entityTrailInterval_rkn) {
 -      autoChatBtn.textContent = "Disable Auto Spin";
 -      autoChatBtn.style.color = "#4dff4d";
++    if (featuresentitytrailState.entityTrailInterval_9sd) {
 +      autoChatButton.textContent = "Disable Auto Spin";
 +      autoChatButton.style.color = "#27ae60";
      } else {
@@ -1148,20 +1205,21 @@ Index: src/ui/panels.js
      spinKeyInput.value = lastPressedKey.replace("Key", "").toLowerCase();
    });
 -  document.addEventListener("keydown", (keyEvent) => {
-+  document.addEventListener("keydown", (event_2) => {
++  document.addEventListener("keydown", (event_3l4) => {
      if (
        lastPressedKey &&
 -      keyEvent.code === lastPressedKey &&
 -      !keyEvent.target.matches("input, textarea, button")
-+      event_2.code === lastPressedKey &&
-+      !event_2.target.matches("input, textarea, button")
++      event_3l4.code === lastPressedKey &&
++      !event_3l4.target.matches("input, textarea, button")
      ) {
 -      keyEvent.preventDefault();
-+      event_2.preventDefault();
++      event_3l4.preventDefault();
        toggleMouseSimulation();
-       if (featuresentitytrailState.entityTrailInterval_2) {
+-      if (featuresentitytrailState.entityTrailInterval_rkn) {
 -        autoChatBtn.textContent = "Disable Auto Spin";
 -        autoChatBtn.style.color = "#4dff4d";
++      if (featuresentitytrailState.entityTrailInterval_9sd) {
 +        autoChatButton.textContent = "Disable Auto Spin";
 +        autoChatButton.style.color = "#27ae60";
        } else {
@@ -1172,12 +1230,12 @@ Index: src/ui/panels.js
        }
      }
    });
--  const autoChatBtn_2 = toolsPanel.querySelector("#autoChatBtn");
--  autoChatBtn_2.onclick = () => {
+-  const autoChatBtn_o0p = toolsPanel.querySelector("#autoChatBtn");
+-  autoChatBtn_o0p.onclick = () => {
 -    const chatMessageText = toolsPanel.querySelector("#chatMsg").value;
 -    const delayInput = toolsPanel.querySelector("#delayInput");
-+  const autoChatButton_2 = container.querySelector("#autoChatBtn");
-+  autoChatButton_2.onclick = () => {
++  const autoChatButton_joo = container.querySelector("#autoChatBtn");
++  autoChatButton_joo.onclick = () => {
 +    const chatMessageText = container.querySelector("#chatMsg").value;
 +    const delayInput = container.querySelector("#delayInput");
      const delayValue = parseInt(delayInput.value) || 10;
@@ -1188,16 +1246,16 @@ Index: src/ui/panels.js
      }
      if (state.isToggled) {
        stopInterval();
--      autoChatBtn_2.textContent = "Enable Auto Chat";
--      autoChatBtn_2.style.color = "#ff4d4d";
-+      autoChatButton_2.textContent = "Enable Auto Chat";
-+      autoChatButton_2.style.color = "#e74c3c";
+-      autoChatBtn_o0p.textContent = "Enable Auto Chat";
+-      autoChatBtn_o0p.style.color = "#ff4d4d";
++      autoChatButton_joo.textContent = "Enable Auto Chat";
++      autoChatButton_joo.style.color = "#e74c3c";
      } else {
        startScheduledTask(chatMessageText, delayValue);
--      autoChatBtn_2.textContent = "Disable Auto Chat";
--      autoChatBtn_2.style.color = "#4dff4d";
-+      autoChatButton_2.textContent = "Disable Auto Chat";
-+      autoChatButton_2.style.color = "#27ae60";
+-      autoChatBtn_o0p.textContent = "Disable Auto Chat";
+-      autoChatBtn_o0p.style.color = "#4dff4d";
++      autoChatButton_joo.textContent = "Disable Auto Chat";
++      autoChatButton_joo.style.color = "#27ae60";
      }
    };
    let offsetX;
@@ -1205,17 +1263,17 @@ Index: src/ui/panels.js
 -  let isDraggingTools = false;
    let isActive = false;
 -  toolsPanel.addEventListener("mousedown", (uiEvent) => {
-+  let isActive_2 = false;
-+  container.addEventListener("mousedown", (event_3) => {
++  let isActive_jtk = false;
++  container.addEventListener("mousedown", (event_2uf) => {
      if (
 -      uiEvent.target.tagName === "BUTTON" ||
 -      uiEvent.target.tagName === "TEXTAREA" ||
 -      uiEvent.target.tagName === "INPUT" ||
 -      uiEvent.target.classList.contains("credits")
-+      event_3.target.tagName === "BUTTON" ||
-+      event_3.target.tagName === "TEXTAREA" ||
-+      event_3.target.tagName === "INPUT" ||
-+      event_3.target.classList.contains("credits")
++      event_2uf.target.tagName === "BUTTON" ||
++      event_2uf.target.tagName === "TEXTAREA" ||
++      event_2uf.target.tagName === "INPUT" ||
++      event_2uf.target.classList.contains("credits")
      ) {
        return;
      }
@@ -1225,19 +1283,19 @@ Index: src/ui/panels.js
 -    offsetY = uiEvent.clientY - toolsPanel.getBoundingClientRect().top;
 -    toolsPanel.style.transition = "none";
 +    isActive = true;
-+    isActive_2 = false;
-+    offsetX = event_3.clientX - container.getBoundingClientRect().left;
-+    offsetY = event_3.clientY - container.getBoundingClientRect().top;
++    isActive_jtk = false;
++    offsetX = event_2uf.clientX - container.getBoundingClientRect().left;
++    offsetY = event_2uf.clientY - container.getBoundingClientRect().top;
 +    container.style.transition = "none";
      const handleMouseMove = (mouseEvent) => {
 -      const deltaX = mouseEvent.clientX - uiEvent.clientX;
 -      const deltaY = mouseEvent.clientY - uiEvent.clientY;
 -      if (!isActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
 -        isActive = true;
-+      const deltaX = mouseEvent.clientX - event_3.clientX;
-+      const deltaY = mouseEvent.clientY - event_3.clientY;
-+      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-+        isActive_2 = true;
++      const deltaX = mouseEvent.clientX - event_2uf.clientX;
++      const deltaY = mouseEvent.clientY - event_2uf.clientY;
++      if (!isActive_jtk && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
++        isActive_jtk = true;
        }
 -      if (isDraggingTools) {
 -        toolsPanel.style.left = mouseEvent.clientX - offsetX + "px";
@@ -1268,9 +1326,9 @@ Index: src/ui/panels.js
 -  toolsPanel.addEventListener("click", (propagationEvent) => {
 -    if (isActive) {
 -      propagationEvent.stopImmediatePropagation();
-+  container.addEventListener("click", (event_4) => {
-+    if (isActive_2) {
-+      event_4.stopImmediatePropagation();
++  container.addEventListener("click", (event_5g4) => {
++    if (isActive_jtk) {
++      event_5g4.stopImmediatePropagation();
      }
    });
 -  return toolsPanel;
@@ -1339,10 +1397,11 @@ Index: src/ui/panels.js
    };
 -  const thresherBtn = plusPanelElement.querySelector("#thresherBtn");
 -  thresherBtn.onclick = () => {
+-    if (isProcessed_t1s) {
+-      showToast("Thresher Super Boost is already active!");
 +  const astraVisionBtn = container.querySelector("#thresherBtn");
 +  astraVisionBtn.onclick = () => {
-     if (isProcessed_3) {
--      showToast("Thresher Super Boost is already active!");
++    if (isProcessed_qng) {
 +      showNotification("Thresher Super Boost is already active!");
        return;
      }
@@ -1366,9 +1425,9 @@ Index: src/ui/panels.js
 -      clickEvent.target.tagName === "INPUT" ||
 -      clickEvent.target.classList.contains("credits")
 -    ) {
-+  const astraVisionBtn_2 = container.querySelector("#astraVisionBtn");
-+  astraVisionBtn_2.onclick = () => {
-+    if (isProcessed_2) {
++  const astraVisionBtn_fg7 = container.querySelector("#astraVisionBtn");
++  astraVisionBtn_fg7.onclick = () => {
++    if (isProcessed_sc5) {
 +      showNotification("Astra-Vision already enabled!");
        return;
      }
@@ -1430,9 +1489,9 @@ Index: src/ui/panels.js
 -    minSettingsBtn.textContent = isHidden ? "+" : "−";
 +    setupAntiDetection();
 +    applyGameHacks();
-+    astraVisionBtn_2.textContent = "Astra-Vision Active";
-+    astraVisionBtn_2.style.color = "#27ae60";
-+    astraVisionBtn_2.disabled = true;
++    astraVisionBtn_fg7.textContent = "Astra-Vision Active";
++    astraVisionBtn_fg7.style.color = "#27ae60";
++    astraVisionBtn_fg7.disabled = true;
 +    showNotification(
 +      "👁️ Astra-Vision enabled! (zoom-limit unlocked, no ink-flash or deep darkness effects)",
 +    );
@@ -1449,7 +1508,7 @@ Index: src/ui/panels.js
 -  let isDraggingSettingsPanel = false;
    let isActive = false;
 -  settingsPanelElement.addEventListener("mousedown", (clickEvent) => {
-+  let isActive_2 = false;
++  let isActive_gcu = false;
 +  container.addEventListener("mousedown", (clickEvent) => {
      if (
        clickEvent.target.tagName === "BUTTON" ||
@@ -1467,7 +1526,7 @@ Index: src/ui/panels.js
 -      clickEvent.clientY - settingsPanelElement.getBoundingClientRect().top;
 -    settingsPanelElement.style.transition = "none";
 +    isActive = true;
-+    isActive_2 = false;
++    isActive_gcu = false;
 +    offsetX = clickEvent.clientX - container.getBoundingClientRect().left;
 +    offsetY = clickEvent.clientY - container.getBoundingClientRect().top;
 +    container.style.transition = "none";
@@ -1476,8 +1535,8 @@ Index: src/ui/panels.js
        const deltaY = mouseEvent.clientY - clickEvent.clientY;
 -      if (!isActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
 -        isActive = true;
-+      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-+        isActive_2 = true;
++      if (!isActive_gcu && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
++        isActive_gcu = true;
        }
 -      if (isDraggingSettingsPanel) {
 -        settingsPanelElement.style.left = mouseEvent.clientX - offsetX + "px";
@@ -1510,7 +1569,7 @@ Index: src/ui/panels.js
 -    if (isActive) {
 -      event.stopImmediatePropagation();
 +  container.addEventListener("click", (keyboardEvent) => {
-+    if (isActive_2) {
++    if (isActive_gcu) {
 +      keyboardEvent.stopImmediatePropagation();
      }
    });
@@ -1520,7 +1579,7 @@ Index: src/ui/panels.js
  function togglePanels() {
    const deepToolsPanel = document.getElementById("deep-tools-panel");
    const updateHistoryPanel = document.getElementById("update-history");
-@@ -412,9 +352,8 @@
+@@ -412,9 +354,8 @@
  }
  
  export {
@@ -1626,7 +1685,7 @@ Index: src/ui/theme.js
 +  let offsetX;
 +  let offsetY;
 +  let isActive = false;
-+  let isActive_2 = false;
++  let isActive_rs1 = false;
 +  container.addEventListener("mousedown", (clickEvent) => {
 +    if (
 +      clickEvent.target.tagName === "BUTTON" ||
@@ -1636,15 +1695,15 @@ Index: src/ui/theme.js
 +      return;
 +    }
 +    isActive = true;
-+    isActive_2 = false;
++    isActive_rs1 = false;
 +    offsetX = clickEvent.clientX - container.getBoundingClientRect().left;
 +    offsetY = clickEvent.clientY - container.getBoundingClientRect().top;
 +    container.style.transition = "none";
 +    const handleMouseMove = (mouseEvent) => {
 +      const deltaX = mouseEvent.clientX - clickEvent.clientX;
 +      const deltaY = mouseEvent.clientY - clickEvent.clientY;
-+      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-+        isActive_2 = true;
++      if (!isActive_rs1 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
++        isActive_rs1 = true;
 +      }
 +      if (isActive) {
 +        container.style.left = mouseEvent.clientX - offsetX + "px";
@@ -1663,7 +1722,7 @@ Index: src/ui/theme.js
 +    document.addEventListener("mouseup", handleMouseUp);
 +  });
 +  container.addEventListener("click", (propagationEvent) => {
-+    if (isActive_2) {
++    if (isActive_rs1) {
 +      propagationEvent.stopImmediatePropagation();
 +    }
 +  });

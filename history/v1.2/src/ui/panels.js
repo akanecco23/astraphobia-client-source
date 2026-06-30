@@ -1,8 +1,8 @@
 import {
   radius,
   initNetworkHook,
-  isProcessed_2,
-  isProcessed_3,
+  isProcessed_sc5,
+  isProcessed_qng,
   setupAntiDetection,
   applyGameHacks,
   state,
@@ -40,21 +40,23 @@ function createUpdateHistoryPanel() {
   let offsetX;
   let offsetY;
   let isActive = false;
-  let isActive_2 = false;
-  historyPanel.addEventListener("mousedown", (event_2) => {
-    if (["BUTTON", "INPUT", "TEXTAREA", "A"].includes(event_2.target.tagName)) {
+  let isActive_fb8 = false;
+  historyPanel.addEventListener("mousedown", (event_z21) => {
+    if (
+      ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(event_z21.target.tagName)
+    ) {
       return;
     }
     isActive = true;
-    isActive_2 = false;
-    offsetX = event_2.clientX - historyPanel.getBoundingClientRect().left;
-    offsetY = event_2.clientY - historyPanel.getBoundingClientRect().top;
+    isActive_fb8 = false;
+    offsetX = event_z21.clientX - historyPanel.getBoundingClientRect().left;
+    offsetY = event_z21.clientY - historyPanel.getBoundingClientRect().top;
     historyPanel.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
-      const deltaX = mouseEvent.clientX - event_2.clientX;
-      const deltaY = mouseEvent.clientY - event_2.clientY;
-      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isActive_2 = true;
+      const deltaX = mouseEvent.clientX - event_z21.clientX;
+      const deltaY = mouseEvent.clientY - event_z21.clientY;
+      if (!isActive_fb8 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+        isActive_fb8 = true;
       }
       if (isActive) {
         historyPanel.style.left = mouseEvent.clientX - offsetX + "px";
@@ -72,9 +74,9 @@ function createUpdateHistoryPanel() {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   });
-  historyPanel.addEventListener("click", (event_3) => {
-    if (isActive_2) {
-      event_3.stopImmediatePropagation();
+  historyPanel.addEventListener("click", (event_cbo) => {
+    if (isActive_fb8) {
+      event_cbo.stopImmediatePropagation();
     }
   });
   return historyPanel;
@@ -120,8 +122,8 @@ function createDeepToolsPanel() {
   };
   const spoofButton = container.querySelector("#patchBtn");
   spoofButton.onclick = () => initNetworkHook(spoofButton);
-  const spoofButton_2 = container.querySelector("#spoofBtn");
-  spoofButton_2.onclick = () => {
+  const spoofButton_iul = container.querySelector("#spoofBtn");
+  spoofButton_iul.onclick = () => {
     const maxLength = generateRandomString(8);
     if (simulateTyping(".play-game .el-input__inner", maxLength)) {
       showNotification("Spoofed name!");
@@ -134,7 +136,7 @@ function createDeepToolsPanel() {
   const autoChatButton = container.querySelector("#spinBtn");
   autoChatButton.onclick = () => {
     toggleMouseSimulation();
-    if (featuresentitytrailState.entityTrailInterval_2) {
+    if (featuresentitytrailState.entityTrailInterval_9sd) {
       autoChatButton.textContent = "Disable Auto Spin";
       autoChatButton.style.color = "#27ae60";
     } else {
@@ -149,15 +151,15 @@ function createDeepToolsPanel() {
     lastPressedKey = keyEvent.code || keyEvent.key;
     spinKeyInput.value = lastPressedKey.replace("Key", "").toLowerCase();
   });
-  document.addEventListener("keydown", (event_2) => {
+  document.addEventListener("keydown", (event_3l4) => {
     if (
       lastPressedKey &&
-      event_2.code === lastPressedKey &&
-      !event_2.target.matches("input, textarea, button")
+      event_3l4.code === lastPressedKey &&
+      !event_3l4.target.matches("input, textarea, button")
     ) {
-      event_2.preventDefault();
+      event_3l4.preventDefault();
       toggleMouseSimulation();
-      if (featuresentitytrailState.entityTrailInterval_2) {
+      if (featuresentitytrailState.entityTrailInterval_9sd) {
         autoChatButton.textContent = "Disable Auto Spin";
         autoChatButton.style.color = "#27ae60";
       } else {
@@ -166,8 +168,8 @@ function createDeepToolsPanel() {
       }
     }
   });
-  const autoChatButton_2 = container.querySelector("#autoChatBtn");
-  autoChatButton_2.onclick = () => {
+  const autoChatButton_joo = container.querySelector("#autoChatBtn");
+  autoChatButton_joo.onclick = () => {
     const chatMessageText = container.querySelector("#chatMsg").value;
     const delayInput = container.querySelector("#delayInput");
     const delayValue = parseInt(delayInput.value) || 10;
@@ -177,37 +179,37 @@ function createDeepToolsPanel() {
     }
     if (state.isToggled) {
       stopInterval();
-      autoChatButton_2.textContent = "Enable Auto Chat";
-      autoChatButton_2.style.color = "#e74c3c";
+      autoChatButton_joo.textContent = "Enable Auto Chat";
+      autoChatButton_joo.style.color = "#e74c3c";
     } else {
       startScheduledTask(chatMessageText, delayValue);
-      autoChatButton_2.textContent = "Disable Auto Chat";
-      autoChatButton_2.style.color = "#27ae60";
+      autoChatButton_joo.textContent = "Disable Auto Chat";
+      autoChatButton_joo.style.color = "#27ae60";
     }
   };
   let offsetX;
   let offsetY;
   let isActive = false;
-  let isActive_2 = false;
-  container.addEventListener("mousedown", (event_3) => {
+  let isActive_jtk = false;
+  container.addEventListener("mousedown", (event_2uf) => {
     if (
-      event_3.target.tagName === "BUTTON" ||
-      event_3.target.tagName === "TEXTAREA" ||
-      event_3.target.tagName === "INPUT" ||
-      event_3.target.classList.contains("credits")
+      event_2uf.target.tagName === "BUTTON" ||
+      event_2uf.target.tagName === "TEXTAREA" ||
+      event_2uf.target.tagName === "INPUT" ||
+      event_2uf.target.classList.contains("credits")
     ) {
       return;
     }
     isActive = true;
-    isActive_2 = false;
-    offsetX = event_3.clientX - container.getBoundingClientRect().left;
-    offsetY = event_3.clientY - container.getBoundingClientRect().top;
+    isActive_jtk = false;
+    offsetX = event_2uf.clientX - container.getBoundingClientRect().left;
+    offsetY = event_2uf.clientY - container.getBoundingClientRect().top;
     container.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
-      const deltaX = mouseEvent.clientX - event_3.clientX;
-      const deltaY = mouseEvent.clientY - event_3.clientY;
-      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isActive_2 = true;
+      const deltaX = mouseEvent.clientX - event_2uf.clientX;
+      const deltaY = mouseEvent.clientY - event_2uf.clientY;
+      if (!isActive_jtk && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+        isActive_jtk = true;
       }
       if (isActive) {
         container.style.left = mouseEvent.clientX - offsetX + "px";
@@ -225,9 +227,9 @@ function createDeepToolsPanel() {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   });
-  container.addEventListener("click", (event_4) => {
-    if (isActive_2) {
-      event_4.stopImmediatePropagation();
+  container.addEventListener("click", (event_5g4) => {
+    if (isActive_jtk) {
+      event_5g4.stopImmediatePropagation();
     }
   });
   return container;
@@ -267,7 +269,7 @@ function createPlusPanel() {
   };
   const astraVisionBtn = container.querySelector("#thresherBtn");
   astraVisionBtn.onclick = () => {
-    if (isProcessed_3) {
+    if (isProcessed_qng) {
       showNotification("Thresher Super Boost is already active!");
       return;
     }
@@ -276,17 +278,17 @@ function createPlusPanel() {
     astraVisionBtn.style.color = "#27ae60";
     astraVisionBtn.disabled = true;
   };
-  const astraVisionBtn_2 = container.querySelector("#astraVisionBtn");
-  astraVisionBtn_2.onclick = () => {
-    if (isProcessed_2) {
+  const astraVisionBtn_fg7 = container.querySelector("#astraVisionBtn");
+  astraVisionBtn_fg7.onclick = () => {
+    if (isProcessed_sc5) {
       showNotification("Astra-Vision already enabled!");
       return;
     }
     setupAntiDetection();
     applyGameHacks();
-    astraVisionBtn_2.textContent = "Astra-Vision Active";
-    astraVisionBtn_2.style.color = "#27ae60";
-    astraVisionBtn_2.disabled = true;
+    astraVisionBtn_fg7.textContent = "Astra-Vision Active";
+    astraVisionBtn_fg7.style.color = "#27ae60";
+    astraVisionBtn_fg7.disabled = true;
     showNotification(
       "👁️ Astra-Vision enabled! (zoom-limit unlocked, no ink-flash or deep darkness effects)",
     );
@@ -294,7 +296,7 @@ function createPlusPanel() {
   let offsetX;
   let offsetY;
   let isActive = false;
-  let isActive_2 = false;
+  let isActive_gcu = false;
   container.addEventListener("mousedown", (clickEvent) => {
     if (
       clickEvent.target.tagName === "BUTTON" ||
@@ -305,15 +307,15 @@ function createPlusPanel() {
       return;
     }
     isActive = true;
-    isActive_2 = false;
+    isActive_gcu = false;
     offsetX = clickEvent.clientX - container.getBoundingClientRect().left;
     offsetY = clickEvent.clientY - container.getBoundingClientRect().top;
     container.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
       const deltaX = mouseEvent.clientX - clickEvent.clientX;
       const deltaY = mouseEvent.clientY - clickEvent.clientY;
-      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isActive_2 = true;
+      if (!isActive_gcu && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+        isActive_gcu = true;
       }
       if (isActive) {
         container.style.left = mouseEvent.clientX - offsetX + "px";
@@ -332,7 +334,7 @@ function createPlusPanel() {
     document.addEventListener("mouseup", handleMouseUp);
   });
   container.addEventListener("click", (keyboardEvent) => {
-    if (isActive_2) {
+    if (isActive_gcu) {
       keyboardEvent.stopImmediatePropagation();
     }
   });

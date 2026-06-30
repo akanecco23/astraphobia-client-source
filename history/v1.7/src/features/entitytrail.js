@@ -12,17 +12,17 @@ import {
 import { showNotification } from "../ui/interaction.js";
 import { refreshUI } from "../ui/panels.js";
 
-function stopEntityTrail_2() {
-  if (featuresentitytrailState.entityTrailInterval_3) {
-    clearInterval(featuresentitytrailState.entityTrailInterval_3);
-    featuresentitytrailState.entityTrailInterval_3 = null;
+function stopEntityTrail_r5j() {
+  if (featuresentitytrailState.entityTrailInterval_skd) {
+    clearInterval(featuresentitytrailState.entityTrailInterval_skd);
+    featuresentitytrailState.entityTrailInterval_skd = null;
   }
 }
 function toggleEntityTrail() {
   if (window.entityTrailEnabled) {
     window.entityTrailEnabled = false;
     window.entityTrailTargetId = null;
-    stopEntityTrail_2();
+    stopEntityTrail_r5j();
     window.entityTrailHistory = [];
     showNotification("Trail stopped");
     refreshUI();
@@ -76,12 +76,12 @@ function drawEntityTrail(ctx, canvas, playerPos, zoomScale) {
   }
   for (let j = 0; j < window.entityTrailHistory.length; j += 5) {
     const point = window.entityTrailHistory[j];
-    const pointAge_2 = currentTime - point.time;
-    const opacity_2 = Math.max(0.1, 1 - pointAge_2 / trailDuration);
+    const pointAge_ea1 = currentTime - point.time;
+    const opacity_e1r = Math.max(0.1, 1 - pointAge_ea1 / trailDuration);
     const pointX = centerX + (point.x - playerPos.x) * zoomScale;
     const pointY = centerY + (point.y - playerPos.y) * zoomScale;
     ctx.fillStyle =
-      "rgba(" + colorR + "," + colorG + "," + colorB + "," + opacity_2 + ")";
+      "rgba(" + colorR + "," + colorG + "," + colorB + "," + opacity_e1r + ")";
     ctx.beginPath();
     ctx.arc(pointX, pointY, 2, 0, Math.PI * 2);
     ctx.fill();
@@ -90,13 +90,13 @@ function drawEntityTrail(ctx, canvas, playerPos, zoomScale) {
     const lastTrailPoint =
       window.entityTrailHistory[window.entityTrailHistory.length - 1];
     const screenY = centerX + (lastTrailPoint.x - playerPos.x) * zoomScale;
-    const screenY_2 = centerY + (lastTrailPoint.y - playerPos.y) * zoomScale;
+    const screenY_eka = centerY + (lastTrailPoint.y - playerPos.y) * zoomScale;
     ctx.fillStyle = "rgb(" + colorR + "," + colorG + "," + colorB + ")";
     ctx.font = "bold 10px monospace";
     ctx.fillText(
       "TRAIL (" + window.entityTrailHistory.length + " pts)",
       screenY + 8,
-      screenY_2 - 8,
+      screenY_eka - 8,
     );
   }
 }
@@ -125,12 +125,12 @@ window.entityTrailMaxLength = 200;
 window.entityTrailRecordInterval = 100;
 
 export const featuresentitytrailState = {
-  entityTrailInterval_2: null,
-  entityTrailInterval_3: null,
+  entityTrailInterval_rdg: null,
+  entityTrailInterval_skd: null,
 };
 
 export {
-  stopEntityTrail_2,
+  stopEntityTrail_r5j,
   toggleEntityTrail,
   drawEntityTrail,
   renderOverlayLoop,

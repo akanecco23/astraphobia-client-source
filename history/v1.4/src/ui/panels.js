@@ -3,7 +3,7 @@ import {
   playerData,
   config,
   radius,
-  isProcessed_2,
+  isProcessed_jat,
   setupProxyHooks,
   disableGameRestrictions,
   state,
@@ -13,9 +13,9 @@ import { toggleMinimapSize } from "../features/esp.js";
 import { showNotification } from "./interaction.js";
 import { setTheme } from "./theme.js";
 
-let isProcessed_3 = false;
+let isProcessed_sue = false;
 const initControlOverlay = () => {
-  if (isProcessed_3) {
+  if (isProcessed_sue) {
     return;
   }
   function sendActionSequence() {
@@ -110,7 +110,7 @@ const initControlOverlay = () => {
       document.getElementById("ctrl-overlay").style.pointerEvents = "none";
     } catch {}
   });
-  isProcessed_3 = true;
+  isProcessed_sue = true;
 };
 function setupUpdateHistory() {
   const historyStyle = document.createElement("style");
@@ -135,7 +135,7 @@ function setupUpdateHistory() {
   let offsetX;
   let offsetY;
   let isActive = false;
-  let isActive_2 = false;
+  let isActive_eqo = false;
   historyPanel.addEventListener("mousedown", (clickEvent) => {
     if (
       ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(clickEvent.target.tagName)
@@ -143,15 +143,15 @@ function setupUpdateHistory() {
       return;
     }
     isActive = true;
-    isActive_2 = false;
+    isActive_eqo = false;
     offsetX = clickEvent.clientX - historyPanel.getBoundingClientRect().left;
     offsetY = clickEvent.clientY - historyPanel.getBoundingClientRect().top;
     historyPanel.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
       const deltaX = mouseEvent.clientX - clickEvent.clientX;
       const deltaY = mouseEvent.clientY - clickEvent.clientY;
-      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isActive_2 = true;
+      if (!isActive_eqo && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+        isActive_eqo = true;
       }
       if (isActive) {
         historyPanel.style.left = mouseEvent.clientX - offsetX + "px";
@@ -170,7 +170,7 @@ function setupUpdateHistory() {
     document.addEventListener("mouseup", handleMouseUp);
   });
   historyPanel.addEventListener("click", (inputEvent) => {
-    if (isActive_2) {
+    if (isActive_eqo) {
       inputEvent.stopImmediatePropagation();
     }
   });
@@ -201,7 +201,7 @@ function injectPlusPanelStyles() {
   document.body.appendChild(container);
   const astraVisionButton = container.querySelector("#thresherBtn");
   astraVisionButton.onclick = () => {
-    if (isProcessed_3) {
+    if (isProcessed_sue) {
       showNotification("Thresher Super Boost is already active!");
       return;
     }
@@ -211,18 +211,18 @@ function injectPlusPanelStyles() {
     astraVisionButton.style.opacity = "0.6";
     astraVisionButton.disabled = true;
   };
-  const astraVisionButton_2 = container.querySelector("#astraVisionBtn");
-  astraVisionButton_2.onclick = () => {
-    if (isProcessed_2) {
+  const astraVisionButton_6kf = container.querySelector("#astraVisionBtn");
+  astraVisionButton_6kf.onclick = () => {
+    if (isProcessed_jat) {
       showNotification("Astra-Vision already enabled!");
       return;
     }
     setupProxyHooks();
     disableGameRestrictions();
-    astraVisionButton_2.textContent = "Astra-Vision Active";
-    astraVisionButton_2.style.color = "var(--accent)";
-    astraVisionButton_2.style.opacity = "0.6";
-    astraVisionButton_2.disabled = true;
+    astraVisionButton_6kf.textContent = "Astra-Vision Active";
+    astraVisionButton_6kf.style.color = "var(--accent)";
+    astraVisionButton_6kf.style.opacity = "0.6";
+    astraVisionButton_6kf.disabled = true;
     showNotification(
       "👁️ Astra-Vision enabled! (zoom-limit unlocked, no ink-flash or deep darkness effects)",
     );
@@ -231,7 +231,7 @@ function injectPlusPanelStyles() {
   smallMinimapButton.onclick = () => {
     setupProxyHooks();
     toggleMinimapSize();
-    if (state.isToggled_2) {
+    if (state.isToggled_qpw) {
       smallMinimapButton.textContent = "Disable Small Minimap";
       smallMinimapButton.style.color = "var(--accent)";
       smallMinimapButton.style.opacity = "0.6";
@@ -244,7 +244,7 @@ function injectPlusPanelStyles() {
   let relativeX;
   let relativeY;
   let isActive = false;
-  let isActive_2 = false;
+  let isActive_7am = false;
   container.addEventListener("mousedown", (event) => {
     if (
       event.target.tagName === "BUTTON" ||
@@ -255,15 +255,15 @@ function injectPlusPanelStyles() {
       return;
     }
     isActive = true;
-    isActive_2 = false;
+    isActive_7am = false;
     relativeX = event.clientX - container.getBoundingClientRect().left;
     relativeY = event.clientY - container.getBoundingClientRect().top;
     container.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
       const deltaX = mouseEvent.clientX - event.clientX;
       const deltaY = mouseEvent.clientY - event.clientY;
-      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isActive_2 = true;
+      if (!isActive_7am && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+        isActive_7am = true;
       }
       if (isActive) {
         container.style.left = mouseEvent.clientX - relativeX + "px";
@@ -281,9 +281,9 @@ function injectPlusPanelStyles() {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   });
-  container.addEventListener("click", (event_2) => {
-    if (isActive_2) {
-      event_2.stopImmediatePropagation();
+  container.addEventListener("click", (event_pbf) => {
+    if (isActive_7am) {
+      event_pbf.stopImmediatePropagation();
     }
   });
   return container;
@@ -347,7 +347,7 @@ function injectSettingsStyles() {
   let offsetX;
   let offsetY;
   let isActive = false;
-  let isActive_2 = false;
+  let isActive_qyt = false;
   container.addEventListener("mousedown", (uiEvent) => {
     if (
       uiEvent.target.tagName === "BUTTON" ||
@@ -357,15 +357,15 @@ function injectSettingsStyles() {
       return;
     }
     isActive = true;
-    isActive_2 = false;
+    isActive_qyt = false;
     offsetX = uiEvent.clientX - container.getBoundingClientRect().left;
     offsetY = uiEvent.clientY - container.getBoundingClientRect().top;
     container.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
       const deltaX = mouseEvent.clientX - uiEvent.clientX;
       const deltaY = mouseEvent.clientY - uiEvent.clientY;
-      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isActive_2 = true;
+      if (!isActive_qyt && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+        isActive_qyt = true;
       }
       if (isActive) {
         container.style.left = mouseEvent.clientX - offsetX + "px";
@@ -384,7 +384,7 @@ function injectSettingsStyles() {
     document.addEventListener("mouseup", handleMouseUp);
   });
   container.addEventListener("click", (interceptedEvent) => {
-    if (isActive_2) {
+    if (isActive_qyt) {
       interceptedEvent.stopImmediatePropagation();
     }
   });

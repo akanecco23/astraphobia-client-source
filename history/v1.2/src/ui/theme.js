@@ -87,7 +87,7 @@ function createSettingsStyles() {
   let offsetX;
   let offsetY;
   let isActive = false;
-  let isActive_2 = false;
+  let isActive_rs1 = false;
   container.addEventListener("mousedown", (clickEvent) => {
     if (
       clickEvent.target.tagName === "BUTTON" ||
@@ -97,15 +97,15 @@ function createSettingsStyles() {
       return;
     }
     isActive = true;
-    isActive_2 = false;
+    isActive_rs1 = false;
     offsetX = clickEvent.clientX - container.getBoundingClientRect().left;
     offsetY = clickEvent.clientY - container.getBoundingClientRect().top;
     container.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
       const deltaX = mouseEvent.clientX - clickEvent.clientX;
       const deltaY = mouseEvent.clientY - clickEvent.clientY;
-      if (!isActive_2 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isActive_2 = true;
+      if (!isActive_rs1 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+        isActive_rs1 = true;
       }
       if (isActive) {
         container.style.left = mouseEvent.clientX - offsetX + "px";
@@ -124,7 +124,7 @@ function createSettingsStyles() {
     document.addEventListener("mouseup", handleMouseUp);
   });
   container.addEventListener("click", (propagationEvent) => {
-    if (isActive_2) {
+    if (isActive_rs1) {
       propagationEvent.stopImmediatePropagation();
     }
   });

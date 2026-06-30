@@ -688,6 +688,19 @@ program
       }
     }
 
+    // Final dedupe pass to ensure cross-version name consistency
+    log("info", "Running final dedupe pass for cross-version consistency...");
+    const finalMapping = new MappingStore(mappingPath);
+    const finalFnMerged = finalMapping.mergeDuplicateFunctions();
+    log("info", `  Merged ${finalFnMerged} duplicate function entries`);
+    const finalVarMerged = finalMapping.mergeDuplicateVariables();
+    log("info", `  Merged ${finalVarMerged} duplicate variable entries`);
+
+    if (finalFnMerged > 0 || finalVarMerged > 0) {
+      finalMapping.save();
+      log("info", "  Saved deduplicated mapping.json");
+    }
+
     log("info", `Backward processing complete. History saved to ${historyDir}`);
   });
 
@@ -727,6 +740,10 @@ program
     "Post-process mapping.json to merge duplicate function/variable entries with identical DNA/role fingerprints but different names",
   )
   .option("--config <path>", "Config file path", "config.json")
+  .option(
+    "--llm",
+    "Use LLM to pick the best name when multiple candidates exist",
+  )
   .action(async (opts) => {
     const mappingPath = resolve(getRoot(), "mapping.json");
     const mapping = new MappingStore(mappingPath);
@@ -737,7 +754,22 @@ program
     const varMerged = mapping.mergeDuplicateVariables();
     log("info", `Merged ${varMerged} duplicate variable entries`);
 
-    if (fnMerged > 0 || varMerged > 0) {
+    if (opts.llm) {
+      const config = loadConfig(opts.config);
+      const llmConfig = resolveLLMConfig({
+        ...config.llm,
+        enabled: true,
+      });
+      const llm = new LLMClient(llmConfig);
+
+      const fnLLM = await mapping.llmDedupeFunctions(llm);
+      log("info", `LLM deduped ${fnLLM} function entries`);
+
+      const varLLM = await mapping.llmDedupeVariables(llm);
+      log("info", `LLM deduped ${varLLM} variable entries`);
+    }
+
+    if (fnMerged > 0 || varMerged > 0 || opts.llm) {
       mapping.save();
       log("info", "Saved deduplicated mapping.json");
     } else {

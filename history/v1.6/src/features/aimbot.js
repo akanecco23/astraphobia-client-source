@@ -12,11 +12,11 @@ import { isPlayer, calculateDistance } from "../utils.js";
 import { simulateMoveAndClick } from "./movement.js";
 import { showToast } from "../ui/interaction.js";
 
-let currentTime_2 = 0;
-let currentTime_3 = 0;
-let entityTrailInterval_3 = null;
+let currentTime_qq5 = 0;
+let currentTime_re6 = 0;
+let entityTrailInterval_jft = null;
 function autoDodgeLoop() {
-  if (!state.isProcessed_4) {
+  if (!state.isProcessed_rdh) {
     return;
   }
   setTimeout(autoDodgeLoop, 80);
@@ -66,13 +66,13 @@ function autoDodgeLoop() {
       state.position = null;
       state.counter = 0;
       state.dataList = [];
-      entityTrailInterval_3 = null;
+      entityTrailInterval_jft = null;
       return;
     }
     const currentTime = Date.now();
     let hasMoved = false;
-    if (currentTime - currentTime_3 > 600) {
-      currentTime_3 = currentTime;
+    if (currentTime - currentTime_re6 > 600) {
+      currentTime_re6 = currentTime;
       if (state.position) {
         const distFromLastPos = calculateDistance(
           playerPosition.x,
@@ -138,9 +138,9 @@ function autoDodgeLoop() {
         const sinAdjustedAngle = Math.sin(adjustedAngle);
         nearbyEntities.forEach((otherEntity) => {
           const diffX = otherEntity.x - playerPosition.x;
-          const deltaY_2 = otherEntity.y - playerPosition.y;
+          const deltaY_u6o = otherEntity.y - playerPosition.y;
           const totalOffset =
-            cosAdjustedAngle * diffX + sinAdjustedAngle * deltaY_2;
+            cosAdjustedAngle * diffX + sinAdjustedAngle * deltaY_u6o;
           currentValue -= totalOffset;
         });
         if (currentValue > maxValue) {
@@ -159,14 +159,14 @@ function autoDodgeLoop() {
         state.dataList = [];
       }
     }
-    entityTrailInterval_3 = angle;
-    const angle_2 = playerPosition.x + Math.cos(angle) * 2000;
-    const angle_3 = playerPosition.y + Math.sin(angle) * 2000;
-    const angle_4 = currentTime - currentTime_2 > deltaThreshold;
-    if (angle_4) {
-      currentTime_2 = currentTime;
+    entityTrailInterval_jft = angle;
+    const angle_p9p = playerPosition.x + Math.cos(angle) * 2000;
+    const angle_q62 = playerPosition.y + Math.sin(angle) * 2000;
+    const angle_q0o = currentTime - currentTime_qq5 > deltaThreshold;
+    if (angle_q0o) {
+      currentTime_qq5 = currentTime;
     }
-    simulateMoveAndClick(angle_2, angle_3, angle_4);
+    simulateMoveAndClick(angle_p9p, angle_q62, angle_q0o);
   } catch (data) {}
 }
 function enableAutoDodge() {
@@ -174,9 +174,9 @@ function enableAutoDodge() {
   state.position = null;
   state.counter = 0;
   state.dataList = [];
-  entityTrailInterval_3 = null;
-  if (!state.isProcessed_4) {
-    state.isProcessed_4 = true;
+  entityTrailInterval_jft = null;
+  if (!state.isProcessed_rdh) {
+    state.isProcessed_rdh = true;
     autoDodgeLoop();
   }
   showToast("Auto dodge enabled");

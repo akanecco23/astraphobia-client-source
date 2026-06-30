@@ -4,7 +4,7 @@ import {
   playerData,
   config,
   initInterceptor,
-  isProcessed_2,
+  isProcessed_run,
   initializeAntiTamper,
   disableGameRestrictions,
   state,
@@ -22,7 +22,7 @@ import { generateRandomString } from "../utils.js";
 import { toggleMinimapScale } from "./radar.js";
 import { applyThemeColors } from "./theme.js";
 
-let isProcessed_3 = false;
+let isProcessed_r36 = false;
 function createHalloweenModal(modalConfig) {
   const modalContainer = document.createElement("div");
   modalContainer.id = "halloween-code-modal";
@@ -82,7 +82,7 @@ function createHalloweenModal(modalConfig) {
   halloweenCodeInput.focus();
 }
 const initControlOverlay = () => {
-  if (isProcessed_3) {
+  if (isProcessed_r36) {
     return;
   }
   function sendActionSequence() {
@@ -177,7 +177,7 @@ const initControlOverlay = () => {
       document.getElementById("ctrl-overlay").style.pointerEvents = "none";
     } catch {}
   });
-  isProcessed_3 = true;
+  isProcessed_r36 = true;
 };
 function createUpdateHistoryStyles() {
   const styleElement = document.createElement("style");
@@ -284,8 +284,8 @@ function injectDeepToolsStyles() {
   };
   const spoofButton = deepToolsPanel.querySelector("#patchBtn");
   spoofButton.onclick = () => initInterceptor(spoofButton);
-  const spoofButton_2 = deepToolsPanel.querySelector("#spoofBtn");
-  spoofButton_2.onclick = () => {
+  const spoofButton_251 = deepToolsPanel.querySelector("#spoofBtn");
+  spoofButton_251.onclick = () => {
     const inputLimit = generateRandomString(8);
     if (simulateTyping(".play-game .el-input__inner", inputLimit)) {
       showNotification("Spoofed name!");
@@ -298,7 +298,7 @@ function injectDeepToolsStyles() {
   const autoChatButton = deepToolsPanel.querySelector("#spinBtn");
   autoChatButton.onclick = () => {
     toggleMouseSimulation();
-    if (featuresentitytrailState.entityTrailInterval_2) {
+    if (featuresentitytrailState.entityTrailInterval_s4i) {
       autoChatButton.textContent = "Disable Auto Spin";
       autoChatButton.style.color = "var(--accent)";
       autoChatButton.style.opacity = "0.6";
@@ -315,15 +315,15 @@ function injectDeepToolsStyles() {
     lastPressedKey = event.code || event.key;
     spinKeyInput.value = lastPressedKey.replace("Key", "").toLowerCase();
   });
-  document.addEventListener("keydown", (event_2) => {
+  document.addEventListener("keydown", (event_1u9) => {
     if (
       lastPressedKey &&
-      event_2.code === lastPressedKey &&
-      !event_2.target.matches("input, textarea, button")
+      event_1u9.code === lastPressedKey &&
+      !event_1u9.target.matches("input, textarea, button")
     ) {
-      event_2.preventDefault();
+      event_1u9.preventDefault();
       toggleMouseSimulation();
-      if (featuresentitytrailState.entityTrailInterval_2) {
+      if (featuresentitytrailState.entityTrailInterval_s4i) {
         autoChatButton.textContent = "Disable Auto Spin";
         autoChatButton.style.color = "var(--accent)";
         autoChatButton.style.opacity = "0.6";
@@ -334,8 +334,8 @@ function injectDeepToolsStyles() {
       }
     }
   });
-  const autoChatButton_2 = deepToolsPanel.querySelector("#autoChatBtn");
-  autoChatButton_2.onclick = () => {
+  const autoChatButton_3ud = deepToolsPanel.querySelector("#autoChatBtn");
+  autoChatButton_3ud.onclick = () => {
     const chatMessageValue = deepToolsPanel.querySelector("#chatMsg").value;
     const delayInput = deepToolsPanel.querySelector("#delayInput");
     const delayValue = parseInt(delayInput.value) || 10;
@@ -345,39 +345,39 @@ function injectDeepToolsStyles() {
     }
     if (state.isToggled) {
       stopInterval();
-      autoChatButton_2.textContent = "Enable Auto Chat";
-      autoChatButton_2.style.color = "var(--accent)";
-      autoChatButton_2.style.opacity = "1";
+      autoChatButton_3ud.textContent = "Enable Auto Chat";
+      autoChatButton_3ud.style.color = "var(--accent)";
+      autoChatButton_3ud.style.opacity = "1";
     } else {
       startScheduledTask(chatMessageValue, delayValue);
-      autoChatButton_2.textContent = "Disable Auto Chat";
-      autoChatButton_2.style.color = "var(--accent)";
-      autoChatButton_2.style.opacity = "0.6";
+      autoChatButton_3ud.textContent = "Disable Auto Chat";
+      autoChatButton_3ud.style.color = "var(--accent)";
+      autoChatButton_3ud.style.opacity = "0.6";
     }
   };
   let deepToolsOffsetX;
   let deepToolsOffsetY;
   let deepToolsDragActive = false;
   let deepToolsIsDragging = false;
-  deepToolsPanel.addEventListener("mousedown", (event_3) => {
+  deepToolsPanel.addEventListener("mousedown", (event_xe9) => {
     if (
-      event_3.target.tagName === "BUTTON" ||
-      event_3.target.tagName === "TEXTAREA" ||
-      event_3.target.tagName === "INPUT" ||
-      event_3.target.classList.contains("credits")
+      event_xe9.target.tagName === "BUTTON" ||
+      event_xe9.target.tagName === "TEXTAREA" ||
+      event_xe9.target.tagName === "INPUT" ||
+      event_xe9.target.classList.contains("credits")
     ) {
       return;
     }
     deepToolsDragActive = true;
     deepToolsIsDragging = false;
     deepToolsOffsetX =
-      event_3.clientX - deepToolsPanel.getBoundingClientRect().left;
+      event_xe9.clientX - deepToolsPanel.getBoundingClientRect().left;
     deepToolsOffsetY =
-      event_3.clientY - deepToolsPanel.getBoundingClientRect().top;
+      event_xe9.clientY - deepToolsPanel.getBoundingClientRect().top;
     deepToolsPanel.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
-      const deltaX = mouseEvent.clientX - event_3.clientX;
-      const deltaY = mouseEvent.clientY - event_3.clientY;
+      const deltaX = mouseEvent.clientX - event_xe9.clientX;
+      const deltaY = mouseEvent.clientY - event_xe9.clientY;
       if (
         !deepToolsIsDragging &&
         (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)
@@ -401,9 +401,9 @@ function injectDeepToolsStyles() {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   });
-  deepToolsPanel.addEventListener("click", (event_4) => {
+  deepToolsPanel.addEventListener("click", (event_mr3) => {
     if (deepToolsIsDragging) {
-      event_4.stopImmediatePropagation();
+      event_mr3.stopImmediatePropagation();
     }
   });
   if (localStorage.getItem("theme") === "halloween") {
@@ -441,7 +441,7 @@ function injectPlusPanelStyles() {
   document.body.appendChild(plusPanel);
   const astraVisionButton = plusPanel.querySelector("#thresherBtn");
   astraVisionButton.onclick = () => {
-    if (isProcessed_3) {
+    if (isProcessed_r36) {
       showNotification("Thresher Super Boost is already active!");
       return;
     }
@@ -451,18 +451,18 @@ function injectPlusPanelStyles() {
     astraVisionButton.style.opacity = "0.6";
     astraVisionButton.disabled = true;
   };
-  const astraVisionButton_2 = plusPanel.querySelector("#astraVisionBtn");
-  astraVisionButton_2.onclick = () => {
-    if (isProcessed_2) {
+  const astraVisionButton_cs5 = plusPanel.querySelector("#astraVisionBtn");
+  astraVisionButton_cs5.onclick = () => {
+    if (isProcessed_run) {
       showNotification("Astra-Vision already enabled!");
       return;
     }
     initializeAntiTamper();
     disableGameRestrictions();
-    astraVisionButton_2.textContent = "Astra-Vision Active";
-    astraVisionButton_2.style.color = "var(--accent)";
-    astraVisionButton_2.style.opacity = "0.6";
-    astraVisionButton_2.disabled = true;
+    astraVisionButton_cs5.textContent = "Astra-Vision Active";
+    astraVisionButton_cs5.style.color = "var(--accent)";
+    astraVisionButton_cs5.style.opacity = "0.6";
+    astraVisionButton_cs5.disabled = true;
     showNotification(
       "👁️ Astra-Vision enabled! (zoom-limit unlocked, no ink-flash or deep darkness effects)",
     );
@@ -471,7 +471,7 @@ function injectPlusPanelStyles() {
   smallMinimapButton.onclick = () => {
     initializeAntiTamper();
     toggleMinimapScale();
-    if (state.isToggled_2) {
+    if (state.isToggled_r5u) {
       smallMinimapButton.textContent = "Disable Small Minimap";
       smallMinimapButton.style.color = "var(--accent)";
       smallMinimapButton.style.opacity = "0.6";
@@ -524,9 +524,9 @@ function injectPlusPanelStyles() {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   });
-  plusPanel.addEventListener("click", (event_2) => {
+  plusPanel.addEventListener("click", (event_wtd) => {
     if (plusPanelIsDragging) {
-      event_2.stopImmediatePropagation();
+      event_wtd.stopImmediatePropagation();
     }
   });
   if (localStorage.getItem("theme") === "halloween") {

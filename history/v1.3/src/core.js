@@ -141,7 +141,7 @@ const radius = 300;
 let gameInstance;
 let appState;
 let playerData;
-let isProcessed_2 = false;
+let isProcessed_qlz = false;
 
 const encryptPacketData = (inputData, checksumByte, suffix = "") => {
   const stringTable = [
@@ -216,13 +216,13 @@ const config = {
   },
 };
 const sendPacket = (payload, additionalData = "") => {
-  if (gameInstance && appState && config_2.socketManager) {
-    gameInstance[config_2.socketManager].sendBytePacket(
+  if (gameInstance && appState && config_rub.socketManager) {
+    gameInstance[config_rub.socketManager].sendBytePacket(
       encryptPacketData(appState.token._value, payload, additionalData),
     );
   }
 };
-const config_2 = {};
+const config_rub = {};
 const currentTime = 0;
 const initHooks = () => {
   const propertyCache = {};
@@ -240,10 +240,10 @@ const initHooks = () => {
     targetObject[propertyKey] = propertyInstance;
   };
   createPropertyProxy(Function.prototype, "toString", {
-    apply(thisContext, propertyKey_2, thisArg) {
+    apply(thisContext, propertyKey_fai, thisArg) {
       return propertyCache.apply(
         thisContext,
-        stateCache.get(propertyKey_2) || propertyKey_2,
+        stateCache.get(propertyKey_fai) || propertyKey_fai,
         thisArg,
       );
     },
@@ -292,49 +292,49 @@ const initHooks = () => {
           const obfuscatedKeys = allKeys.filter((varName) =>
             varName.startsWith("_0x"),
           );
-          config_2.setFlash =
+          config_rub.setFlash =
             Object.getOwnPropertyNames(playerData.__proto__.__proto__)
               .filter((propName) => propName.startsWith("_0x"))
               .find(
                 (methodName) => playerData[methodName] instanceof Function,
-              ) || config_2.setFlash;
-          config_2.terrainManager =
+              ) || config_rub.setFlash;
+          config_rub.terrainManager =
             obfuscatedKeys.find(
               (shadowKey) =>
                 typeof playerData[shadowKey]?.shadow !== "undefined",
-            ) || config_2.terrainManager;
-          config_2.entityManager =
+            ) || config_rub.terrainManager;
+          config_rub.entityManager =
             obfuscatedKeys.find(
               (entitiesListKey) =>
                 typeof playerData[entitiesListKey]?.entitiesList !==
                 "undefined",
-            ) || config_2.entityManager;
-          config_2.entityManagerProps = {};
+            ) || config_rub.entityManager;
+          config_rub.entityManagerProps = {};
           const entityManagerKeys = getAllPropertyNames(
-            playerData[config_2.entityManager],
+            playerData[config_rub.entityManager],
           );
           const animalsUpdateInterval = setInterval(() => {
-            config_2.entityManagerProps.animalsList =
+            config_rub.entityManagerProps.animalsList =
               entityManagerKeys
                 .filter((variableName) => variableName.startsWith("_0x"))
                 .find(
                   (entityKey) =>
-                    typeof playerData?.[config_2.entityManager]?.[
+                    typeof playerData?.[config_rub.entityManager]?.[
                       entityKey
                     ]?.[0] !== "undefined",
-                ) || config_2.entityManagerProps.animalsList;
+                ) || config_rub.entityManagerProps.animalsList;
             if (
-              typeof config_2.entityManagerProps.animalsList !== "undefined"
+              typeof config_rub.entityManagerProps.animalsList !== "undefined"
             ) {
               clearInterval(animalsUpdateInterval);
             }
           }, 1000);
-          config_2.socketManager =
+          config_rub.socketManager =
             getAllPropertyNames(gameInstance).find(
               (packetSenderKey) =>
                 typeof gameInstance[packetSenderKey]?.sendBytePacket !==
                 "undefined",
-            ) || config_2.socketManager;
+            ) || config_rub.socketManager;
           try {
             appState = document
               .getElementById("app")
@@ -387,7 +387,7 @@ const initHooks = () => {
   });
 };
 const disableGameRestrictions = () => {
-  if (isProcessed_2) {
+  if (isProcessed_qlz) {
     return;
   }
   if (!playerData) {
@@ -405,11 +405,11 @@ const disableGameRestrictions = () => {
     } catch {}
   }, 300);
   try {
-    if (config_2.setFlash) {
-      playerData[config_2.setFlash] = () => {};
+    if (config_rub.setFlash) {
+      playerData[config_rub.setFlash] = () => {};
     }
-    if (config_2.terrainManager) {
-      const terrainManager = playerData[config_2.terrainManager];
+    if (config_rub.terrainManager) {
+      const terrainManager = playerData[config_rub.terrainManager];
       if (terrainManager && terrainManager.shadow) {
         terrainManager.shadow.setShadowSize(1000000);
         terrainManager.shadow.setShadowSize = () => {};
@@ -418,7 +418,7 @@ const disableGameRestrictions = () => {
   } catch (url) {
     console.error(url);
   }
-  isProcessed_2 = true;
+  isProcessed_qlz = true;
 };
 
 function initializePanels() {
@@ -457,7 +457,7 @@ export const state = {
   entityTrailInterval: null,
   isToggled: false,
   angleIndex: 0,
-  isToggled_2: false,
+  isToggled_r45: false,
   activeKey: "Shift",
 };
 
@@ -473,6 +473,6 @@ export {
   radius,
   gameInstance,
   playerData,
-  isProcessed_2,
+  isProcessed_qlz,
   config,
 };

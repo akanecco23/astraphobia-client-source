@@ -22,7 +22,7 @@ import {
   autoDodgeLoop,
   toggleLock,
 } from "./features/aimbot.js";
-import { renderEspLoop, trackPlayer, toggleEsp_2 } from "./features/esp.js";
+import { renderEspLoop, trackPlayer, toggleEsp_qot } from "./features/esp.js";
 import { setupPatrolPoints, autoFarmLoop } from "./features/autofarm.js";
 import { applyTheme, initBackground, injectStyles } from "./ui/theme.js";
 import { moveMouseSide } from "./features/movement.js";
@@ -37,9 +37,9 @@ function wrapWithProxy(targetObject, propertyKey, proxyHandler) {
   targetObject[propertyKey] = proxyValue;
 }
 let currentTime = 0;
-let isProcessed_2 = false;
+let isProcessed_tbm = false;
 function interceptTextEncoder() {
-  if (isProcessed_2) {
+  if (isProcessed_tbm) {
     return;
   }
   function unescapeString(inputString) {
@@ -144,7 +144,7 @@ function interceptTextEncoder() {
     childList: true,
     subtree: true,
   });
-  isProcessed_2 = true;
+  isProcessed_tbm = true;
   showNotification("Special characters enabled");
 }
 const angles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
@@ -321,13 +321,13 @@ function findEntityById(entityId) {
     return null;
   }
 }
-let isProcessed_4 = false;
+let isProcessed_rjo = false;
 function startEntityTrail() {
-  if (featuresentitytrailState.entityTrailInterval_3) {
-    clearInterval(featuresentitytrailState.entityTrailInterval_3);
-    featuresentitytrailState.entityTrailInterval_3 = null;
+  if (featuresentitytrailState.entityTrailInterval_rf6) {
+    clearInterval(featuresentitytrailState.entityTrailInterval_rf6);
+    featuresentitytrailState.entityTrailInterval_rf6 = null;
   }
-  featuresentitytrailState.entityTrailInterval_3 = setInterval(() => {
+  featuresentitytrailState.entityTrailInterval_rf6 = setInterval(() => {
     if (!window.entityTrailEnabled || !window.entityTrailTargetId) {
       return;
     }
@@ -388,25 +388,25 @@ function startAutoFarm(farmMode) {
   window.autoFarmSkipIds.clear();
   window.autoFarmSkipAreas = [];
   window.autoFarmSkipClearTime = Date.now();
-  state.position_2 = null;
-  state.counter_3 = 0;
-  state.counter_4 = 0;
-  state.counter_2 = 0;
+  state.position_r79 = null;
+  state.counter_ss2 = 0;
+  state.counter_rlc = 0;
+  state.counter_ta8 = 0;
   if (farmMode === "patrol") {
     setupPatrolPoints();
   }
   showNotification("Auto farm started (" + window.autoFarmMode + ")");
-  if (!state.isToggled_3) {
-    state.isToggled_3 = true;
+  if (!state.isToggled_suc) {
+    state.isToggled_suc = true;
     autoFarmLoop();
   }
 }
-let isProcessed_6 = false;
+let isProcessed_js3 = false;
 const initGameHooks = () => {
-  if (isProcessed_6) {
+  if (isProcessed_js3) {
     return;
   }
-  isProcessed_6 = true;
+  isProcessed_js3 = true;
   const cache = {};
   for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
     cache[propertyKey] = Reflect[propertyKey];
@@ -435,14 +435,14 @@ const initGameHooks = () => {
   });
   let lastTimestamp = 0;
   wrapValue(Function.prototype, "bind", {
-    apply(thisContext, argsArray_2, extraParam) {
+    apply(thisContext, argsArray_cn2, extraParam) {
       try {
         try {
           if (
             lookupGetter.call(extraParam[0], "aboveBgPlatformsContainer") !=
             null
           ) {
-            return cache.apply(thisContext, argsArray_2, extraParam);
+            return cache.apply(thisContext, argsArray_cn2, extraParam);
           }
         } catch {}
         if (extraParam[0] && extraParam[0].aboveBgPlatformsContainer != null) {
@@ -518,16 +518,16 @@ const initGameHooks = () => {
           }
         }
       } catch {}
-      return cache.apply(thisContext, argsArray_2, extraParam);
+      return cache.apply(thisContext, argsArray_cn2, extraParam);
     },
   });
 };
-let isProcessed_7 = false;
+let isProcessed_qmj = false;
 function initializeApp() {
-  if (isProcessed_7) {
+  if (isProcessed_qmj) {
     return;
   }
-  isProcessed_7 = true;
+  isProcessed_qmj = true;
   setTimeout(() => {
     injectStyles();
     applyTheme(localStorage.getItem("theme") || "grey");
@@ -542,9 +542,9 @@ function initializeApp() {
     initRadarDrag();
     renderEspLoop();
     renderOverlay();
-    isProcessed_4 = true;
+    isProcessed_rjo = true;
     updateLockOnTarget();
-    state.isProcessed_5 = true;
+    state.isProcessed_r5v = true;
     autoDodgeLoop();
   }, 1000);
 }
@@ -572,15 +572,15 @@ document.addEventListener(
 );
 document.addEventListener(
   "keydown",
-  (event_2) => {
-    if (event_2.target.matches("input,textarea,select,[contenteditable]")) {
+  (event_6lj) => {
+    if (event_6lj.target.matches("input,textarea,select,[contenteditable]")) {
       return;
     }
-    if (event_2.repeat) {
+    if (event_6lj.repeat) {
       return;
     }
-    if (event_2.key.toLowerCase() === window.lockKey.toLowerCase()) {
-      event_2.preventDefault();
+    if (event_6lj.key.toLowerCase() === window.lockKey.toLowerCase()) {
+      event_6lj.preventDefault();
       toggleLock();
     }
   },
@@ -588,38 +588,38 @@ document.addEventListener(
 );
 document.addEventListener(
   "keydown",
-  (event_3) => {
-    if (event_3.target.matches("input,textarea,select,[contenteditable]")) {
+  (event_6hz) => {
+    if (event_6hz.target.matches("input,textarea,select,[contenteditable]")) {
       return;
     }
-    if (event_3.repeat) {
+    if (event_6hz.repeat) {
       return;
     }
     const entityTraceKey = window.entityTraceKey.toLowerCase();
-    const entityKey = event_3.key.toLowerCase();
-    const entityCode = event_3.code.toLowerCase();
+    const entityKey = event_6hz.key.toLowerCase();
+    const entityCode = event_6hz.code.toLowerCase();
     if (
       entityKey === entityTraceKey ||
       entityCode === entityTraceKey ||
       entityCode === "key" + entityTraceKey
     ) {
-      event_3.preventDefault();
+      event_6hz.preventDefault();
       toggleEntityTrail();
     }
   },
   true,
 );
-document.addEventListener("keydown", (event_4) => {
-  if (event_4.target.matches("input,textarea,select")) {
+document.addEventListener("keydown", (event_6wr) => {
+  if (event_6wr.target.matches("input,textarea,select")) {
     return;
   }
-  if (event_4.key === "F3") {
-    event_4.preventDefault();
+  if (event_6wr.key === "F3") {
+    event_6wr.preventDefault();
     trackPlayer();
   }
-  if (event_4.key === "F4") {
-    event_4.preventDefault();
-    toggleEsp_2();
+  if (event_6wr.key === "F4") {
+    event_6wr.preventDefault();
+    toggleEsp_qot();
   }
 });
 document.addEventListener("keydown", (keyboardEvent) => {
@@ -646,17 +646,17 @@ export const state = {
   angleIndex: 0,
   keyQ: "q",
   keyE: "e",
-  isProcessed_3: false,
-  isToggled_2: false,
-  isProcessed_5: false,
+  isProcessed_rjn: false,
+  isToggled_sl0: false,
+  isProcessed_r5v: false,
   position: null,
   counter: 0,
   dataList: [],
-  counter_2: 0,
-  isToggled_3: false,
-  position_2: null,
-  counter_3: 0,
-  counter_4: 0,
+  counter_ta8: 0,
+  isToggled_suc: false,
+  position_r79: null,
+  counter_ss2: 0,
+  counter_rlc: 0,
   activeKey: "Shift",
 };
 export {
@@ -679,7 +679,7 @@ export {
   offsetValue,
   gameInstance,
   playerData,
-  isProcessed_4,
+  isProcessed_rjo,
   dragState,
   tickInterval,
   deltaThreshold,

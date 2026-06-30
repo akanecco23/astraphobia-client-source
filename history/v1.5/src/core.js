@@ -134,7 +134,7 @@ const radius = 300;
 let gameInstance;
 let appState;
 let playerData;
-let isProcessed_2 = false;
+let isProcessed_run = false;
 
 const encryptPacketData = (isActive, charCode, suffix = "") => {
   const stringTable = [
@@ -208,13 +208,13 @@ const config = {
   },
 };
 const sendPacket = (payload, additionalData = "") => {
-  if (gameInstance && appState && config_2.socketManager) {
-    gameInstance[config_2.socketManager].sendBytePacket(
+  if (gameInstance && appState && config_rk6.socketManager) {
+    gameInstance[config_rk6.socketManager].sendBytePacket(
       encryptPacketData(appState.token._value, payload, additionalData),
     );
   }
 };
-const config_2 = {};
+const config_rk6 = {};
 const currentTime = 0;
 const initializeAntiTamper = () => {
   const storage = {};
@@ -270,51 +270,51 @@ const initializeAntiTamper = () => {
           const obfuscatedKeys = allKeys.filter((obfuscatedVarName) =>
             obfuscatedVarName.startsWith("_0x"),
           );
-          config_2.setFlash =
+          config_rk6.setFlash =
             Object.getOwnPropertyNames(playerData.__proto__.__proto__)
               .filter((obfuscatedPropName) =>
                 obfuscatedPropName.startsWith("_0x"),
               )
               .find(
                 (methodName) => playerData[methodName] instanceof Function,
-              ) || config_2.setFlash;
-          config_2.terrainManager =
+              ) || config_rk6.setFlash;
+          config_rk6.terrainManager =
             obfuscatedKeys.find(
               (shadowEntityKey) =>
                 typeof playerData[shadowEntityKey]?.shadow !== "undefined",
-            ) || config_2.terrainManager;
-          config_2.entityManager =
+            ) || config_rk6.terrainManager;
+          config_rk6.entityManager =
             obfuscatedKeys.find(
               (entitiesListKey) =>
                 typeof playerData[entitiesListKey]?.entitiesList !==
                 "undefined",
-            ) || config_2.entityManager;
-          config_2.entityManagerProps = {};
+            ) || config_rk6.entityManager;
+          config_rk6.entityManagerProps = {};
           const entityManagerKeys = getAllPropertyNames(
-            playerData[config_2.entityManager],
+            playerData[config_rk6.entityManager],
           );
           const animalsUpdateInterval = setInterval(() => {
-            config_2.entityManagerProps.animalsList =
+            config_rk6.entityManagerProps.animalsList =
               entityManagerKeys
                 .filter((variableName) => variableName.startsWith("_0x"))
                 .find(
                   (entityName) =>
-                    typeof playerData?.[config_2.entityManager]?.[
+                    typeof playerData?.[config_rk6.entityManager]?.[
                       entityName
                     ]?.[0] !== "undefined",
-                ) || config_2.entityManagerProps.animalsList;
+                ) || config_rk6.entityManagerProps.animalsList;
             if (
-              typeof config_2.entityManagerProps.animalsList !== "undefined"
+              typeof config_rk6.entityManagerProps.animalsList !== "undefined"
             ) {
               clearInterval(animalsUpdateInterval);
             }
           }, 1000);
-          config_2.socketManager =
+          config_rk6.socketManager =
             getAllPropertyNames(gameInstance).find(
               (networkClientKey) =>
                 typeof gameInstance[networkClientKey]?.sendBytePacket !==
                 "undefined",
-            ) || config_2.socketManager;
+            ) || config_rk6.socketManager;
           try {
             appState = document
               .getElementById("app")
@@ -363,7 +363,7 @@ const initializeAntiTamper = () => {
   });
 };
 const disableGameRestrictions = () => {
-  if (isProcessed_2) {
+  if (isProcessed_run) {
     return;
   }
   if (!playerData) {
@@ -381,11 +381,11 @@ const disableGameRestrictions = () => {
     } catch {}
   }, 300);
   try {
-    if (config_2.setFlash) {
-      playerData[config_2.setFlash] = () => {};
+    if (config_rk6.setFlash) {
+      playerData[config_rk6.setFlash] = () => {};
     }
-    if (config_2.terrainManager) {
-      const terrainManager = playerData[config_2.terrainManager];
+    if (config_rk6.terrainManager) {
+      const terrainManager = playerData[config_rk6.terrainManager];
       if (terrainManager && terrainManager.shadow) {
         terrainManager.shadow.setShadowSize(1000000);
         terrainManager.shadow.setShadowSize = () => {};
@@ -394,7 +394,7 @@ const disableGameRestrictions = () => {
   } catch (url) {
     console.error(url);
   }
-  isProcessed_2 = true;
+  isProcessed_run = true;
 };
 
 document.addEventListener("keydown", (keyboardEvent) => {
@@ -419,7 +419,7 @@ export const state = {
   entityTrailInterval: null,
   isToggled: false,
   angleIndex: 0,
-  isToggled_2: false,
+  isToggled_r5u: false,
   activeKey: "Shift",
 };
 
@@ -434,6 +434,6 @@ export {
   radius,
   gameInstance,
   playerData,
-  isProcessed_2,
+  isProcessed_run,
   config,
 };

@@ -7,7 +7,7 @@ import {
   getEntityPosition,
   calculateDirection,
   findEntityById,
-  isAreaSkipped_2,
+  isAreaSkipped_sc8,
   initAutoFarm,
   initializeAntiDetection,
   initializeViewportSettings,
@@ -18,7 +18,7 @@ import {
   offsetValue,
   gameInstance,
   playerData,
-  isProcessed_3,
+  isProcessed_skx,
   config,
   dragState,
   tickInterval,
@@ -44,6 +44,17 @@ import {
   stopAutoFarm,
 } from "./src/features/autofarm.js";
 import {
+  createEspOverlay,
+  drawEsp,
+  drawTrackedEntity,
+  renderEspLoop,
+  toggleEsp,
+  trackPlayer,
+  toggleEsp_sdk,
+  toggleEsp_sl9,
+  toggleMinimapSize,
+} from "./src/features/esp.js";
+import {
   showHalloweenModal,
   makeDraggable,
   createToolsPanel,
@@ -52,17 +63,6 @@ import {
   createUpdateHistoryPanel,
   toggleUiVisibility,
 } from "./src/ui/panels.js";
-import {
-  createEspOverlay,
-  drawEsp,
-  drawTrackedEntity,
-  renderEspLoop,
-  toggleEsp,
-  trackPlayer,
-  toggleEsp_2,
-  toggleEsp_3,
-  toggleMinimapSize,
-} from "./src/features/esp.js";
 import {
   generateRandomString,
   getGameCanvas,

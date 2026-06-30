@@ -24,7 +24,11 @@ import {
   autoDodgeLoop,
   toggleLock,
 } from "./features/aimbot.js";
-import { renderEspOverlay, trackPlayer, toggleEsp_2 } from "./features/esp.js";
+import {
+  renderEspOverlay,
+  trackPlayer,
+  toggleEsp_tia,
+} from "./features/esp.js";
 import { setTheme, initHomeBackground, injectStyles } from "./ui/theme.js";
 import { setupPatrolPoints, autoFarmLoop } from "./features/autofarm.js";
 import { moveMouseToSide } from "./features/movement.js";
@@ -33,9 +37,9 @@ import { initAdBlocker } from "./features/adblock.js";
 import { initRadarDragging } from "./ui/radar.js";
 let stateCache = new WeakMap();
 let currentTime = 0;
-let isProcessed_2 = false;
+let isProcessed_r5u = false;
 function hookTextEncoder() {
-  if (isProcessed_2) {
+  if (isProcessed_r5u) {
     return;
   }
   function unescapeString(inputString) {
@@ -140,7 +144,7 @@ function hookTextEncoder() {
     childList: true,
     subtree: true,
   });
-  isProcessed_2 = true;
+  isProcessed_r5u = true;
   showNotification("Special characters enabled");
 }
 const angles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
@@ -264,13 +268,13 @@ function calculateDirection(entity) {
     dirY: dirY,
   };
 }
-let isProcessed_4 = false;
+let isProcessed_l68 = false;
 function startEntityTrail() {
-  if (featuresentitytrailState.entityTrailInterval_3) {
-    clearInterval(featuresentitytrailState.entityTrailInterval_3);
-    featuresentitytrailState.entityTrailInterval_3 = null;
+  if (featuresentitytrailState.entityTrailInterval_skd) {
+    clearInterval(featuresentitytrailState.entityTrailInterval_skd);
+    featuresentitytrailState.entityTrailInterval_skd = null;
   }
-  featuresentitytrailState.entityTrailInterval_3 = setInterval(() => {
+  featuresentitytrailState.entityTrailInterval_skd = setInterval(() => {
     if (!window.entityTrailEnabled || !window.entityTrailTargetId) {
       return;
     }
@@ -331,25 +335,25 @@ function startAutoFarm(farmMode) {
   window.autoFarmSkipIds.clear();
   window.autoFarmSkipAreas = [];
   window.autoFarmSkipClearTime = Date.now();
-  state.position_2 = null;
-  state.counter_3 = 0;
-  state.counter_4 = 0;
-  state.counter_2 = 0;
+  state.position_qml = null;
+  state.counter_rvr = 0;
+  state.counter_r46 = 0;
+  state.counter_sce = 0;
   if (farmMode === "patrol") {
     setupPatrolPoints();
   }
   showNotification("Auto farm started (" + window.autoFarmMode + ")");
-  if (!state.isToggled_3) {
-    state.isToggled_3 = true;
+  if (!state.isToggled_sv3) {
+    state.isToggled_sv3 = true;
     autoFarmLoop();
   }
 }
-let isProcessed_6 = false;
+let isProcessed_shm = false;
 const initAntiTamper = () => {
-  if (isProcessed_6) {
+  if (isProcessed_shm) {
     return;
   }
-  isProcessed_6 = true;
+  isProcessed_shm = true;
   const cache = {};
   for (const reflectMethod of Object.getOwnPropertyNames(Reflect)) {
     cache[reflectMethod] = Reflect[reflectMethod];
@@ -470,12 +474,12 @@ const initAntiTamper = () => {
     },
   });
 };
-let isProcessed_7 = false;
+let isProcessed_sse = false;
 function initializeApp() {
-  if (isProcessed_7) {
+  if (isProcessed_sse) {
     return;
   }
-  isProcessed_7 = true;
+  isProcessed_sse = true;
   setTimeout(() => {
     injectStyles();
     setTheme(localStorage.getItem("theme") || "grey");
@@ -490,9 +494,9 @@ function initializeApp() {
     initRadarDragging();
     renderEspOverlay();
     renderOverlayLoop();
-    isProcessed_4 = true;
+    isProcessed_l68 = true;
     updateLockOnTarget();
-    state.isProcessed_5 = true;
+    state.isProcessed_rdv = true;
     autoDodgeLoop();
   }, 1000);
 }
@@ -520,15 +524,15 @@ document.addEventListener(
 );
 document.addEventListener(
   "keydown",
-  (event_2) => {
-    if (event_2.target.matches("input,textarea,select,[contenteditable]")) {
+  (event_69q) => {
+    if (event_69q.target.matches("input,textarea,select,[contenteditable]")) {
       return;
     }
-    if (event_2.repeat) {
+    if (event_69q.repeat) {
       return;
     }
-    if (event_2.key.toLowerCase() === window.lockKey.toLowerCase()) {
-      event_2.preventDefault();
+    if (event_69q.key.toLowerCase() === window.lockKey.toLowerCase()) {
+      event_69q.preventDefault();
       toggleLock();
     }
   },
@@ -536,38 +540,38 @@ document.addEventListener(
 );
 document.addEventListener(
   "keydown",
-  (event_3) => {
-    if (event_3.target.matches("input,textarea,select,[contenteditable]")) {
+  (event_4og) => {
+    if (event_4og.target.matches("input,textarea,select,[contenteditable]")) {
       return;
     }
-    if (event_3.repeat) {
+    if (event_4og.repeat) {
       return;
     }
     const entityTraceKey = window.entityTraceKey.toLowerCase();
-    const lowercaseKey = event_3.key.toLowerCase();
-    const lowercaseCode = event_3.code.toLowerCase();
+    const lowercaseKey = event_4og.key.toLowerCase();
+    const lowercaseCode = event_4og.code.toLowerCase();
     if (
       lowercaseKey === entityTraceKey ||
       lowercaseCode === entityTraceKey ||
       lowercaseCode === "key" + entityTraceKey
     ) {
-      event_3.preventDefault();
+      event_4og.preventDefault();
       toggleEntityTrail();
     }
   },
   true,
 );
-document.addEventListener("keydown", (event_4) => {
-  if (event_4.target.matches("input,textarea,select")) {
+document.addEventListener("keydown", (event_6k3) => {
+  if (event_6k3.target.matches("input,textarea,select")) {
     return;
   }
-  if (event_4.key === "F3") {
-    event_4.preventDefault();
+  if (event_6k3.key === "F3") {
+    event_6k3.preventDefault();
     trackPlayer();
   }
-  if (event_4.key === "F4") {
-    event_4.preventDefault();
-    toggleEsp_2();
+  if (event_6k3.key === "F4") {
+    event_6k3.preventDefault();
+    toggleEsp_tia();
   }
 });
 document.addEventListener("keydown", (keyboardEvent) => {
@@ -594,17 +598,17 @@ export const state = {
   angleIndex: 0,
   keyQ: "q",
   keyE: "e",
-  isProcessed_3: false,
-  isToggled_2: false,
-  isProcessed_5: false,
+  isProcessed_rnh: false,
+  isToggled_r8c: false,
+  isProcessed_rdv: false,
   position: null,
   counter: 0,
   dataList: [],
-  counter_2: 0,
-  isToggled_3: false,
-  position_2: null,
-  counter_3: 0,
-  counter_4: 0,
+  counter_sce: 0,
+  isToggled_sv3: false,
+  position_qml: null,
+  counter_rvr: 0,
+  counter_r46: 0,
   activeKey: "Shift",
 };
 export {
@@ -626,7 +630,7 @@ export {
   gameInstance,
   playerData,
   config,
-  isProcessed_4,
+  isProcessed_l68,
   dragState,
   tickInterval,
   deltaThreshold,

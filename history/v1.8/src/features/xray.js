@@ -2,7 +2,7 @@ import { gameInstance, playerData, state } from "../core.js";
 import { showNotification } from "../ui/interaction.js";
 
 const initializeAstraVision = () => {
-  if (state.isProcessed_3) {
+  if (state.isProcessed_rjn) {
     return;
   }
   if (!playerData) {
@@ -44,7 +44,7 @@ const initializeAstraVision = () => {
   } catch (url) {
     console.error("AstraVision Error:", url);
   }
-  state.isProcessed_3 = true;
+  state.isProcessed_rjn = true;
 };
 
 export { initializeAstraVision };

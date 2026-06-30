@@ -1,7 +1,6 @@
 import {
   currentTime,
   radius,
-  maxDistance_2,
   maxFailCount,
   timeoutLimit,
   isValidEntity,
@@ -36,6 +35,7 @@ window.autoFarmSkipIds = new Set();
 window.autoFarmSkipClearTime = 0;
 window.autoFarmSkipAreas = [];
 
+const maxDistance_tas = 400;
 function handleFarmFailure(x, y) {
   const currentTime = Date.now();
   window.autoFarmSkipAreas = window.autoFarmSkipAreas.filter(
@@ -44,7 +44,7 @@ function handleFarmFailure(x, y) {
   let existingArea = window.autoFarmSkipAreas.find(
     (position) =>
       calculateDistance(x, y, state.position.x, state.position.y) <
-      maxDistance_2,
+      maxDistance_tas,
   );
   if (existingArea) {
     existingArea.failCount++;
@@ -57,7 +57,7 @@ function handleFarmFailure(x, y) {
     window.autoFarmSkipAreas.push({
       x: x,
       y: y,
-      radius: maxDistance_2,
+      radius: maxDistance_tas,
       time: currentTime,
       failCount: 1,
       skipped: false,
@@ -344,17 +344,17 @@ function detectAndHandleStuck(currentPos) {
     return false;
   }
   state.lastValue = now;
-  if (state.position_2) {
+  if (state.position_s2v) {
     if (
       calculateDistance(
         currentPos.x,
         currentPos.y,
-        state.position_2.x,
-        state.position_2.y,
+        state.position_s2v.x,
+        state.position_s2v.y,
       ) < 25
     ) {
-      state.counter_2++;
-      if (state.counter_2 >= 1 && window.autoFarmCurrentTarget) {
+      state.counter_qpz++;
+      if (state.counter_qpz >= 1 && window.autoFarmCurrentTarget) {
         handleFarmFailure(
           window.autoFarmCurrentTarget.x,
           window.autoFarmCurrentTarget.y,
@@ -362,10 +362,10 @@ function detectAndHandleStuck(currentPos) {
         window.autoFarmSkipIds.add(window.autoFarmCurrentTarget.id);
         window.autoFarmCurrentTarget = null;
         window.autoFarmTargetStartTime = 0;
-        state.counter_2 = 0;
+        state.counter_qpz = 0;
       }
-      if (state.counter_2 >= 2) {
-        state.counter_2 = 0;
+      if (state.counter_qpz >= 2) {
+        state.counter_qpz = 0;
         window.autoFarmCurrentTarget = null;
         window.autoFarmTargetStartTime = 0;
         const randomAngle = Math.random() * Math.PI * 2;
@@ -377,10 +377,10 @@ function detectAndHandleStuck(currentPos) {
         return true;
       }
     } else {
-      state.counter_2 = 0;
+      state.counter_qpz = 0;
     }
   }
-  state.position_2 = {
+  state.position_s2v = {
     x: currentPos.x,
     y: currentPos.y,
   };
@@ -403,7 +403,7 @@ function setupPatrolPoints() {
 }
 function autoFarmLoop() {
   if (!window.autoFarmActive) {
-    state.isToggled_4 = false;
+    state.isToggled_s1e = false;
     return;
   }
   const currentTime = Date.now();
@@ -430,7 +430,7 @@ function autoFarmLoop() {
     const currentTarget = getFirstAnimalPosition();
     if (!currentTarget) {
       window.autoFarmActive = false;
-      state.isToggled_4 = false;
+      state.isToggled_s1e = false;
       const autoFarmButton = document.getElementById("autoFarmBtn");
       if (autoFarmButton) {
         autoFarmButton.textContent = "Auto Farm";
@@ -481,7 +481,7 @@ function autoFarmLoop() {
           }
           window.autoFarmCurrentTarget = nearestTarget;
           window.autoFarmTargetStartTime = currentTime;
-          state.counter_2 = 0;
+          state.counter_qpz = 0;
         }
         if (nearestTarget.distance < 40) {
           targetX += (Math.random() - 0.5) * 80;
@@ -538,16 +538,16 @@ function autoFarmLoop() {
       if (!window.autoFarmPatrolPoints.length) {
         setupPatrolPoints();
       }
-      const selectedTarget_2 = findClosestFarmableEntity(800);
-      if (selectedTarget_2) {
-        targetX = selectedTarget_2.x;
-        targetY = selectedTarget_2.y;
-        minDistance = selectedTarget_2.distance;
+      const selectedTarget_zfk = findClosestFarmableEntity(800);
+      if (selectedTarget_zfk) {
+        targetX = selectedTarget_zfk.x;
+        targetY = selectedTarget_zfk.y;
+        minDistance = selectedTarget_zfk.distance;
         if (
           !window.autoFarmCurrentTarget ||
-          window.autoFarmCurrentTarget.id !== selectedTarget_2.id
+          window.autoFarmCurrentTarget.id !== selectedTarget_zfk.id
         ) {
-          window.autoFarmCurrentTarget = selectedTarget_2;
+          window.autoFarmCurrentTarget = selectedTarget_zfk;
           window.autoFarmTargetStartTime = currentTime;
         }
       } else {
@@ -589,7 +589,7 @@ function autoFarmLoop() {
 }
 function stopAutoFarm() {
   window.autoFarmActive = false;
-  state.isToggled_4 = false;
+  state.isToggled_s1e = false;
   showNotification(
     "Farm stopped. ~" +
       window.autoFarmStats.collected +
@@ -598,12 +598,12 @@ function stopAutoFarm() {
       "s",
   );
 }
-document.addEventListener("keydown", (event_5) => {
-  if (event_5.target.matches("input,textarea,select")) {
+document.addEventListener("keydown", (event_6gv) => {
+  if (event_6gv.target.matches("input,textarea,select")) {
     return;
   }
-  if (event_5.key === "F5") {
-    event_5.preventDefault();
+  if (event_6gv.key === "F5") {
+    event_6gv.preventDefault();
     if (window.autoFarmActive) {
       stopAutoFarm();
       const autoFarmBtn = document.getElementById("autoFarmBtn");
@@ -614,10 +614,10 @@ document.addEventListener("keydown", (event_5) => {
     } else {
       const farmModeSelect = document.getElementById("farmModeSelect");
       startAutoFarm(farmModeSelect ? farmModeSelect.value : "nearest");
-      const autoFarmBtn_2 = document.getElementById("autoFarmBtn");
-      if (autoFarmBtn_2) {
-        autoFarmBtn_2.textContent = "Stop Farm";
-        autoFarmBtn_2.classList.add("toggle-on");
+      const autoFarmBtn_6li = document.getElementById("autoFarmBtn");
+      if (autoFarmBtn_6li) {
+        autoFarmBtn_6li.textContent = "Stop Farm";
+        autoFarmBtn_6li.classList.add("toggle-on");
       }
     }
   }

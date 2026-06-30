@@ -10,8 +10,8 @@ import {
   angles,
   radius,
   playerData,
-  isProcessed_2,
-  isProcessed_3,
+  isProcessed_sc5,
+  isProcessed_qng,
   config,
   state,
 } from "./src/core.js";

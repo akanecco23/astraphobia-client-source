@@ -1,9 +1,9 @@
 import {
   toggleEsp,
   trackPlayer,
-  toggleEsp_2,
+  toggleEsp_qot,
   toggleMinimapSize,
-  toggleEsp_3,
+  toggleEsp_slh,
 } from "../features/esp.js";
 import {
   radius,
@@ -117,9 +117,9 @@ function makeDraggable(element) {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   });
-  element.addEventListener("click", (event_2) => {
+  element.addEventListener("click", (event_re9) => {
     if (hasMoved) {
-      event_2.stopImmediatePropagation();
+      event_re9.stopImmediatePropagation();
     }
   });
 }
@@ -181,15 +181,15 @@ function createToolsPanel() {
       showNotification("No name input found");
     }
   };
-  const spinBtn_2 = toolsPanel.querySelector("#spinBtn");
-  spinBtn_2.onclick = () => {
+  const spinBtn_oj8 = toolsPanel.querySelector("#spinBtn");
+  spinBtn_oj8.onclick = () => {
     toggleMouseSimulation();
-    spinBtn_2.textContent = featuresentitytrailState.entityTrailInterval_2
+    spinBtn_oj8.textContent = featuresentitytrailState.entityTrailInterval_sje
       ? "Stop Spin"
       : "Auto Spin";
-    spinBtn_2.classList.toggle(
+    spinBtn_oj8.classList.toggle(
       "toggle-on",
-      !!featuresentitytrailState.entityTrailInterval_2,
+      !!featuresentitytrailState.entityTrailInterval_sje,
     );
   };
   const turnRightKeyInput = toolsPanel.querySelector("#spinKeyInput");
@@ -207,33 +207,33 @@ function createToolsPanel() {
     ) {
       shortcutEvent.preventDefault();
       toggleMouseSimulation();
-      spinBtn_2.textContent = featuresentitytrailState.entityTrailInterval_2
+      spinBtn_oj8.textContent = featuresentitytrailState.entityTrailInterval_sje
         ? "Stop Spin"
         : "Auto Spin";
-      spinBtn_2.classList.toggle(
+      spinBtn_oj8.classList.toggle(
         "toggle-on",
-        !!featuresentitytrailState.entityTrailInterval_2,
+        !!featuresentitytrailState.entityTrailInterval_sje,
       );
     }
   });
-  const turnRightKeyInput_2 = toolsPanel.querySelector("#turnLeftKeyInput");
-  const turnRightKeyInput_3 = toolsPanel.querySelector("#turnRightKeyInput");
-  turnRightKeyInput_2.value = state.keyQ.toUpperCase();
-  turnRightKeyInput_3.value = state.keyE.toUpperCase();
-  turnRightKeyInput_2.addEventListener("keydown", (contextMenuEvent) => {
+  const turnRightKeyInput_q3j = toolsPanel.querySelector("#turnLeftKeyInput");
+  const turnRightKeyInput_n9e = toolsPanel.querySelector("#turnRightKeyInput");
+  turnRightKeyInput_q3j.value = state.keyQ.toUpperCase();
+  turnRightKeyInput_n9e.value = state.keyE.toUpperCase();
+  turnRightKeyInput_q3j.addEventListener("keydown", (contextMenuEvent) => {
     contextMenuEvent.preventDefault();
     contextMenuEvent.stopPropagation();
     state.keyQ = contextMenuEvent.key;
-    turnRightKeyInput_2.value =
+    turnRightKeyInput_q3j.value =
       contextMenuEvent.key.length === 1
         ? contextMenuEvent.key.toUpperCase()
         : contextMenuEvent.key;
   });
-  turnRightKeyInput_3.addEventListener("keydown", (dragEvent) => {
+  turnRightKeyInput_n9e.addEventListener("keydown", (dragEvent) => {
     dragEvent.preventDefault();
     dragEvent.stopPropagation();
     state.keyE = dragEvent.key;
-    turnRightKeyInput_3.value =
+    turnRightKeyInput_n9e.value =
       dragEvent.key.length === 1 ? dragEvent.key.toUpperCase() : dragEvent.key;
   });
   makeDraggable(toolsPanel);
@@ -261,7 +261,7 @@ function createVisionPanel() {
   };
   const astraVisionBtn = visionPanel.querySelector("#astraVisionBtn");
   astraVisionBtn.onclick = () => {
-    if (state.isProcessed_3) {
+    if (state.isProcessed_rjn) {
       showNotification("Already active");
       return;
     }
@@ -275,14 +275,16 @@ function createVisionPanel() {
   espBtn.onclick = () => {
     initGameHooks();
     toggleMinimapSize();
-    espBtn.textContent = state.isToggled_2 ? "Minimap: Small" : "Small Minimap";
-    espBtn.classList.toggle("toggle-on", state.isToggled_2);
+    espBtn.textContent = state.isToggled_sl0
+      ? "Minimap: Small"
+      : "Small Minimap";
+    espBtn.classList.toggle("toggle-on", state.isToggled_sl0);
   };
-  const espBtn_2 = visionPanel.querySelector("#espBtn");
-  espBtn_2.onclick = () => {
+  const espBtn_6rn = visionPanel.querySelector("#espBtn");
+  espBtn_6rn.onclick = () => {
     toggleEsp();
-    espBtn_2.textContent = window.espEnabled ? "ESP ✓" : "ESP";
-    espBtn_2.classList.toggle("toggle-on", window.espEnabled);
+    espBtn_6rn.textContent = window.espEnabled ? "ESP ✓" : "ESP";
+    espBtn_6rn.classList.toggle("toggle-on", window.espEnabled);
   };
   const espModeSelect = visionPanel.querySelector("#espModeSelect");
   espModeSelect.value = window.espMode || "players";
@@ -291,15 +293,15 @@ function createVisionPanel() {
     showNotification("ESP: " + espModeEvent.target.value);
   };
   visionPanel.querySelector("#trackNearestBtn").onclick = () => trackPlayer();
-  visionPanel.querySelector("#untrackBtn").onclick = () => toggleEsp_2();
+  visionPanel.querySelector("#untrackBtn").onclick = () => toggleEsp_qot();
   const espColorsToggleBtn = visionPanel.querySelector("#espColorsToggleBtn");
-  const espColorsSection_2 = visionPanel.querySelector("#espColorsSection");
+  const espColorsSection_68h = visionPanel.querySelector("#espColorsSection");
   const espColorsArrow = visionPanel.querySelector("#espColorsArrow");
-  let isHidden_2 = false;
+  let isHidden_6z4 = false;
   espColorsToggleBtn.onclick = () => {
-    isHidden_2 = !isHidden_2;
-    espColorsSection_2.style.display = isHidden_2 ? "block" : "none";
-    espColorsArrow.textContent = isHidden_2 ? "▲" : "▼";
+    isHidden_6z4 = !isHidden_6z4;
+    espColorsSection_68h.style.display = isHidden_6z4 ? "block" : "none";
+    espColorsArrow.textContent = isHidden_6z4 ? "▲" : "▼";
   };
   const eventInit = {
     espColorClose: "close",
@@ -395,7 +397,7 @@ function createAutomationPanel() {
   const autoDodgeButton = automationPanel.querySelector("#autoDodgeBtn");
   autoDodgeButton.onclick = () => {
     if (window.autoDodgeEnabled) {
-      toggleEsp_3();
+      toggleEsp_slh();
       autoDodgeButton.textContent = "Auto Dodge";
       autoDodgeButton.classList.remove("toggle-on");
     } else {
@@ -428,11 +430,12 @@ function createAutomationPanel() {
     }
   };
   const farmAvoidToggle = automationPanel.querySelector("#farmBoostToggle");
-  const farmAvoidToggle_2 = automationPanel.querySelector("#farmEvolveToggle");
-  const farmAvoidToggle_3 = automationPanel.querySelector("#farmAvoidToggle");
+  const farmAvoidToggle_k0h =
+    automationPanel.querySelector("#farmEvolveToggle");
+  const farmAvoidToggle_q6k = automationPanel.querySelector("#farmAvoidToggle");
   farmAvoidToggle.checked = window.autoFarmBoost;
-  farmAvoidToggle_2.checked = window.autoFarmEvolve;
-  farmAvoidToggle_3.checked = window.autoFarmAvoidPlayers;
+  farmAvoidToggle_k0h.checked = window.autoFarmEvolve;
+  farmAvoidToggle_q6k.checked = window.autoFarmAvoidPlayers;
   const farmBoostLabel = farmAvoidToggle.nextElementSibling;
   farmBoostLabel.addEventListener("click", (farmOptionEvent1) => {
     farmOptionEvent1.stopPropagation();
@@ -442,22 +445,22 @@ function createAutomationPanel() {
       farmAvoidToggle.checked ? "Farm boost ON" : "Farm boost OFF",
     );
   });
-  const farmEvolveLabel = farmAvoidToggle_2.nextElementSibling;
+  const farmEvolveLabel = farmAvoidToggle_k0h.nextElementSibling;
   farmEvolveLabel.addEventListener("click", (farmOptionEvent2) => {
     farmOptionEvent2.stopPropagation();
-    farmAvoidToggle_2.checked = !farmAvoidToggle_2.checked;
-    window.autoFarmEvolve = farmAvoidToggle_2.checked;
+    farmAvoidToggle_k0h.checked = !farmAvoidToggle_k0h.checked;
+    window.autoFarmEvolve = farmAvoidToggle_k0h.checked;
     showNotification(
-      farmAvoidToggle_2.checked ? "Auto evolve ON" : "Auto evolve OFF",
+      farmAvoidToggle_k0h.checked ? "Auto evolve ON" : "Auto evolve OFF",
     );
   });
-  const farmAvoidLabel = farmAvoidToggle_3.nextElementSibling;
+  const farmAvoidLabel = farmAvoidToggle_q6k.nextElementSibling;
   farmAvoidLabel.addEventListener("click", (farmOptionEvent3) => {
     farmOptionEvent3.stopPropagation();
-    farmAvoidToggle_3.checked = !farmAvoidToggle_3.checked;
-    window.autoFarmAvoidPlayers = farmAvoidToggle_3.checked;
+    farmAvoidToggle_q6k.checked = !farmAvoidToggle_q6k.checked;
+    window.autoFarmAvoidPlayers = farmAvoidToggle_q6k.checked;
     showNotification(
-      farmAvoidToggle_3.checked ? "Avoid players ON" : "Avoid players OFF",
+      farmAvoidToggle_q6k.checked ? "Avoid players ON" : "Avoid players OFF",
     );
   });
   makeDraggable(automationPanel);
@@ -631,11 +634,11 @@ function createSettingsPanel() {
       border: "#333",
       hover: adjustColor(themePanelColor),
     };
-    const customThemes_2 = JSON.parse(
+    const customThemes_wtz = JSON.parse(
       localStorage.getItem("customThemes") || "{}",
     );
-    customThemes_2[customThemeName] = themeSettings;
-    localStorage.setItem("customThemes", JSON.stringify(customThemes_2));
+    customThemes_wtz[customThemeName] = themeSettings;
+    localStorage.setItem("customThemes", JSON.stringify(customThemes_wtz));
     applyTheme(customThemeName);
     settingsPanel.querySelector("#customThemeName").value = "";
     renderCustomThemes();
@@ -644,23 +647,26 @@ function createSettingsPanel() {
   const myThemesToggleBtn = settingsPanel.querySelector(
     "#customThemeToggleBtn",
   );
-  const myThemesSection_2 = settingsPanel.querySelector("#customThemeSection");
+  const myThemesSection_uwk = settingsPanel.querySelector(
+    "#customThemeSection",
+  );
   const myThemesArrow = settingsPanel.querySelector("#customThemeArrow");
-  let isHidden_2 = false;
+  let isHidden_9db = false;
   myThemesToggleBtn.onclick = () => {
-    isHidden_2 = !isHidden_2;
-    myThemesSection_2.style.display = isHidden_2 ? "block" : "none";
-    myThemesArrow.textContent = isHidden_2 ? "▲" : "▼";
+    isHidden_9db = !isHidden_9db;
+    myThemesSection_uwk.style.display = isHidden_9db ? "block" : "none";
+    myThemesArrow.textContent = isHidden_9db ? "▲" : "▼";
   };
-  const myThemesToggleBtn_2 = settingsPanel.querySelector("#myThemesToggleBtn");
-  const myThemesSection_3 = settingsPanel.querySelector("#myThemesSection");
-  const myThemesArrow_2 = settingsPanel.querySelector("#myThemesArrow");
-  let isHidden_3 = false;
-  myThemesToggleBtn_2.onclick = () => {
-    isHidden_3 = !isHidden_3;
-    myThemesSection_3.style.display = isHidden_3 ? "block" : "none";
-    myThemesArrow_2.textContent = isHidden_3 ? "▲" : "▼";
-    if (isHidden_3) {
+  const myThemesToggleBtn_8lc =
+    settingsPanel.querySelector("#myThemesToggleBtn");
+  const myThemesSection_u3r = settingsPanel.querySelector("#myThemesSection");
+  const myThemesArrow_7x5 = settingsPanel.querySelector("#myThemesArrow");
+  let isHidden_7uf = false;
+  myThemesToggleBtn_8lc.onclick = () => {
+    isHidden_7uf = !isHidden_7uf;
+    myThemesSection_u3r.style.display = isHidden_7uf ? "block" : "none";
+    myThemesArrow_7x5.textContent = isHidden_7uf ? "▲" : "▼";
+    if (isHidden_7uf) {
       renderCustomThemes();
     }
   };
