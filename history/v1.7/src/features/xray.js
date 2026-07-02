@@ -1,7 +1,7 @@
-import { gameInstance, playerData, config, state } from "../core.js";
+import { gameInstance, playerData, Config, state } from "../core.js";
 
 const initializeViewportHacks = () => {
-  if (state.isProcessed_rnh) {
+  if (state.appIsProcessed) {
     return;
   }
   if (!playerData) {
@@ -19,20 +19,20 @@ const initializeViewportHacks = () => {
     } catch {}
   }, 300);
   try {
-    if (config.setFlash) {
-      playerData[config.setFlash] = () => {};
+    if (Config.setFlash) {
+      playerData[Config.setFlash] = () => {};
     }
-    if (config.terrainManager) {
-      const terrainManager = playerData[config.terrainManager];
+    if (Config.terrainManager) {
+      const terrainManager = playerData[Config.terrainManager];
       if (terrainManager?.shadow) {
         terrainManager.shadow.setShadowSize(1000000);
         terrainManager.shadow.setShadowSize = () => {};
       }
     }
-  } catch (url) {
-    console.error(url);
+  } catch (v3e75Url) {
+    console.error(v3e75Url);
   }
-  state.isProcessed_rnh = true;
+  state.appIsProcessed = true;
 };
 
 export { initializeViewportHacks };

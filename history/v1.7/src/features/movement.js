@@ -4,7 +4,7 @@ import { showNotification } from "../ui/interaction.js";
 import { getGameCanvas } from "../utils.js";
 
 function startCircularMovement() {
-  if (featuresentitytrailState.entityTrailInterval_rdg) {
+  if (featuresentitytrailState.globalEntityTrailInterval) {
     return;
   }
   const canvas = getGameCanvas();
@@ -12,15 +12,15 @@ function startCircularMovement() {
     showNotification("Canvas not found");
     return;
   }
-  featuresentitytrailState.entityTrailInterval_rdg = setInterval(() => {
+  featuresentitytrailState.globalEntityTrailInterval = setInterval(() => {
     const angleDegrees = angles[state.angleIndex];
     const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
-    const offsetX = Math.round(radius * Math.sin(angleRadians));
-    const offsetY = Math.round(radius * Math.cos(angleRadians));
+    const v1ee9OffsetX = Math.round(radius * Math.sin(angleRadians));
+    const v11d4OffsetY = Math.round(radius * Math.cos(angleRadians));
     canvas.dispatchEvent(
       new MouseEvent("pointermove", {
-        clientX: window.innerWidth / 2 + offsetX,
-        clientY: window.innerHeight / 2 + offsetY,
+        clientX: window.innerWidth / 2 + v1ee9OffsetX,
+        clientY: window.innerHeight / 2 + v11d4OffsetY,
         bubbles: true,
       }),
     );
@@ -28,29 +28,29 @@ function startCircularMovement() {
   }, 15);
 }
 function stopEntityTrail() {
-  if (featuresentitytrailState.entityTrailInterval_rdg) {
-    clearInterval(featuresentitytrailState.entityTrailInterval_rdg);
-    featuresentitytrailState.entityTrailInterval_rdg = null;
+  if (featuresentitytrailState.globalEntityTrailInterval) {
+    clearInterval(featuresentitytrailState.globalEntityTrailInterval);
+    featuresentitytrailState.globalEntityTrailInterval = null;
   }
 }
 function toggleMouseSimulation() {
-  if (featuresentitytrailState.entityTrailInterval_rdg) {
+  if (featuresentitytrailState.globalEntityTrailInterval) {
     stopEntityTrail();
   } else {
     startCircularMovement();
   }
 }
 function moveMouseToSide(direction) {
-  const canvas = getGameCanvas();
-  if (!canvas) {
+  const v45cbCanvas = getGameCanvas();
+  if (!v45cbCanvas) {
     return;
   }
-  const rect = canvas.getBoundingClientRect();
+  const rect = v45cbCanvas.getBoundingClientRect();
   const centerX = rect.left + rect.width / 2;
   const centerY = rect.top + rect.height / 2;
   const targetX =
     direction === "left" ? centerX - offsetValue : centerX + offsetValue;
-  canvas.dispatchEvent(
+  v45cbCanvas.dispatchEvent(
     new MouseEvent("pointermove", {
       clientX: targetX,
       clientY: centerY,

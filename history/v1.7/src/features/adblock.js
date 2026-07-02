@@ -1,12 +1,12 @@
 import { showNotification } from "../ui/interaction.js";
-import { state } from "../core.js";
 
+let IsProcessed = false;
 function initAdBlocker() {
-  if (state.isProcessed) {
+  if (IsProcessed) {
     return;
   }
-  state.isProcessed = true;
-  const adSelectors = [
+  IsProcessed = true;
+  const Selectors = [
     "div.ad-block",
     'a[href*="ad"]',
     'iframe[src*="ads"], iframe[src*="googlead"]',
@@ -19,15 +19,17 @@ function initAdBlocker() {
     'div.sidebar.left > div:has(> a[href*="doubleclick"])',
   ];
   const cleanupUI = () => {
-    adSelectors.forEach((targetSelector) => {
-      document.querySelectorAll(targetSelector).forEach((targetElement) => {
-        targetElement.style.display = "none";
-        targetElement.style.opacity = "0";
-        targetElement.style.pointerEvents = "none";
-        targetElement.style.visibility = "hidden";
-        targetElement.removeAttribute("src");
-        targetElement.remove();
-      });
+    Selectors.forEach((targetSelector) => {
+      document
+        .querySelectorAll(targetSelector)
+        .forEach((v332bTargetElement) => {
+          v332bTargetElement.style.display = "none";
+          v332bTargetElement.style.opacity = "0";
+          v332bTargetElement.style.pointerEvents = "none";
+          v332bTargetElement.style.visibility = "hidden";
+          v332bTargetElement.removeAttribute("src");
+          v332bTargetElement.remove();
+        });
     });
     const leftSidebar = document.querySelector("div.sidebar.left");
     if (leftSidebar) {

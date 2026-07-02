@@ -20,6 +20,51 @@ function stripNameSuffix(name: string): string {
   return name.replace(SUFFIX_RE, "");
 }
 
+// Strip accumulated prefixes from previous claimName calls.
+// This prevents prefix accumulation across versions.
+const KNOWN_PREFIXES = [
+  "bool",
+  "arr",
+  "obj",
+  "str",
+  "num",
+  "fn",
+  "ui",
+  "core",
+  "global",
+  "main",
+  "app",
+  "sys",
+  "mod",
+];
+
+function stripPrefixes(name: string): string {
+  let result = name;
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const prefix of KNOWN_PREFIXES) {
+      if (
+        result.length > prefix.length &&
+        result.toLowerCase().startsWith(prefix.toLowerCase()) &&
+        /[A-Z]/.test(result[prefix.length]!)
+      ) {
+        result = result.slice(prefix.length);
+        changed = true;
+        break;
+      }
+    }
+    if (!changed) {
+      const hexMatch = result.match(/^[a-f0-9]+[A-Z]/);
+      if (hexMatch) {
+        result = result.slice(hexMatch[0].length - 1);
+        changed = true;
+      }
+    }
+  }
+  return result;
+}
+
 export class MappingStore {
   filePath: string;
   data: MappingFile;
@@ -312,22 +357,22 @@ export class MappingStore {
       this.data.variableFingerprints = {};
     }
     const key = `${funcFingerprintHash}::${roleFingerprintHash}`;
-    // Strip any _N suffix so cross-version matching always gets the base name
+    // Strip any _N suffix so cross-version matching always gets the base name.
+    // Also strip accumulated prefixes to prevent prefix chaining across versions.
     this.data.variableFingerprints[key] = {
       ...entry,
-      name: stripNameSuffix(entry.name),
+      name: stripPrefixes(stripNameSuffix(entry.name)),
     };
   }
 
   // Function DNA exact matching
   getFunctionByDNA(dna: FunctionDNA): string | undefined {
     if (!this.data.functionDNAIndex) return undefined;
-    // Try each DNA component in order of stability
-    const hashes = [dna.stringDNA, dna.apiDNA, dna.propertyDNA, dna.callDNA];
-    for (const hash of hashes) {
-      if (hash && this.data.functionDNAIndex[hash]) {
-        return this.data.functionDNAIndex[hash];
-      }
+    // Only match on stringDNA - it's the most unique and stable identifier.
+    // Matching on apiDNA/propertyDNA/callDNA causes too many false positives
+    // because many functions share the same APIs or call patterns.
+    if (dna.stringDNA && this.data.functionDNAIndex[dna.stringDNA]) {
+      return this.data.functionDNAIndex[dna.stringDNA];
     }
     return undefined;
   }
@@ -336,12 +381,11 @@ export class MappingStore {
     if (!this.data.functionDNAIndex) {
       this.data.functionDNAIndex = {};
     }
-    // Store under each non-empty DNA component
-    const hashes = [dna.stringDNA, dna.apiDNA, dna.propertyDNA, dna.callDNA];
-    for (const hash of hashes) {
-      if (hash) {
-        this.data.functionDNAIndex[hash] = name;
-      }
+    // Only store under stringDNA - it's the most unique identifier.
+    // Storing under apiDNA/propertyDNA/callDNA causes false matches
+    // because many functions share the same APIs or call patterns.
+    if (dna.stringDNA) {
+      this.data.functionDNAIndex[dna.stringDNA] = name;
     }
   }
 

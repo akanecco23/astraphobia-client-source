@@ -1,21 +1,21 @@
-import { typeText } from "../ui/interaction.js";
 import { state } from "../core.js";
 
+let EntityTrailInterval = null;
 function startScheduledTask(taskData, intervalSeconds) {
-  if (state.entityTrailInterval) {
-    clearInterval(state.entityTrailInterval);
+  if (EntityTrailInterval) {
+    clearInterval(EntityTrailInterval);
   }
-  state.isToggled = true;
-  state.entityTrailInterval = setInterval(() => {
+  state.IsToggled = true;
+  EntityTrailInterval = setInterval(() => {
     simulateChatInput(taskData);
   }, intervalSeconds * 1000);
 }
 function stopInterval() {
-  if (state.entityTrailInterval) {
-    clearInterval(state.entityTrailInterval);
-    state.entityTrailInterval = null;
+  if (EntityTrailInterval) {
+    clearInterval(EntityTrailInterval);
+    EntityTrailInterval = null;
   }
-  state.isToggled = false;
+  state.IsToggled = false;
 }
 function simulateChatInput(textToType) {
   const chatInput =
@@ -27,9 +27,9 @@ function simulateChatInput(textToType) {
   }
   chatInput.focus();
   chatInput.value = "";
-  let charIndex = 0;
-  const typeText = () => {
-    if (charIndex >= textToType.length) {
+  let v1491CharIndex = 0;
+  const v2c99TypeText = () => {
+    if (v1491CharIndex >= textToType.length) {
       const sendButton =
         document.querySelector(".chat-input button") ||
         document.querySelector('button[aria-label*="send" i]');
@@ -53,16 +53,16 @@ function simulateChatInput(textToType) {
       }
       return;
     }
-    chatInput.value += textToType[charIndex];
+    chatInput.value += textToType[v1491CharIndex];
     chatInput.dispatchEvent(
       new InputEvent("input", {
         bubbles: true,
       }),
     );
-    charIndex++;
-    setTimeout(typeText, 25);
+    v1491CharIndex++;
+    setTimeout(v2c99TypeText, 25);
   };
-  typeText();
+  v2c99TypeText();
 }
 
 export { startScheduledTask, stopInterval, simulateChatInput };

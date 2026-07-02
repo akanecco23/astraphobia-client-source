@@ -9,8 +9,8 @@ import {
   radius,
   gameInstance,
   playerData,
-  isProcessed_run,
-  config,
+  boolIsProcessed,
+  objConfig,
   state,
 } from "./src/core.js";
 import {

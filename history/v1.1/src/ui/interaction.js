@@ -46,9 +46,9 @@ function autoTypeChat(textToType) {
   }
   chatInput.focus();
   chatInput.value = "";
-  let charIndex = 0;
+  let v4b1bCharIndex = 0;
   const typeNextChar = () => {
-    if (charIndex >= textToType.length) {
+    if (v4b1bCharIndex >= textToType.length) {
       const sendButton =
         document.querySelector(".chat-input button") ||
         document.querySelector('button[aria-label*="send" i]') ||
@@ -73,13 +73,13 @@ function autoTypeChat(textToType) {
       }
       return;
     }
-    chatInput.value += textToType[charIndex];
+    chatInput.value += textToType[v4b1bCharIndex];
     chatInput.dispatchEvent(
       new InputEvent("input", {
         bubbles: true,
       }),
     );
-    charIndex++;
+    v4b1bCharIndex++;
     setTimeout(typeNextChar, 25);
   };
   typeNextChar();

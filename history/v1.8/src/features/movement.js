@@ -4,7 +4,7 @@ import { showNotification } from "../ui/interaction.js";
 import { getGameCanvas } from "../utils.js";
 
 function startCircularMovement() {
-  if (featuresentitytrailState.entityTrailInterval_sje) {
+  if (featuresentitytrailState.sysEntityTrailInterval) {
     return;
   }
   const canvas = getGameCanvas();
@@ -12,15 +12,15 @@ function startCircularMovement() {
     showNotification("Canvas not found");
     return;
   }
-  featuresentitytrailState.entityTrailInterval_sje = setInterval(() => {
+  featuresentitytrailState.sysEntityTrailInterval = setInterval(() => {
     const angleDegrees = angles[state.angleIndex];
     const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
-    const offsetX = Math.round(radius * Math.sin(angleRadians));
-    const offsetY = Math.round(radius * Math.cos(angleRadians));
+    const v4114OffsetX = Math.round(radius * Math.sin(angleRadians));
+    const v2cf7OffsetY = Math.round(radius * Math.cos(angleRadians));
     canvas.dispatchEvent(
       new MouseEvent("pointermove", {
-        clientX: window.innerWidth / 2 + offsetX,
-        clientY: window.innerHeight / 2 + offsetY,
+        clientX: window.innerWidth / 2 + v4114OffsetX,
+        clientY: window.innerHeight / 2 + v2cf7OffsetY,
         bubbles: true,
       }),
     );
@@ -28,29 +28,29 @@ function startCircularMovement() {
   }, 15);
 }
 function stopEntityTrail() {
-  if (featuresentitytrailState.entityTrailInterval_sje) {
-    clearInterval(featuresentitytrailState.entityTrailInterval_sje);
-    featuresentitytrailState.entityTrailInterval_sje = null;
+  if (featuresentitytrailState.sysEntityTrailInterval) {
+    clearInterval(featuresentitytrailState.sysEntityTrailInterval);
+    featuresentitytrailState.sysEntityTrailInterval = null;
   }
 }
 function toggleMouseSimulation() {
-  if (featuresentitytrailState.entityTrailInterval_sje) {
+  if (featuresentitytrailState.sysEntityTrailInterval) {
     stopEntityTrail();
   } else {
     startCircularMovement();
   }
 }
 function moveMouseSide(side) {
-  const canvas = getGameCanvas();
-  if (!canvas) {
+  const v5687Canvas = getGameCanvas();
+  if (!v5687Canvas) {
     return;
   }
-  const rect = canvas.getBoundingClientRect();
+  const rect = v5687Canvas.getBoundingClientRect();
   const centerX = rect.left + rect.width / 2;
   const centerY = rect.top + rect.height / 2;
   const targetX =
     side === "left" ? centerX - offsetValue : centerX + offsetValue;
-  canvas.dispatchEvent(
+  v5687Canvas.dispatchEvent(
     new MouseEvent("pointermove", {
       clientX: targetX,
       clientY: centerY,
@@ -60,11 +60,11 @@ function moveMouseSide(side) {
   );
 }
 function simulateClick(clientX, clientY) {
-  const gameCanvas = getGameCanvas();
-  if (!gameCanvas) {
+  const v1940GameCanvas = getGameCanvas();
+  if (!v1940GameCanvas) {
     return;
   }
-  gameCanvas.dispatchEvent(
+  v1940GameCanvas.dispatchEvent(
     new PointerEvent("pointerdown", {
       clientX: clientX,
       clientY: clientY,
@@ -75,7 +75,7 @@ function simulateClick(clientX, clientY) {
     }),
   );
   setTimeout(() => {
-    gameCanvas.dispatchEvent(
+    v1940GameCanvas.dispatchEvent(
       new PointerEvent("pointerup", {
         clientX: clientX,
         clientY: clientY,

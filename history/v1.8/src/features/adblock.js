@@ -1,12 +1,12 @@
 import { showNotification } from "../ui/interaction.js";
-import { state } from "../core.js";
 
+let IsProcessed = false;
 function initAdBlocker() {
-  if (state.isProcessed) {
+  if (IsProcessed) {
     return;
   }
-  state.isProcessed = true;
-  const adSelectors = [
+  IsProcessed = true;
+  const Selectors = [
     "div.ad-block",
     'a[href*="ad"]',
     'iframe[src*="ads"], iframe[src*="googlead"]',
@@ -19,8 +19,8 @@ function initAdBlocker() {
     'div.sidebar.left > div:has(> a[href*="doubleclick"])',
   ];
   const hideElementsAndAdjustSidebar = () => {
-    adSelectors.forEach((y) => {
-      document.querySelectorAll(y).forEach((targetElement) => {
+    Selectors.forEach((v28cbY) => {
+      document.querySelectorAll(v28cbY).forEach((targetElement) => {
         targetElement.style.display = "none";
         targetElement.style.opacity = "0";
         targetElement.style.pointerEvents = "none";

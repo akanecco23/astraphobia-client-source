@@ -1,4 +1,4 @@
-import { currentTime, radius, state } from "../core.js";
+import { radius, state } from "../core.js";
 
 function typeText(selector, text) {
   const inputElement = document.querySelector(selector);
@@ -34,13 +34,14 @@ function typeText(selector, text) {
   typeChar();
   return true;
 }
+let CurrentTime = 0;
 function showNotification(message) {
   const currentTime = Date.now();
-  if (message === state.currentTrackId && currentTime - currentTime < 3000) {
+  if (message === state.currentTrackId && currentTime - CurrentTime < 3000) {
     return;
   }
   state.currentTrackId = message;
-  currentTime = currentTime;
+  CurrentTime = currentTime;
   const notificationDiv = document.createElement("div");
   notificationDiv.style.cssText =
     "\n      position: fixed; top: 16px; right: 16px;\n      background: var(--notif-bg, #282828); color: var(--notif-text, #e0e0e0);\n      padding: 10px 16px; border-radius: 4px;\n      z-index: 10000000; font-size: 13px;\n      opacity: 0; transition: opacity 0.2s ease, transform 0.2s ease;\n      pointer-events: none; font-family: 'Segoe UI', system-ui, sans-serif;\n      border-left: 3px solid var(--notif-border, var(--acc, #888));\n      transform: translateX(20px);\n    ";

@@ -35,7 +35,7 @@ function simulateTyping(selector, textToType) {
   typeNextChar();
   return true;
 }
-function autoTypeChat(textToType) {
+function autoTypeChat(v2ae1TextToType) {
   const chatInput =
     document.querySelector(".chat-input input") ||
     document.querySelector('input[placeholder*="chat" i]') ||
@@ -46,9 +46,9 @@ function autoTypeChat(textToType) {
   }
   chatInput.focus();
   chatInput.value = "";
-  let charIndex = 0;
-  const typeNextChar = () => {
-    if (charIndex >= textToType.length) {
+  let v57b6CharIndex = 0;
+  const v21fdTypeNextChar = () => {
+    if (v57b6CharIndex >= v2ae1TextToType.length) {
       const sendButton =
         document.querySelector(".chat-input button") ||
         document.querySelector('button[aria-label*="send" i]') ||
@@ -73,16 +73,16 @@ function autoTypeChat(textToType) {
       }
       return;
     }
-    chatInput.value += textToType[charIndex];
+    chatInput.value += v2ae1TextToType[v57b6CharIndex];
     chatInput.dispatchEvent(
       new InputEvent("input", {
         bubbles: true,
       }),
     );
-    charIndex++;
-    setTimeout(typeNextChar, 25);
+    v57b6CharIndex++;
+    setTimeout(v21fdTypeNextChar, 25);
   };
-  typeNextChar();
+  v21fdTypeNextChar();
 }
 function showNotification(message) {
   const notificationDiv = document.createElement("div");

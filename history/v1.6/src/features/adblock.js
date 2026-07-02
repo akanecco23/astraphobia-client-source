@@ -1,12 +1,12 @@
 import { showToast } from "../ui/interaction.js";
-import { state } from "../core.js";
 
+let IsProcessed = false;
 function initAdBlocker() {
-  if (state.isProcessed) {
+  if (IsProcessed) {
     return;
   }
-  state.isProcessed = true;
-  const adSelectors = [
+  IsProcessed = true;
+  const Selectors = [
     "div.ad-block",
     'a[href*="ad"]',
     'iframe[src*="ads"], iframe[src*="googlead"]',
@@ -19,14 +19,14 @@ function initAdBlocker() {
     'div.sidebar.left > div:has(> a[href*="doubleclick"])',
   ];
   const hideElementsAndAdjustSidebar = () => {
-    adSelectors.forEach((cssSelector) => {
-      document.querySelectorAll(cssSelector).forEach((targetElement) => {
-        targetElement.style.display = "none";
-        targetElement.style.opacity = "0";
-        targetElement.style.pointerEvents = "none";
-        targetElement.style.visibility = "hidden";
-        targetElement.removeAttribute("src");
-        targetElement.remove();
+    Selectors.forEach((cssSelector) => {
+      document.querySelectorAll(cssSelector).forEach((v24f3TargetElement) => {
+        v24f3TargetElement.style.display = "none";
+        v24f3TargetElement.style.opacity = "0";
+        v24f3TargetElement.style.pointerEvents = "none";
+        v24f3TargetElement.style.visibility = "hidden";
+        v24f3TargetElement.removeAttribute("src");
+        v24f3TargetElement.remove();
       });
     });
     const leftSidebar = document.querySelector("div.sidebar.left");

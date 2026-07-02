@@ -1,7 +1,7 @@
 {
   "_meta": {
     "version": "1.1",
-    "lastUpdated": "2026-06-30T09:20:27.457Z",
+    "lastUpdated": "2026-07-02T04:59:36.262Z",
     "description": "Edit name/module fields to customize. Params/locals are ordered by position."
   },
   "functions": {
@@ -6702,7 +6702,7 @@
       "module": "core"
     },
     "global/_0x4a3fbe/anon::_0x4f1f76": {
-      "name": "distance",
+      "name": "Distance",
       "module": "core"
     },
     "global/_0x4a3fbe/anon::_0x184985": {
@@ -6806,7 +6806,7 @@
       "module": "core"
     },
     "global/_0x3be0ee/anon::_0x2ad819": {
-      "name": "distance",
+      "name": "Distance",
       "module": "core"
     },
     "global/_0x326ace/anon::_0x2004fb": {
@@ -6878,7 +6878,7 @@
       "module": "core"
     },
     "global/_0x194f14/anon::_0x96e622": {
-      "name": "distance",
+      "name": "Distance",
       "module": "core"
     },
     "global/_0x194f14/anon::_0x1313da": {
@@ -8130,7 +8130,7 @@
       "module": "core"
     },
     "global/_0x842aa8/anon::_0x49f9a3": {
-      "name": "distance",
+      "name": "Distance",
       "module": "core"
     },
     "global/_0x842aa8/anon::_0x4f745e": {
@@ -8306,7 +8306,7 @@
       "module": "core"
     },
     "global/_0xfa6848/anon::_0x3a218f": {
-      "name": "distance",
+      "name": "Distance",
       "module": "core"
     },
     "global/_0xfa6848/anon::_0x808a01": {
@@ -9186,7 +9186,7 @@
       "module": "core"
     },
     "global/_0x151307/anon::_0x4ee9b6": {
-      "name": "distance",
+      "name": "Distance",
       "module": "core"
     },
     "global/_0x151307/anon::_0x299945": {
@@ -9494,7 +9494,7 @@
       "module": "core"
     },
     "global/_0xc84540/anon::_0x11344e": {
-      "name": "distance",
+      "name": "Distance",
       "module": "core"
     },
     "global/_0xc84540/anon::_0x1fc042": {
@@ -9658,7 +9658,7 @@
       "module": "core"
     },
     "global/_0x79f91c/anon::_0x3b607f": {
-      "name": "distance",
+      "name": "Distance",
       "module": "core"
     },
     "global/_0x79f91c/anon::_0x2f51ae": {
@@ -10426,7 +10426,7 @@
       "module": "core"
     },
     "global/_0x52275e/anon::_0x128a83": {
-      "name": "distance",
+      "name": "Distance",
       "module": "core"
     },
     "global/_0x52275e/anon::_0x238a27": {
@@ -10650,7 +10650,7 @@
       "module": "core"
     },
     "global/_0x25e29e/anon::_0x211022": {
-      "name": "distance",
+      "name": "Distance",
       "module": "core"
     },
     "global/_0x25e29e/anon::_0x2241bc": {
@@ -10862,7 +10862,7 @@
       "module": "core"
     },
     "global/_0x4a2a30/anon::_0x1d5822": {
-      "name": "distance",
+      "name": "Distance",
       "module": "core"
     },
     "global/_0x80c1e7/anon::_0x467b5b": {
@@ -10878,7 +10878,7 @@
       "module": "core"
     },
     "global/_0x80c1e7/anon::_0x466467": {
-      "name": "distance",
+      "name": "Distance",
       "module": "core"
     },
     "global/_0x80c1e7/anon::_0x340764": {
@@ -10954,7 +10954,7 @@
       "module": "core"
     },
     "global/_0x32d4f2/anon::_0xc71e52": {
-      "name": "distance",
+      "name": "Distance",
       "module": "core"
     },
     "global::_0x564513": {
@@ -15622,7 +15622,7 @@
       }
     },
     "2::0::1::0::1::0::0::3::15::\"::document::Event|InputEvent|_0x2b5144.dispatchEvent|_0x2b5144.focus|document.querySelector|if|setTimeout::5f2e2ad3557cd9f8": {
-      "name": "y",
+      "name": "v1a0cY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -15845,7 +15845,7 @@
       }
     },
     "2::0::1::0::0::0::0::0::4::::::clearInterval|if|setInterval::5f2e2ad3557cd9f8": {
-      "name": "y",
+      "name": "v1a0cY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -15871,7 +15871,7 @@
       }
     },
     "1::0::1::0::1::0::0::2::19::\"::document::Event|InputEvent|_0x21f5b6.click|_0x5a73db.blur|_0x5a73db.dispatchEvent|_0x5a73db.focus|document.querySelector|if|setTimeout::abf26ca45239bd20": {
-      "name": "textToType",
+      "name": "v4c3bTextToType",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -16253,7 +16253,7 @@
       }
     },
     "0::0::1::0::1::0::0::1::42::\"::document::_0x11e6e3.forEach|_0x1c77c3.appendChild|_0x2dc0b8.classList.toggle|_0x3a0e25.querySelector|_0x415202.querySelectorAll|_0x42f11e.name.substring|_0x5ed2c7.classList.toggle|document.createElement|document.getElementById|if::90e3ea391174cb39": {
-      "name": "isPlaying",
+      "name": "IsPlaying",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x20b078(...)",
@@ -16445,7 +16445,7 @@
       }
     },
     "0::1::1::1::1::0::0::6::9::::Object|window::Object.keys|catch|for|if::3a55b3cecad6e02a": {
-      "name": "i",
+      "name": "v40cfI",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -16585,7 +16585,7 @@
       }
     },
     "1::0::1::0::0::0::0::2::2::::::if::c64ac12b8ef90a87": {
-      "name": "entity",
+      "name": "Entity",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -16599,7 +16599,7 @@
       }
     },
     "1::0::1::0::0::1::0::2::14::::Math::Math.abs|Math.cos|Math.sin|Math.sqrt|if::635f50fbcdc8834f": {
-      "name": "entity",
+      "name": "v56c0Entity",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -16708,7 +16708,7 @@
       }
     },
     "1::1::1::1::0::0::0::4::12::::Array|Object::Array.isArray|Object.keys|_0x3f8ff4.entitiesList.find|_0x448d35.find|catch|for|if::7561d3e3703b2548": {
-      "name": "userData",
+      "name": "v2f4aUserData",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0xee4f7d(...)",
@@ -16720,7 +16720,7 @@
       }
     },
     "1::1::1::1::0::0::0::4::12::::Array|Object::Array.isArray|Object.keys|_0x3f8ff4.entitiesList.find|_0x448d35.find|catch|for|if::294314fcc7debff4": {
-      "name": "gameState",
+      "name": "v3f8fGameState",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x195d07(...)",
@@ -16736,7 +16736,7 @@
       }
     },
     "1::1::1::1::0::0::0::4::12::::Array|Object::Array.isArray|Object.keys|_0x3f8ff4.entitiesList.find|_0x448d35.find|catch|for|if::0cd5d3eb509b3535": {
-      "name": "entity",
+      "name": "v32d2Entity",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -16825,7 +16825,7 @@
       }
     },
     "0::1::1::1::0::1::0::3::25::::Math::Math.atan2|Math.sqrt|_0x466baf.entities.push|_0x466baf.food.push|_0x466baf.food.sort|_0x466baf.players.push|_0x466baf.players.sort|catch|for|if::4443ea6b8e8095b7": {
-      "name": "error",
+      "name": "Error",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -16851,7 +16851,7 @@
       }
     },
     "0::1::1::1::0::1::0::3::25::::Math::Math.atan2|Math.sqrt|_0x466baf.entities.push|_0x466baf.food.push|_0x466baf.food.sort|_0x466baf.players.push|_0x466baf.players.sort|catch|for|if::e67dd2f99f8375d2": {
-      "name": "entities",
+      "name": "parsedState",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x195d07(...)",
@@ -16926,7 +16926,7 @@
       }
     },
     "0::1::1::1::0::1::0::3::25::::Math::Math.atan2|Math.sqrt|_0x466baf.entities.push|_0x466baf.food.push|_0x466baf.food.sort|_0x466baf.players.push|_0x466baf.players.sort|catch|for|if::8a70289b6427e125": {
-      "name": "i",
+      "name": "v38ecI",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -16940,7 +16940,7 @@
       }
     },
     "0::1::1::1::0::1::0::3::25::::Math::Math.atan2|Math.sqrt|_0x466baf.entities.push|_0x466baf.food.push|_0x466baf.food.sort|_0x466baf.players.push|_0x466baf.players.sort|catch|for|if::a64ab901e5132f16": {
-      "name": "entity",
+      "name": "v28feEntity",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x3e0d11._0x38ec58",
@@ -17107,7 +17107,7 @@
       }
     },
     "0::0::1::1::1::1::0::5::42::\"::Math|window::Math.min|Math.sqrt|MouseEvent|_0x39e266.dispatchEvent|_0x39e266.getBoundingClientRect|catch|if|requestAnimationFrame::4e242352930e627d": {
-      "name": "targetElement",
+      "name": "v39e2TargetElement",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x1fa40d(...)",
@@ -17125,7 +17125,7 @@
       }
     },
     "0::0::1::1::1::1::0::5::42::\"::Math|window::Math.min|Math.sqrt|MouseEvent|_0x39e266.dispatchEvent|_0x39e266.getBoundingClientRect|catch|if|requestAnimationFrame::0995c50499f023d1": {
-      "name": "rect",
+      "name": "v3098Rect",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x39e266.getBoundingClientRect(...)",
@@ -17142,7 +17142,7 @@
       }
     },
     "0::0::1::1::1::1::0::5::42::\"::Math|window::Math.min|Math.sqrt|MouseEvent|_0x39e266.dispatchEvent|_0x39e266.getBoundingClientRect|catch|if|requestAnimationFrame::ff61698dca62b292": {
-      "name": "centerX",
+      "name": "v2213CenterX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -17156,7 +17156,7 @@
       }
     },
     "0::0::1::1::1::1::0::5::42::\"::Math|window::Math.min|Math.sqrt|MouseEvent|_0x39e266.dispatchEvent|_0x39e266.getBoundingClientRect|catch|if|requestAnimationFrame::21af79b1ea98fe1a": {
-      "name": "centerY",
+      "name": "v17bbCenterY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -17198,7 +17198,7 @@
       }
     },
     "0::0::1::1::1::1::0::5::42::\"::Math|window::Math.min|Math.sqrt|MouseEvent|_0x39e266.dispatchEvent|_0x39e266.getBoundingClientRect|catch|if|requestAnimationFrame::e9081bf17a8bb688": {
-      "name": "distance",
+      "name": "Distance",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Math.sqrt(...)",
@@ -17412,7 +17412,7 @@
       }
     },
     "0::0::1::0::1::0::0::0::10::\"::window::if::23bd84081d8464a2": {
-      "name": "gameData",
+      "name": "v3726GameData",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x4c6311(...)",
@@ -17455,7 +17455,7 @@
       }
     },
     "0::0::1::0::1::0::0::2::19::\"::window::if::23bd84081d8464a2": {
-      "name": "gameData",
+      "name": "v3726GameData",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x4c6311(...)",
@@ -17541,7 +17541,7 @@
       }
     },
     "4::1::1::0::1::1::0::1::40::\"::Date|Math|window::Date.now|Math.max|_0x1e55fc.arc|_0x1e55fc.beginPath|_0x1e55fc.lineTo|_0x1e55fc.moveTo|_0x1e55fc.stroke|for|if|rgba::ced1ea8645ad7aaa": {
-      "name": "canvas",
+      "name": "v2953Canvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -17556,7 +17556,7 @@
       }
     },
     "4::1::1::0::1::1::0::1::40::\"::Date|Math|window::Date.now|Math.max|_0x1e55fc.arc|_0x1e55fc.beginPath|_0x1e55fc.lineTo|_0x1e55fc.moveTo|_0x1e55fc.stroke|for|if|rgba::d5f21dc1d0f290a0": {
-      "name": "myPos",
+      "name": "playerPos",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -17585,7 +17585,7 @@
       }
     },
     "4::1::1::0::1::1::0::1::40::\"::Date|Math|window::Date.now|Math.max|_0x1e55fc.arc|_0x1e55fc.beginPath|_0x1e55fc.lineTo|_0x1e55fc.moveTo|_0x1e55fc.stroke|for|if|rgba::33fb994b08ac659b": {
-      "name": "centerY",
+      "name": "halfHeight",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -17599,7 +17599,7 @@
       }
     },
     "4::1::1::0::1::1::0::1::40::\"::Date|Math|window::Date.now|Math.max|_0x1e55fc.arc|_0x1e55fc.beginPath|_0x1e55fc.lineTo|_0x1e55fc.moveTo|_0x1e55fc.stroke|for|if|rgba::26b32575777ce4b4": {
-      "name": "currentTime",
+      "name": "v646bCurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Date.now(...)",
@@ -17644,7 +17644,7 @@
       }
     },
     "4::1::1::0::1::1::0::1::40::\"::Date|Math|window::Date.now|Math.max|_0x1e55fc.arc|_0x1e55fc.beginPath|_0x1e55fc.lineTo|_0x1e55fc.moveTo|_0x1e55fc.stroke|for|if|rgba::79e339077b492673": {
-      "name": "i",
+      "name": "I",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "1",
@@ -17704,7 +17704,7 @@
       }
     },
     "4::1::1::0::1::1::0::1::40::\"::Date|Math|window::Date.now|Math.max|_0x1e55fc.arc|_0x1e55fc.beginPath|_0x1e55fc.lineTo|_0x1e55fc.moveTo|_0x1e55fc.stroke|for|if|rgba::d35411b105ff0cef": {
-      "name": "opacity",
+      "name": "pointOpacity",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Math.max(...)",
@@ -17776,7 +17776,7 @@
       }
     },
     "4::1::1::0::1::1::0::1::40::\"::Date|Math|window::Date.now|Math.max|_0x1e55fc.arc|_0x1e55fc.beginPath|_0x1e55fc.lineTo|_0x1e55fc.moveTo|_0x1e55fc.stroke|for|if|rgba::f57d9d41457834cc": {
-      "name": "screenY",
+      "name": "ScreenY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -17790,7 +17790,7 @@
       }
     },
     "2::0::1::0::1::0::0::1::21::\"::document|window::_0x4eba8a.getBoundingClientRect|document.body.appendChild|document.createElement|document.getElementById|if::5f2e2ad3557cd9f8": {
-      "name": "y",
+      "name": "v1a0cY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -17816,7 +17816,7 @@
       }
     },
     "2::0::1::0::1::0::0::1::21::\"::document|window::_0x4eba8a.getBoundingClientRect|document.body.appendChild|document.createElement|document.getElementById|if::905d3385d07a2546": {
-      "name": "canvas",
+      "name": "v2898Canvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "document.getElementById(...)",
@@ -17835,7 +17835,7 @@
       }
     },
     "2::0::1::0::1::0::0::1::21::\"::document|window::_0x4eba8a.getBoundingClientRect|document.body.appendChild|document.createElement|document.getElementById|if::f5de86e0d3311a01": {
-      "name": "targetElement",
+      "name": "v4ebaTargetElement",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x1fa40d(...)",
@@ -17851,7 +17851,7 @@
       }
     },
     "2::0::1::0::1::0::0::1::21::\"::document|window::_0x4eba8a.getBoundingClientRect|document.body.appendChild|document.createElement|document.getElementById|if::a77254be8c5c65d5": {
-      "name": "rect",
+      "name": "v4148Rect",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x4eba8a.getBoundingClientRect(...)",
@@ -17868,7 +17868,7 @@
       }
     },
     "0::0::1::0::1::0::0::0::6::\"::window::_0x145be3.clearRect|_0x49b741.getContext|if|requestAnimationFrame::0b06375c7f2c8bc6": {
-      "name": "canvas",
+      "name": "v49b7Canvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x4a19c2(...)",
@@ -17886,7 +17886,7 @@
       }
     },
     "0::0::1::0::1::0::0::0::6::\"::window::_0x145be3.clearRect|_0x49b741.getContext|if|requestAnimationFrame::aa5105b46138f62e": {
-      "name": "ctx",
+      "name": "v145bCtx",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x49b741.getContext(...)",
@@ -17902,7 +17902,7 @@
       }
     },
     "0::0::1::0::1::0::0::0::6::\"::window::_0x145be3.clearRect|_0x49b741.getContext|if|requestAnimationFrame::fd0b67ef409b7d2e": {
-      "name": "playerPos",
+      "name": "localPlayer",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x200c10(...)",
@@ -17914,7 +17914,7 @@
       }
     },
     "5::0::1::1::1::1::0::1::59::\"::Math|window::Math.round|_0x2e69dc.forEach|_0x302f38.beginPath|_0x302f38.fillText|_0x302f38.lineTo|_0x302f38.moveTo|_0x302f38.strokeRect|catch|if|toString::252966d7067dd658": {
-      "name": "ctx",
+      "name": "v302fCtx",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -17978,7 +17978,7 @@
       }
     },
     "5::0::1::1::1::1::0::1::59::\"::Math|window::Math.round|_0x2e69dc.forEach|_0x302f38.beginPath|_0x302f38.fillText|_0x302f38.lineTo|_0x302f38.moveTo|_0x302f38.strokeRect|catch|if|toString::85e5da2b4a44570d": {
-      "name": "scale",
+      "name": "v1e18Scale",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -18006,7 +18006,7 @@
       }
     },
     "5::0::1::1::1::1::0::1::59::\"::Math|window::Math.round|_0x2e69dc.forEach|_0x302f38.beginPath|_0x302f38.fillText|_0x302f38.lineTo|_0x302f38.moveTo|_0x302f38.strokeRect|catch|if|toString::efe1a6c7dfd66a8c": {
-      "name": "myPos",
+      "name": "v519aMyPos",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0xf83071.myPos",
@@ -18095,7 +18095,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x5c0c6c.beginPath|_0x5c0c6c.lineTo|_0x5c0c6c.moveTo|_0x5c0c6c.setLineDash|_0x5c0c6c.stroke|_0x5c0c6c.strokeRect|if|rgba::380ab6e88e5908a0": {
-      "name": "ctx",
+      "name": "v5c0cCtx",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -18134,7 +18134,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x5c0c6c.beginPath|_0x5c0c6c.lineTo|_0x5c0c6c.moveTo|_0x5c0c6c.setLineDash|_0x5c0c6c.stroke|_0x5c0c6c.strokeRect|if|rgba::ced1ea8645ad7aaa": {
-      "name": "canvas",
+      "name": "v2953Canvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -18149,7 +18149,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x5c0c6c.beginPath|_0x5c0c6c.lineTo|_0x5c0c6c.moveTo|_0x5c0c6c.setLineDash|_0x5c0c6c.stroke|_0x5c0c6c.strokeRect|if|rgba::d5f21dc1d0f290a0": {
-      "name": "myPos",
+      "name": "playerPos",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -18164,7 +18164,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x5c0c6c.beginPath|_0x5c0c6c.lineTo|_0x5c0c6c.moveTo|_0x5c0c6c.setLineDash|_0x5c0c6c.stroke|_0x5c0c6c.strokeRect|if|rgba::6f878a1517bf4f3d": {
-      "name": "scale",
+      "name": "v1f39Scale",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -18193,7 +18193,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x5c0c6c.beginPath|_0x5c0c6c.lineTo|_0x5c0c6c.moveTo|_0x5c0c6c.setLineDash|_0x5c0c6c.stroke|_0x5c0c6c.strokeRect|if|rgba::fd1c70532b6ffbd0": {
-      "name": "entityPos",
+      "name": "v3dceEntityPos",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x3e379f(...)",
@@ -18208,7 +18208,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x5c0c6c.beginPath|_0x5c0c6c.lineTo|_0x5c0c6c.moveTo|_0x5c0c6c.setLineDash|_0x5c0c6c.stroke|_0x5c0c6c.strokeRect|if|rgba::cb5b6e159c300416": {
-      "name": "centerX",
+      "name": "v3892CenterX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -18223,7 +18223,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x5c0c6c.beginPath|_0x5c0c6c.lineTo|_0x5c0c6c.moveTo|_0x5c0c6c.setLineDash|_0x5c0c6c.stroke|_0x5c0c6c.strokeRect|if|rgba::618ba35f58369cc8": {
-      "name": "centerY",
+      "name": "v5e20CenterY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -18252,7 +18252,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x5c0c6c.beginPath|_0x5c0c6c.lineTo|_0x5c0c6c.moveTo|_0x5c0c6c.setLineDash|_0x5c0c6c.stroke|_0x5c0c6c.strokeRect|if|rgba::e4b7caeaa6d8f787": {
-      "name": "targetX",
+      "name": "v5268TargetX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -18286,7 +18286,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x5c0c6c.beginPath|_0x5c0c6c.lineTo|_0x5c0c6c.moveTo|_0x5c0c6c.setLineDash|_0x5c0c6c.stroke|_0x5c0c6c.strokeRect|if|rgba::d1c82cfabc41508e": {
-      "name": "distance",
+      "name": "v10d9Distance",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0xe9b4e3(...)",
@@ -18298,7 +18298,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x5c0c6c.beginPath|_0x5c0c6c.lineTo|_0x5c0c6c.moveTo|_0x5c0c6c.setLineDash|_0x5c0c6c.stroke|_0x5c0c6c.strokeRect|if|rgba::62d8433a26930146": {
-      "name": "entityData",
+      "name": "v2f61EntityData",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x175295(...)",
@@ -18356,7 +18356,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x5c0c6c.beginPath|_0x5c0c6c.lineTo|_0x5c0c6c.moveTo|_0x5c0c6c.setLineDash|_0x5c0c6c.stroke|_0x5c0c6c.strokeRect|if|rgba::860dde60a05f567c": {
-      "name": "angle",
+      "name": "Angle",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Math.atan2(...)",
@@ -18474,7 +18474,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::93::\"::Date|Math|window::_0x3782c7.arc|_0x3782c7.beginPath|_0x3782c7.fill|_0x3782c7.lineTo|_0x3782c7.moveTo|_0x3782c7.roundRect|_0x3782c7.stroke|for|if|rgba::87bddfc7becca222": {
-      "name": "ctx",
+      "name": "v3782Ctx",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -18508,7 +18508,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::93::\"::Date|Math|window::_0x3782c7.arc|_0x3782c7.beginPath|_0x3782c7.fill|_0x3782c7.lineTo|_0x3782c7.moveTo|_0x3782c7.roundRect|_0x3782c7.stroke|for|if|rgba::e580eb6d252b027e": {
-      "name": "canvas",
+      "name": "v4e44Canvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -18522,7 +18522,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::93::\"::Date|Math|window::_0x3782c7.arc|_0x3782c7.beginPath|_0x3782c7.fill|_0x3782c7.lineTo|_0x3782c7.moveTo|_0x3782c7.roundRect|_0x3782c7.stroke|for|if|rgba::aeb723c99d05491f": {
-      "name": "gameData",
+      "name": "v15a9GameData",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -18641,7 +18641,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::93::\"::Date|Math|window::_0x3782c7.arc|_0x3782c7.beginPath|_0x3782c7.fill|_0x3782c7.lineTo|_0x3782c7.moveTo|_0x3782c7.roundRect|_0x3782c7.stroke|for|if|rgba::c1d373e9621f4b67": {
-      "name": "entities",
+      "name": "v5769Entities",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -18685,7 +18685,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::93::\"::Date|Math|window::_0x3782c7.arc|_0x3782c7.beginPath|_0x3782c7.fill|_0x3782c7.lineTo|_0x3782c7.moveTo|_0x3782c7.roundRect|_0x3782c7.stroke|for|if|rgba::24c9c140aa274824": {
-      "name": "deltaY",
+      "name": "v59fcDeltaY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -18699,7 +18699,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::93::\"::Date|Math|window::_0x3782c7.arc|_0x3782c7.beginPath|_0x3782c7.fill|_0x3782c7.lineTo|_0x3782c7.moveTo|_0x3782c7.roundRect|_0x3782c7.stroke|for|if|rgba::a47902584fccf0c2": {
-      "name": "drawY",
+      "name": "v3574DrawY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Math.max(...)",
@@ -18740,7 +18740,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::93::\"::Date|Math|window::_0x3782c7.arc|_0x3782c7.beginPath|_0x3782c7.fill|_0x3782c7.lineTo|_0x3782c7.moveTo|_0x3782c7.roundRect|_0x3782c7.stroke|for|if|rgba::b2a0982b6872cbff": {
-      "name": "blue",
+      "name": "v2a6dBlue",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -18787,7 +18787,7 @@
       }
     },
     "0::0::1::0::1::0::0::1::14::\"::document|window::_0x1a36eb.getContext|_0x213487.clearRect|_0x428160.getContext|clearRect|document.getElementById|if|requestAnimationFrame::0b06375c7f2c8bc6": {
-      "name": "canvas",
+      "name": "v49b7Canvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x4a19c2(...)",
@@ -18805,7 +18805,7 @@
       }
     },
     "0::0::1::0::1::0::0::1::14::\"::document|window::_0x1a36eb.getContext|_0x213487.clearRect|_0x428160.getContext|clearRect|document.getElementById|if|requestAnimationFrame::7c8786b06677a554": {
-      "name": "ctx",
+      "name": "v2134Ctx",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x428160.getContext(...)",
@@ -18821,7 +18821,7 @@
       }
     },
     "0::0::1::0::1::0::0::1::14::\"::document|window::_0x1a36eb.getContext|_0x213487.clearRect|_0x428160.getContext|clearRect|document.getElementById|if|requestAnimationFrame::bcd45e77e97e94ae": {
-      "name": "gameData",
+      "name": "GameData",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x4c6311(...)",
@@ -18833,7 +18833,7 @@
       }
     },
     "0::0::1::0::1::0::0::1::14::\"::document|window::_0x1a36eb.getContext|_0x213487.clearRect|_0x428160.getContext|clearRect|document.getElementById|if|requestAnimationFrame::fd0b67ef409b7d2e": {
-      "name": "playerPos",
+      "name": "localPlayer",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x200c10(...)",
@@ -18857,7 +18857,7 @@
       }
     },
     "0::0::1::0::1::0::0::0::4::\"::window::if::23bd84081d8464a2": {
-      "name": "gameData",
+      "name": "v3726GameData",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x4c6311(...)",
@@ -18871,7 +18871,7 @@
       }
     },
     "2::0::1::0::1::0::0::1::5::\"::::PointerEvent|_0x27cb9c.dispatchEvent|if|setTimeout::5f2e2ad3557cd9f8": {
-      "name": "y",
+      "name": "v1a0cY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -18883,7 +18883,7 @@
       }
     },
     "2::0::1::0::1::0::0::1::5::\"::::PointerEvent|_0x27cb9c.dispatchEvent|if|setTimeout::a31c7075b887bd12": {
-      "name": "targetElement",
+      "name": "v27cbTargetElement",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x1fa40d(...)",
@@ -18899,7 +18899,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x28bcfa.dispatchEvent|_0x28bcfa.getBoundingClientRect|if::416c11c4dab5c31d": {
-      "name": "targetX",
+      "name": "v170cTargetX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -18913,7 +18913,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x28bcfa.dispatchEvent|_0x28bcfa.getBoundingClientRect|if::52cf0131f3817471": {
-      "name": "targetY",
+      "name": "v2015TargetY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -18939,7 +18939,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x28bcfa.dispatchEvent|_0x28bcfa.getBoundingClientRect|if::4e242352930e627d": {
-      "name": "targetElement",
+      "name": "v28bcTargetElement",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x1fa40d(...)",
@@ -18957,7 +18957,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x28bcfa.dispatchEvent|_0x28bcfa.getBoundingClientRect|if::e869ec038ab7cb3c": {
-      "name": "playerPos",
+      "name": "v129dPlayerPos",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x200c10(...)",
@@ -18972,7 +18972,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x28bcfa.dispatchEvent|_0x28bcfa.getBoundingClientRect|if::a19e81cd311a42f2": {
-      "name": "rect",
+      "name": "v1c93Rect",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x28bcfa.getBoundingClientRect(...)",
@@ -18989,7 +18989,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x28bcfa.dispatchEvent|_0x28bcfa.getBoundingClientRect|if::0c4739cd7444f0c4": {
-      "name": "centerX",
+      "name": "v3f7fCenterX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -19003,7 +19003,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x28bcfa.dispatchEvent|_0x28bcfa.getBoundingClientRect|if::8e7d655ff95473ce": {
-      "name": "centerY",
+      "name": "v5bdaCenterY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -19017,7 +19017,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x28bcfa.dispatchEvent|_0x28bcfa.getBoundingClientRect|if::59fe7408457c5473": {
-      "name": "diffX",
+      "name": "v376cDiffX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -19032,7 +19032,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x28bcfa.dispatchEvent|_0x28bcfa.getBoundingClientRect|if::472641f175cc7977": {
-      "name": "diffY",
+      "name": "v5f4eDiffY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -19047,7 +19047,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x28bcfa.dispatchEvent|_0x28bcfa.getBoundingClientRect|if::9e7789086936bd17": {
-      "name": "distance",
+      "name": "Distance",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Math.sqrt(...)",
@@ -19088,7 +19088,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x28bcfa.dispatchEvent|_0x28bcfa.getBoundingClientRect|if::f4ffe1f6eab05d69": {
-      "name": "offsetX",
+      "name": "v409aOffsetX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -19105,7 +19105,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x28bcfa.dispatchEvent|_0x28bcfa.getBoundingClientRect|if::7c8752e3e13bda8a": {
-      "name": "offsetY",
+      "name": "v3438OffsetY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -19189,7 +19189,7 @@
       }
     },
     "0::1::1::1::1::1::0::7::65::::Date|Math|window::Date.now|Math.atan2|Math.sqrt|_0x103958.some|_0x1e84ea.forEach|_0x1e84ea.push|for|forEach|if|setTimeout::6fdc4e8a845840c6": {
-      "name": "gameState",
+      "name": "v2077GameState",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0xee4f7d(...)",
@@ -19203,7 +19203,7 @@
       }
     },
     "0::1::1::1::1::1::0::7::65::::Date|Math|window::Date.now|Math.atan2|Math.sqrt|_0x103958.some|_0x1e84ea.forEach|_0x1e84ea.push|for|forEach|if|setTimeout::e67dd2f99f8375d2": {
-      "name": "entities",
+      "name": "parsedState",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x195d07(...)",
@@ -19250,7 +19250,7 @@
       }
     },
     "0::1::1::1::1::1::0::7::65::::Date|Math|window::Date.now|Math.atan2|Math.sqrt|_0x103958.some|_0x1e84ea.forEach|_0x1e84ea.push|for|forEach|if|setTimeout::ee533953e3a9b27a": {
-      "name": "currentTime",
+      "name": "v29f3CurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Date.now(...)",
@@ -19329,7 +19329,7 @@
       }
     },
     "0::1::1::1::1::1::0::7::65::::Date|Math|window::Date.now|Math.atan2|Math.sqrt|_0x103958.some|_0x1e84ea.forEach|_0x1e84ea.push|for|forEach|if|setTimeout::391c5b20508ca855": {
-      "name": "magnitude",
+      "name": "v198eMagnitude",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Math.sqrt(...)",
@@ -19345,7 +19345,7 @@
       }
     },
     "0::1::1::1::1::1::0::7::65::::Date|Math|window::Date.now|Math.atan2|Math.sqrt|_0x103958.some|_0x1e84ea.forEach|_0x1e84ea.push|for|forEach|if|setTimeout::f04b843bfe398a23": {
-      "name": "angle",
+      "name": "v3a3aAngle",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Math.atan2(...)",
@@ -19460,7 +19460,7 @@
       }
     },
     "2::0::1::0::1::0::0::0::8::\"::Date|window::Date.now|if|window.autoFarmSkipAreas.filter|window.autoFarmSkipAreas.find|window.autoFarmSkipAreas.push::5f2e2ad3557cd9f8": {
-      "name": "y",
+      "name": "v1a0cY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -19472,7 +19472,7 @@
       }
     },
     "2::0::1::0::1::0::0::0::8::\"::Date|window::Date.now|if|window.autoFarmSkipAreas.filter|window.autoFarmSkipAreas.find|window.autoFarmSkipAreas.push::40b770af6f3c501b": {
-      "name": "currentTime",
+      "name": "v597cCurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Date.now(...)",
@@ -19502,7 +19502,7 @@
       }
     },
     "2::0::0::0::1::0::0::1::3::::Date|window::Date.now|window.autoFarmSkipAreas.filter|window.autoFarmSkipAreas.some::5f2e2ad3557cd9f8": {
-      "name": "y",
+      "name": "v1a0cY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -19514,7 +19514,7 @@
       }
     },
     "2::0::0::0::1::0::0::1::3::::Date|window::Date.now|window.autoFarmSkipAreas.filter|window.autoFarmSkipAreas.some::d4d22ae079f548f2": {
-      "name": "currentTime",
+      "name": "v50a2CurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Date.now(...)",
@@ -19556,7 +19556,7 @@
       }
     },
     "1::0::1::1::1::0::0::5::19::::window::catch|forEach|if|window.autoFarmSkipIds.has::6fdc4e8a845840c6": {
-      "name": "gameState",
+      "name": "v1ac4GameState",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0xee4f7d(...)",
@@ -19570,7 +19570,7 @@
       }
     },
     "1::0::1::1::1::0::0::5::19::::window::catch|forEach|if|window.autoFarmSkipIds.has::e67dd2f99f8375d2": {
-      "name": "entityManager",
+      "name": "v2514EntityManager",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x195d07(...)",
@@ -19641,7 +19641,7 @@
       }
     },
     "1::0::1::1::1::0::0::5::17::::window::_0x4af3d3.push|_0x4af3d3.sort|catch|forEach|if|window.autoFarmSkipIds.has::9c793417b9d59396": {
-      "name": "farmRange",
+      "name": "v428aFarmRange",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -19669,7 +19669,7 @@
       }
     },
     "1::0::1::1::1::0::0::5::17::::window::_0x4af3d3.push|_0x4af3d3.sort|catch|forEach|if|window.autoFarmSkipIds.has::6fdc4e8a845840c6": {
-      "name": "gameState",
+      "name": "v1ac4GameState",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0xee4f7d(...)",
@@ -19683,7 +19683,7 @@
       }
     },
     "1::0::1::1::1::0::0::5::17::::window::_0x4af3d3.push|_0x4af3d3.sort|catch|forEach|if|window.autoFarmSkipIds.has::e67dd2f99f8375d2": {
-      "name": "entityManager",
+      "name": "v2514EntityManager",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x195d07(...)",
@@ -19697,7 +19697,7 @@
       }
     },
     "1::0::1::1::1::0::0::5::17::::window::_0x4af3d3.push|_0x4af3d3.sort|catch|forEach|if|window.autoFarmSkipIds.has::49b6916c0851c21c": {
-      "name": "playerAnimal",
+      "name": "v5a46PlayerAnimal",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x490aa1?.myAnimals?.?",
@@ -19742,7 +19742,7 @@
       }
     },
     "2::0::1::0::1::0::0::2::15::::window::_0xfe1141.forEach|if::5f2e2ad3557cd9f8": {
-      "name": "y",
+      "name": "v1a0cY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -19842,7 +19842,7 @@
       }
     },
     "0::0::1::1::1::1::0::6::22::::Math|window::Math.max|Math.sqrt|catch|forEach|if::6fdc4e8a845840c6": {
-      "name": "gameState",
+      "name": "v2077GameState",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0xee4f7d(...)",
@@ -19856,7 +19856,7 @@
       }
     },
     "0::0::1::1::1::1::0::6::22::::Math|window::Math.max|Math.sqrt|catch|forEach|if::e67dd2f99f8375d2": {
-      "name": "entities",
+      "name": "parsedState",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x195d07(...)",
@@ -19870,7 +19870,7 @@
       }
     },
     "0::0::1::1::1::1::0::6::22::::Math|window::Math.max|Math.sqrt|catch|forEach|if::3eaedbda1fdb1af5": {
-      "name": "myAnimal",
+      "name": "v5d08MyAnimal",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x31aa23?.myAnimals?.?",
@@ -19884,7 +19884,7 @@
       }
     },
     "0::0::1::1::1::1::0::3::11::\"::Date|Math|document|window::Date.now|KeyboardEvent|Math.floor|Math.random|String|_0x1f0de7.dispatchEvent|_0x2b75ff.charCodeAt|forEach|if|setTimeout::2d5a2ef2e1c4716f": {
-      "name": "currentTime",
+      "name": "v5d9bCurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Date.now(...)",
@@ -19898,7 +19898,7 @@
       }
     },
     "0::0::1::1::1::1::0::3::11::\"::Date|Math|document|window::Date.now|KeyboardEvent|Math.floor|Math.random|String|_0x1f0de7.dispatchEvent|_0x2b75ff.charCodeAt|forEach|if|setTimeout::df2b0d5e4781fbd6": {
-      "name": "targetElement",
+      "name": "v14bfTargetElement",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x1fa40d(...)",
@@ -19996,7 +19996,7 @@
       }
     },
     "0::1::1::0::1::1::0::1::8::::Math|window::Math.cos|Math.sin|for|if|window.autoFarmPatrolPoints.push::2453a4b5bb12bccb": {
-      "name": "i",
+      "name": "v35beI",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -20035,7 +20035,7 @@
       }
     },
     "0::0::1::1::1::1::0::5::83::\"::Date|Math|console|document|window::Date.now|Math.abs|Math.cos|Math.random|_0x470123.classList.remove|document.getElementById|if|setTimeout|window.autoFarmSkipIds.add|window.autoFarmSkipIds.clear::8a59e12801b2be95": {
-      "name": "currentTime",
+      "name": "CurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Date.now(...)",
@@ -20109,7 +20109,7 @@
       }
     },
     "0::0::1::1::1::1::0::5::83::\"::Date|Math|console|document|window::Date.now|Math.abs|Math.cos|Math.random|_0x470123.classList.remove|document.getElementById|if|setTimeout|window.autoFarmSkipIds.add|window.autoFarmSkipIds.clear::a4b4ef7bbf3d11df": {
-      "name": "targetX",
+      "name": "v2101TargetX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "literal",
@@ -20128,7 +20128,7 @@
       }
     },
     "0::0::1::1::1::1::0::5::83::\"::Date|Math|console|document|window::Date.now|Math.abs|Math.cos|Math.random|_0x470123.classList.remove|document.getElementById|if|setTimeout|window.autoFarmSkipIds.add|window.autoFarmSkipIds.clear::42e704771c929ac1": {
-      "name": "targetY",
+      "name": "v26d8TargetY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "literal",
@@ -20145,7 +20145,7 @@
       }
     },
     "0::0::1::1::1::1::0::5::83::\"::Date|Math|console|document|window::Date.now|Math.abs|Math.cos|Math.random|_0x470123.classList.remove|document.getElementById|if|setTimeout|window.autoFarmSkipIds.add|window.autoFarmSkipIds.clear::e22c8750065f9022": {
-      "name": "minDistance",
+      "name": "v3fbbMinDistance",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Infinity",
@@ -20166,7 +20166,7 @@
       }
     },
     "0::0::1::1::1::1::0::5::83::\"::Date|Math|console|document|window::Date.now|Math.abs|Math.cos|Math.random|_0x470123.classList.remove|document.getElementById|if|setTimeout|window.autoFarmSkipIds.add|window.autoFarmSkipIds.clear::fd7f8650758accdf": {
-      "name": "selectedTarget",
+      "name": "v3208SelectedTarget",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x3be0ee(...)",
@@ -20299,7 +20299,7 @@
       }
     },
     "1::0::1::0::1::1::0::2::27::\"::Math|document::Math.abs|_0x4adb17.target.closest|_0x6c6667.stopImmediatePropagation|_0x9990bf.addEventListener|_0x9990bf.getBoundingClientRect|document.addEventListener|document.removeEventListener|if|includes::b362de311acb2804": {
-      "name": "offsetX",
+      "name": "v3250OffsetX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -20315,7 +20315,7 @@
       }
     },
     "1::0::1::0::1::1::0::2::27::\"::Math|document::Math.abs|_0x4adb17.target.closest|_0x6c6667.stopImmediatePropagation|_0x9990bf.addEventListener|_0x9990bf.getBoundingClientRect|document.addEventListener|document.removeEventListener|if|includes::331c6ee473c8259f": {
-      "name": "offsetY",
+      "name": "v55eeOffsetY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -20494,7 +20494,7 @@
       }
     },
     "0::0::1::0::1::0::0::2::108::\"::document|localStorage::_0x18a535.classList.toggle|_0x1c20a8.stopPropagation|_0x265cc1.classList.add|_0x58c365.querySelector|_0xd74c84.classList.add|_0xd74c84.classList.remove|document.body.appendChild|document.createElement|if|parseInt::a9ce801137f9d2d4": {
-      "name": "mainBody",
+      "name": "Body",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x58c365.querySelector(...)",
@@ -20522,7 +20522,7 @@
       }
     },
     "0::0::1::0::1::0::0::2::108::\"::document|localStorage::_0x18a535.classList.toggle|_0x1c20a8.stopPropagation|_0x265cc1.classList.add|_0x58c365.querySelector|_0xd74c84.classList.add|_0xd74c84.classList.remove|document.body.appendChild|document.createElement|if|parseInt::2e4dd8036756a639": {
-      "name": "spinBtn",
+      "name": "v18a5SpinBtn",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x58c365.querySelector(...)",
@@ -20555,7 +20555,7 @@
       }
     },
     "0::0::1::0::1::0::0::2::108::\"::document|localStorage::_0x18a535.classList.toggle|_0x1c20a8.stopPropagation|_0x265cc1.classList.add|_0x58c365.querySelector|_0xd74c84.classList.add|_0xd74c84.classList.remove|document.body.appendChild|document.createElement|if|parseInt::bce028f749a9a0bc": {
-      "name": "turnRightKeyInput",
+      "name": "v475aTurnRightKeyInput",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x58c365.querySelector(...)",
@@ -20606,7 +20606,7 @@
       }
     },
     "0::0::1::0::1::0::0::2::108::\"::document|localStorage::_0x18a535.classList.toggle|_0x1c20a8.stopPropagation|_0x265cc1.classList.add|_0x58c365.querySelector|_0xd74c84.classList.add|_0xd74c84.classList.remove|document.body.appendChild|document.createElement|if|parseInt::4bd41672f37e79ba": {
-      "name": "clearNameBtn",
+      "name": "v338fClearNameBtn",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x58c365.querySelector(...)",
@@ -20640,7 +20640,7 @@
       }
     },
     "0::0::1::0::1::0::0::5::142::\"::Object|document|window::Boost|Close|Far|Medium|Nearest|Untrack|_0x330383.querySelector|document.body.appendChild|document.createElement|var::3a684cbb38f77014": {
-      "name": "espColorsSection",
+      "name": "v56beEspColorsSection",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x330383.querySelector(...)",
@@ -20685,7 +20685,7 @@
       }
     },
     "0::0::1::0::1::0::0::5::142::\"::Object|document|window::Boost|Close|Far|Medium|Nearest|Untrack|_0x330383.querySelector|document.body.appendChild|document.createElement|var::80d3e887112311bc": {
-      "name": "espBtn",
+      "name": "v48c3EspBtn",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x330383.querySelector(...)",
@@ -20804,7 +20804,7 @@
       }
     },
     "0::0::0::0::1::0::0::1::46::\"::document|window::Key|_0x157c33.addEventListener|_0x2d5b73.stopPropagation|_0x5c4168.querySelector|_0xa16d07.preventDefault|_0xa16d07.stopPropagation|document.body.appendChild|document.createElement|var|window.lockKey.toUpperCase::3c3098883d46349c": {
-      "name": "lockButton",
+      "name": "v43ebLockButton",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x5c4168.querySelector(...)",
@@ -20915,7 +20915,7 @@
       }
     },
     "0::0::1::0::1::0::0::1::65::\"::document|window::Farm|_0x144b8a.classList.add|_0x144b8a.classList.remove|_0x2e8def.stopPropagation|_0x46feab.classList.add|_0x46feab.classList.remove|_0x4b9ecb.querySelector|document.body.appendChild|document.createElement|if::0db324d0a3570063": {
-      "name": "autoFarmButton",
+      "name": "v144bAutoFarmButton",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x4b9ecb.querySelector(...)",
@@ -20947,7 +20947,7 @@
       }
     },
     "0::0::1::0::1::0::0::1::65::\"::document|window::Farm|_0x144b8a.classList.add|_0x144b8a.classList.remove|_0x2e8def.stopPropagation|_0x46feab.classList.add|_0x46feab.classList.remove|_0x4b9ecb.querySelector|document.body.appendChild|document.createElement|if::49429842b7e93ee9": {
-      "name": "farmAvoidToggle",
+      "name": "v1060FarmAvoidToggle",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x4b9ecb.querySelector(...)",
@@ -21030,7 +21030,7 @@
       }
     },
     "0::0::1::0::1::1::1::5::181::\"::JSON|Math|Object|document|localStorage|value::_0x11a0fb.toUpperCase|_0x2b4702.addEventListener|_0x3d0447.key.toUpperCase|_0x3d0447.preventDefault|_0xb7a9bf.querySelector|_0xcea1ec.stopPropagation|document.body.appendChild|document.createElement|localStorage.getItem|var::8ec6abd401c4804b": {
-      "name": "themesSection",
+      "name": "v34f4ThemesSection",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0xb7a9bf.querySelector(...)",
@@ -21146,7 +21146,7 @@
       }
     },
     "0::0::1::0::1::1::1::5::181::\"::JSON|Math|Object|document|localStorage|value::_0x11a0fb.toUpperCase|_0x2b4702.addEventListener|_0x3d0447.key.toUpperCase|_0x3d0447.preventDefault|_0xb7a9bf.querySelector|_0xcea1ec.stopPropagation|document.body.appendChild|document.createElement|localStorage.getItem|var::a3f96293f2aac37e": {
-      "name": "myThemesToggleBtn",
+      "name": "v2d26MyThemesToggleBtn",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0xb7a9bf.querySelector(...)",
@@ -21160,7 +21160,7 @@
       }
     },
     "0::0::1::0::1::1::1::5::181::\"::JSON|Math|Object|document|localStorage|value::_0x11a0fb.toUpperCase|_0x2b4702.addEventListener|_0x3d0447.key.toUpperCase|_0x3d0447.preventDefault|_0xb7a9bf.querySelector|_0xcea1ec.stopPropagation|document.body.appendChild|document.createElement|localStorage.getItem|var::4200cd0c2b03c734": {
-      "name": "themesArrow",
+      "name": "v50fdThemesArrow",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0xb7a9bf.querySelector(...)",
@@ -21236,7 +21236,7 @@
       }
     },
     "0::0::1::1::1::1::0::3::109::\"::Math|document|localStorage|value::_0x22d34b.classList.toggle|_0x241959.classList.toggle|_0x33d517.querySelector|_0x37e43e.stopPropagation|document.body.appendChild|document.createElement|if|localStorage.setItem|name|var::2f00a333a2ac8329": {
-      "name": "musicShuffleButton",
+      "name": "v22d3MusicShuffleButton",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x33d517.querySelector(...)",
@@ -21330,7 +21330,7 @@
       }
     },
     "0::0::1::0::1::0::0::1::7::\"::document::_0x32f352.forEach|document.getElementById|if::a78a9645498d9af6": {
-      "name": "mainPanel",
+      "name": "Panel",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "document.getElementById(...)",
@@ -21390,7 +21390,7 @@
       }
     },
     "module::b0abeb513928da49": {
-      "name": "currentTime",
+      "name": "CurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -21406,7 +21406,7 @@
       }
     },
     "module::0e90bb7282edf2b9": {
-      "name": "isProcessed",
+      "name": "IsProcessed",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "false",
@@ -21420,7 +21420,7 @@
       }
     },
     "module::54bf53156d4509ad": {
-      "name": "isToggled",
+      "name": "IsToggled",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "false",
@@ -21435,7 +21435,7 @@
       }
     },
     "module::9ea5be389f830f20": {
-      "name": "entityTrailInterval",
+      "name": "EntityTrailInterval",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "literal",
@@ -21536,7 +21536,7 @@
       }
     },
     "module::61d56f57cd4459f7": {
-      "name": "isMusicShuffleEnabled",
+      "name": "IsMusicShuffleEnabled",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -21715,7 +21715,7 @@
       }
     },
     "module::73e3b0beceed2445": {
-      "name": "appState",
+      "name": "State",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -21755,7 +21755,7 @@
       }
     },
     "module::e8bf3841863140f7": {
-      "name": "config",
+      "name": "Config",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "{...}",
@@ -21820,7 +21820,7 @@
       }
     },
     "module::922f9e998f229e79": {
-      "name": "previousTimestamp",
+      "name": "PreviousTimestamp",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -21836,7 +21836,7 @@
       }
     },
     "module::139df0c026c258c6": {
-      "name": "position",
+      "name": "Position",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "literal",
@@ -21894,7 +21894,7 @@
       }
     },
     "module::b66e530c1ae6d80b": {
-      "name": "maxDistance",
+      "name": "MaxDistance",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "400",
@@ -21953,7 +21953,7 @@
       }
     },
     "module::b3a4bdc3ff4600cf": {
-      "name": "tickInterval",
+      "name": "TickInterval",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "600",
@@ -21983,7 +21983,7 @@
       }
     },
     "module::6b1a81fa36997988": {
-      "name": "counter",
+      "name": "Counter",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -22017,7 +22017,7 @@
       }
     },
     "module::89295f338c6a27a9": {
-      "name": "angle",
+      "name": "Angle",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -22113,7 +22113,7 @@
       }
     },
     "2::0::1::0::1::0::0::3::15::\"::document::Event|InputEvent|_0x508399.dispatchEvent|_0x508399.focus|document.querySelector|if|setTimeout::5f2e2ad3557cd9f8": {
-      "name": "y",
+      "name": "v1a0cY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -22425,7 +22425,7 @@
       }
     },
     "1::0::1::0::1::0::0::1::7::\"::::MouseEvent|_0x568734.dispatchEvent|_0x568734.getBoundingClientRect|if::1fd2b56d2e30264f": {
-      "name": "canvas",
+      "name": "v5687Canvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x6bc346(...)",
@@ -22525,7 +22525,7 @@
       }
     },
     "0::1::1::1::1::0::0::6::9::::Object|window::Object.keys|catch|for|if::90bc16a8e62a727d": {
-      "name": "i",
+      "name": "v3462I",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -22707,7 +22707,7 @@
       }
     },
     "1::1::1::1::0::0::0::4::12::::Array|Object::Array.isArray|Object.keys|_0x3e734f.entitiesList.find|_0xe8cccd.find|catch|for|if::1195d97696930ba7": {
-      "name": "gameState",
+      "name": "v3e73GameState",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x31b3bc(...)",
@@ -22812,7 +22812,7 @@
       }
     },
     "0::1::1::1::0::1::0::3::25::::Math::Math.atan2|Math.sqrt|_0x4fb9ba.entities.push|_0x4fb9ba.food.push|_0x4fb9ba.food.sort|_0x4fb9ba.players.push|_0x4fb9ba.players.sort|catch|for|if::4443ea6b8e8095b7": {
-      "name": "error",
+      "name": "Error",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -22826,7 +22826,7 @@
       }
     },
     "0::1::1::1::0::1::0::3::25::::Math::Math.atan2|Math.sqrt|_0x4fb9ba.entities.push|_0x4fb9ba.food.push|_0x4fb9ba.food.sort|_0x4fb9ba.players.push|_0x4fb9ba.players.sort|catch|for|if::e4e0b7e4af882d0d": {
-      "name": "rawState",
+      "name": "v169cRawState",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x5a0ec2(...)",
@@ -22838,7 +22838,7 @@
       }
     },
     "0::1::1::1::0::1::0::3::25::::Math::Math.atan2|Math.sqrt|_0x4fb9ba.entities.push|_0x4fb9ba.food.push|_0x4fb9ba.food.sort|_0x4fb9ba.players.push|_0x4fb9ba.players.sort|catch|for|if::a03991867d643739": {
-      "name": "entities",
+      "name": "Entities",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x31b3bc(...)",
@@ -22913,7 +22913,7 @@
       }
     },
     "0::1::1::1::0::1::0::3::25::::Math::Math.atan2|Math.sqrt|_0x4fb9ba.entities.push|_0x4fb9ba.food.push|_0x4fb9ba.food.sort|_0x4fb9ba.players.push|_0x4fb9ba.players.sort|catch|for|if::964ef5af5c9a335e": {
-      "name": "i",
+      "name": "v11d5I",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -22927,7 +22927,7 @@
       }
     },
     "0::1::1::1::0::1::0::3::25::::Math::Math.atan2|Math.sqrt|_0x4fb9ba.entities.push|_0x4fb9ba.food.push|_0x4fb9ba.food.sort|_0x4fb9ba.players.push|_0x4fb9ba.players.sort|catch|for|if::5c5a7161f84726e5": {
-      "name": "entity",
+      "name": "v2414Entity",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x280895._0x11d581",
@@ -23107,7 +23107,7 @@
       }
     },
     "0::0::1::1::1::1::0::5::42::\"::Math|window::Math.min|Math.sqrt|MouseEvent|_0x802c96.dispatchEvent|_0x802c96.getBoundingClientRect|catch|if|requestAnimationFrame::1fd2b56d2e30264f": {
-      "name": "canvas",
+      "name": "v802cCanvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x6bc346(...)",
@@ -23142,7 +23142,7 @@
       }
     },
     "0::0::1::1::1::1::0::5::42::\"::Math|window::Math.min|Math.sqrt|MouseEvent|_0x802c96.dispatchEvent|_0x802c96.getBoundingClientRect|catch|if|requestAnimationFrame::3e6d40fcf57b79ad": {
-      "name": "centerX",
+      "name": "v4f33CenterX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -23156,7 +23156,7 @@
       }
     },
     "0::0::1::1::1::1::0::5::42::\"::Math|window::Math.min|Math.sqrt|MouseEvent|_0x802c96.dispatchEvent|_0x802c96.getBoundingClientRect|catch|if|requestAnimationFrame::4f207fe8da2f4e53": {
-      "name": "centerY",
+      "name": "v55cbCenterY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -23198,7 +23198,7 @@
       }
     },
     "0::0::1::1::1::1::0::5::42::\"::Math|window::Math.min|Math.sqrt|MouseEvent|_0x802c96.dispatchEvent|_0x802c96.getBoundingClientRect|catch|if|requestAnimationFrame::e9081bf17a8bb688": {
-      "name": "distance",
+      "name": "Distance",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Math.sqrt(...)",
@@ -23501,7 +23501,7 @@
       }
     },
     "4::1::1::0::1::1::0::1::40::\"::Date|Math|window::Date.now|Math.max|_0x4c2bb6.arc|_0x4c2bb6.beginPath|_0x4c2bb6.lineTo|_0x4c2bb6.moveTo|_0x4c2bb6.stroke|for|if|rgba::ced1ea8645ad7aaa": {
-      "name": "canvas",
+      "name": "v2953Canvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -23516,7 +23516,7 @@
       }
     },
     "4::1::1::0::1::1::0::1::40::\"::Date|Math|window::Date.now|Math.max|_0x4c2bb6.arc|_0x4c2bb6.beginPath|_0x4c2bb6.lineTo|_0x4c2bb6.moveTo|_0x4c2bb6.stroke|for|if|rgba::d5f21dc1d0f290a0": {
-      "name": "myPos",
+      "name": "playerPos",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -23545,7 +23545,7 @@
       }
     },
     "4::1::1::0::1::1::0::1::40::\"::Date|Math|window::Date.now|Math.max|_0x4c2bb6.arc|_0x4c2bb6.beginPath|_0x4c2bb6.lineTo|_0x4c2bb6.moveTo|_0x4c2bb6.stroke|for|if|rgba::33fb994b08ac659b": {
-      "name": "centerY",
+      "name": "halfHeight",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -23559,7 +23559,7 @@
       }
     },
     "4::1::1::0::1::1::0::1::40::\"::Date|Math|window::Date.now|Math.max|_0x4c2bb6.arc|_0x4c2bb6.beginPath|_0x4c2bb6.lineTo|_0x4c2bb6.moveTo|_0x4c2bb6.stroke|for|if|rgba::f1edeff2c8ce820c": {
-      "name": "currentTime",
+      "name": "v4863CurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Date.now(...)",
@@ -23604,7 +23604,7 @@
       }
     },
     "4::1::1::0::1::1::0::1::40::\"::Date|Math|window::Date.now|Math.max|_0x4c2bb6.arc|_0x4c2bb6.beginPath|_0x4c2bb6.lineTo|_0x4c2bb6.moveTo|_0x4c2bb6.stroke|for|if|rgba::79e339077b492673": {
-      "name": "i",
+      "name": "I",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "1",
@@ -23664,7 +23664,7 @@
       }
     },
     "4::1::1::0::1::1::0::1::40::\"::Date|Math|window::Date.now|Math.max|_0x4c2bb6.arc|_0x4c2bb6.beginPath|_0x4c2bb6.lineTo|_0x4c2bb6.moveTo|_0x4c2bb6.stroke|for|if|rgba::d35411b105ff0cef": {
-      "name": "opacity",
+      "name": "pointOpacity",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Math.max(...)",
@@ -23736,7 +23736,7 @@
       }
     },
     "4::1::1::0::1::1::0::1::40::\"::Date|Math|window::Date.now|Math.max|_0x4c2bb6.arc|_0x4c2bb6.beginPath|_0x4c2bb6.lineTo|_0x4c2bb6.moveTo|_0x4c2bb6.stroke|for|if|rgba::f57d9d41457834cc": {
-      "name": "screenY",
+      "name": "ScreenY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -23750,7 +23750,7 @@
       }
     },
     "2::0::1::0::1::0::0::1::21::\"::document|window::_0xed1444.getBoundingClientRect|document.body.appendChild|document.createElement|document.getElementById|if::5f2e2ad3557cd9f8": {
-      "name": "y",
+      "name": "v1a0cY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -23776,7 +23776,7 @@
       }
     },
     "2::0::1::0::1::0::0::1::21::\"::document|window::_0xed1444.getBoundingClientRect|document.body.appendChild|document.createElement|document.getElementById|if::905d3385d07a2546": {
-      "name": "canvas",
+      "name": "v2898Canvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "document.getElementById(...)",
@@ -23862,7 +23862,7 @@
       }
     },
     "0::0::1::0::1::0::0::0::6::\"::window::_0x3843df.getContext|_0x5df13c.clearRect|if|requestAnimationFrame::1a5825762a54182c": {
-      "name": "playerPos",
+      "name": "v4929PlayerPos",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x2776a3(...)",
@@ -23874,7 +23874,7 @@
       }
     },
     "5::0::1::1::1::1::0::1::59::\"::Math|window::Math.round|_0x20fed8.forEach|_0x5568b2.beginPath|_0x5568b2.fillText|_0x5568b2.lineTo|_0x5568b2.moveTo|_0x5568b2.strokeRect|catch|if|toString::252966d7067dd658": {
-      "name": "ctx",
+      "name": "v302fCtx",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -24041,7 +24041,7 @@
       }
     },
     "5::0::1::1::1::1::0::1::59::\"::Math|window::Math.round|_0x20fed8.forEach|_0x5568b2.beginPath|_0x5568b2.fillText|_0x5568b2.lineTo|_0x5568b2.moveTo|_0x5568b2.strokeRect|catch|if|toString::5fc6db6f6b28ca6a": {
-      "name": "viewport",
+      "name": "v2067Viewport",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x338d23.viewport",
@@ -24055,7 +24055,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x3ef87f.beginPath|_0x3ef87f.lineTo|_0x3ef87f.moveTo|_0x3ef87f.setLineDash|_0x3ef87f.stroke|_0x3ef87f.strokeRect|if|rgba::380ab6e88e5908a0": {
-      "name": "ctx",
+      "name": "v5c0cCtx",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -24094,7 +24094,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x3ef87f.beginPath|_0x3ef87f.lineTo|_0x3ef87f.moveTo|_0x3ef87f.setLineDash|_0x3ef87f.stroke|_0x3ef87f.strokeRect|if|rgba::ced1ea8645ad7aaa": {
-      "name": "canvas",
+      "name": "v2953Canvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -24109,7 +24109,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x3ef87f.beginPath|_0x3ef87f.lineTo|_0x3ef87f.moveTo|_0x3ef87f.setLineDash|_0x3ef87f.stroke|_0x3ef87f.strokeRect|if|rgba::d5f21dc1d0f290a0": {
-      "name": "myPos",
+      "name": "playerPos",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -24124,7 +24124,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x3ef87f.beginPath|_0x3ef87f.lineTo|_0x3ef87f.moveTo|_0x3ef87f.setLineDash|_0x3ef87f.stroke|_0x3ef87f.strokeRect|if|rgba::3c7252b586a5b05d": {
-      "name": "scale",
+      "name": "v2af4Scale",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -24168,7 +24168,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x3ef87f.beginPath|_0x3ef87f.lineTo|_0x3ef87f.moveTo|_0x3ef87f.setLineDash|_0x3ef87f.stroke|_0x3ef87f.strokeRect|if|rgba::1da15c556d41a2fa": {
-      "name": "centerX",
+      "name": "v552bCenterX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -24183,7 +24183,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x3ef87f.beginPath|_0x3ef87f.lineTo|_0x3ef87f.moveTo|_0x3ef87f.setLineDash|_0x3ef87f.stroke|_0x3ef87f.strokeRect|if|rgba::fd00db0525961e17": {
-      "name": "centerY",
+      "name": "v171aCenterY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -24246,7 +24246,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x3ef87f.beginPath|_0x3ef87f.lineTo|_0x3ef87f.moveTo|_0x3ef87f.setLineDash|_0x3ef87f.stroke|_0x3ef87f.strokeRect|if|rgba::9c990afc9c9def43": {
-      "name": "distance",
+      "name": "v400eDistance",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x292a02(...)",
@@ -24316,7 +24316,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x3ef87f.beginPath|_0x3ef87f.lineTo|_0x3ef87f.moveTo|_0x3ef87f.setLineDash|_0x3ef87f.stroke|_0x3ef87f.strokeRect|if|rgba::860dde60a05f567c": {
-      "name": "angle",
+      "name": "Angle",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Math.atan2(...)",
@@ -24434,7 +24434,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::93::\"::Date|Math|window::_0x215655.arc|_0x215655.beginPath|_0x215655.fill|_0x215655.lineTo|_0x215655.moveTo|_0x215655.roundRect|_0x215655.stroke|for|if|rgba::87bddfc7becca222": {
-      "name": "ctx",
+      "name": "v3782Ctx",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -24468,7 +24468,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::93::\"::Date|Math|window::_0x215655.arc|_0x215655.beginPath|_0x215655.fill|_0x215655.lineTo|_0x215655.moveTo|_0x215655.roundRect|_0x215655.stroke|for|if|rgba::e580eb6d252b027e": {
-      "name": "canvas",
+      "name": "v4e44Canvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -24482,7 +24482,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::93::\"::Date|Math|window::_0x215655.arc|_0x215655.beginPath|_0x215655.fill|_0x215655.lineTo|_0x215655.moveTo|_0x215655.roundRect|_0x215655.stroke|for|if|rgba::aeb723c99d05491f": {
-      "name": "gameData",
+      "name": "v15a9GameData",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -24601,7 +24601,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::93::\"::Date|Math|window::_0x215655.arc|_0x215655.beginPath|_0x215655.fill|_0x215655.lineTo|_0x215655.moveTo|_0x215655.roundRect|_0x215655.stroke|for|if|rgba::c1d373e9621f4b67": {
-      "name": "entities",
+      "name": "v5769Entities",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -24630,7 +24630,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::93::\"::Date|Math|window::_0x215655.arc|_0x215655.beginPath|_0x215655.fill|_0x215655.lineTo|_0x215655.moveTo|_0x215655.roundRect|_0x215655.stroke|for|if|rgba::4513e8fbb6c6766d": {
-      "name": "targetEntity",
+      "name": "v4855TargetEntity",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x40096f(...)",
@@ -24645,7 +24645,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::93::\"::Date|Math|window::_0x215655.arc|_0x215655.beginPath|_0x215655.fill|_0x215655.lineTo|_0x215655.moveTo|_0x215655.roundRect|_0x215655.stroke|for|if|rgba::4962a19b625a0afe": {
-      "name": "offsetY",
+      "name": "v4515V4515OffsetY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -24659,7 +24659,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::93::\"::Date|Math|window::_0x215655.arc|_0x215655.beginPath|_0x215655.fill|_0x215655.lineTo|_0x215655.moveTo|_0x215655.roundRect|_0x215655.stroke|for|if|rgba::a47902584fccf0c2": {
-      "name": "drawY",
+      "name": "v3574DrawY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Math.max(...)",
@@ -24700,7 +24700,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::93::\"::Date|Math|window::_0x215655.arc|_0x215655.beginPath|_0x215655.fill|_0x215655.lineTo|_0x215655.moveTo|_0x215655.roundRect|_0x215655.stroke|for|if|rgba::b2a0982b6872cbff": {
-      "name": "blue",
+      "name": "v2a6dBlue",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -24765,7 +24765,7 @@
       }
     },
     "0::0::1::0::1::0::0::1::14::\"::document|window::_0x2e915c.getContext|_0x53bcce.getContext|_0xeba1be.clearRect|clearRect|document.getElementById|if|requestAnimationFrame::bd7b712d7a9ff5ed": {
-      "name": "ctx",
+      "name": "Ctx",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x53bcce.getContext(...)",
@@ -24793,7 +24793,7 @@
       }
     },
     "0::0::1::0::1::0::0::1::14::\"::document|window::_0x2e915c.getContext|_0x53bcce.getContext|_0xeba1be.clearRect|clearRect|document.getElementById|if|requestAnimationFrame::1a5825762a54182c": {
-      "name": "playerPos",
+      "name": "v4929PlayerPos",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x2776a3(...)",
@@ -24831,7 +24831,7 @@
       }
     },
     "2::0::1::0::1::0::0::1::5::\"::::PointerEvent|_0x194043.dispatchEvent|if|setTimeout::5f2e2ad3557cd9f8": {
-      "name": "y",
+      "name": "v1a0cY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -24843,7 +24843,7 @@
       }
     },
     "2::0::1::0::1::0::0::1::5::\"::::PointerEvent|_0x194043.dispatchEvent|if|setTimeout::6ac03d5b0f3328b4": {
-      "name": "gameCanvas",
+      "name": "v1940GameCanvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x6bc346(...)",
@@ -24859,7 +24859,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x5a949d.dispatchEvent|_0x5a949d.getBoundingClientRect|if::a42cb884d0b672bb": {
-      "name": "targetX",
+      "name": "v6c26TargetX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -24899,7 +24899,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x5a949d.dispatchEvent|_0x5a949d.getBoundingClientRect|if::1fd2b56d2e30264f": {
-      "name": "gameCanvas",
+      "name": "v5a94GameCanvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x6bc346(...)",
@@ -24917,7 +24917,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x5a949d.dispatchEvent|_0x5a949d.getBoundingClientRect|if::724240b5b42db81b": {
-      "name": "playerPos",
+      "name": "v1c56PlayerPos",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x2776a3(...)",
@@ -24932,7 +24932,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x5a949d.dispatchEvent|_0x5a949d.getBoundingClientRect|if::599d945b9632711a": {
-      "name": "canvasRect",
+      "name": "v329fCanvasRect",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x5a949d.getBoundingClientRect(...)",
@@ -24977,7 +24977,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x5a949d.dispatchEvent|_0x5a949d.getBoundingClientRect|if::47845f9b76a1b7d3": {
-      "name": "diffX",
+      "name": "v4905DiffX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -24992,7 +24992,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x5a949d.dispatchEvent|_0x5a949d.getBoundingClientRect|if::8b1ffc9bc9c35aef": {
-      "name": "diffY",
+      "name": "DiffY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -25007,7 +25007,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x5a949d.dispatchEvent|_0x5a949d.getBoundingClientRect|if::9e7789086936bd17": {
-      "name": "distance",
+      "name": "Distance",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Math.sqrt(...)",
@@ -25082,7 +25082,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x5a949d.dispatchEvent|_0x5a949d.getBoundingClientRect|if::b5f1501b90e23f0e": {
-      "name": "maxOffset",
+      "name": "v17f5MaxOffset",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -25149,7 +25149,7 @@
       }
     },
     "0::1::1::1::1::1::0::7::65::::Date|Math|window::Date.now|Math.atan2|Math.sqrt|_0x22861c.some|_0x2bc4c4.forEach|_0x2bc4c4.push|for|forEach|if|setTimeout::2e7b8ab786c1e3f6": {
-      "name": "gameState",
+      "name": "GameState",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x5a0ec2(...)",
@@ -25163,7 +25163,7 @@
       }
     },
     "0::1::1::1::1::1::0::7::65::::Date|Math|window::Date.now|Math.atan2|Math.sqrt|_0x22861c.some|_0x2bc4c4.forEach|_0x2bc4c4.push|for|forEach|if|setTimeout::a03991867d643739": {
-      "name": "entities",
+      "name": "Entities",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x31b3bc(...)",
@@ -25289,7 +25289,7 @@
       }
     },
     "0::1::1::1::1::1::0::7::65::::Date|Math|window::Date.now|Math.atan2|Math.sqrt|_0x22861c.some|_0x2bc4c4.forEach|_0x2bc4c4.push|for|forEach|if|setTimeout::391c5b20508ca855": {
-      "name": "magnitude",
+      "name": "v198eMagnitude",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Math.sqrt(...)",
@@ -25305,7 +25305,7 @@
       }
     },
     "0::1::1::1::1::1::0::7::65::::Date|Math|window::Date.now|Math.atan2|Math.sqrt|_0x22861c.some|_0x2bc4c4.forEach|_0x2bc4c4.push|for|forEach|if|setTimeout::60b7fb5401623c19": {
-      "name": "angle",
+      "name": "v3e0bAngle",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Math.atan2(...)",
@@ -25420,7 +25420,7 @@
       }
     },
     "2::0::1::0::1::0::0::0::8::\"::Date|window::Date.now|if|window.autoFarmSkipAreas.filter|window.autoFarmSkipAreas.find|window.autoFarmSkipAreas.push::674f76d258988a3e": {
-      "name": "currentTime",
+      "name": "v4ffdCurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Date.now(...)",
@@ -25434,7 +25434,7 @@
       }
     },
     "2::0::0::0::1::0::0::1::3::::Date|window::Date.now|window.autoFarmSkipAreas.filter|window.autoFarmSkipAreas.some::4fe921d362e786a6": {
-      "name": "currentTime",
+      "name": "v3477CurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Date.now(...)",
@@ -25464,7 +25464,7 @@
       }
     },
     "1::0::1::1::1::0::0::5::19::::window::catch|forEach|if|window.autoFarmSkipIds.has::2e7b8ab786c1e3f6": {
-      "name": "gameState",
+      "name": "v5c43GameState",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x5a0ec2(...)",
@@ -25478,7 +25478,7 @@
       }
     },
     "1::0::1::1::1::0::0::5::19::::window::catch|forEach|if|window.autoFarmSkipIds.has::a03991867d643739": {
-      "name": "entities",
+      "name": "v10c2Entities",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x31b3bc(...)",
@@ -25523,7 +25523,7 @@
       }
     },
     "1::0::1::1::1::0::0::5::17::::window::_0x2ef160.push|_0x2ef160.sort|catch|forEach|if|window.autoFarmSkipIds.has::c81a714dc96df2bf": {
-      "name": "farmRange",
+      "name": "v46e0FarmRange",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -25551,7 +25551,7 @@
       }
     },
     "1::0::1::1::1::0::0::5::17::::window::_0x2ef160.push|_0x2ef160.sort|catch|forEach|if|window.autoFarmSkipIds.has::2e7b8ab786c1e3f6": {
-      "name": "gameState",
+      "name": "v5c43GameState",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x5a0ec2(...)",
@@ -25565,7 +25565,7 @@
       }
     },
     "1::0::1::1::1::0::0::5::17::::window::_0x2ef160.push|_0x2ef160.sort|catch|forEach|if|window.autoFarmSkipIds.has::a03991867d643739": {
-      "name": "entities",
+      "name": "v10c2Entities",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x31b3bc(...)",
@@ -25579,7 +25579,7 @@
       }
     },
     "1::0::1::1::1::0::0::5::17::::window::_0x2ef160.push|_0x2ef160.sort|catch|forEach|if|window.autoFarmSkipIds.has::361b3f51fa1d5048": {
-      "name": "myAnimal",
+      "name": "v5472MyAnimal",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x4c145d?.myAnimals?.?",
@@ -25624,7 +25624,7 @@
       }
     },
     "2::0::1::0::1::0::0::2::15::::window::_0x459d52.forEach|if::5f2e2ad3557cd9f8": {
-      "name": "y",
+      "name": "v1a0cY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -25698,7 +25698,7 @@
       }
     },
     "0::0::1::1::1::1::0::6::22::::Math|window::Math.max|Math.sqrt|catch|forEach|if::2e7b8ab786c1e3f6": {
-      "name": "gameState",
+      "name": "GameState",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x5a0ec2(...)",
@@ -25712,7 +25712,7 @@
       }
     },
     "0::0::1::1::1::1::0::6::22::::Math|window::Math.max|Math.sqrt|catch|forEach|if::a03991867d643739": {
-      "name": "entities",
+      "name": "Entities",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x31b3bc(...)",
@@ -25726,7 +25726,7 @@
       }
     },
     "0::0::1::1::1::1::0::6::22::::Math|window::Math.max|Math.sqrt|catch|forEach|if::9483b8cd97ad775d": {
-      "name": "myAnimal",
+      "name": "v1f3dMyAnimal",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x5dc5c9?.myAnimals?.?",
@@ -25740,7 +25740,7 @@
       }
     },
     "0::0::1::1::1::1::0::3::11::\"::Date|Math|document|window::Date.now|KeyboardEvent|Math.floor|Math.random|String|_0x201e0f.dispatchEvent|_0x59eb33.charCodeAt|forEach|if|setTimeout::824816577e24c5c6": {
-      "name": "currentTime",
+      "name": "v36baCurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Date.now(...)",
@@ -25754,7 +25754,7 @@
       }
     },
     "0::0::1::1::1::1::0::3::11::\"::Date|Math|document|window::Date.now|KeyboardEvent|Math.floor|Math.random|String|_0x201e0f.dispatchEvent|_0x59eb33.charCodeAt|forEach|if|setTimeout::39f56972de5de41a": {
-      "name": "gameCanvas",
+      "name": "v4a4cGameCanvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x6bc346(...)",
@@ -25796,7 +25796,7 @@
       }
     },
     "1::0::1::0::1::1::0::3::18::::Date|Math|window::Date.now|Math.cos|Math.random|Math.sin|if|window.autoFarmSkipIds.add::76b79a6fae271eda": {
-      "name": "now",
+      "name": "v47c3Now",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Date.now(...)",
@@ -25837,7 +25837,7 @@
       }
     },
     "0::0::1::1::1::1::0::5::83::\"::Date|Math|console|document|window::Date.now|Math.abs|Math.cos|Math.random|_0x1ccdca.classList.remove|document.getElementById|if|setTimeout|window.autoFarmSkipIds.add|window.autoFarmSkipIds.clear::48345f333ec6edd3": {
-      "name": "now",
+      "name": "Now",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Date.now(...)",
@@ -25911,7 +25911,7 @@
       }
     },
     "0::0::1::1::1::1::0::5::83::\"::Date|Math|console|document|window::Date.now|Math.abs|Math.cos|Math.random|_0x1ccdca.classList.remove|document.getElementById|if|setTimeout|window.autoFarmSkipIds.add|window.autoFarmSkipIds.clear::917c9ff337247fff": {
-      "name": "targetX",
+      "name": "v24d1TargetX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "literal",
@@ -25930,7 +25930,7 @@
       }
     },
     "0::0::1::1::1::1::0::5::83::\"::Date|Math|console|document|window::Date.now|Math.abs|Math.cos|Math.random|_0x1ccdca.classList.remove|document.getElementById|if|setTimeout|window.autoFarmSkipIds.add|window.autoFarmSkipIds.clear::65b1e78226600d63": {
-      "name": "targetY",
+      "name": "v1ecbTargetY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "literal",
@@ -25947,7 +25947,7 @@
       }
     },
     "0::0::1::1::1::1::0::5::83::\"::Date|Math|console|document|window::Date.now|Math.abs|Math.cos|Math.random|_0x1ccdca.classList.remove|document.getElementById|if|setTimeout|window.autoFarmSkipIds.add|window.autoFarmSkipIds.clear::dd151e5b3cd55493": {
-      "name": "minDistance",
+      "name": "v2648MinDistance",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Infinity",
@@ -25968,7 +25968,7 @@
       }
     },
     "0::0::1::1::1::1::0::5::83::\"::Date|Math|console|document|window::Date.now|Math.abs|Math.cos|Math.random|_0x1ccdca.classList.remove|document.getElementById|if|setTimeout|window.autoFarmSkipIds.add|window.autoFarmSkipIds.clear::2aaabf57bd2ee4ed": {
-      "name": "selectedTarget",
+      "name": "v4f14V4f14SelectedTarget",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x59cc07(...)",
@@ -26087,7 +26087,7 @@
       }
     },
     "1::0::1::0::1::1::0::2::27::\"::Math|document::Math.abs|_0x52094e.addEventListener|_0x52094e.getBoundingClientRect|_0x53096b.target.closest|_0x5d210f.stopImmediatePropagation|document.addEventListener|document.removeEventListener|if|includes::2a45524f43cb2156": {
-      "name": "offsetX",
+      "name": "v26b8OffsetX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -26103,7 +26103,7 @@
       }
     },
     "1::0::1::0::1::1::0::2::27::\"::Math|document::Math.abs|_0x52094e.addEventListener|_0x52094e.getBoundingClientRect|_0x53096b.target.closest|_0x5d210f.stopImmediatePropagation|document.addEventListener|document.removeEventListener|if|includes::de52744d9e76226f": {
-      "name": "offsetY",
+      "name": "v58cdOffsetY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -26268,7 +26268,7 @@
       }
     },
     "0::0::1::0::1::0::0::2::81::\"::document::_0x1d8d60.classList.add|_0x1d8d60.classList.remove|_0x3fd524.classList.toggle|_0x43d6fc.querySelector|_0x457d30.stopPropagation|_0x52002a.classList.add|document.body.appendChild|document.createElement|if|parseInt::f8e129f545fad755": {
-      "name": "mainBody",
+      "name": "Body",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x43d6fc.querySelector(...)",
@@ -26296,7 +26296,7 @@
       }
     },
     "0::0::1::0::1::0::0::2::81::\"::document::_0x1d8d60.classList.add|_0x1d8d60.classList.remove|_0x3fd524.classList.toggle|_0x43d6fc.querySelector|_0x457d30.stopPropagation|_0x52002a.classList.add|document.body.appendChild|document.createElement|if|parseInt::2c59b1d729399e79": {
-      "name": "spinBtn",
+      "name": "v3fd5V3fd5SpinBtn",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x43d6fc.querySelector(...)",
@@ -26329,7 +26329,7 @@
       }
     },
     "0::0::1::0::1::0::0::2::81::\"::document::_0x1d8d60.classList.add|_0x1d8d60.classList.remove|_0x3fd524.classList.toggle|_0x43d6fc.querySelector|_0x457d30.stopPropagation|_0x52002a.classList.add|document.body.appendChild|document.createElement|if|parseInt::0ee671b07fb0d8a4": {
-      "name": "turnRightKeyInput",
+      "name": "v239bV239bTurnRightKeyInput",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x43d6fc.querySelector(...)",
@@ -26386,7 +26386,7 @@
       }
     },
     "0::0::1::0::1::0::0::2::131::\"::Object|document|window::Boost|Close|Far|Medium|Nearest|Untrack|_0x5dbad5.querySelector|document.body.appendChild|document.createElement|var::381178a83cfab6b4": {
-      "name": "espColorsSection",
+      "name": "v1386V1386EspColorsSection",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x5dbad5.querySelector(...)",
@@ -26431,7 +26431,7 @@
       }
     },
     "0::0::1::0::1::0::0::2::131::\"::Object|document|window::Boost|Close|Far|Medium|Nearest|Untrack|_0x5dbad5.querySelector|document.body.appendChild|document.createElement|var::ba4b7e61b7c8ed3b": {
-      "name": "espBtn",
+      "name": "v2735V2735EspBtn",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x5dbad5.querySelector(...)",
@@ -26550,7 +26550,7 @@
       }
     },
     "0::0::0::0::1::0::0::1::46::\"::document|window::Key|_0x4924f4.querySelector|_0x5c7fa0.addEventListener|_0x5e01c1.stopPropagation|_0x6477af.preventDefault|_0x6477af.stopPropagation|document.body.appendChild|document.createElement|var|window.lockKey.toUpperCase::b9fa039bc6551993": {
-      "name": "lockButton",
+      "name": "v5301LockButton",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x4924f4.querySelector(...)",
@@ -26693,7 +26693,7 @@
       }
     },
     "0::0::1::0::1::0::0::1::65::\"::document|window::Farm|_0x1b1ad3.stopPropagation|_0x311f86.classList.add|_0x311f86.classList.remove|_0x48deea.querySelector|_0x581089.classList.add|_0x581089.classList.remove|document.body.appendChild|document.createElement|if::f641bf53ae990838": {
-      "name": "farmAvoidToggle",
+      "name": "v3419V3419FarmAvoidToggle",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x48deea.querySelector(...)",
@@ -26776,7 +26776,7 @@
       }
     },
     "0::0::1::0::1::1::1::5::181::\"::JSON|Math|Object|document|localStorage|value::_0x253c89.stopPropagation|_0x28cc12.addEventListener|_0x32f16a.key.toUpperCase|_0x32f16a.preventDefault|_0x398a04.toUpperCase|_0x3f60a6.querySelector|document.body.appendChild|document.createElement|localStorage.getItem|var::acd038f16968cb29": {
-      "name": "myThemesSection",
+      "name": "MyThemesSection",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x3f60a6.querySelector(...)",
@@ -26892,7 +26892,7 @@
       }
     },
     "0::0::1::0::1::1::1::5::181::\"::JSON|Math|Object|document|localStorage|value::_0x253c89.stopPropagation|_0x28cc12.addEventListener|_0x32f16a.key.toUpperCase|_0x32f16a.preventDefault|_0x398a04.toUpperCase|_0x3f60a6.querySelector|document.body.appendChild|document.createElement|localStorage.getItem|var::1117019a1b7a71bb": {
-      "name": "myThemesToggleBtn",
+      "name": "v4b6aV4b6aMyThemesToggleBtn",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x3f60a6.querySelector(...)",
@@ -26906,7 +26906,7 @@
       }
     },
     "0::0::1::0::1::1::1::5::181::\"::JSON|Math|Object|document|localStorage|value::_0x253c89.stopPropagation|_0x28cc12.addEventListener|_0x32f16a.key.toUpperCase|_0x32f16a.preventDefault|_0x398a04.toUpperCase|_0x3f60a6.querySelector|document.body.appendChild|document.createElement|localStorage.getItem|var::cd51b00b57060381": {
-      "name": "myThemesArrow",
+      "name": "v465cV465cMyThemesArrow",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x3f60a6.querySelector(...)",
@@ -26984,7 +26984,7 @@
       }
     },
     "0::0::1::0::1::0::0::1::7::\"::document::_0x43ad66.forEach|document.getElementById|if::a78a9645498d9af6": {
-      "name": "mainPanel",
+      "name": "Panel",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "document.getElementById(...)",
@@ -27026,7 +27026,7 @@
       }
     },
     "module::0200ed6eaa58a19f": {
-      "name": "currentTime",
+      "name": "CurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -27169,7 +27169,7 @@
       }
     },
     "module::eda5b2d0a5a5f432": {
-      "name": "currentTime",
+      "name": "CurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -27185,7 +27185,7 @@
       }
     },
     "module::edad3796079658de": {
-      "name": "offsetValue",
+      "name": "OffsetValue",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "400",
@@ -27213,7 +27213,7 @@
       }
     },
     "module::df4444a163c39da0": {
-      "name": "counter",
+      "name": "Counter",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -27246,7 +27246,7 @@
       }
     },
     "module::5d69b35946a1777b": {
-      "name": "counter",
+      "name": "Counter",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -27263,7 +27263,7 @@
       }
     },
     "module::9713a6bc25ce8378": {
-      "name": "currentTime",
+      "name": "CurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -27327,7 +27327,7 @@
       }
     },
     "2::0::1::0::1::0::0::3::15::\"::document::Event|InputEvent|_0x5ba86b.dispatchEvent|_0x5ba86b.focus|document.querySelector|if|setTimeout::5f2e2ad3557cd9f8": {
-      "name": "y",
+      "name": "v1a0cY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -27535,7 +27535,7 @@
       }
     },
     "1::0::1::0::1::0::0::2::19::\"::document::Event|InputEvent|_0x1536b2.click|_0x285119.blur|_0x285119.dispatchEvent|_0x285119.focus|document.querySelector|if|setTimeout::6534d07bfd24482b": {
-      "name": "charIndex",
+      "name": "v1491CharIndex",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -27639,7 +27639,7 @@
       }
     },
     "1::0::1::0::1::0::0::1::7::\"::::MouseEvent|_0x45cb95.dispatchEvent|_0x45cb95.getBoundingClientRect|if::054a14de43433777": {
-      "name": "canvas",
+      "name": "v45cbCanvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x47e1a4(...)",
@@ -27715,7 +27715,7 @@
       }
     },
     "0::1::1::1::1::0::0::6::9::::Object|window::Object.keys|catch|for|if::b5dceba8bba4bc66": {
-      "name": "i",
+      "name": "v564eI",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -27879,7 +27879,7 @@
       }
     },
     "1::1::1::1::0::0::0::4::12::::Array|Object::Array.isArray|Object.keys|_0x2cef4a.find|_0x40bdef.entitiesList.find|catch|for|if::64469f0bf975f714": {
-      "name": "gameState",
+      "name": "v299bGameState",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x2f69b5(...)",
@@ -27907,7 +27907,7 @@
       }
     },
     "1::1::1::1::0::0::0::4::12::::Array|Object::Array.isArray|Object.keys|_0x2cef4a.find|_0x40bdef.entitiesList.find|catch|for|if::2721aa29d9d77293": {
-      "name": "entity",
+      "name": "v87e7Entity",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -27996,7 +27996,7 @@
       }
     },
     "0::0::1::1::0::1::0::5::25::::Math::Math.atan2|Math.sqrt|_0x1ef5e1.entities.push|_0x1ef5e1.entities.sort|_0x1ef5e1.food.push|_0x1ef5e1.food.sort|_0x1ef5e1.players.push|_0x1ef5e1.players.sort|_0xc091af.forEach|if::4443ea6b8e8095b7": {
-      "name": "error",
+      "name": "Error",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -28024,7 +28024,7 @@
       }
     },
     "0::0::1::1::0::1::0::5::25::::Math::Math.atan2|Math.sqrt|_0x1ef5e1.entities.push|_0x1ef5e1.entities.sort|_0x1ef5e1.food.push|_0x1ef5e1.food.sort|_0x1ef5e1.players.push|_0x1ef5e1.players.sort|_0xc091af.forEach|if::4bc796a84b48ff36": {
-      "name": "entities",
+      "name": "worldData",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x202684(...)",
@@ -28301,7 +28301,7 @@
       }
     },
     "0::0::1::1::1::1::0::5::42::\"::Math|window::Math.min|Math.sqrt|MouseEvent|_0x1469f4.dispatchEvent|_0x1469f4.getBoundingClientRect|catch|if|requestAnimationFrame::e9081bf17a8bb688": {
-      "name": "distance",
+      "name": "Distance",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Math.sqrt(...)",
@@ -28604,7 +28604,7 @@
       }
     },
     "4::1::1::0::1::1::0::1::40::\"::Date|Math|window::Date.now|Math.max|_0x26b34a.arc|_0x26b34a.beginPath|_0x26b34a.lineTo|_0x26b34a.moveTo|_0x26b34a.stroke|for|if|rgba::ced1ea8645ad7aaa": {
-      "name": "canvas",
+      "name": "v2953Canvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -28619,7 +28619,7 @@
       }
     },
     "4::1::1::0::1::1::0::1::40::\"::Date|Math|window::Date.now|Math.max|_0x26b34a.arc|_0x26b34a.beginPath|_0x26b34a.lineTo|_0x26b34a.moveTo|_0x26b34a.stroke|for|if|rgba::d5f21dc1d0f290a0": {
-      "name": "myPos",
+      "name": "playerPos",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -28648,7 +28648,7 @@
       }
     },
     "4::1::1::0::1::1::0::1::40::\"::Date|Math|window::Date.now|Math.max|_0x26b34a.arc|_0x26b34a.beginPath|_0x26b34a.lineTo|_0x26b34a.moveTo|_0x26b34a.stroke|for|if|rgba::33fb994b08ac659b": {
-      "name": "centerY",
+      "name": "halfHeight",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -28662,7 +28662,7 @@
       }
     },
     "4::1::1::0::1::1::0::1::40::\"::Date|Math|window::Date.now|Math.max|_0x26b34a.arc|_0x26b34a.beginPath|_0x26b34a.lineTo|_0x26b34a.moveTo|_0x26b34a.stroke|for|if|rgba::cc2524fe61243c14": {
-      "name": "currentTime",
+      "name": "v23e2CurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Date.now(...)",
@@ -28707,7 +28707,7 @@
       }
     },
     "4::1::1::0::1::1::0::1::40::\"::Date|Math|window::Date.now|Math.max|_0x26b34a.arc|_0x26b34a.beginPath|_0x26b34a.lineTo|_0x26b34a.moveTo|_0x26b34a.stroke|for|if|rgba::79e339077b492673": {
-      "name": "i",
+      "name": "I",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "1",
@@ -28753,7 +28753,7 @@
       }
     },
     "4::1::1::0::1::1::0::1::40::\"::Date|Math|window::Date.now|Math.max|_0x26b34a.arc|_0x26b34a.beginPath|_0x26b34a.lineTo|_0x26b34a.moveTo|_0x26b34a.stroke|for|if|rgba::ef32b4eadf985afa": {
-      "name": "pointAge",
+      "name": "v3cc1PointAge",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -28767,7 +28767,7 @@
       }
     },
     "4::1::1::0::1::1::0::1::40::\"::Date|Math|window::Date.now|Math.max|_0x26b34a.arc|_0x26b34a.beginPath|_0x26b34a.lineTo|_0x26b34a.moveTo|_0x26b34a.stroke|for|if|rgba::d35411b105ff0cef": {
-      "name": "opacity",
+      "name": "pointOpacity",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Math.max(...)",
@@ -28839,7 +28839,7 @@
       }
     },
     "4::1::1::0::1::1::0::1::40::\"::Date|Math|window::Date.now|Math.max|_0x26b34a.arc|_0x26b34a.beginPath|_0x26b34a.lineTo|_0x26b34a.moveTo|_0x26b34a.stroke|for|if|rgba::f57d9d41457834cc": {
-      "name": "screenY",
+      "name": "ScreenY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -28853,7 +28853,7 @@
       }
     },
     "2::0::1::0::1::0::0::1::21::\"::document|window::_0x196108.getBoundingClientRect|document.body.appendChild|document.createElement|document.getElementById|if::5f2e2ad3557cd9f8": {
-      "name": "y",
+      "name": "v1a0cY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -28879,7 +28879,7 @@
       }
     },
     "2::0::1::0::1::0::0::1::21::\"::document|window::_0x196108.getBoundingClientRect|document.body.appendChild|document.createElement|document.getElementById|if::905d3385d07a2546": {
-      "name": "canvas",
+      "name": "v2898Canvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "document.getElementById(...)",
@@ -28931,7 +28931,7 @@
       }
     },
     "0::0::1::0::1::0::0::0::7::\"::window::_0x3f1afd.clearRect|_0x536adf.getContext|if|requestAnimationFrame::c73c908ad6757335": {
-      "name": "canvas",
+      "name": "v5615Canvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x4f2902(...)",
@@ -28949,7 +28949,7 @@
       }
     },
     "0::0::1::0::1::0::0::0::7::\"::window::_0x3f1afd.clearRect|_0x536adf.getContext|if|requestAnimationFrame::78e2c5a64a488497": {
-      "name": "ctx",
+      "name": "v3f1aCtx",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x536adf.getContext(...)",
@@ -28977,7 +28977,7 @@
       }
     },
     "0::0::1::0::1::0::0::0::7::\"::window::_0x3f1afd.clearRect|_0x536adf.getContext|if|requestAnimationFrame::f87026a55e75becf": {
-      "name": "zoomLevel",
+      "name": "trailSettings",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x344627(...)",
@@ -28989,7 +28989,7 @@
       }
     },
     "5::0::1::0::1::1::0::1::54::\"::Math|window::Math.round|_0x528fee.forEach|_0x8d349b.beginPath|_0x8d349b.fillText|_0x8d349b.lineTo|_0x8d349b.moveTo|_0x8d349b.stroke|_0x8d349b.strokeRect|if|toString::252966d7067dd658": {
-      "name": "ctx",
+      "name": "v302fCtx",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -29127,7 +29127,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x116ceb.beginPath|_0x116ceb.lineTo|_0x116ceb.moveTo|_0x116ceb.setLineDash|_0x116ceb.stroke|_0x116ceb.strokeRect|if|rgba::380ab6e88e5908a0": {
-      "name": "ctx",
+      "name": "v5c0cCtx",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -29166,7 +29166,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x116ceb.beginPath|_0x116ceb.lineTo|_0x116ceb.moveTo|_0x116ceb.setLineDash|_0x116ceb.stroke|_0x116ceb.strokeRect|if|rgba::ced1ea8645ad7aaa": {
-      "name": "canvas",
+      "name": "v2953Canvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -29181,7 +29181,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x116ceb.beginPath|_0x116ceb.lineTo|_0x116ceb.moveTo|_0x116ceb.setLineDash|_0x116ceb.stroke|_0x116ceb.strokeRect|if|rgba::d5f21dc1d0f290a0": {
-      "name": "myPos",
+      "name": "playerPos",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -29196,7 +29196,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x116ceb.beginPath|_0x116ceb.lineTo|_0x116ceb.moveTo|_0x116ceb.setLineDash|_0x116ceb.stroke|_0x116ceb.strokeRect|if|rgba::4d8774732258815b": {
-      "name": "scale",
+      "name": "v5f42Scale",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -29240,7 +29240,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x116ceb.beginPath|_0x116ceb.lineTo|_0x116ceb.moveTo|_0x116ceb.setLineDash|_0x116ceb.stroke|_0x116ceb.strokeRect|if|rgba::9b7c53f656c7fcf6": {
-      "name": "centerX",
+      "name": "v44f2CenterX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -29255,7 +29255,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x116ceb.beginPath|_0x116ceb.lineTo|_0x116ceb.moveTo|_0x116ceb.setLineDash|_0x116ceb.stroke|_0x116ceb.strokeRect|if|rgba::fc52deefc8c063f5": {
-      "name": "centerY",
+      "name": "v59f7CenterY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -29270,7 +29270,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x116ceb.beginPath|_0x116ceb.lineTo|_0x116ceb.moveTo|_0x116ceb.setLineDash|_0x116ceb.stroke|_0x116ceb.strokeRect|if|rgba::6c7df7c50f061a87": {
-      "name": "diffY",
+      "name": "v55e5DiffY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -29318,7 +29318,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x116ceb.beginPath|_0x116ceb.lineTo|_0x116ceb.moveTo|_0x116ceb.setLineDash|_0x116ceb.stroke|_0x116ceb.strokeRect|if|rgba::845cb36f53dc88ac": {
-      "name": "distance",
+      "name": "v1637Distance",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x249bba(...)",
@@ -29388,7 +29388,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::86::\"::Date|Math|window::Date.now|Math.sin|_0x116ceb.beginPath|_0x116ceb.lineTo|_0x116ceb.moveTo|_0x116ceb.setLineDash|_0x116ceb.stroke|_0x116ceb.strokeRect|if|rgba::860dde60a05f567c": {
-      "name": "angle",
+      "name": "Angle",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Math.atan2(...)",
@@ -29506,7 +29506,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::93::\"::Date|Math|window::_0x1438be.arc|_0x1438be.beginPath|_0x1438be.fill|_0x1438be.lineTo|_0x1438be.moveTo|_0x1438be.roundRect|_0x1438be.stroke|for|if|rgba::87bddfc7becca222": {
-      "name": "ctx",
+      "name": "v3782Ctx",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -29540,7 +29540,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::93::\"::Date|Math|window::_0x1438be.arc|_0x1438be.beginPath|_0x1438be.fill|_0x1438be.lineTo|_0x1438be.moveTo|_0x1438be.roundRect|_0x1438be.stroke|for|if|rgba::e580eb6d252b027e": {
-      "name": "canvas",
+      "name": "v4e44Canvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -29554,7 +29554,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::93::\"::Date|Math|window::_0x1438be.arc|_0x1438be.beginPath|_0x1438be.fill|_0x1438be.lineTo|_0x1438be.moveTo|_0x1438be.roundRect|_0x1438be.stroke|for|if|rgba::aeb723c99d05491f": {
-      "name": "gameData",
+      "name": "v15a9GameData",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -29673,7 +29673,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::93::\"::Date|Math|window::_0x1438be.arc|_0x1438be.beginPath|_0x1438be.fill|_0x1438be.lineTo|_0x1438be.moveTo|_0x1438be.roundRect|_0x1438be.stroke|for|if|rgba::c1d373e9621f4b67": {
-      "name": "entities",
+      "name": "v5769Entities",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -29702,7 +29702,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::93::\"::Date|Math|window::_0x1438be.arc|_0x1438be.beginPath|_0x1438be.fill|_0x1438be.lineTo|_0x1438be.moveTo|_0x1438be.roundRect|_0x1438be.stroke|for|if|rgba::a567a494c70e52f9": {
-      "name": "targetEntity",
+      "name": "v4402TargetEntity",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x3ffd5e(...)",
@@ -29717,7 +29717,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::93::\"::Date|Math|window::_0x1438be.arc|_0x1438be.beginPath|_0x1438be.fill|_0x1438be.lineTo|_0x1438be.moveTo|_0x1438be.roundRect|_0x1438be.stroke|for|if|rgba::aa8cecf578a67c44": {
-      "name": "deltaY",
+      "name": "v1472V1472DeltaY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -29731,7 +29731,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::93::\"::Date|Math|window::_0x1438be.arc|_0x1438be.beginPath|_0x1438be.fill|_0x1438be.lineTo|_0x1438be.moveTo|_0x1438be.roundRect|_0x1438be.stroke|for|if|rgba::a47902584fccf0c2": {
-      "name": "drawY",
+      "name": "v3574DrawY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Math.max(...)",
@@ -29772,7 +29772,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::93::\"::Date|Math|window::_0x1438be.arc|_0x1438be.beginPath|_0x1438be.fill|_0x1438be.lineTo|_0x1438be.moveTo|_0x1438be.roundRect|_0x1438be.stroke|for|if|rgba::b2a0982b6872cbff": {
-      "name": "blue",
+      "name": "v2a6dBlue",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -29819,7 +29819,7 @@
       }
     },
     "0::0::1::0::1::0::0::1::14::\"::document|window::_0x21e5ad.getContext|_0x537982.clearRect|_0x5615de.getContext|clearRect|document.getElementById|if|requestAnimationFrame::c73c908ad6757335": {
-      "name": "canvas",
+      "name": "v5615Canvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x4f2902(...)",
@@ -29837,7 +29837,7 @@
       }
     },
     "0::0::1::0::1::0::0::1::14::\"::document|window::_0x21e5ad.getContext|_0x537982.clearRect|_0x5615de.getContext|clearRect|document.getElementById|if|requestAnimationFrame::d49ebf065c76077d": {
-      "name": "ctx",
+      "name": "v5379Ctx",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x5615de.getContext(...)",
@@ -29853,7 +29853,7 @@
       }
     },
     "0::0::1::0::1::0::0::1::14::\"::document|window::_0x21e5ad.getContext|_0x537982.clearRect|_0x5615de.getContext|clearRect|document.getElementById|if|requestAnimationFrame::8561997297069c14": {
-      "name": "entities",
+      "name": "v9036Entities",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x151307(...)",
@@ -29877,7 +29877,7 @@
       }
     },
     "0::0::1::0::1::0::0::1::14::\"::document|window::_0x21e5ad.getContext|_0x537982.clearRect|_0x5615de.getContext|clearRect|document.getElementById|if|requestAnimationFrame::f87026a55e75becf": {
-      "name": "zoomLevel",
+      "name": "trailSettings",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x344627(...)",
@@ -29903,7 +29903,7 @@
       }
     },
     "2::0::1::0::1::0::0::1::5::\"::::PointerEvent|_0x15b4fc.dispatchEvent|if|setTimeout::5f2e2ad3557cd9f8": {
-      "name": "y",
+      "name": "v1a0cY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -29931,7 +29931,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x65171f.dispatchEvent|_0x65171f.getBoundingClientRect|if::072c732379de7611": {
-      "name": "targetX",
+      "name": "v4b7bTargetX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -29971,7 +29971,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x65171f.dispatchEvent|_0x65171f.getBoundingClientRect|if::054a14de43433777": {
-      "name": "canvas",
+      "name": "v6517Canvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x47e1a4(...)",
@@ -29989,7 +29989,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x65171f.dispatchEvent|_0x65171f.getBoundingClientRect|if::3f38b25481a8a20b": {
-      "name": "localPlayer",
+      "name": "v5850LocalPlayer",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x12c167(...)",
@@ -30004,7 +30004,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x65171f.dispatchEvent|_0x65171f.getBoundingClientRect|if::c8c4a7e283c447cd": {
-      "name": "rect",
+      "name": "v2501Rect",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x65171f.getBoundingClientRect(...)",
@@ -30021,7 +30021,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x65171f.dispatchEvent|_0x65171f.getBoundingClientRect|if::3fccd8d4802ec3a9": {
-      "name": "centerX",
+      "name": "v2193CenterX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -30035,7 +30035,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x65171f.dispatchEvent|_0x65171f.getBoundingClientRect|if::311d099069e75135": {
-      "name": "centerY",
+      "name": "v4698CenterY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -30049,7 +30049,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x65171f.dispatchEvent|_0x65171f.getBoundingClientRect|if::9252772b7fd66a18": {
-      "name": "diffX",
+      "name": "v93dcDiffX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -30064,7 +30064,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x65171f.dispatchEvent|_0x65171f.getBoundingClientRect|if::5b19e3bb41d7f1e5": {
-      "name": "diffY",
+      "name": "v5ce3DiffY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -30079,7 +30079,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x65171f.dispatchEvent|_0x65171f.getBoundingClientRect|if::9e7789086936bd17": {
-      "name": "distance",
+      "name": "Distance",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Math.sqrt(...)",
@@ -30235,7 +30235,7 @@
       }
     },
     "0::1::1::1::1::1::0::7::65::::Date|Math|window::Date.now|Math.atan2|Math.sqrt|_0x1f0737.forEach|_0x1f0737.push|_0x2754a5.some|for|forEach|if|setTimeout::4bc796a84b48ff36": {
-      "name": "entities",
+      "name": "worldData",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x202684(...)",
@@ -30249,7 +30249,7 @@
       }
     },
     "0::1::1::1::1::1::0::7::65::::Date|Math|window::Date.now|Math.atan2|Math.sqrt|_0x1f0737.forEach|_0x1f0737.push|_0x2754a5.some|for|forEach|if|setTimeout::272de661c995a2ab": {
-      "name": "myAnimal",
+      "name": "v4838MyAnimal",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x5914b4?.myAnimals?.?",
@@ -30361,7 +30361,7 @@
       }
     },
     "0::1::1::1::1::1::0::7::65::::Date|Math|window::Date.now|Math.atan2|Math.sqrt|_0x1f0737.forEach|_0x1f0737.push|_0x2754a5.some|for|forEach|if|setTimeout::391c5b20508ca855": {
-      "name": "magnitude",
+      "name": "v198eMagnitude",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Math.sqrt(...)",
@@ -30377,7 +30377,7 @@
       }
     },
     "0::1::1::1::1::1::0::7::65::::Date|Math|window::Date.now|Math.atan2|Math.sqrt|_0x1f0737.forEach|_0x1f0737.push|_0x2754a5.some|for|forEach|if|setTimeout::8da6c5e4607faf5b": {
-      "name": "angle",
+      "name": "v112dAngle",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Math.atan2(...)",
@@ -30406,7 +30406,7 @@
       }
     },
     "0::1::1::1::1::1::0::7::65::::Date|Math|window::Date.now|Math.atan2|Math.sqrt|_0x1f0737.forEach|_0x1f0737.push|_0x2754a5.some|for|forEach|if|setTimeout::91dbdc7ded93de8d": {
-      "name": "targetAngle",
+      "name": "v2a4dTargetAngle",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x112d9a",
@@ -30492,7 +30492,7 @@
       }
     },
     "2::0::1::0::1::0::0::0::8::\"::Date|window::Date.now|if|window.autoFarmSkipAreas.filter|window.autoFarmSkipAreas.find|window.autoFarmSkipAreas.push::c5f242bb2a951a58": {
-      "name": "currentTime",
+      "name": "v8662CurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Date.now(...)",
@@ -30506,7 +30506,7 @@
       }
     },
     "2::0::0::0::1::0::0::1::3::::Date|window::Date.now|window.autoFarmSkipAreas.filter|window.autoFarmSkipAreas.some::eefa5fd84a307db4": {
-      "name": "currentTime",
+      "name": "v2de4CurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Date.now(...)",
@@ -30536,7 +30536,7 @@
       }
     },
     "1::0::1::1::1::0::0::5::19::::window::catch|forEach|if|window.autoFarmSkipIds.has::784330efbea58b75": {
-      "name": "gameState",
+      "name": "v2970GameState",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x2f69b5(...)",
@@ -30550,7 +30550,7 @@
       }
     },
     "1::0::1::1::1::0::0::5::19::::window::catch|forEach|if|window.autoFarmSkipIds.has::4bc796a84b48ff36": {
-      "name": "worldData",
+      "name": "v8539WorldData",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x202684(...)",
@@ -30595,7 +30595,7 @@
       }
     },
     "1::0::1::1::1::0::0::5::17::::window::_0x3cb5f8.push|_0x3cb5f8.sort|catch|forEach|if|window.autoFarmSkipIds.has::c7340faa36637edb": {
-      "name": "farmRange",
+      "name": "v535dFarmRange",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -30623,7 +30623,7 @@
       }
     },
     "1::0::1::1::1::0::0::5::17::::window::_0x3cb5f8.push|_0x3cb5f8.sort|catch|forEach|if|window.autoFarmSkipIds.has::784330efbea58b75": {
-      "name": "gameState",
+      "name": "v2970GameState",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x2f69b5(...)",
@@ -30637,7 +30637,7 @@
       }
     },
     "1::0::1::1::1::0::0::5::17::::window::_0x3cb5f8.push|_0x3cb5f8.sort|catch|forEach|if|window.autoFarmSkipIds.has::4bc796a84b48ff36": {
-      "name": "worldData",
+      "name": "v8539WorldData",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x202684(...)",
@@ -30651,7 +30651,7 @@
       }
     },
     "1::0::1::1::1::0::0::5::17::::window::_0x3cb5f8.push|_0x3cb5f8.sort|catch|forEach|if|window.autoFarmSkipIds.has::4f1dae84a1cc64f9": {
-      "name": "myAnimal",
+      "name": "v3c72MyAnimal",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x1a1064?.myAnimals?.?",
@@ -30696,7 +30696,7 @@
       }
     },
     "2::0::1::0::1::0::0::2::15::::window::_0x5d4775.forEach|if::5f2e2ad3557cd9f8": {
-      "name": "y",
+      "name": "v1a0cY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -30784,7 +30784,7 @@
       }
     },
     "0::0::1::1::1::1::0::6::22::::Math|window::Math.max|Math.sqrt|catch|forEach|if::4bc796a84b48ff36": {
-      "name": "entities",
+      "name": "worldData",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x202684(...)",
@@ -30798,7 +30798,7 @@
       }
     },
     "0::0::1::1::1::1::0::6::22::::Math|window::Math.max|Math.sqrt|catch|forEach|if::8bab0e3c7b3bec9b": {
-      "name": "myAnimal",
+      "name": "v1d11MyAnimal",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x2b34c4?.myAnimals?.?",
@@ -30812,7 +30812,7 @@
       }
     },
     "0::0::1::1::1::1::0::3::11::\"::Date|Math|document|window::Date.now|KeyboardEvent|Math.floor|Math.random|String|_0x3d053b.dispatchEvent|_0x40c258.charCodeAt|forEach|if|setTimeout::4f9bea672ac2f52a": {
-      "name": "now",
+      "name": "v5cc6Now",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Date.now(...)",
@@ -30826,7 +30826,7 @@
       }
     },
     "0::0::1::1::1::1::0::3::11::\"::Date|Math|document|window::Date.now|KeyboardEvent|Math.floor|Math.random|String|_0x3d053b.dispatchEvent|_0x40c258.charCodeAt|forEach|if|setTimeout::31bc09bde1be92d5": {
-      "name": "gameCanvas",
+      "name": "v57ceGameCanvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x47e1a4(...)",
@@ -30868,7 +30868,7 @@
       }
     },
     "1::0::1::0::1::1::0::3::18::::Date|Math|window::Date.now|Math.cos|Math.random|Math.sin|if|window.autoFarmSkipIds.add::d993e4a59ce72b5e": {
-      "name": "now",
+      "name": "v49a5Now",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Date.now(...)",
@@ -30909,7 +30909,7 @@
       }
     },
     "0::0::1::1::1::1::0::5::83::\"::Date|Math|console|document|window::Date.now|Math.abs|Math.cos|Math.random|_0x478a98.classList.remove|document.getElementById|if|setTimeout|window.autoFarmSkipIds.add|window.autoFarmSkipIds.clear::09390b273c24c927": {
-      "name": "currentTime",
+      "name": "v378eCurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Date.now(...)",
@@ -31040,7 +31040,7 @@
       }
     },
     "0::0::1::1::1::1::0::5::83::\"::Date|Math|console|document|window::Date.now|Math.abs|Math.cos|Math.random|_0x478a98.classList.remove|document.getElementById|if|setTimeout|window.autoFarmSkipIds.add|window.autoFarmSkipIds.clear::2b1cf544d3f4d84c": {
-      "name": "targetEntity",
+      "name": "v22b3V22b3TargetEntity",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x445db7(...)",
@@ -31159,7 +31159,7 @@
       }
     },
     "1::0::1::0::1::1::0::2::27::\"::Math|document::Math.abs|_0x45470a.stopImmediatePropagation|_0x5e95c5.addEventListener|_0x5e95c5.getBoundingClientRect|_0x913b73.target.closest|document.addEventListener|document.removeEventListener|if|includes::9b8cb439e498a563": {
-      "name": "offsetX",
+      "name": "v440eOffsetX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -31175,7 +31175,7 @@
       }
     },
     "1::0::1::0::1::1::0::2::27::\"::Math|document::Math.abs|_0x45470a.stopImmediatePropagation|_0x5e95c5.addEventListener|_0x5e95c5.getBoundingClientRect|_0x913b73.target.closest|document.addEventListener|document.removeEventListener|if|includes::2b9893371e68951f": {
-      "name": "offsetY",
+      "name": "v277cOffsetY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -31316,7 +31316,7 @@
       }
     },
     "0::0::1::0::1::0::0::2::81::\"::document::_0x1de93a.classList.add|_0x20c7bf.querySelector|_0x24d516.classList.toggle|_0x3b75e6.stopPropagation|_0x3d0064.classList.add|_0x3d0064.classList.remove|document.body.appendChild|document.createElement|if|parseInt::b072677dc39a7d96": {
-      "name": "mainBody",
+      "name": "Body",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x20c7bf.querySelector(...)",
@@ -31344,7 +31344,7 @@
       }
     },
     "0::0::1::0::1::0::0::2::81::\"::document::_0x1de93a.classList.add|_0x20c7bf.querySelector|_0x24d516.classList.toggle|_0x3b75e6.stopPropagation|_0x3d0064.classList.add|_0x3d0064.classList.remove|document.body.appendChild|document.createElement|if|parseInt::388389a7c0562f82": {
-      "name": "spinButton",
+      "name": "v24d5V24d5SpinButton",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x20c7bf.querySelector(...)",
@@ -31377,7 +31377,7 @@
       }
     },
     "0::0::1::0::1::0::0::2::81::\"::document::_0x1de93a.classList.add|_0x20c7bf.querySelector|_0x24d516.classList.toggle|_0x3b75e6.stopPropagation|_0x3d0064.classList.add|_0x3d0064.classList.remove|document.body.appendChild|document.createElement|if|parseInt::8d5d89fd6534bdd1": {
-      "name": "turnRightKeyInput",
+      "name": "v5511V5511TurnRightKeyInput",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x20c7bf.querySelector(...)",
@@ -31434,7 +31434,7 @@
       }
     },
     "0::0::1::0::1::0::0::2::131::\"::Object|document|window::Boost|Close|Far|Medium|Nearest|Untrack|_0xf4c4e5.querySelector|document.body.appendChild|document.createElement|var::9280fd7608d1a8a5": {
-      "name": "espColorsSection",
+      "name": "v27b4V27b4EspColorsSection",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0xf4c4e5.querySelector(...)",
@@ -31479,7 +31479,7 @@
       }
     },
     "0::0::1::0::1::0::0::2::131::\"::Object|document|window::Boost|Close|Far|Medium|Nearest|Untrack|_0xf4c4e5.querySelector|document.body.appendChild|document.createElement|var::8e98ba46eb8e39eb": {
-      "name": "espBtn",
+      "name": "v1600V1600EspBtn",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0xf4c4e5.querySelector(...)",
@@ -31598,7 +31598,7 @@
       }
     },
     "0::0::0::0::1::0::0::1::46::\"::document|window::Key|_0x17c74a.preventDefault|_0x17c74a.stopPropagation|_0x216114.querySelector|_0x2314ce.stopPropagation|_0x3aa9d6.addEventListener|document.body.appendChild|document.createElement|var|window.lockKey.toUpperCase::685a99d9500daa1f": {
-      "name": "lockButton",
+      "name": "v4bccLockButton",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x216114.querySelector(...)",
@@ -31741,7 +31741,7 @@
       }
     },
     "0::0::1::0::1::0::0::1::50::\"::document|window::Farm|_0x1a996a.stopPropagation|_0x20a022.classList.add|_0x20a022.classList.remove|_0x312eff.querySelector|_0x344867.classList.add|_0x344867.classList.remove|document.body.appendChild|document.createElement|if::bbb0d8f73f6ef503": {
-      "name": "farmAvoidToggle",
+      "name": "v5283V5283FarmAvoidToggle",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x312eff.querySelector(...)",
@@ -31914,7 +31914,7 @@
       }
     },
     "0::0::1::0::1::0::0::1::7::\"::document::_0xc4ec51.forEach|document.getElementById|if::a78a9645498d9af6": {
-      "name": "mainPanel",
+      "name": "Panel",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "document.getElementById(...)",
@@ -31956,7 +31956,7 @@
       }
     },
     "module::aae74063a0c7f6de": {
-      "name": "currentTime",
+      "name": "CurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -32096,7 +32096,7 @@
       }
     },
     "module::eea207d2450de1bd": {
-      "name": "currentTime",
+      "name": "CurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -32112,7 +32112,7 @@
       }
     },
     "module::6aa10b67f803016a": {
-      "name": "offsetValue",
+      "name": "OffsetValue",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "400",
@@ -32140,7 +32140,7 @@
       }
     },
     "module::21273684ab82de00": {
-      "name": "counter",
+      "name": "Counter",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -32173,7 +32173,7 @@
       }
     },
     "module::02c018ea46704b9c": {
-      "name": "counter",
+      "name": "Counter",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -32190,7 +32190,7 @@
       }
     },
     "module::ca19dbcf006e2b19": {
-      "name": "currentTime",
+      "name": "CurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -32254,7 +32254,7 @@
       }
     },
     "2::0::1::0::1::0::0::3::15::\"::document::Event|InputEvent|_0x17069a.dispatchEvent|_0x17069a.focus|document.querySelector|if|setTimeout::5f2e2ad3557cd9f8": {
-      "name": "y",
+      "name": "v1a0cY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -32566,7 +32566,7 @@
       }
     },
     "1::0::1::0::1::0::0::1::7::\"::::MouseEvent|_0x3e6347.dispatchEvent|_0x3e6347.getBoundingClientRect|if::505313f70cdb2561": {
-      "name": "canvas",
+      "name": "v3e63Canvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x421aaf(...)",
@@ -32642,7 +32642,7 @@
       }
     },
     "0::1::1::1::1::0::0::6::9::::Object|window::Object.keys|catch|for|if::e7e9e5224f75e270": {
-      "name": "i",
+      "name": "v415eI",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -32822,7 +32822,7 @@
       }
     },
     "1::1::1::1::0::0::0::4::12::::Array|Object::Array.isArray|Object.keys|_0x24ec17.entitiesList.find|_0x387019.find|catch|for|if::808478c0746b82d8": {
-      "name": "entity",
+      "name": "v7565Entity",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -32911,7 +32911,7 @@
       }
     },
     "0::0::1::1::0::1::0::5::25::::Math::Math.atan2|Math.sqrt|_0x2b7d16.forEach|_0x411cd0.entities.push|_0x411cd0.entities.sort|_0x411cd0.food.push|_0x411cd0.food.sort|_0x411cd0.players.push|_0x411cd0.players.sort|if::4443ea6b8e8095b7": {
-      "name": "error",
+      "name": "Error",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -32939,7 +32939,7 @@
       }
     },
     "0::0::1::1::0::1::0::5::25::::Math::Math.atan2|Math.sqrt|_0x2b7d16.forEach|_0x411cd0.entities.push|_0x411cd0.entities.sort|_0x411cd0.food.push|_0x411cd0.food.sort|_0x411cd0.players.push|_0x411cd0.players.sort|if::74cddcfa9904594d": {
-      "name": "parsedState",
+      "name": "ParsedState",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x22f420(...)",
@@ -33076,7 +33076,7 @@
       }
     },
     "0::0::1::0::1::0::0::1::21::\"::document|window::_0x3da57f.getBoundingClientRect|document.body.appendChild|document.createElement|document.getElementById|if::211a932f134da53f": {
-      "name": "canvas",
+      "name": "v3da5Canvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x421aaf(...)",
@@ -33092,7 +33092,7 @@
       }
     },
     "0::0::1::0::1::0::0::1::21::\"::document|window::_0x3da57f.getBoundingClientRect|document.body.appendChild|document.createElement|document.getElementById|if::0c6be19d1881ac35": {
-      "name": "rect",
+      "name": "v2bf8Rect",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x3da57f.getBoundingClientRect(...)",
@@ -33245,7 +33245,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::96::\"::Date|Math|window::Date.now|Math.sin|_0x14f1c2.beginPath|_0x14f1c2.lineTo|_0x14f1c2.moveTo|_0x14f1c2.setLineDash|_0x14f1c2.stroke|_0x14f1c2.strokeRect|if|rgba::380ab6e88e5908a0": {
-      "name": "ctx",
+      "name": "v5c0cCtx",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -33284,7 +33284,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::96::\"::Date|Math|window::Date.now|Math.sin|_0x14f1c2.beginPath|_0x14f1c2.lineTo|_0x14f1c2.moveTo|_0x14f1c2.setLineDash|_0x14f1c2.stroke|_0x14f1c2.strokeRect|if|rgba::ced1ea8645ad7aaa": {
-      "name": "canvas",
+      "name": "v2953Canvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -33299,7 +33299,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::96::\"::Date|Math|window::Date.now|Math.sin|_0x14f1c2.beginPath|_0x14f1c2.lineTo|_0x14f1c2.moveTo|_0x14f1c2.setLineDash|_0x14f1c2.stroke|_0x14f1c2.strokeRect|if|rgba::d5f21dc1d0f290a0": {
-      "name": "myPos",
+      "name": "playerPos",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -33314,7 +33314,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::96::\"::Date|Math|window::Date.now|Math.sin|_0x14f1c2.beginPath|_0x14f1c2.lineTo|_0x14f1c2.moveTo|_0x14f1c2.setLineDash|_0x14f1c2.stroke|_0x14f1c2.strokeRect|if|rgba::c46b3e7a564dee6b": {
-      "name": "scale",
+      "name": "v3ffcScale",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -33358,7 +33358,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::96::\"::Date|Math|window::Date.now|Math.sin|_0x14f1c2.beginPath|_0x14f1c2.lineTo|_0x14f1c2.moveTo|_0x14f1c2.setLineDash|_0x14f1c2.stroke|_0x14f1c2.strokeRect|if|rgba::ebef64b6a4101836": {
-      "name": "centerX",
+      "name": "v15eaCenterX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -33373,7 +33373,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::96::\"::Date|Math|window::Date.now|Math.sin|_0x14f1c2.beginPath|_0x14f1c2.lineTo|_0x14f1c2.moveTo|_0x14f1c2.setLineDash|_0x14f1c2.stroke|_0x14f1c2.strokeRect|if|rgba::eee074bff3ef7cb6": {
-      "name": "centerY",
+      "name": "v4812CenterY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -33525,7 +33525,7 @@
       }
     },
     "4::0::1::0::1::1::0::4::96::\"::Date|Math|window::Date.now|Math.sin|_0x14f1c2.beginPath|_0x14f1c2.lineTo|_0x14f1c2.moveTo|_0x14f1c2.setLineDash|_0x14f1c2.stroke|_0x14f1c2.strokeRect|if|rgba::860dde60a05f567c": {
-      "name": "angle",
+      "name": "Angle",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Math.atan2(...)",
@@ -33655,7 +33655,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::63::\"::Math|window::_0x5512fa.arc|_0x5512fa.beginPath|_0x5512fa.fill|_0x5512fa.lineTo|_0x5512fa.moveTo|_0x5512fa.roundRect|_0x5512fa.stroke|for|if|rgba::87bddfc7becca222": {
-      "name": "ctx",
+      "name": "v3782Ctx",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -33689,7 +33689,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::63::\"::Math|window::_0x5512fa.arc|_0x5512fa.beginPath|_0x5512fa.fill|_0x5512fa.lineTo|_0x5512fa.moveTo|_0x5512fa.roundRect|_0x5512fa.stroke|for|if|rgba::e580eb6d252b027e": {
-      "name": "canvas",
+      "name": "v4e44Canvas",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -33703,7 +33703,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::63::\"::Math|window::_0x5512fa.arc|_0x5512fa.beginPath|_0x5512fa.fill|_0x5512fa.lineTo|_0x5512fa.moveTo|_0x5512fa.roundRect|_0x5512fa.stroke|for|if|rgba::aeb723c99d05491f": {
-      "name": "gameData",
+      "name": "v15a9GameData",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -33819,7 +33819,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::63::\"::Math|window::_0x5512fa.arc|_0x5512fa.beginPath|_0x5512fa.fill|_0x5512fa.lineTo|_0x5512fa.moveTo|_0x5512fa.roundRect|_0x5512fa.stroke|for|if|rgba::8d45702748d20918": {
-      "name": "espMode",
+      "name": "v662bEspMode",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "window.espMode",
@@ -33833,7 +33833,7 @@
       }
     },
     "3::1::1::0::1::1::0::1::63::\"::Math|window::_0x5512fa.arc|_0x5512fa.beginPath|_0x5512fa.fill|_0x5512fa.lineTo|_0x5512fa.moveTo|_0x5512fa.roundRect|_0x5512fa.stroke|for|if|rgba::d079077ae30ad1c3": {
-      "name": "entities",
+      "name": "v59c7Entities",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -33913,7 +33913,7 @@
       }
     },
     "0::0::1::0::1::0::0::1::17::\"::document|window::_0x1679ec.getContext|_0x39f2dc.getContext|_0x43377e.clearRect|_0xc073ae.clearRect|document.getElementById|if|requestAnimationFrame::3526528296284164": {
-      "name": "ctx",
+      "name": "Ctx",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x1679ec.getContext(...)",
@@ -33929,7 +33929,7 @@
       }
     },
     "0::0::1::0::1::0::0::1::17::\"::document|window::_0x1679ec.getContext|_0x39f2dc.getContext|_0x43377e.clearRect|_0xc073ae.clearRect|document.getElementById|if|requestAnimationFrame::e8fca6a1fa7a7d77": {
-      "name": "entities",
+      "name": "v237fEntities",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x52275e(...)",
@@ -33977,7 +33977,7 @@
       }
     },
     "0::0::1::0::1::0::0::0::4::\"::window::if::21c66d15e76ae9c7": {
-      "name": "gameData",
+      "name": "v11abGameData",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x52275e(...)",
@@ -33991,7 +33991,7 @@
       }
     },
     "2::0::1::0::1::0::0::1::5::\"::::PointerEvent|_0x287729.dispatchEvent|if|setTimeout::5f2e2ad3557cd9f8": {
-      "name": "y",
+      "name": "v1a0cY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -34019,7 +34019,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x21d797.dispatchEvent|_0x21d797.getBoundingClientRect|if::01eba22656755e90": {
-      "name": "targetX",
+      "name": "v3f58TargetX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -34059,7 +34059,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x21d797.dispatchEvent|_0x21d797.getBoundingClientRect|if::505313f70cdb2561": {
-      "name": "targetElement",
+      "name": "v21d7TargetElement",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x421aaf(...)",
@@ -34109,7 +34109,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x21d797.dispatchEvent|_0x21d797.getBoundingClientRect|if::d26a7190dab1996a": {
-      "name": "centerX",
+      "name": "v39c0CenterX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -34124,7 +34124,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x21d797.dispatchEvent|_0x21d797.getBoundingClientRect|if::32379d208776a1f6": {
-      "name": "centerY",
+      "name": "v11cfCenterY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -34169,7 +34169,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x21d797.dispatchEvent|_0x21d797.getBoundingClientRect|if::9e7789086936bd17": {
-      "name": "distance",
+      "name": "Distance",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Math.sqrt(...)",
@@ -34210,7 +34210,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x21d797.dispatchEvent|_0x21d797.getBoundingClientRect|if::99f2bd52a0425358": {
-      "name": "offsetX",
+      "name": "v4daeOffsetX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -34226,7 +34226,7 @@
       }
     },
     "3::0::1::0::1::1::0::2::28::\"::Math::Math.min|Math.sqrt|MouseEvent|_0x21d797.dispatchEvent|_0x21d797.getBoundingClientRect|if::9ee2435ac7dda317": {
-      "name": "offsetY",
+      "name": "v1429OffsetY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -34340,7 +34340,7 @@
       }
     },
     "0::1::1::1::1::1::0::8::77::::Date|Math|window::Date.now|Math.atan2|Math.sqrt|_0x1e0357.forEach|_0x1e0357.push|_0x2ce726.some|_0xc71ac0.forEach|for|if|setTimeout::74cddcfa9904594d": {
-      "name": "parsedState",
+      "name": "ParsedState",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x22f420(...)",
@@ -34354,7 +34354,7 @@
       }
     },
     "0::1::1::1::1::1::0::8::77::::Date|Math|window::Date.now|Math.atan2|Math.sqrt|_0x1e0357.forEach|_0x1e0357.push|_0x2ce726.some|_0xc71ac0.forEach|for|if|setTimeout::54795db80eee6707": {
-      "name": "myAnimal",
+      "name": "v1f29MyAnimal",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x32239d?.myAnimals?.?",
@@ -34403,7 +34403,7 @@
       }
     },
     "0::1::1::1::1::1::0::8::77::::Date|Math|window::Date.now|Math.atan2|Math.sqrt|_0x1e0357.forEach|_0x1e0357.push|_0x2ce726.some|_0xc71ac0.forEach|for|if|setTimeout::634e750ee525ef6b": {
-      "name": "currentTime",
+      "name": "v2bc0CurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Date.now(...)",
@@ -34482,7 +34482,7 @@
       }
     },
     "0::1::1::1::1::1::0::8::77::::Date|Math|window::Date.now|Math.atan2|Math.sqrt|_0x1e0357.forEach|_0x1e0357.push|_0x2ce726.some|_0xc71ac0.forEach|for|if|setTimeout::391c5b20508ca855": {
-      "name": "magnitude",
+      "name": "v198eMagnitude",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Math.sqrt(...)",
@@ -34498,7 +34498,7 @@
       }
     },
     "0::1::1::1::1::1::0::8::77::::Date|Math|window::Date.now|Math.atan2|Math.sqrt|_0x1e0357.forEach|_0x1e0357.push|_0x2ce726.some|_0xc71ac0.forEach|for|if|setTimeout::5703dc1cec92fa2d": {
-      "name": "angle",
+      "name": "v6818Angle",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Math.atan2(...)",
@@ -34654,7 +34654,7 @@
       }
     },
     "2::0::0::0::1::0::0::1::3::::Date|window::Date.now|window.autoFarmSkipAreas.filter|window.autoFarmSkipAreas.some::b5b2650ecdf4d5cb": {
-      "name": "currentTime",
+      "name": "v39acCurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Date.now(...)",
@@ -34668,7 +34668,7 @@
       }
     },
     "2::0::1::0::1::0::0::0::8::\"::Date|window::Date.now|if|window.autoFarmSkipAreas.filter|window.autoFarmSkipAreas.find|window.autoFarmSkipAreas.push::ee7134f137f1df6c": {
-      "name": "currentTime",
+      "name": "v1cf7CurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Date.now(...)",
@@ -34682,7 +34682,7 @@
       }
     },
     "2::0::0::0::1::0::0::1::3::::Date|window::Date.now|window.autoFarmSkipAreas.filter|window.autoFarmSkipAreas.some::e9208a1ca59356d8": {
-      "name": "currentTime",
+      "name": "v5c00CurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Date.now(...)",
@@ -34724,7 +34724,7 @@
       }
     },
     "1::0::1::1::1::0::0::8::23::::window::_0x52a671.forEach|catch|if|window.autoFarmSkipIds.has::0f0cb719a5bfb7b7": {
-      "name": "gameState",
+      "name": "v286cGameState",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x4b3486(...)",
@@ -34779,7 +34779,7 @@
       }
     },
     "1::0::1::1::1::0::0::8::23::::window::_0x52a671.forEach|catch|if|window.autoFarmSkipIds.has::d079077ae30ad1c3": {
-      "name": "entities",
+      "name": "v52a6Entities",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -34825,7 +34825,7 @@
       }
     },
     "1::0::1::1::1::0::0::8::22::::window::_0x4086f8.forEach|_0x561801.push|_0x561801.sort|catch|if|window.autoFarmSkipIds.has::6f15af0fe448bc71": {
-      "name": "farmRange",
+      "name": "v2ebbFarmRange",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -34853,7 +34853,7 @@
       }
     },
     "1::0::1::1::1::0::0::8::22::::window::_0x4086f8.forEach|_0x561801.push|_0x561801.sort|catch|if|window.autoFarmSkipIds.has::0f0cb719a5bfb7b7": {
-      "name": "gameState",
+      "name": "v286cGameState",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x4b3486(...)",
@@ -34881,7 +34881,7 @@
       }
     },
     "1::0::1::1::1::0::0::8::22::::window::_0x4086f8.forEach|_0x561801.push|_0x561801.sort|catch|if|window.autoFarmSkipIds.has::1fd974f65b7a1a49": {
-      "name": "playerAnimal",
+      "name": "v50dbPlayerAnimal",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x4e0ddd?.myAnimals?.?",
@@ -34908,7 +34908,7 @@
       }
     },
     "1::0::1::1::1::0::0::8::22::::window::_0x4086f8.forEach|_0x561801.push|_0x561801.sort|catch|if|window.autoFarmSkipIds.has::d079077ae30ad1c3": {
-      "name": "entities",
+      "name": "v52a6Entities",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -34958,7 +34958,7 @@
       }
     },
     "2::0::1::0::1::0::0::2::17::::window::_0x228c62.forEach|if::2db7ad5e67b14711": {
-      "name": "farmRange",
+      "name": "v5362FarmRange",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -35047,7 +35047,7 @@
       }
     },
     "1::0::1::1::1::0::0::6::20::::window::_0x16d644.push|_0x16d644.sort|_0x3a213d.forEach|catch|if::0f0cb719a5bfb7b7": {
-      "name": "gameState",
+      "name": "v286cGameState",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x4b3486(...)",
@@ -35075,7 +35075,7 @@
       }
     },
     "1::0::1::1::1::0::0::6::20::::window::_0x16d644.push|_0x16d644.sort|_0x3a213d.forEach|catch|if::cd814e937a9a03aa": {
-      "name": "playerAnimal",
+      "name": "PlayerAnimal",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x342e04?.myAnimals?.?",
@@ -35102,7 +35102,7 @@
       }
     },
     "1::0::1::1::1::0::0::6::20::::window::_0x16d644.push|_0x16d644.sort|_0x3a213d.forEach|catch|if::d079077ae30ad1c3": {
-      "name": "entities",
+      "name": "v52a6Entities",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "?",
@@ -35265,7 +35265,7 @@
       }
     },
     "1::0::1::0::1::1::0::3::21::::Date|Math|window::Date.now|Math.cos|Math.random|Math.sin|if|window.autoFarmSkipIds.add::8a6bfdf3efa9ef5b": {
-      "name": "now",
+      "name": "v4793Now",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Date.now(...)",
@@ -35350,7 +35350,7 @@
       }
     },
     "0::1::1::0::1::1::0::1::10::::Math|window::Math.cos|Math.sin|for|if|window.autoFarmPatrolPoints.push::80097d428471712f": {
-      "name": "i",
+      "name": "I",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -35389,7 +35389,7 @@
       }
     },
     "0::0::1::1::1::1::0::5::88::\"::Date|Math|console|document|window::Date.now|Math.abs|Math.cos|Math.random|_0x3cc3c7.classList.remove|document.getElementById|if|setTimeout|window.autoFarmSkipIds.add|window.autoFarmSkipIds.clear::539be08248e872f0": {
-      "name": "now",
+      "name": "v2a82Now",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Date.now(...)",
@@ -35463,7 +35463,7 @@
       }
     },
     "0::0::1::1::1::1::0::5::88::\"::Date|Math|console|document|window::Date.now|Math.abs|Math.cos|Math.random|_0x3cc3c7.classList.remove|document.getElementById|if|setTimeout|window.autoFarmSkipIds.add|window.autoFarmSkipIds.clear::f5f2c913c98028d8": {
-      "name": "finalX",
+      "name": "v2cffFinalX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "literal",
@@ -35482,7 +35482,7 @@
       }
     },
     "0::0::1::1::1::1::0::5::88::\"::Date|Math|console|document|window::Date.now|Math.abs|Math.cos|Math.random|_0x3cc3c7.classList.remove|document.getElementById|if|setTimeout|window.autoFarmSkipIds.add|window.autoFarmSkipIds.clear::0f81ae9aba408e9b": {
-      "name": "finalY",
+      "name": "v556bFinalY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "literal",
@@ -35501,7 +35501,7 @@
       }
     },
     "0::0::1::1::1::1::0::5::88::\"::Date|Math|console|document|window::Date.now|Math.abs|Math.cos|Math.random|_0x3cc3c7.classList.remove|document.getElementById|if|setTimeout|window.autoFarmSkipIds.add|window.autoFarmSkipIds.clear::e018f3862c621fa4": {
-      "name": "minDistance",
+      "name": "v13a2MinDistance",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "Infinity",
@@ -35522,7 +35522,7 @@
       }
     },
     "0::0::1::1::1::1::0::5::88::\"::Date|Math|console|document|window::Date.now|Math.abs|Math.cos|Math.random|_0x3cc3c7.classList.remove|document.getElementById|if|setTimeout|window.autoFarmSkipIds.add|window.autoFarmSkipIds.clear::3c47a3a15037d64a": {
-      "name": "nearbyTarget",
+      "name": "v5d64V5d64NearbyTarget",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x4a2a30(...)",
@@ -35670,7 +35670,7 @@
       }
     },
     "1::0::1::0::1::1::0::2::27::\"::Math|document::Math.abs|_0x10c129.target.closest|_0x367e5d.stopImmediatePropagation|_0xc74399.addEventListener|_0xc74399.getBoundingClientRect|document.addEventListener|document.removeEventListener|if|includes::36244304731fcf70": {
-      "name": "offsetX",
+      "name": "v279dOffsetX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -35686,7 +35686,7 @@
       }
     },
     "1::0::1::0::1::1::0::2::27::\"::Math|document::Math.abs|_0x10c129.target.closest|_0x367e5d.stopImmediatePropagation|_0xc74399.addEventListener|_0xc74399.getBoundingClientRect|document.addEventListener|document.removeEventListener|if|includes::65c94f867c8e8c99": {
-      "name": "offsetY",
+      "name": "OffsetY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -35841,7 +35841,7 @@
       }
     },
     "0::0::1::0::1::0::0::2::85::\"::document::_0x1ec0a9.querySelector|_0x2f7aa3.classList.add|_0x4d79d1.classList.add|_0x5defdb.classList.add|_0x5defdb.classList.remove|_0x9a5d6b.stopPropagation|document.body.appendChild|document.createElement|if|parseInt::12369e1b012cc1da": {
-      "name": "mainBody",
+      "name": "Body",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x1ec0a9.querySelector(...)",
@@ -35869,7 +35869,7 @@
       }
     },
     "0::0::1::0::1::0::0::2::85::\"::document::_0x1ec0a9.querySelector|_0x2f7aa3.classList.add|_0x4d79d1.classList.add|_0x5defdb.classList.add|_0x5defdb.classList.remove|_0x9a5d6b.stopPropagation|document.body.appendChild|document.createElement|if|parseInt::7d58ed20490a9e32": {
-      "name": "spinBtn",
+      "name": "v4d79V4d79SpinBtn",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x1ec0a9.querySelector(...)",
@@ -35902,7 +35902,7 @@
       }
     },
     "0::0::1::0::1::0::0::2::85::\"::document::_0x1ec0a9.querySelector|_0x2f7aa3.classList.add|_0x4d79d1.classList.add|_0x5defdb.classList.add|_0x5defdb.classList.remove|_0x9a5d6b.stopPropagation|document.body.appendChild|document.createElement|if|parseInt::b778f552406d6aa1": {
-      "name": "turnRightKeyInput",
+      "name": "v38c3V38c3TurnRightKeyInput",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x1ec0a9.querySelector(...)",
@@ -36004,7 +36004,7 @@
       }
     },
     "0::0::1::0::1::0::0::2::80::\"::document|window::Boost|Farm|Nearest|Untrack|_0x398861.querySelector|_0x700032.preventDefault|_0xa57fd8.stopPropagation|document.body.appendChild|document.createElement|if::f59308f252797ef0": {
-      "name": "autoDodgeBtn",
+      "name": "AutoDodgeBtn",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x398861.querySelector(...)",
@@ -36020,7 +36020,7 @@
       }
     },
     "0::0::1::0::1::0::0::2::80::\"::document|window::Boost|Farm|Nearest|Untrack|_0x398861.querySelector|_0x700032.preventDefault|_0xa57fd8.stopPropagation|document.body.appendChild|document.createElement|if::d9aa859c9eb94be8": {
-      "name": "farmModeSelect",
+      "name": "v3880V3880FarmModeSelect",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x398861.querySelector(...)",
@@ -36222,7 +36222,7 @@
       }
     },
     "0::0::1::0::1::0::0::1::8::\"::document::_0x2620c8.forEach|document.getElementById|if::a78a9645498d9af6": {
-      "name": "mainPanel",
+      "name": "Panel",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "document.getElementById(...)",
@@ -36264,7 +36264,7 @@
       }
     },
     "module::ccfb530fa1a97171": {
-      "name": "currentTime",
+      "name": "CurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -36366,7 +36366,7 @@
       }
     },
     "module::8ab08b302be45fbe": {
-      "name": "playerData",
+      "name": "PlayerData",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -36404,7 +36404,7 @@
       }
     },
     "module::81a0632d0097b128": {
-      "name": "currentTime",
+      "name": "CurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -36435,7 +36435,7 @@
       }
     },
     "module::87b801723e316604": {
-      "name": "offsetValue",
+      "name": "OffsetValue",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "400",
@@ -36463,7 +36463,7 @@
       }
     },
     "module::8a7038092c699372": {
-      "name": "counter",
+      "name": "Counter",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -36480,7 +36480,7 @@
       }
     },
     "module::5b1ca97474770270": {
-      "name": "currentTime",
+      "name": "CurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -36496,7 +36496,7 @@
       }
     },
     "module::d9d62297c03c3321": {
-      "name": "counter",
+      "name": "Counter",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -36513,7 +36513,7 @@
       }
     },
     "module::5b10fda90e12a7aa": {
-      "name": "currentTime",
+      "name": "CurrentTime",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -36577,7 +36577,7 @@
       }
     },
     "2::0::1::0::1::0::0::3::16::\"::document::Event|InputEvent|_0x3abdc7.dispatchEvent|_0x3abdc7.focus|document.querySelector|if|setTimeout::5f2e2ad3557cd9f8": {
-      "name": "y",
+      "name": "v1a0cY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -36755,7 +36755,7 @@
       }
     },
     "1::0::1::0::1::0::0::2::20::\"::console|document::Event|InputEvent|_0x35c3ee.click|_0x3a265f.blur|_0x3a265f.dispatchEvent|_0x3a265f.focus|console.warn|document.querySelector|if|setTimeout::93bbdc27fd4b3d3b": {
-      "name": "charIndex",
+      "name": "v291aCharIndex",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -37152,7 +37152,7 @@
       }
     },
     "0::1::1::0::1::1::0::2::152::\"|'::Math|button|document|history|localStorage::blur|child|document.createElement|document.head.appendChild|gradient|rgba|rotate|translateX|translateY|var::264d1f1ab6d87118": {
-      "name": "i",
+      "name": "I",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -37220,7 +37220,7 @@
       }
     },
     "0::1::1::0::1::1::0::3::273::\"|'::Math|classList|div|document|localStorage|panel::blur|child|document.createElement|gradient|not|rgba|rotate|translateX|translateY|var::75afdf40dffe1d80": {
-      "name": "spoofButton",
+      "name": "v2413SpoofButton",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x4fc878.querySelector(...)",
@@ -37234,7 +37234,7 @@
       }
     },
     "0::1::1::0::1::1::0::3::273::\"|'::Math|classList|div|document|localStorage|panel::blur|child|document.createElement|gradient|not|rgba|rotate|translateX|translateY|var::029da521eb420014": {
-      "name": "autoChatButton",
+      "name": "v4da6AutoChatButton",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x4fc878.querySelector(...)",
@@ -37334,7 +37334,7 @@
       }
     },
     "0::1::1::0::1::1::0::3::273::\"|'::Math|classList|div|document|localStorage|panel::blur|child|document.createElement|gradient|not|rgba|rotate|translateX|translateY|var::264d1f1ab6d87118": {
-      "name": "i",
+      "name": "I",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -37402,7 +37402,7 @@
       }
     },
     "0::1::1::0::1::1::0::4::205::\"|'::Math|classList|document|localStorage|panel::blur|child|document.createElement|gradient|not|rgba|rotate|translateX|translateY|var::574bba9a66002cfc": {
-      "name": "astraVisionButton",
+      "name": "v2414AstraVisionButton",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0xd39926.querySelector(...)",
@@ -37482,7 +37482,7 @@
       }
     },
     "0::1::1::0::1::1::0::4::205::\"|'::Math|classList|document|localStorage|panel::blur|child|document.createElement|gradient|not|rgba|rotate|translateX|translateY|var::264d1f1ab6d87118": {
-      "name": "i",
+      "name": "I",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -37753,7 +37753,7 @@
       }
     },
     "0::1::1::0::1::1::0::3::227::\"|'::Math|classList|document|localStorage|panel::blur|child|document.createElement|gradient|not|rgba|rotate|translateX|translateY|var::87a187d17a3e7db8": {
-      "name": "offsetX",
+      "name": "v76deOffsetX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -37769,7 +37769,7 @@
       }
     },
     "0::1::1::0::1::1::0::3::227::\"|'::Math|classList|document|localStorage|panel::blur|child|document.createElement|gradient|not|rgba|rotate|translateX|translateY|var::a641f5e07d8700f6": {
-      "name": "offsetY",
+      "name": "v1330OffsetY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -37800,7 +37800,7 @@
       }
     },
     "0::1::1::0::1::1::0::3::227::\"|'::Math|classList|document|localStorage|panel::blur|child|document.createElement|gradient|not|rgba|rotate|translateX|translateY|var::264d1f1ab6d87118": {
-      "name": "i",
+      "name": "I",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -37829,7 +37829,7 @@
       }
     },
     "0::0::0::0::1::0::0::0::10::\"::document::document.getElementById::a78a9645498d9af6": {
-      "name": "mainPanel",
+      "name": "Panel",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "document.getElementById(...)",
@@ -37903,7 +37903,7 @@
       }
     },
     "module::7959dd471d63017d": {
-      "name": "appState",
+      "name": "State",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -37941,7 +37941,7 @@
       }
     },
     "module::7a39f11cfe9238b3": {
-      "name": "config",
+      "name": "Config",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "{...}",
@@ -37957,7 +37957,7 @@
       }
     },
     "module::349681f016d5bd1f": {
-      "name": "config",
+      "name": "Config",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "{...}",
@@ -38031,7 +38031,7 @@
       }
     },
     "2::0::1::0::1::0::0::3::16::\"::document::Event|InputEvent|_0x2322c7.dispatchEvent|_0x2322c7.focus|document.querySelector|if|setTimeout::5f2e2ad3557cd9f8": {
-      "name": "y",
+      "name": "v1a0cY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -38540,7 +38540,7 @@
       }
     },
     "0::0::1::0::1::1::0::3::213::\"|'::Math|classList|div|document::Characters|Name|blur|document.createElement|document.head.appendChild|gradient|not|rgba|translateY|var::733b9666aba8b752": {
-      "name": "spoofButton",
+      "name": "v44d3SpoofButton",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x450b63.querySelector(...)",
@@ -38554,7 +38554,7 @@
       }
     },
     "0::0::1::0::1::1::0::3::213::\"|'::Math|classList|div|document::Characters|Name|blur|document.createElement|document.head.appendChild|gradient|not|rgba|translateY|var::ce2608c8c5514394": {
-      "name": "autoChatButton",
+      "name": "v3d6fAutoChatButton",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x450b63.querySelector(...)",
@@ -38607,7 +38607,7 @@
       }
     },
     "0::0::1::0::1::1::0::3::213::\"|'::Math|classList|div|document::Characters|Name|blur|document.createElement|document.head.appendChild|gradient|not|rgba|translateY|var::612c09b749461e34": {
-      "name": "offsetX",
+      "name": "OffsetX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -38623,7 +38623,7 @@
       }
     },
     "0::0::1::0::1::1::0::3::213::\"|'::Math|classList|div|document::Characters|Name|blur|document.createElement|document.head.appendChild|gradient|not|rgba|translateY|var::c22c1c5261e6fba3": {
-      "name": "offsetY",
+      "name": "v1593OffsetY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -38691,7 +38691,7 @@
       }
     },
     "0::0::1::0::1::1::0::4::145::\"|'::Math|classList|document::Boost|Vision|blur|document.createElement|document.head.appendChild|gradient|not|rgba|translateY|var::5b77cbe52bec3cf6": {
-      "name": "astraVisionButton",
+      "name": "v5d8eAstraVisionButton",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x2a84c2.querySelector(...)",
@@ -38978,7 +38978,7 @@
       }
     },
     "0::0::1::0::1::1::0::3::156::\"|'::Math|classList|document|localStorage::Blue|blur|document.body.appendChild|document.createElement|document.head.appendChild|gradient|not|rgba|translateY|var::292c69fbf6ea9313": {
-      "name": "offsetX",
+      "name": "OffsetX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -38994,7 +38994,7 @@
       }
     },
     "0::0::1::0::1::1::0::3::156::\"|'::Math|classList|document|localStorage::Blue|blur|document.body.appendChild|document.createElement|document.head.appendChild|gradient|not|rgba|translateY|var::9f4ca1e864a58837": {
-      "name": "offsetY",
+      "name": "v86fbOffsetY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -39039,7 +39039,7 @@
       }
     },
     "0::0::0::0::0::0::0::1::7::::::::03a01be9cb775d61": {
-      "name": "mainPanelElement",
+      "name": "PanelElement",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x533fc4(...)",
@@ -39143,7 +39143,7 @@
       }
     },
     "module::d9d9afc14bcdd92d": {
-      "name": "config",
+      "name": "Config",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "{...}",
@@ -39203,7 +39203,7 @@
       }
     },
     "2::0::1::0::1::0::0::3::16::\"::document::Event|InputEvent|_0xbb78d6.dispatchEvent|_0xbb78d6.focus|document.querySelector|if|setTimeout::5f2e2ad3557cd9f8": {
-      "name": "y",
+      "name": "v1a0cY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -39345,7 +39345,7 @@
       }
     },
     "1::0::1::0::1::0::0::2::20::\"::console|document::Event|InputEvent|_0x1e90b1.blur|_0x1e90b1.dispatchEvent|_0x1e90b1.focus|_0x5b2ecd.click|console.warn|document.querySelector|if|setTimeout::aaf28d16b0703248": {
-      "name": "textToType",
+      "name": "v3024TextToType",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -39381,7 +39381,7 @@
       }
     },
     "1::0::1::0::1::0::0::2::20::\"::console|document::Event|InputEvent|_0x1e90b1.blur|_0x1e90b1.dispatchEvent|_0x1e90b1.focus|_0x5b2ecd.click|console.warn|document.querySelector|if|setTimeout::322c9b17e35d72e7": {
-      "name": "charIndex",
+      "name": "v267fCharIndex",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -39712,7 +39712,7 @@
       }
     },
     "0::0::1::0::1::1::0::3::214::\"|'::Math|classList|div|document::Characters|Name|blur|document.createElement|document.head.appendChild|gradient|not|rgba|translateY|var::6530ccadc906d879": {
-      "name": "spoofButton",
+      "name": "v239eV239eSpoofButton",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x123ef0.querySelector(...)",
@@ -39726,7 +39726,7 @@
       }
     },
     "0::0::1::0::1::1::0::3::214::\"|'::Math|classList|div|document::Characters|Name|blur|document.createElement|document.head.appendChild|gradient|not|rgba|translateY|var::b2ec13e825c7e2fe": {
-      "name": "autoChatButton",
+      "name": "v3b40V3b40AutoChatButton",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x123ef0.querySelector(...)",
@@ -39779,7 +39779,7 @@
       }
     },
     "0::0::1::0::1::1::0::3::214::\"|'::Math|classList|div|document::Characters|Name|blur|document.createElement|document.head.appendChild|gradient|not|rgba|translateY|var::3f12ea4cb12bbbe1": {
-      "name": "offsetX",
+      "name": "v3ad6OffsetX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -39795,7 +39795,7 @@
       }
     },
     "0::0::1::0::1::1::0::3::214::\"|'::Math|classList|div|document::Characters|Name|blur|document.createElement|document.head.appendChild|gradient|not|rgba|translateY|var::9df3b615556090d3": {
-      "name": "offsetY",
+      "name": "v1f8aOffsetY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -39863,7 +39863,7 @@
       }
     },
     "0::0::1::0::1::1::0::4::141::\"|'::Math|classList|document::Boost|Vision|blur|document.createElement|document.head.appendChild|gradient|not|rgba|translateY|var::1dafb671647ee665": {
-      "name": "astraVisionButton",
+      "name": "v44a0V44a0AstraVisionButton",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0xbeaa2a.querySelector(...)",
@@ -39896,7 +39896,7 @@
       }
     },
     "0::0::1::0::1::1::0::4::141::\"|'::Math|classList|document::Boost|Vision|blur|document.createElement|document.head.appendChild|gradient|not|rgba|translateY|var::fa0f0705de8cbf13": {
-      "name": "offsetX",
+      "name": "v3a60OffsetX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -39912,7 +39912,7 @@
       }
     },
     "0::0::1::0::1::1::0::4::141::\"|'::Math|classList|document::Boost|Vision|blur|document.createElement|document.head.appendChild|gradient|not|rgba|translateY|var::c787cc21ed3f18fa": {
-      "name": "offsetY",
+      "name": "v4035OffsetY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -40070,7 +40070,7 @@
       }
     },
     "0::0::1::0::1::1::0::3::138::\"|'::Math|classList|document|localStorage::_0xe13ce1.querySelector|blur|document.body.appendChild|document.createElement|document.head.appendChild|gradient|not|rgba|translateY|var::75b57592622763df": {
-      "name": "offsetX",
+      "name": "v35bcOffsetX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -40086,7 +40086,7 @@
       }
     },
     "0::0::1::0::1::1::0::3::138::\"|'::Math|classList|document|localStorage::_0xe13ce1.querySelector|blur|document.body.appendChild|document.createElement|document.head.appendChild|gradient|not|rgba|translateY|var::9c3e915f16a88753": {
-      "name": "offsetY",
+      "name": "v9b1bOffsetY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -40131,7 +40131,7 @@
       }
     },
     "0::0::0::0::0::0::0::1::7::::::::f17d0c5c972d0efd": {
-      "name": "mainPanelElement",
+      "name": "PanelElement",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x139ecb(...)",
@@ -40235,7 +40235,7 @@
       }
     },
     "module::d5b6eab4e5405e15": {
-      "name": "config",
+      "name": "Config",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "{...}",
@@ -40295,7 +40295,7 @@
       }
     },
     "2::0::1::0::1::0::0::3::16::\"::document::Event|InputEvent|_0x4e2f5a.dispatchEvent|_0x4e2f5a.focus|document.querySelector|if|setTimeout::5f2e2ad3557cd9f8": {
-      "name": "y",
+      "name": "v1a0cY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -40437,7 +40437,7 @@
       }
     },
     "1::0::1::0::1::0::0::2::20::\"::console|document::Event|InputEvent|_0x3e14ab.click|_0x5625b6.blur|_0x5625b6.dispatchEvent|_0x5625b6.focus|console.warn|document.querySelector|if|setTimeout::8c007ed7de2388c7": {
-      "name": "textToType",
+      "name": "v2ae1TextToType",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -40473,7 +40473,7 @@
       }
     },
     "1::0::1::0::1::0::0::2::20::\"::console|document::Event|InputEvent|_0x3e14ab.click|_0x5625b6.blur|_0x5625b6.dispatchEvent|_0x5625b6.focus|console.warn|document.querySelector|if|setTimeout::57adecbffebaf9b3": {
-      "name": "charIndex",
+      "name": "v57b6CharIndex",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -40847,7 +40847,7 @@
       }
     },
     "0::0::1::0::1::1::0::3::214::\"|'::Math|button|classList|div|document::Characters|Name|_0x3b4912.querySelector|_0x3bfa93.stopPropagation|document.body.appendChild|document.createElement|document.head.appendChild|not|rgba|translateY::64d2af385143768b": {
-      "name": "spoofButton",
+      "name": "v2136SpoofButton",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x3b4912.querySelector(...)",
@@ -40861,7 +40861,7 @@
       }
     },
     "0::0::1::0::1::1::0::3::214::\"|'::Math|button|classList|div|document::Characters|Name|_0x3b4912.querySelector|_0x3bfa93.stopPropagation|document.body.appendChild|document.createElement|document.head.appendChild|not|rgba|translateY::a0c542fb5a09c0ec": {
-      "name": "autoChatButton",
+      "name": "v2ffaAutoChatButton",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x3b4912.querySelector(...)",
@@ -40914,7 +40914,7 @@
       }
     },
     "0::0::1::0::1::1::0::3::214::\"|'::Math|button|classList|div|document::Characters|Name|_0x3b4912.querySelector|_0x3bfa93.stopPropagation|document.body.appendChild|document.createElement|document.head.appendChild|not|rgba|translateY::ff1bccbffc8ac7f8": {
-      "name": "offsetX",
+      "name": "v1985OffsetX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -40930,7 +40930,7 @@
       }
     },
     "0::0::1::0::1::1::0::3::214::\"|'::Math|button|classList|div|document::Characters|Name|_0x3b4912.querySelector|_0x3bfa93.stopPropagation|document.body.appendChild|document.createElement|document.head.appendChild|not|rgba|translateY::cf432fe17bef10e4": {
-      "name": "offsetY",
+      "name": "v12c5OffsetY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -41041,7 +41041,7 @@
       }
     },
     "0::0::1::0::1::1::0::4::143::\"|'::Math|button|classList|document::Boost|Vision|_0x18ae3f.querySelector|_0x57c7fb.stopPropagation|document.body.appendChild|document.createElement|document.head.appendChild|not|rgba|translateY::0943eb646aa9cf95": {
-      "name": "astraVisionBtn",
+      "name": "v3fd4AstraVisionBtn",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x18ae3f.querySelector(...)",
@@ -41058,7 +41058,7 @@
       }
     },
     "0::0::1::0::1::1::0::4::143::\"|'::Math|button|classList|document::Boost|Vision|_0x18ae3f.querySelector|_0x57c7fb.stopPropagation|document.body.appendChild|document.createElement|document.head.appendChild|not|rgba|translateY::e837df2e026382fe": {
-      "name": "offsetX",
+      "name": "v3e3bOffsetX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -41074,7 +41074,7 @@
       }
     },
     "0::0::1::0::1::1::0::4::143::\"|'::Math|button|classList|document::Boost|Vision|_0x18ae3f.querySelector|_0x57c7fb.stopPropagation|document.body.appendChild|document.createElement|document.head.appendChild|not|rgba|translateY::5ab81c0209cff1fd": {
-      "name": "offsetY",
+      "name": "v3748OffsetY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -41275,7 +41275,7 @@
       }
     },
     "0::0::1::0::1::1::0::3::149::\"|'::Math|button|classList|document|localStorage::_0x4420e2.querySelector|_0xb4d0d7.value.trim|document.body.appendChild|document.createElement|document.head.appendChild|if|localStorage.getItem|not|rgba|translateY::0cbc2fe8a9cd12f8": {
-      "name": "offsetX",
+      "name": "v1e01OffsetX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -41291,7 +41291,7 @@
       }
     },
     "0::0::1::0::1::1::0::3::149::\"|'::Math|button|classList|document|localStorage::_0x4420e2.querySelector|_0xb4d0d7.value.trim|document.body.appendChild|document.createElement|document.head.appendChild|if|localStorage.getItem|not|rgba|translateY::7454aa87280159cb": {
-      "name": "offsetY",
+      "name": "v392aOffsetY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -41336,7 +41336,7 @@
       }
     },
     "0::0::0::0::0::0::0::1::7::::::::d5d97d3e8df22947": {
-      "name": "mainPanelElement",
+      "name": "PanelElement",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x5a58b5(...)",
@@ -41439,7 +41439,7 @@
       }
     },
     "module::52c97a3fd41e95fc": {
-      "name": "config",
+      "name": "Config",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "{...}",
@@ -41499,7 +41499,7 @@
       }
     },
     "2::0::1::0::1::0::0::3::16::\"::document::Event|InputEvent|_0x1d420b.dispatchEvent|_0x1d420b.focus|document.querySelector|if|setTimeout::5f2e2ad3557cd9f8": {
-      "name": "y",
+      "name": "v1a0cY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -41677,7 +41677,7 @@
       }
     },
     "1::0::1::0::1::0::0::2::20::\"::console|document::Event|InputEvent|_0x46f2f2.click|_0x5c49c3.blur|_0x5c49c3.dispatchEvent|_0x5c49c3.focus|console.warn|document.querySelector|if|setTimeout::2bbf6808c2d32215": {
-      "name": "charIndex",
+      "name": "v4b1bCharIndex",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "0",
@@ -42051,7 +42051,7 @@
       }
     },
     "0::0::1::0::1::1::0::3::216::\"|'::Math|button|classList|div|document::Characters|Name|bezier|document.body.appendChild|document.createElement|document.head.appendChild|gradient|not|rgba|translateY::e5fb4ae56d7965d0": {
-      "name": "spoofBtn",
+      "name": "v4a5eSpoofBtn",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x1f70fb.querySelector(...)",
@@ -42065,7 +42065,7 @@
       }
     },
     "0::0::1::0::1::1::0::3::216::\"|'::Math|button|classList|div|document::Characters|Name|bezier|document.body.appendChild|document.createElement|document.head.appendChild|gradient|not|rgba|translateY::200c0723291d732e": {
-      "name": "autoChatBtn",
+      "name": "v5557AutoChatBtn",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x1f70fb.querySelector(...)",
@@ -42118,7 +42118,7 @@
       }
     },
     "0::0::1::0::1::1::0::3::216::\"|'::Math|button|classList|div|document::Characters|Name|bezier|document.body.appendChild|document.createElement|document.head.appendChild|gradient|not|rgba|translateY::8e56715a50e0314d": {
-      "name": "offsetX",
+      "name": "v1a4dOffsetX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -42134,7 +42134,7 @@
       }
     },
     "0::0::1::0::1::1::0::3::216::\"|'::Math|button|classList|div|document::Characters|Name|bezier|document.body.appendChild|document.createElement|document.head.appendChild|gradient|not|rgba|translateY::bfb7b7530dc8b43d": {
-      "name": "offsetY",
+      "name": "v1d07OffsetY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -42262,7 +42262,7 @@
       }
     },
     "0::0::1::0::1::1::0::3::135::\"|'::Math|button|classList|document::Boost|_0x4c5221.querySelector|bezier|document.body.appendChild|document.createElement|document.head.appendChild|gradient|not|rgba|translateY::ee8dc37d35d14e61": {
-      "name": "offsetX",
+      "name": "v2e9cOffsetX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -42278,7 +42278,7 @@
       }
     },
     "0::0::1::0::1::1::0::3::135::\"|'::Math|button|classList|document::Boost|_0x4c5221.querySelector|bezier|document.body.appendChild|document.createElement|document.head.appendChild|gradient|not|rgba|translateY::a4a8c33c0e82ab18": {
-      "name": "offsetY",
+      "name": "OffsetY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -42406,7 +42406,7 @@
       }
     },
     "0::0::1::0::1::1::0::2::129::\"|'::Math|button|classList|document::_0x57a534.querySelector|_0x5aba70.stopPropagation|bezier|document.body.appendChild|document.createElement|document.head.appendChild|gradient|not|rgba|translateY::025ec2dc26991dbb": {
-      "name": "offsetX",
+      "name": "v1938OffsetX",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -42422,7 +42422,7 @@
       }
     },
     "0::0::1::0::1::1::0::2::129::\"|'::Math|button|classList|document::_0x57a534.querySelector|_0x5aba70.stopPropagation|bezier|document.body.appendChild|document.createElement|document.head.appendChild|gradient|not|rgba|translateY::d06e98ae98357f64": {
-      "name": "offsetY",
+      "name": "v1ebfOffsetY",
       "module": "core",
       "roleFingerprint": {
         "initPattern": null,
@@ -42467,7 +42467,7 @@
       }
     },
     "0::0::0::0::0::0::0::1::6::::::::48b3844aa668ab20": {
-      "name": "mainPanel",
+      "name": "Panel",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x3b02b0(...)",
@@ -42479,7 +42479,7 @@
       }
     },
     "0::0::0::0::0::0::0::1::6::::::::20cab89138159841": {
-      "name": "historyPanel",
+      "name": "v99a0HistoryPanel",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x1729c9(...)",
@@ -42491,7 +42491,7 @@
       }
     },
     "0::0::0::0::0::0::0::1::6::::::::9cb7b84d47c94542": {
-      "name": "settingsPanel",
+      "name": "v499bSettingsPanel",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0xbc5431(...)",
@@ -42503,7 +42503,7 @@
       }
     },
     "0::0::0::0::0::0::0::1::6::::::::01fb0e0a5078dbf3": {
-      "name": "plusPanel",
+      "name": "PlusPanel",
       "module": "core",
       "roleFingerprint": {
         "initPattern": "_0x1588db(...)",

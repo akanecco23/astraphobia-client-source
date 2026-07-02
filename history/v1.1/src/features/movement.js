@@ -4,7 +4,7 @@ import { showToast } from "../ui/interaction.js";
 import { getGameCanvas } from "../utils.js";
 
 function startCircularMouseMovement() {
-  if (featuresentitytrailState.entityTrailInterval_rkn) {
+  if (featuresentitytrailState.modEntityTrailInterval) {
     return;
   }
   const gameCanvas = getGameCanvas();
@@ -12,15 +12,15 @@ function startCircularMouseMovement() {
     showToast("Game canvas not found!");
     return;
   }
-  featuresentitytrailState.entityTrailInterval_rkn = setInterval(() => {
+  featuresentitytrailState.modEntityTrailInterval = setInterval(() => {
     const angleDegrees = angles[state.angleIndex];
     const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
-    const offsetX = Math.round(radius * Math.sin(angleRadians));
-    const offsetY = Math.round(radius * Math.cos(angleRadians));
+    const v41a7OffsetX = Math.round(radius * Math.sin(angleRadians));
+    const v541cOffsetY = Math.round(radius * Math.cos(angleRadians));
     gameCanvas.dispatchEvent(
       new MouseEvent("pointermove", {
-        clientX: window.innerWidth / 2 + offsetX,
-        clientY: window.innerHeight / 2 + offsetY,
+        clientX: window.innerWidth / 2 + v41a7OffsetX,
+        clientY: window.innerHeight / 2 + v541cOffsetY,
         bubbles: true,
       }),
     );
@@ -28,13 +28,13 @@ function startCircularMouseMovement() {
   }, 15);
 }
 function stopEntityTrail() {
-  if (featuresentitytrailState.entityTrailInterval_rkn) {
-    clearInterval(featuresentitytrailState.entityTrailInterval_rkn);
-    featuresentitytrailState.entityTrailInterval_rkn = null;
+  if (featuresentitytrailState.modEntityTrailInterval) {
+    clearInterval(featuresentitytrailState.modEntityTrailInterval);
+    featuresentitytrailState.modEntityTrailInterval = null;
   }
 }
 function toggleMouseSimulation() {
-  if (featuresentitytrailState.entityTrailInterval_rkn) {
+  if (featuresentitytrailState.modEntityTrailInterval) {
     stopEntityTrail();
   } else {
     startCircularMouseMovement();

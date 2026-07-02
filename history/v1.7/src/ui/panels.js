@@ -1,9 +1,9 @@
 import {
   toggleEsp,
   trackPlayer,
-  toggleEsp_tia,
+  mainToggleEsp,
   toggleMinimapSize,
-  toggleEsp_sl0,
+  sysToggleEsp,
 } from "../features/esp.js";
 import {
   radius,
@@ -72,37 +72,37 @@ function showHalloweenCodeModal(onUnlockCallback) {
   codeInput.focus();
 }
 function makeDraggable(element) {
-  let offsetX;
-  let offsetY;
+  let v440eOffsetX;
+  let v277cOffsetY;
   let isDragging = false;
   let hasMoved = false;
-  element.addEventListener("mousedown", (event) => {
+  element.addEventListener("mousedown", (v913bEvent) => {
     if (
       ["BUTTON", "INPUT", "TEXTAREA", "SELECT", "A", "LABEL"].includes(
-        event.target.tagName,
+        v913bEvent.target.tagName,
       )
     ) {
       return;
     }
-    if (event.target.closest("button,input,textarea,select,label")) {
+    if (v913bEvent.target.closest("button,input,textarea,select,label")) {
       return;
     }
     isDragging = true;
     hasMoved = false;
-    offsetX = event.clientX - element.getBoundingClientRect().left;
-    offsetY = event.clientY - element.getBoundingClientRect().top;
+    v440eOffsetX = v913bEvent.clientX - element.getBoundingClientRect().left;
+    v277cOffsetY = v913bEvent.clientY - element.getBoundingClientRect().top;
     element.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
       if (
         !hasMoved &&
-        (Math.abs(mouseEvent.clientX - event.clientX) > 5 ||
-          Math.abs(mouseEvent.clientY - event.clientY) > 5)
+        (Math.abs(mouseEvent.clientX - v913bEvent.clientX) > 5 ||
+          Math.abs(mouseEvent.clientY - v913bEvent.clientY) > 5)
       ) {
         hasMoved = true;
       }
       if (isDragging) {
-        element.style.left = mouseEvent.clientX - offsetX + "px";
-        element.style.top = mouseEvent.clientY - offsetY + "px";
+        element.style.left = mouseEvent.clientX - v440eOffsetX + "px";
+        element.style.top = mouseEvent.clientY - v277cOffsetY + "px";
         element.style.bottom = "auto";
         element.style.right = "auto";
       }
@@ -116,9 +116,9 @@ function makeDraggable(element) {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   });
-  element.addEventListener("click", (event_v9h) => {
+  element.addEventListener("click", (v4547Event) => {
     if (hasMoved) {
-      event_v9h.stopImmediatePropagation();
+      v4547Event.stopImmediatePropagation();
     }
   });
 }
@@ -130,12 +130,12 @@ function createToolsPanel() {
   toolsPanel.innerHTML =
     '\n      <div class="ast-header"><span class="ast-header-title">Astraphobia Client</span><button class="ast-header-min" id="mainMin">−</button></div>\n      <div class="ast-body" id="mainBody">\n        <span class="ast-section-label">Chat</span>\n        <textarea class="ast-textarea" id="chatMsg" placeholder="Message..." rows="2"></textarea>\n        <button class="ast-btn" id="sendBtn">Send Chat</button>\n        <div class="ast-row" style="margin-top:4px;">\n          <input class="ast-input" type="number" id="delayInput" min="1" max="300" value="10" style="width:50px;text-align:center;">\n          <span style="font-size:11px;color:#888;">sec</span>\n          <button class="ast-btn" id="autoChatBtn" style="flex:1;margin-bottom:0;">Auto Chat</button>\n        </div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Tools</span>\n        <button class="ast-btn" id="patchBtn">Special Characters</button>\n        <button class="ast-btn" id="spoofBtn">Spoof Username</button>\n        <button class="ast-btn" id="spinBtn">Auto Spin</button>\n        <div class="ast-key-row"><span>Spin key</span><input class="ast-key-capture" id="spinKeyInput" type="text" placeholder="..." readonly></div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Turn Controls</span>\n        <div class="ast-key-row">\n          <span>Turn Left</span>\n          <input class="ast-key-capture" id="turnLeftKeyInput" type="text" value="Q" readonly>\n        </div>\n        <div class="ast-key-row">\n          <span>Turn Right</span>\n          <input class="ast-key-capture" id="turnRightKeyInput" type="text" value="E" readonly>\n        </div>\n        <div class="ast-credits">Made by Astraphobia</div>\n      </div>';
   document.body.appendChild(toolsPanel);
-  const mainBody = toolsPanel.querySelector("#mainBody");
+  const Body = toolsPanel.querySelector("#mainBody");
   let isHidden = false;
   toolsPanel.querySelector("#mainMin").onclick = (toggleEvent) => {
     toggleEvent.stopPropagation();
     isHidden = !isHidden;
-    mainBody.style.display = isHidden ? "none" : "block";
+    Body.style.display = isHidden ? "none" : "block";
     toolsPanel.querySelector("#mainMin").textContent = isHidden ? "+" : "−";
   };
   toolsPanel.querySelector("#sendBtn").onclick = () => {
@@ -144,22 +144,22 @@ function createToolsPanel() {
       simulateChatInput(chatMessage);
     }
   };
-  const spinButton = toolsPanel.querySelector("#autoChatBtn");
-  spinButton.onclick = () => {
-    const chatMessage_axv = toolsPanel.querySelector("#chatMsg").value;
+  const v24d5SpinButton = toolsPanel.querySelector("#autoChatBtn");
+  v24d5SpinButton.onclick = () => {
+    const v3eceChatMessage = toolsPanel.querySelector("#chatMsg").value;
     const delay = parseInt(toolsPanel.querySelector("#delayInput").value) || 10;
-    if (!chatMessage_axv) {
+    if (!v3eceChatMessage) {
       showNotification("Enter a message first");
       return;
     }
-    if (state.isToggled) {
+    if (state.IsToggled) {
       stopInterval();
-      spinButton.textContent = "Auto Chat";
-      spinButton.classList.remove("toggle-on");
+      v24d5SpinButton.textContent = "Auto Chat";
+      v24d5SpinButton.classList.remove("toggle-on");
     } else {
-      startScheduledTask(chatMessage_axv, delay);
-      spinButton.textContent = "Stop Chat";
-      spinButton.classList.add("toggle-on");
+      startScheduledTask(v3eceChatMessage, delay);
+      v24d5SpinButton.textContent = "Stop Chat";
+      v24d5SpinButton.classList.add("toggle-on");
     }
   };
   const patchButton = toolsPanel.querySelector("#patchBtn");
@@ -179,24 +179,26 @@ function createToolsPanel() {
       showNotification("No name input found");
     }
   };
-  const spinButton_t2b = toolsPanel.querySelector("#spinBtn");
-  spinButton_t2b.onclick = () => {
+  const v24d5V24d5SpinButton = toolsPanel.querySelector("#spinBtn");
+  v24d5V24d5SpinButton.onclick = () => {
     toggleMouseSimulation();
-    spinButton_t2b.textContent =
-      featuresentitytrailState.entityTrailInterval_rdg
+    v24d5V24d5SpinButton.textContent =
+      featuresentitytrailState.globalEntityTrailInterval
         ? "Stop Spin"
         : "Auto Spin";
-    spinButton_t2b.classList.toggle(
+    v24d5V24d5SpinButton.classList.toggle(
       "toggle-on",
-      !!featuresentitytrailState.entityTrailInterval_rdg,
+      !!featuresentitytrailState.globalEntityTrailInterval,
     );
   };
-  const turnRightKeyInput = toolsPanel.querySelector("#spinKeyInput");
+  const v5511TurnRightKeyInput = toolsPanel.querySelector("#spinKeyInput");
   let lastPressedKey = null;
-  turnRightKeyInput.addEventListener("keydown", (keydownEvent) => {
+  v5511TurnRightKeyInput.addEventListener("keydown", (keydownEvent) => {
     keydownEvent.preventDefault();
     lastPressedKey = keydownEvent.code || keydownEvent.key;
-    turnRightKeyInput.value = lastPressedKey.replace("Key", "").toUpperCase();
+    v5511TurnRightKeyInput.value = lastPressedKey
+      .replace("Key", "")
+      .toUpperCase();
   });
   document.addEventListener("keydown", (keyupEvent) => {
     if (
@@ -206,33 +208,39 @@ function createToolsPanel() {
     ) {
       keyupEvent.preventDefault();
       toggleMouseSimulation();
-      spinButton_t2b.textContent =
-        featuresentitytrailState.entityTrailInterval_rdg
+      v24d5V24d5SpinButton.textContent =
+        featuresentitytrailState.globalEntityTrailInterval
           ? "Stop Spin"
           : "Auto Spin";
-      spinButton_t2b.classList.toggle(
+      v24d5V24d5SpinButton.classList.toggle(
         "toggle-on",
-        !!featuresentitytrailState.entityTrailInterval_rdg,
+        !!featuresentitytrailState.globalEntityTrailInterval,
       );
     }
   });
-  const turnRightKeyInput_uix = toolsPanel.querySelector("#turnLeftKeyInput");
-  const turnRightKeyInput_uh3 = toolsPanel.querySelector("#turnRightKeyInput");
-  turnRightKeyInput_uix.value = state.keyQ.toUpperCase();
-  turnRightKeyInput_uh3.value = state.keyE.toUpperCase();
-  turnRightKeyInput_uix.addEventListener("keydown", (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    state.keyQ = event.key;
-    turnRightKeyInput_uix.value =
-      event.key.length === 1 ? event.key.toUpperCase() : event.key;
+  const v589dV5511TurnRightKeyInput =
+    toolsPanel.querySelector("#turnLeftKeyInput");
+  const v5511V5511TurnRightKeyInput =
+    toolsPanel.querySelector("#turnRightKeyInput");
+  v589dV5511TurnRightKeyInput.value = state.keyQ.toUpperCase();
+  v5511V5511TurnRightKeyInput.value = state.keyE.toUpperCase();
+  v589dV5511TurnRightKeyInput.addEventListener("keydown", (v22beEvent) => {
+    v22beEvent.preventDefault();
+    v22beEvent.stopPropagation();
+    state.keyQ = v22beEvent.key;
+    v589dV5511TurnRightKeyInput.value =
+      v22beEvent.key.length === 1
+        ? v22beEvent.key.toUpperCase()
+        : v22beEvent.key;
   });
-  turnRightKeyInput_uh3.addEventListener("keydown", (event_98m) => {
-    event_98m.preventDefault();
-    event_98m.stopPropagation();
-    state.keyE = event_98m.key;
-    turnRightKeyInput_uh3.value =
-      event_98m.key.length === 1 ? event_98m.key.toUpperCase() : event_98m.key;
+  v5511V5511TurnRightKeyInput.addEventListener("keydown", (v157cEvent) => {
+    v157cEvent.preventDefault();
+    v157cEvent.stopPropagation();
+    state.keyE = v157cEvent.key;
+    v5511V5511TurnRightKeyInput.value =
+      v157cEvent.key.length === 1
+        ? v157cEvent.key.toUpperCase()
+        : v157cEvent.key;
   });
   makeDraggable(toolsPanel);
   return toolsPanel;
@@ -245,13 +253,15 @@ function createVisionPanel() {
   visionPanel.innerHTML =
     '\n      <div class="ast-header"><span class="ast-header-title">Astraphobia Client</span><button class="ast-header-min" id="visionMin">−</button></div>\n      <div class="ast-body" id="visionBody">\n        <span class="ast-section-label">Vision</span>\n        <button class="ast-btn patched" id="thresherBtn" disabled>Thresher Boost (Patched)</button>\n        <button class="ast-btn" id="astraVisionBtn">Astra-Vision</button>\n        <button class="ast-btn" id="smallMinimapBtn">Small Minimap</button>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">ESP</span>\n        <button class="ast-btn" id="espBtn">ESP</button>\n        <select class="ast-select" id="espModeSelect"><option value="players">Players</option><option value="food">Food</option></select>\n        <button class="ast-btn" id="trackNearestBtn">Track Nearest (F3)</button>\n        <button class="ast-btn" id="untrackBtn">Untrack (F4)</button>\n        <div class="ast-sep"></div>\n        <button class="ast-btn" id="espColorsToggleBtn" style="display:flex;align-items:center;justify-content:space-between;">\n          <span style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-sec,#888);">ESP Colors</span>\n          <span id="espColorsArrow" style="color:var(--text-sec,#888);font-size:12px;">▼</span>\n        </button>\n        <div id="espColorsSection" style="display:none;">\n          <div class="ast-key-row"><span>Close (&lt;500)</span><input type="color" id="espColorClose" value="#ff0000" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Medium (&lt;1500)</span><input type="color" id="espColorMedium" value="#ffff00" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Far (&lt;3000)</span><input type="color" id="espColorFar" value="#00ffff" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Very Far</span><input type="color" id="espColorVeryFar" value="#00ff00" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Tracked</span><input type="color" id="espColorTracked" value="#ff00ff" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Food Close</span><input type="color" id="espColorFoodClose" value="#00ff00" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Food Medium</span><input type="color" id="espColorFoodMedium" value="#88ff88" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Food Far</span><input type="color" id="espColorFoodFar" value="#44cc44" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n        </div>\n      </div>';
   document.body.appendChild(visionPanel);
-  const espColorsSection = visionPanel.querySelector("#visionBody");
-  let isHidden = false;
+  const v27b4EspColorsSection = visionPanel.querySelector("#visionBody");
+  let v2b28IsHidden = false;
   visionPanel.querySelector("#visionMin").onclick = (clickEvent) => {
     clickEvent.stopPropagation();
-    isHidden = !isHidden;
-    espColorsSection.style.display = isHidden ? "none" : "block";
-    visionPanel.querySelector("#visionMin").textContent = isHidden ? "+" : "−";
+    v2b28IsHidden = !v2b28IsHidden;
+    v27b4EspColorsSection.style.display = v2b28IsHidden ? "none" : "block";
+    visionPanel.querySelector("#visionMin").textContent = v2b28IsHidden
+      ? "+"
+      : "−";
   };
   visionPanel.querySelector("#thresherBtn").onclick = (submitEvent) => {
     submitEvent.preventDefault();
@@ -259,7 +269,7 @@ function createVisionPanel() {
   };
   const astraVisionBtn = visionPanel.querySelector("#astraVisionBtn");
   astraVisionBtn.onclick = () => {
-    if (state.isProcessed_rnh) {
+    if (state.appIsProcessed) {
       showNotification("Already active");
       return;
     }
@@ -269,20 +279,20 @@ function createVisionPanel() {
     astraVisionBtn.classList.add("toggle-on");
     astraVisionBtn.disabled = true;
   };
-  const espBtn = visionPanel.querySelector("#smallMinimapBtn");
-  espBtn.onclick = () => {
+  const v1600EspBtn = visionPanel.querySelector("#smallMinimapBtn");
+  v1600EspBtn.onclick = () => {
     initAntiTamper();
     toggleMinimapSize();
-    espBtn.textContent = state.isToggled_r8c
+    v1600EspBtn.textContent = state.boolIsToggled
       ? "Minimap: Small"
       : "Small Minimap";
-    espBtn.classList.toggle("toggle-on", state.isToggled_r8c);
+    v1600EspBtn.classList.toggle("toggle-on", state.boolIsToggled);
   };
-  const espBtn_x1p = visionPanel.querySelector("#espBtn");
-  espBtn_x1p.onclick = () => {
+  const v1600V1600EspBtn = visionPanel.querySelector("#espBtn");
+  v1600V1600EspBtn.onclick = () => {
     toggleEsp();
-    espBtn_x1p.textContent = window.espEnabled ? "ESP ✓" : "ESP";
-    espBtn_x1p.classList.toggle("toggle-on", window.espEnabled);
+    v1600V1600EspBtn.textContent = window.espEnabled ? "ESP ✓" : "ESP";
+    v1600V1600EspBtn.classList.toggle("toggle-on", window.espEnabled);
   };
   const espModeSelect = visionPanel.querySelector("#espModeSelect");
   espModeSelect.value = window.espMode || "players";
@@ -291,17 +301,20 @@ function createVisionPanel() {
     showNotification("ESP: " + changeEvent.target.value);
   };
   visionPanel.querySelector("#trackNearestBtn").onclick = () => trackPlayer();
-  visionPanel.querySelector("#untrackBtn").onclick = () => toggleEsp_tia();
+  visionPanel.querySelector("#untrackBtn").onclick = () => mainToggleEsp();
   const espColorsToggleBtn = visionPanel.querySelector("#espColorsToggleBtn");
-  const espColorsSection_xk6 = visionPanel.querySelector("#espColorsSection");
+  const v27b4V27b4EspColorsSection =
+    visionPanel.querySelector("#espColorsSection");
   const espColorsArrow = visionPanel.querySelector("#espColorsArrow");
-  let isHidden_y6z = false;
+  let v2b28V2b28IsHidden = false;
   espColorsToggleBtn.onclick = () => {
-    isHidden_y6z = !isHidden_y6z;
-    espColorsSection_xk6.style.display = isHidden_y6z ? "block" : "none";
-    espColorsArrow.textContent = isHidden_y6z ? "▲" : "▼";
+    v2b28V2b28IsHidden = !v2b28V2b28IsHidden;
+    v27b4V27b4EspColorsSection.style.display = v2b28V2b28IsHidden
+      ? "block"
+      : "none";
+    espColorsArrow.textContent = v2b28V2b28IsHidden ? "▲" : "▼";
   };
-  const eventInit = {
+  const v5dedEventInit = {
     espColorClose: "close",
     espColorMedium: "medium",
     espColorFar: "far",
@@ -311,11 +324,11 @@ function createVisionPanel() {
     espColorFoodMedium: "foodMedium",
     espColorFoodFar: "foodFar",
   };
-  Object.entries(eventInit).forEach(([elementId, colorKey]) => {
-    const targetElement = visionPanel.querySelector("#" + elementId);
-    if (targetElement) {
-      targetElement.addEventListener("input", (event) => {
-        window.espColors[colorKey] = event.target.value;
+  Object.entries(v5dedEventInit).forEach(([elementId, colorKey]) => {
+    const v482eTargetElement = visionPanel.querySelector("#" + elementId);
+    if (v482eTargetElement) {
+      v482eTargetElement.addEventListener("input", (v1280Event) => {
+        window.espColors[colorKey] = v1280Event.target.value;
       });
     }
   });
@@ -332,16 +345,16 @@ function createCombatPanel() {
   document.body.appendChild(combatPanel);
   const combatBody = combatPanel.querySelector("#combatBody");
   let isCombatMinimized = false;
-  combatPanel.querySelector("#combatMin").onclick = (toggleEvent) => {
-    toggleEvent.stopPropagation();
+  combatPanel.querySelector("#combatMin").onclick = (v2314ToggleEvent) => {
+    v2314ToggleEvent.stopPropagation();
     isCombatMinimized = !isCombatMinimized;
     combatBody.style.display = isCombatMinimized ? "none" : "block";
     combatPanel.querySelector("#combatMin").textContent = isCombatMinimized
       ? "+"
       : "−";
   };
-  const lockButton = combatPanel.querySelector("#lockBtn");
-  lockButton.onclick = () => toggleLock();
+  const v4bccLockButton = combatPanel.querySelector("#lockBtn");
+  v4bccLockButton.onclick = () => toggleLock();
   const lockKeyInput = combatPanel.querySelector("#lockKeyInput");
   lockKeyInput.value = window.lockKey.toUpperCase();
   lockKeyInput.addEventListener("keydown", (lockKeyEvent) => {
@@ -386,8 +399,8 @@ function createAutomationPanel() {
   document.body.appendChild(automationPanel);
   const automationBody = automationPanel.querySelector("#autoBody");
   let isAutomationMinimized = false;
-  automationPanel.querySelector("#autoMin").onclick = (toggleEvent) => {
-    toggleEvent.stopPropagation();
+  automationPanel.querySelector("#autoMin").onclick = (v1a99ToggleEvent) => {
+    v1a99ToggleEvent.stopPropagation();
     isAutomationMinimized = !isAutomationMinimized;
     automationBody.style.display = isAutomationMinimized ? "none" : "block";
     automationPanel.querySelector("#autoMin").textContent =
@@ -396,7 +409,7 @@ function createAutomationPanel() {
   const autoDodgeButton = automationPanel.querySelector("#autoDodgeBtn");
   autoDodgeButton.onclick = () => {
     if (window.autoDodgeEnabled) {
-      toggleEsp_sl0();
+      sysToggleEsp();
       autoDodgeButton.textContent = "Auto Dodge";
       autoDodgeButton.classList.remove("toggle-on");
     } else {
@@ -428,18 +441,20 @@ function createAutomationPanel() {
       showNotification("Farm: " + modeEvent.target.value);
     }
   };
-  const farmAvoidToggle = automationPanel.querySelector("#farmBoostToggle");
-  const farmAvoidToggle_ovg =
+  const v5283FarmAvoidToggle =
+    automationPanel.querySelector("#farmBoostToggle");
+  const v199aV5283FarmAvoidToggle =
     automationPanel.querySelector("#farmEvolveToggle");
-  const farmAvoidToggle_qnq = automationPanel.querySelector("#farmAvoidToggle");
-  farmAvoidToggle.checked = window.autoFarmBoost;
-  farmAvoidToggle_ovg.checked = window.autoFarmEvolve;
-  farmAvoidToggle_qnq.checked = window.autoFarmAvoidPlayers;
-  farmAvoidToggle.onchange = (boostEvent) =>
+  const v5283V5283FarmAvoidToggle =
+    automationPanel.querySelector("#farmAvoidToggle");
+  v5283FarmAvoidToggle.checked = window.autoFarmBoost;
+  v199aV5283FarmAvoidToggle.checked = window.autoFarmEvolve;
+  v5283V5283FarmAvoidToggle.checked = window.autoFarmAvoidPlayers;
+  v5283FarmAvoidToggle.onchange = (boostEvent) =>
     (window.autoFarmBoost = boostEvent.target.checked);
-  farmAvoidToggle_ovg.onchange = (evolveEvent) =>
+  v199aV5283FarmAvoidToggle.onchange = (evolveEvent) =>
     (window.autoFarmEvolve = evolveEvent.target.checked);
-  farmAvoidToggle_qnq.onchange = (avoidPlayersEvent) =>
+  v5283V5283FarmAvoidToggle.onchange = (avoidPlayersEvent) =>
     (window.autoFarmAvoidPlayers = avoidPlayersEvent.target.checked);
   makeDraggable(automationPanel);
   return automationPanel;
@@ -454,8 +469,8 @@ function createSettingsPanel() {
   document.body.appendChild(settingsPanel);
   const settingsBody = settingsPanel.querySelector("#settingsBody");
   let isSettingsMinimized = false;
-  settingsPanel.querySelector("#settingsMin").onclick = (event) => {
-    event.stopPropagation();
+  settingsPanel.querySelector("#settingsMin").onclick = (v4d37Event) => {
+    v4d37Event.stopPropagation();
     isSettingsMinimized = !isSettingsMinimized;
     settingsBody.style.display = isSettingsMinimized ? "none" : "block";
     settingsPanel.querySelector("#settingsMin").textContent =
@@ -486,18 +501,18 @@ function createSettingsPanel() {
   const themeSelectElement = settingsPanel.querySelector("#themeSelect");
   themeSelectElement.value = localStorage.getItem("theme") || "grey";
   themeSelectElement.onchange = (themeEvent) => {
-    const myY = themeEvent.target.value;
-    if (myY === "halloween") {
-      showHalloweenCodeModal((myY) => {
-        if (myY) {
+    const v5465MyY = themeEvent.target.value;
+    if (v5465MyY === "halloween") {
+      showHalloweenCodeModal((v3a64MyY) => {
+        if (v3a64MyY) {
           setTheme("halloween");
         } else {
           themeEvent.target.value = localStorage.getItem("theme") || "grey";
         }
       });
     } else {
-      setTheme(myY);
-      showNotification("Theme: " + myY);
+      setTheme(v5465MyY);
+      showNotification("Theme: " + v5465MyY);
     }
   };
   makeDraggable(settingsPanel);
@@ -514,8 +529,8 @@ function createUpdatePanel() {
   document.body.appendChild(updatePanel);
   const updateBody = updatePanel.querySelector("#updateBody");
   let isUpdateMinimized = false;
-  updatePanel.querySelector("#updateMin").onclick = (event) => {
-    event.stopPropagation();
+  updatePanel.querySelector("#updateMin").onclick = (v4b80Event) => {
+    v4b80Event.stopPropagation();
     isUpdateMinimized = !isUpdateMinimized;
     updateBody.style.display = isUpdateMinimized ? "none" : "block";
     updatePanel.querySelector("#updateMin").textContent = isUpdateMinimized
@@ -539,10 +554,10 @@ function togglePanelsVisibility() {
     return;
   }
   const isVisible = deepToolsPanel.style.display !== "none";
-  panelIds.forEach((elementId) => {
-    const targetElement = document.getElementById(elementId);
-    if (targetElement) {
-      targetElement.style.display = isVisible ? "none" : "block";
+  panelIds.forEach((v3034ElementId) => {
+    const v507fTargetElement = document.getElementById(v3034ElementId);
+    if (v507fTargetElement) {
+      v507fTargetElement.style.display = isVisible ? "none" : "block";
     }
   });
 }

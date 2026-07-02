@@ -1,4 +1,4 @@
-import { playerData, config, sendPacket, state } from "../core.js";
+import { playerData, objConfig, sendPacket, state } from "../core.js";
 
 const handleAnimalAction = (currentValue) => {
   const id1 = 1;
@@ -6,8 +6,8 @@ const handleAnimalAction = (currentValue) => {
   const id5 = 5;
   try {
     const fishLevelConfig = {
-      ...config.default,
-      ...(config[playerData?.myAnimals?.[0]?.visibleFishLevel] || {}),
+      ...objConfig.default,
+      ...(objConfig[playerData?.myAnimals?.[0]?.visibleFishLevel] || {}),
     };
     if (currentValue < (playerData?.myAnimals?.[0]?._standing ? 40 : 100)) {
       return sendPacket(id1);

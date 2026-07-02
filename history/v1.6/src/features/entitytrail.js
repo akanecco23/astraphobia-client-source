@@ -1,5 +1,5 @@
 export const featuresentitytrailState = {
-  entityTrailInterval_rfg: null,
+  globalEntityTrailInterval: null,
 };
 
 export {};

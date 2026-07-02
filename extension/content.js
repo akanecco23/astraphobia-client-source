@@ -10,7 +10,7 @@ import {
   angles,
   radius,
   playerData,
-  isProcessed_t1s,
+  sysIsProcessed,
   config,
   state,
 } from "./src/core.js";

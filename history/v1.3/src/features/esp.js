@@ -6,15 +6,15 @@ function toggleMinimapSize() {
     showNotification("Minimap not available yet!");
     return;
   }
-  if (state.isToggled_r45) {
+  if (state.boolIsToggled) {
     playerData.minimap.scale.set(1);
     playerData.minimap.pivot.set(0, 0);
-    state.isToggled_r45 = false;
+    state.boolIsToggled = false;
     showNotification("🗺️ Minimap restored to normal!");
   } else {
     playerData.minimap.scale.set(0.5);
     playerData.minimap.pivot.set(-70, -45);
-    state.isToggled_r45 = true;
+    state.boolIsToggled = true;
     showNotification("🗺️ Small Minimap enabled!");
   }
 }

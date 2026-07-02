@@ -9,7 +9,7 @@ import {
   generatePatrolPoints,
   startAutoFarmLoop,
 } from "./features/autofarm.js";
-import { renderEspLoop, trackPlayer, toggleEsp_sdk } from "./features/esp.js";
+import { renderEspLoop, trackPlayer, globalToggleEsp } from "./features/esp.js";
 import { applyTheme, initBackground, injectStyles } from "./ui/theme.js";
 import { showToast, restoreUIInteractivity } from "./ui/interaction.js";
 import { calculateDistance, getAllPropertyNames } from "./utils.js";
@@ -24,10 +24,9 @@ function wrapWithProxy(targetObject, propertyKey, handler) {
   stateCache.set(proxyValue, originalValue);
   targetObject[propertyKey] = proxyValue;
 }
-let currentTime = 0;
-let isProcessed_ln9 = false;
+let boolIsProcessed = false;
 function hookTextEncoder() {
-  if (isProcessed_ln9) {
+  if (boolIsProcessed) {
     return;
   }
   function unescapeString(inputString) {
@@ -134,41 +133,41 @@ function hookTextEncoder() {
     childList: true,
     subtree: true,
   });
-  isProcessed_ln9 = true;
+  boolIsProcessed = true;
   showToast("Special characters enabled");
 }
 const angles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
 const radius = 300;
 const offsetValue = 400;
 let gameInstance;
-let appState;
-let playerData;
-let isProcessed_skx = false;
-const config = {};
+let State;
+let PlayerData;
+let sysIsProcessed = false;
+const Config = {};
 function getGameState() {
   try {
-    if (playerData && playerData.myAnimals && playerData.myAnimals.length > 0) {
-      return playerData;
+    if (PlayerData && PlayerData.myAnimals && PlayerData.myAnimals.length > 0) {
+      return PlayerData;
     }
     const states = window.__ss?.states;
     if (!states) {
-      return playerData || null;
+      return PlayerData || null;
     }
-    for (let i = 0; i < states.length; i++) {
-      if (states[i]?.gameScene?.myAnimals) {
-        return states[i].gameScene;
+    for (let v415eI = 0; v415eI < states.length; v415eI++) {
+      if (states[v415eI]?.gameScene?.myAnimals) {
+        return states[v415eI].gameScene;
       }
-      if (states[i]?.gameManager) {
-        for (const managerKey of Object.keys(states[i].gameManager)) {
-          if (states[i].gameManager[managerKey]?.myAnimals) {
-            return states[i].gameManager[managerKey];
+      if (states[v415eI]?.gameManager) {
+        for (const managerKey of Object.keys(states[v415eI].gameManager)) {
+          if (states[v415eI].gameManager[managerKey]?.myAnimals) {
+            return states[v415eI].gameManager[managerKey];
           }
         }
       }
     }
-    return playerData || null;
+    return PlayerData || null;
   } catch (error) {
-    return playerData || null;
+    return PlayerData || null;
   }
 }
 function getEntityManager(gameState) {
@@ -181,8 +180,8 @@ function getEntityManager(gameState) {
   if (window.__cachedEM) {
     return window.__cachedEM;
   }
-  if (config.entityManager) {
-    const entityManager = gameState[config.entityManager];
+  if (Config.entityManager) {
+    const entityManager = gameState[Config.entityManager];
     if (entityManager) {
       window.__cachedEM = entityManager;
       return entityManager;
@@ -206,28 +205,28 @@ function getFirstAnimalPosition() {
   try {
     const animal = getGameState();
     const position = animal?.myAnimals?.[0];
-    if (!state.position) {
+    if (!position) {
       return null;
     }
     return {
-      x: state.position.position._x ?? state.position.position.x,
-      y: state.position.position._y ?? state.position.position.y,
+      x: position.position._x ?? position.position.x,
+      y: position.position._y ?? position.position.y,
     };
-  } catch (error) {
+  } catch (v407fError) {
     return null;
   }
 }
-function getEntityPosition(entity) {
-  if (!entity || !entity.position) {
+function getEntityPosition(b0eeEntity) {
+  if (!b0eeEntity || !b0eeEntity.position) {
     return null;
   }
   return {
-    x: entity.position._x || entity.position.x,
-    y: entity.position._y || entity.position.y,
+    x: b0eeEntity.position._x || b0eeEntity.position.x,
+    y: b0eeEntity.position._y || b0eeEntity.position.y,
   };
 }
-function calculateDirection(entity) {
-  if (!entity) {
+function calculateDirection(v56c0Entity) {
+  if (!v56c0Entity) {
     return {
       dirX: 1,
       dirY: 0,
@@ -235,12 +234,13 @@ function calculateDirection(entity) {
   }
   let dirX = 0;
   let dirY = 0;
-  if (entity.velocity) {
-    dirX = entity.velocity._x || entity.velocity.x || 0;
-    dirY = entity.velocity._y || entity.velocity.y || 0;
+  if (v56c0Entity.velocity) {
+    dirX = v56c0Entity.velocity._x || v56c0Entity.velocity.x || 0;
+    dirY = v56c0Entity.velocity._y || v56c0Entity.velocity.y || 0;
   }
   if (Math.abs(dirX) < 0.01 && Math.abs(dirY) < 0.01) {
-    const angle = entity.rotation || entity.angle || entity._rotation || 0;
+    const angle =
+      v56c0Entity.rotation || v56c0Entity.angle || v56c0Entity._rotation || 0;
     dirX = Math.cos(angle);
     dirY = Math.sin(angle);
   }
@@ -267,29 +267,31 @@ function findEntityById(entityId) {
     if (!parsedState) {
       return null;
     }
-    let entity = parsedState.entitiesById
+    let v7565Entity = parsedState.entitiesById
       ? parsedState.entitiesById[entityId]
       : null;
-    if (!entity && parsedState.entitiesList) {
-      entity = parsedState.entitiesList.find((item) => item.id === entityId);
+    if (!v7565Entity && parsedState.entitiesList) {
+      v7565Entity = parsedState.entitiesList.find(
+        (item) => item.id === entityId,
+      );
     }
-    if (!entity && parsedState.animalsByPlayerRoomId) {
+    if (!v7565Entity && parsedState.animalsByPlayerRoomId) {
       for (let roomId of Object.keys(parsedState.animalsByPlayerRoomId)) {
         const animals = parsedState.animalsByPlayerRoomId[roomId];
         if (Array.isArray(animals)) {
-          entity = animals.find(
+          v7565Entity = animals.find(
             (selectedItem) => selectedItem && selectedItem.id === entityId,
           );
         } else if (animals && animals.id === entityId) {
-          entity = animals;
+          v7565Entity = animals;
         }
-        if (entity) {
+        if (v7565Entity) {
           break;
         }
       }
     }
-    return entity;
-  } catch (error) {
+    return v7565Entity;
+  } catch (v7eb9Error) {
     return null;
   }
 }
@@ -304,18 +306,18 @@ const tickInterval = 600;
 const deltaThreshold = 800;
 const maxFailCount = 2;
 const timeoutLimit = 20000;
-function isAreaSkipped_sc8(x, y) {
-  const currentTime = Date.now();
+function modIsAreaSkipped(v13a0X, v599cY) {
+  const v5c00CurrentTime = Date.now();
   window.autoFarmSkipAreas = window.autoFarmSkipAreas.filter(
-    (timerState) => currentTime - timerState.time < timeoutLimit,
+    (timerState) => v5c00CurrentTime - timerState.time < timeoutLimit,
   );
   return window.autoFarmSkipAreas.some(
     (cellData) =>
       cellData.skipped &&
-      calculateDistance(x, y, cellData.x, cellData.y) < cellData.radius,
+      calculateDistance(v13a0X, v599cY, cellData.x, cellData.y) <
+        cellData.radius,
   );
 }
-let angle = 0;
 function initAutoFarm(farmMode) {
   window.autoFarmMode = farmMode || "nearest";
   window.autoFarmActive = true;
@@ -326,25 +328,25 @@ function initAutoFarm(farmMode) {
   window.autoFarmSkipIds.clear();
   window.autoFarmSkipAreas = [];
   window.autoFarmSkipClearTime = Date.now();
-  state.position_t9s = null;
-  state.counter_sm3 = 0;
-  state.counter_tkq = 0;
-  state.counter_agp = 0;
+  state.modPosition = null;
+  state.numCounter = 0;
+  state.modCounter = 0;
+  state.Counter = 0;
   if (farmMode === "patrol") {
     generatePatrolPoints();
   }
   showToast("Auto farm started (" + window.autoFarmMode + ")");
   startAutoFarmLoop();
 }
-let isProcessed_k73 = false;
+let mainIsProcessed = false;
 const initializeAntiDetection = () => {
-  if (isProcessed_k73) {
+  if (mainIsProcessed) {
     return;
   }
-  isProcessed_k73 = true;
+  mainIsProcessed = true;
   const cache = {};
-  for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
-    cache[propertyKey] = Reflect[propertyKey];
+  for (const v231fPropertyKey of Object.getOwnPropertyNames(Reflect)) {
+    cache[v231fPropertyKey] = Reflect[v231fPropertyKey];
   }
   const Proxy = Proxy;
   const lookupGetter = Object.prototype.__lookupGetter__;
@@ -384,36 +386,36 @@ const initializeAntiDetection = () => {
           }
         } catch {}
         if (extraArgs[0] && extraArgs[0].aboveBgPlatformsContainer != null) {
-          playerData = extraArgs[0];
+          PlayerData = extraArgs[0];
           gameInstance = extraArgs[0].game;
           window.__cachedEM = null;
-          const allProperties = getAllPropertyNames(playerData);
+          const allProperties = getAllPropertyNames(PlayerData);
           const obfuscatedProperties = allProperties.filter((varName) =>
             varName.startsWith("_0x"),
           );
-          config.setFlash =
-            Object.getOwnPropertyNames(playerData.__proto__.__proto__)
+          Config.setFlash =
+            Object.getOwnPropertyNames(PlayerData.__proto__.__proto__)
               .filter((propName) => propName.startsWith("_0x"))
               .find(
-                (functionKey) => playerData[functionKey] instanceof Function,
-              ) || config.setFlash;
-          config.terrainManager =
+                (functionKey) => PlayerData[functionKey] instanceof Function,
+              ) || Config.setFlash;
+          Config.terrainManager =
             obfuscatedProperties.find(
               (shadowKey) =>
-                typeof playerData[shadowKey]?.shadow !== "undefined",
-            ) || config.terrainManager;
-          config.entityManager =
+                typeof PlayerData[shadowKey]?.shadow !== "undefined",
+            ) || Config.terrainManager;
+          Config.entityManager =
             obfuscatedProperties.find(
               (entitiesKey) =>
-                typeof playerData[entitiesKey]?.entitiesList !== "undefined",
-            ) || config.entityManager;
-          config.socketManager =
+                typeof PlayerData[entitiesKey]?.entitiesList !== "undefined",
+            ) || Config.entityManager;
+          Config.socketManager =
             getAllPropertyNames(gameInstance).find(
               (networkKey) =>
                 typeof gameInstance[networkKey]?.sendBytePacket !== "undefined",
-            ) || config.socketManager;
+            ) || Config.socketManager;
           try {
-            appState = document
+            State = document
               .getElementById("app")
               ._vnode.appContext.config.globalProperties.$simpleState.states.find(
                 (gameStore) => gameStore._storeMeta.id === "game",
@@ -425,10 +427,10 @@ const initializeAntiDetection = () => {
           } catch {}
           intervalId = setInterval(() => {
             try {
-              if (!playerData?.myAnimals?.[0]) {
+              if (!PlayerData?.myAnimals?.[0]) {
                 return;
               }
-              const firstAnimal = playerData.myAnimals[0];
+              const firstAnimal = PlayerData.myAnimals[0];
               if (firstAnimal.fadingTrail) {
                 wrapWithProxy(
                   Object.getPrototypeOf(firstAnimal.fadingTrail),
@@ -461,10 +463,10 @@ const initializeAntiDetection = () => {
   });
 };
 const initializeViewportSettings = () => {
-  if (isProcessed_skx) {
+  if (sysIsProcessed) {
     return;
   }
-  if (!playerData) {
+  if (!PlayerData) {
     setTimeout(initializeViewportSettings, 500);
     return;
   }
@@ -479,31 +481,31 @@ const initializeViewportSettings = () => {
     } catch {}
   }, 300);
   try {
-    if (config.setFlash) {
-      playerData[config.setFlash] = () => {};
+    if (Config.setFlash) {
+      PlayerData[Config.setFlash] = () => {};
     }
-    if (config.terrainManager) {
-      const terrainManager = playerData[config.terrainManager];
+    if (Config.terrainManager) {
+      const terrainManager = PlayerData[Config.terrainManager];
       if (terrainManager?.shadow) {
         terrainManager.shadow.setShadowSize(1000000);
         terrainManager.shadow.setShadowSize = () => {};
       }
     }
-  } catch (url) {
-    console.error(url);
+  } catch (v4f07Url) {
+    console.error(v4f07Url);
   }
-  isProcessed_skx = true;
+  sysIsProcessed = true;
 };
-let isProcessed_sby = false;
+let v3befIsProcessed = false;
 function initializeClient() {
-  if (isProcessed_sby) {
+  if (v3befIsProcessed) {
     return;
   }
-  isProcessed_sby = true;
+  v3befIsProcessed = true;
   setTimeout(() => {
     injectStyles();
-    const myY = localStorage.getItem("theme") || "grey";
-    applyTheme(myY);
+    const v2898MyY = localStorage.getItem("theme") || "grey";
+    applyTheme(v2898MyY);
     createToolsPanel();
     createPlusPanel();
     createSettingsPanel();
@@ -513,52 +515,52 @@ function initializeClient() {
     restoreUIInteractivity();
     initRadarDrag();
     renderEspLoop();
-    state.isProcessed_rdh = true;
+    state.modIsProcessed = true;
     autoDodgeLoop();
   }, 1000);
 }
 document.addEventListener(
   "keydown",
-  (event) => {
-    if (event.target.matches("input,textarea,select,[contenteditable]")) {
+  (v369cEvent) => {
+    if (v369cEvent.target.matches("input,textarea,select,[contenteditable]")) {
       return;
     }
-    if (event.repeat) {
+    if (v369cEvent.repeat) {
       return;
     }
-    if (event.key.toLowerCase() === state.keyQ.toLowerCase()) {
-      event.preventDefault();
-      event.stopPropagation();
+    if (v369cEvent.key.toLowerCase() === state.keyQ.toLowerCase()) {
+      v369cEvent.preventDefault();
+      v369cEvent.stopPropagation();
       moveMouseToSide("left");
     }
-    if (event.key.toLowerCase() === state.keyE.toLowerCase()) {
-      event.preventDefault();
-      event.stopPropagation();
+    if (v369cEvent.key.toLowerCase() === state.keyE.toLowerCase()) {
+      v369cEvent.preventDefault();
+      v369cEvent.stopPropagation();
       moveMouseToSide("right");
     }
   },
   true,
 );
-document.addEventListener("keydown", (event_4pb) => {
-  if (event_4pb.target.matches("input,textarea,select")) {
+document.addEventListener("keydown", (v19b8Event) => {
+  if (v19b8Event.target.matches("input,textarea,select")) {
     return;
   }
-  if (event_4pb.key === "F3") {
-    event_4pb.preventDefault();
+  if (v19b8Event.key === "F3") {
+    v19b8Event.preventDefault();
     trackPlayer();
   }
-  if (event_4pb.key === "F4") {
-    event_4pb.preventDefault();
-    toggleEsp_sdk();
+  if (v19b8Event.key === "F4") {
+    v19b8Event.preventDefault();
+    globalToggleEsp();
   }
 });
-document.addEventListener("keydown", (event_4kz) => {
+document.addEventListener("keydown", (v11deEvent) => {
   if (
-    event_4kz.key === state.activeKey &&
-    !event_4kz.repeat &&
-    !event_4kz.target.matches("input,textarea,button,select")
+    v11deEvent.key === state.activeKey &&
+    !v11deEvent.repeat &&
+    !v11deEvent.target.matches("input,textarea,button,select")
   ) {
-    event_4kz.preventDefault();
+    v11deEvent.preventDefault();
     toggleUiVisibility();
   }
 });
@@ -570,21 +572,19 @@ window.addEventListener("load", () => {
 });
 export const state = {
   currentTrackId: "",
-  isProcessed: false,
-  entityTrailInterval: null,
-  isToggled: false,
+  IsToggled: false,
   angleIndex: 0,
   keyQ: "q",
   keyE: "e",
-  isToggled_sak: false,
-  isProcessed_rdh: false,
-  position: null,
+  boolIsToggled: false,
+  modIsProcessed: false,
   counter: 0,
+  entityTrailInterval: null,
   dataList: [],
-  counter_agp: 0,
-  position_t9s: null,
-  counter_sm3: 0,
-  counter_tkq: 0,
+  Counter: 0,
+  modPosition: null,
+  numCounter: 0,
+  modCounter: 0,
   activeKey: "Shift",
 };
 export {
@@ -596,23 +596,20 @@ export {
   getEntityPosition,
   calculateDirection,
   findEntityById,
-  isAreaSkipped_sc8,
+  modIsAreaSkipped,
   initAutoFarm,
   initializeAntiDetection,
   initializeViewportSettings,
   initializeClient,
-  currentTime,
   angles,
   radius,
   offsetValue,
   gameInstance,
-  playerData,
-  isProcessed_skx,
-  config,
+  PlayerData,
+  sysIsProcessed,
   dragState,
   tickInterval,
   deltaThreshold,
   maxFailCount,
   timeoutLimit,
-  angle,
 };

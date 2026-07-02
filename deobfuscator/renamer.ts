@@ -79,45 +79,198 @@ export async function renameVariables(
   const scopedNames = new Map<string, Set<string>>();
   const autoNames = new Set<string>();
 
+  // Track the original base name for each variable so we can store clean
+  // names in the mapping (without prefixes/suffixes) and prevent prefix
+  // accumulation across versions.
+  const baseNameMap = new Map<string, string>();
+
+  // Strip known prefixes that were added by previous claimName calls.
+  // This prevents prefix accumulation across versions.
+  const KNOWN_PREFIXES = [
+    "bool",
+    "arr",
+    "obj",
+    "str",
+    "num",
+    "fn",
+    "ui",
+    "core",
+    "global",
+    "main",
+    "app",
+    "sys",
+    "mod",
+  ];
+
+  function stripPrefixes(name: string): string {
+    let result = name;
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const prefix of KNOWN_PREFIXES) {
+        if (
+          result.length > prefix.length &&
+          result.toLowerCase().startsWith(prefix.toLowerCase()) &&
+          /[A-Z]/.test(result[prefix.length]!)
+        ) {
+          result = result.slice(prefix.length);
+          changed = true;
+          break;
+        }
+      }
+      if (!changed) {
+        const hexMatch = result.match(/^[a-f0-9]+[A-Z]/);
+        if (hexMatch) {
+          result = result.slice(hexMatch[0].length - 1);
+          changed = true;
+        }
+      }
+    }
+    return result;
+  }
+
   function getScopeFromKey(key: string): string {
     const idx = key.indexOf("::");
     return idx >= 0 ? key.slice(0, idx) : "global";
   }
 
-  function claimName(key: string, name: string): string {
+  // Build a lookup map for variable info so claimName can use contextual prefixes.
+  const varInfoByKey = new Map<string, VariableInfo>();
+  for (const v of variables) {
+    varInfoByKey.set(v.key, v);
+  }
+
+  function claimName(
+    key: string,
+    name: string,
+    varInfo?: VariableInfo,
+  ): string {
     const scope = getScopeFromKey(key);
     const isGlobal = scope === "global";
     // Strip any existing suffix chains (numeric or alphanumeric) before claiming
-    const baseName = name.replace(/(?:_[a-zA-Z0-9]{1,4})+$/, "");
+    const stripped = name.replace(/(?:_[a-zA-Z0-9]{1,4})+$/, "");
+    // Also strip any accumulated prefixes from previous versions
+    const baseName = stripPrefixes(stripped);
+    // Remember the base name for storing in the mapping later
+    baseNameMap.set(key, baseName);
+
+    // Build a human-readable prefix based on the variable's context.
+    // For scoped variables, use the parent function's resolved name.
+    // For global variables, use the variable's own type/init pattern.
+    function getContextPrefix(depth: number = 0): string | undefined {
+      if (isGlobal) {
+        const info = varInfo || varInfoByKey.get(key);
+        if (info) {
+          if (depth === 0) {
+            const init = info.initType?.toLowerCase() || "";
+            if (init.includes("boolean") || init.includes("bool"))
+              return "bool";
+            if (init.includes("array") || init.includes("arr")) return "arr";
+            if (init.includes("object") || init.includes("obj")) return "obj";
+            if (init.includes("string") || init.includes("str")) return "str";
+            if (init.includes("number") || init.includes("num")) return "num";
+            if (init.includes("function") || init.includes("fn")) return "fn";
+          }
+          if (depth <= 1) {
+            const scopeLower = info.scope.toLowerCase();
+            if (scopeLower.includes("ui") || scopeLower.includes("dom"))
+              return "ui";
+            if (scopeLower.includes("core")) return "core";
+          }
+        }
+        return undefined;
+      }
+      // Scoped variable: look up parent function's resolved name
+      const funcName = baseNameMap.get(scope) || resolved[scope];
+      if (funcName && !isAutoName(funcName)) {
+        return funcName;
+      }
+      return undefined;
+    }
+
+    function tryClaim(
+      targetName: string,
+      nameSet: Set<string>,
+    ): string | undefined {
+      if (nameSet.has(targetName)) return undefined;
+      nameSet.add(targetName);
+      return targetName;
+    }
+
     if (isGlobal) {
-      if (usedGlobalNames.has(baseName)) {
-        // Stable disambiguation: hash of key → avoids _2, _3 churn
-        const suffix = Math.abs(hashStr(key)).toString(36).slice(0, 3);
-        const disambiguated = `${baseName}_${suffix}`;
+      // Try base name first
+      let result = tryClaim(baseName, usedGlobalNames);
+      if (result) return result;
+
+      // Try with type prefix
+      for (let depth = 0; depth < 2; depth++) {
+        const prefix = getContextPrefix(depth);
+        if (prefix) {
+          const disambiguated = `${prefix}${baseName[0]!.toUpperCase() + baseName.slice(1)}`;
+          result = tryClaim(disambiguated, usedGlobalNames);
+          if (result) return result;
+        }
+      }
+
+      // Final fallback: use a generic category prefix based on the key hash
+      // This ensures we NEVER append suffixes
+      const categories = ["global", "main", "app", "sys", "mod"];
+      const hash = Math.abs(hashStr(key)) % categories.length;
+      const fallback = `${categories[hash]!}${baseName[0]!.toUpperCase() + baseName.slice(1)}`;
+      result = tryClaim(fallback, usedGlobalNames);
+      if (result) {
         log(
           "warn",
-          `Global name collision: ${baseName} already used, using ${disambiguated} for ${key}`,
+          `Global name collision: ${baseName} already used, using ${fallback} for ${key}`,
         );
-        usedGlobalNames.add(disambiguated);
-        return disambiguated;
+        return result;
       }
-      usedGlobalNames.add(baseName);
+      // Should never reach here, but just in case
       return baseName;
     }
+
     if (!scopedNames.has(scope)) scopedNames.set(scope, new Set());
     const names = scopedNames.get(scope)!;
-    if (names.has(baseName)) {
-      // Stable disambiguation: hash of key → avoids _2, _3 churn
-      const suffix = Math.abs(hashStr(key)).toString(36).slice(0, 3);
-      const disambiguated = `${baseName}_${suffix}`;
+
+    // Check against usedGlobalNames too, since obfuscated code often
+    // hoists all declarations to the module level.
+    function tryClaimScoped(targetName: string): string | undefined {
+      if (usedGlobalNames.has(targetName) || names.has(targetName)) {
+        return undefined;
+      }
+      usedGlobalNames.add(targetName);
+      names.add(targetName);
+      return targetName;
+    }
+
+    // Try base name first
+    let result = tryClaimScoped(baseName);
+    if (result) return result;
+
+    // Try with function name prefix
+    const prefix = getContextPrefix();
+    if (prefix) {
+      const disambiguated = `${prefix}${baseName[0]!.toUpperCase() + baseName.slice(1)}`;
+      result = tryClaimScoped(disambiguated);
+      if (result) return result;
+    }
+
+    // Final fallback: use the variable's original obfuscated name as a prefix.
+    // Ensure the prefix does NOT start with a number (invalid JS identifier).
+    const obfPrefix = varInfo?.originalName || key.split("::").pop() || "var";
+    let cleanPrefix = obfPrefix.replace(/^_0x/, "").slice(0, 4);
+    if (/^\d/.test(cleanPrefix)) {
+      cleanPrefix = "v" + cleanPrefix;
+    }
+    const fallback = `${cleanPrefix}${baseName[0]!.toUpperCase() + baseName.slice(1)}`;
+    result = tryClaimScoped(fallback);
+    if (result) {
       log(
         "warn",
-        `Scoped name collision in ${scope}: ${baseName} already used, using ${disambiguated} for ${key}`,
+        `Scoped name collision in ${scope}: ${baseName} already used, using ${fallback} for ${key}`,
       );
-      names.add(disambiguated);
-      return disambiguated;
+      return result;
     }
-    names.add(baseName);
     return baseName;
   }
 
@@ -316,6 +469,7 @@ export async function renameVariables(
         resolved[group.params[i]!.key] = claimName(
           group.params[i]!.key,
           storedName,
+          group.params[i],
         );
     }
     for (let i = 0; i < group.locals.length; i++) {
@@ -324,6 +478,7 @@ export async function renameVariables(
         resolved[group.locals[i]!.key] = claimName(
           group.locals[i]!.key,
           storedName,
+          group.locals[i],
         );
     }
     mapping.setFunction(funcKey, {
@@ -395,6 +550,7 @@ export async function renameVariables(
             resolved[group.params[paramIdx]!.key] = claimName(
               group.params[paramIdx]!.key,
               newName,
+              group.params[paramIdx],
             );
             continue;
           }
@@ -406,6 +562,7 @@ export async function renameVariables(
             resolved[group.locals[localIdx]!.key] = claimName(
               group.locals[localIdx]!.key,
               newName,
+              group.locals[localIdx],
             );
           }
         }
@@ -472,7 +629,7 @@ export async function renameVariables(
   for (const v of moduleLevelVars) {
     const matchedName = tryMatchVariableByFingerprint(v, code, "module");
     if (matchedName) {
-      resolved[v.key] = claimName(v.key, matchedName);
+      resolved[v.key] = claimName(v.key, matchedName, v);
     }
   }
   mapping.save();
@@ -528,7 +685,7 @@ export async function renameVariables(
         funcVar.fingerprintHash,
       );
       if (matchedName) {
-        resolved[param.key] = claimName(param.key, matchedName);
+        resolved[param.key] = claimName(param.key, matchedName, param);
       }
     }
 
@@ -540,7 +697,7 @@ export async function renameVariables(
         funcVar.fingerprintHash,
       );
       if (matchedName) {
-        resolved[local.key] = claimName(local.key, matchedName);
+        resolved[local.key] = claimName(local.key, matchedName, local);
       }
     }
   }
@@ -570,7 +727,7 @@ export async function renameVariables(
       !isAutoName(existingVar.name) &&
       !/^_0x/.test(existingVar.name)
     ) {
-      resolved[v.key] = claimName(v.key, existingVar.name);
+      resolved[v.key] = claimName(v.key, existingVar.name, v);
     }
   }
   mapping.save();
@@ -595,7 +752,7 @@ export async function renameVariables(
           "info",
           `  Broad role-fingerprint matched ${v.originalName} -> ${cleanName}`,
         );
-        resolved[v.key] = claimName(v.key, cleanName);
+        resolved[v.key] = claimName(v.key, cleanName, v);
         mapping.data.variables[v.key] = {
           name: resolved[v.key]!,
           module: mapping.data.variables[v.key]?.module ?? "core",
@@ -712,7 +869,7 @@ export async function renameVariables(
           const canonicalName = mapping.canonicalize
             ? mapping.canonicalize(newName)
             : newName;
-          resolved[v.key] = claimName(v.key, canonicalName);
+          resolved[v.key] = claimName(v.key, canonicalName, v);
           mapping.data.variables[v.key] = {
             name: resolved[v.key]!,
             module: mapping.data.variables[v.key]?.module ?? "core",
@@ -724,6 +881,7 @@ export async function renameVariables(
           );
         }
       }
+
       mapping.save();
     }
   }
@@ -740,7 +898,7 @@ export async function renameVariables(
       !isAutoName(existingVar.name) &&
       !/^_0x/.test(existingVar.name)
     ) {
-      resolved[v.key] = claimName(v.key, existingVar.name);
+      resolved[v.key] = claimName(v.key, existingVar.name, v);
       continue;
     }
 
@@ -825,6 +983,32 @@ export async function renameVariables(
       /* ignore fingerprint computation errors */
     }
   }
+  // Post-processing: detect and fix any duplicate names globally.
+  // This is a safety net for edge cases where claimName didn't catch a collision.
+  // Obfuscated code often hoists all declarations to the module level, so
+  // variables from different scopes can end up in the same namespace.
+  const nameToKeys = new Map<string, string[]>();
+  for (const [key, name] of Object.entries(resolved)) {
+    if (!nameToKeys.has(name)) nameToKeys.set(name, []);
+    nameToKeys.get(name)!.push(key);
+  }
+  for (const [name, keys] of nameToKeys) {
+    if (keys.length <= 1) continue;
+    log(
+      "warn",
+      `Duplicate name "${name}" for ${keys.length} variables: ${keys.join(", ")}`,
+    );
+    for (let i = 1; i < keys.length; i++) {
+      const key = keys[i]!;
+      const obfName = key.split("::").pop() || "var";
+      const prefix = obfName.replace(/^_0x/, "").slice(0, 4);
+      const safePrefix = /^\d/.test(prefix) ? `v${prefix}` : prefix;
+      const newName = `${safePrefix}${name[0]!.toUpperCase() + name.slice(1)}`;
+      log("warn", `  Renamed ${key} -> ${newName}`);
+      resolved[key] = newName;
+    }
+  }
+
   // Filter out any mappings that would rename to a reserved word
   for (const [key, name] of Object.entries(resolved)) {
     if (isReservedWord(name)) {

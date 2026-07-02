@@ -2,7 +2,6 @@ import {
   stateCache,
   getGameState,
   getEntityManager,
-  angle,
   gameInstance,
   state,
 } from "./core.js";
@@ -28,10 +27,10 @@ function getGameCanvas() {
     document.querySelector("#canvas-container canvas")
   );
 }
-const getAllPropertyNames = (targetObject) => {
+const getAllPropertyNames = (v3d43TargetObject) => {
   return [
-    ...Object.getOwnPropertyNames(Object.getPrototypeOf(targetObject)),
-    ...Object.getOwnPropertyNames(targetObject),
+    ...Object.getOwnPropertyNames(Object.getPrototypeOf(v3d43TargetObject)),
+    ...Object.getOwnPropertyNames(v3d43TargetObject),
   ];
 };
 function isPlayer(entity) {
@@ -73,45 +72,45 @@ function isPlayer(entity) {
 function getMyAnimal() {
   try {
     return getGameState()?.myAnimals?.[0] || null;
-  } catch (error) {
+  } catch (v8683Error) {
     return null;
   }
 }
 function getEntityById(entityId) {
   try {
-    const gameState = getGameState();
-    if (!gameState) {
+    const v299bGameState = getGameState();
+    if (!v299bGameState) {
       return null;
     }
-    const parsedState = getEntityManager(gameState);
+    const parsedState = getEntityManager(v299bGameState);
     if (!parsedState) {
       return null;
     }
-    let entity = parsedState.entitiesById
+    let v87e7Entity = parsedState.entitiesById
       ? parsedState.entitiesById[entityId]
       : null;
-    if (!entity && parsedState.entitiesList) {
-      entity = parsedState.entitiesList.find(
+    if (!v87e7Entity && parsedState.entitiesList) {
+      v87e7Entity = parsedState.entitiesList.find(
         (currentItem) => currentItem.id === entityId,
       );
     }
-    if (!entity && parsedState.animalsByPlayerRoomId) {
+    if (!v87e7Entity && parsedState.animalsByPlayerRoomId) {
       for (let roomId of Object.keys(parsedState.animalsByPlayerRoomId)) {
         const roomAnimals = parsedState.animalsByPlayerRoomId[roomId];
         if (Array.isArray(roomAnimals)) {
-          entity = roomAnimals.find(
+          v87e7Entity = roomAnimals.find(
             (selectedItem) => selectedItem && selectedItem.id === entityId,
           );
         } else if (roomAnimals && roomAnimals.id === entityId) {
-          entity = roomAnimals;
+          v87e7Entity = roomAnimals;
         }
-        if (entity) {
+        if (v87e7Entity) {
           break;
         }
       }
     }
-    return entity;
-  } catch (error) {
+    return v87e7Entity;
+  } catch (v10a0Error) {
     return null;
   }
 }
@@ -120,10 +119,10 @@ function calculateDistance(x1, y1, x2, y2) {
 }
 function getNearbyEntities() {
   try {
-    const gameState = getGameState();
-    const parsedState = getEntityManager(gameState);
-    const myAnimal = gameState?.myAnimals?.[0];
-    if (!parsedState || !myAnimal) {
+    const v45d3GameState = getGameState();
+    const v2834ParsedState = getEntityManager(v45d3GameState);
+    const myAnimal = v45d3GameState?.myAnimals?.[0];
+    if (!v2834ParsedState || !myAnimal) {
       return null;
     }
     const myX =
@@ -144,53 +143,54 @@ function getNearbyEntities() {
       players: [],
       food: [],
     };
-    const entities = parsedState.entitiesList || [];
-    entities.forEach((entity) => {
-      if (!entity || entity.id === myAnimal.id) {
+    const entities = v2834ParsedState.entitiesList || [];
+    entities.forEach((v194eEntity) => {
+      if (!v194eEntity || v194eEntity.id === myAnimal.id) {
         return;
       }
       const entityX =
-        entity.position?._x !== undefined
-          ? entity.position._x
-          : entity.position?.x;
+        v194eEntity.position?._x !== undefined
+          ? v194eEntity.position._x
+          : v194eEntity.position?.x;
       const entityY =
-        entity.position?._y !== undefined
-          ? entity.position._y
-          : entity.position?.y;
+        v194eEntity.position?._y !== undefined
+          ? v194eEntity.position._y
+          : v194eEntity.position?.y;
       if (entityX == null || entityY == null) {
         return;
       }
       const deltaX = entityX - myX;
       const deltaY = entityY - myY;
-      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-      const gameData = {
-        id: entity.id,
+      const v4ee9Distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+      const v2999GameData = {
+        id: v194eEntity.id,
         x: entityX,
         y: entityY,
-        distance: distance,
+        distance: v4ee9Distance,
         angle: Math.atan2(deltaY, deltaX),
-        entity: entity,
+        entity: v194eEntity,
       };
-      entityData.entities.push(gameData);
-      if (isPlayer(entity)) {
-        entityData.players.push(gameData);
+      entityData.entities.push(v2999GameData);
+      if (isPlayer(v194eEntity)) {
+        entityData.players.push(v2999GameData);
       } else {
-        entityData.food.push(gameData);
+        entityData.food.push(v2999GameData);
       }
     });
     entityData.entities.sort(
       (entityA, entityB) => entityA.distance - entityB.distance,
     );
     entityData.players.sort(
-      (entityA_qn0, entityB_r2r) => entityA_qn0.distance - entityB_r2r.distance,
+      (v180eEntityA, v24e9EntityB) =>
+        v180eEntityA.distance - v24e9EntityB.distance,
     );
     entityData.food.sort(
-      (entityA_imr, secondItem) => entityA_imr.distance - secondItem.distance,
+      (fba1EntityA, secondItem) => fba1EntityA.distance - secondItem.distance,
     );
     return entityData;
-  } catch (error) {
+  } catch (v3909Error) {
     return {
-      error: error.message,
+      error: v3909Error.message,
     };
   }
 }
@@ -207,7 +207,7 @@ function getZoomLevel() {
     if (gameInstance?.viewport?.scale?.x) {
       zoomLevel = gameInstance.viewport.scale.x;
     }
-  } catch (error) {}
+  } catch (v3422Error) {}
   return zoomLevel;
 }
 function getOrCreateOverlayCanvas(canvasId, zIndex) {

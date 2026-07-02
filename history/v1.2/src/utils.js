@@ -13,10 +13,10 @@ function getGameCanvas() {
     document.querySelector("#canvas-container canvas")
   );
 }
-const getAllPropertyNames = (targetObject) => {
+const getAllPropertyNames = (v39e0TargetObject) => {
   return [
-    ...Object.getOwnPropertyNames(Object.getPrototypeOf(targetObject)),
-    ...Object.getOwnPropertyNames(targetObject),
+    ...Object.getOwnPropertyNames(Object.getPrototypeOf(v39e0TargetObject)),
+    ...Object.getOwnPropertyNames(v39e0TargetObject),
   ];
 };
 

@@ -1,8 +1,8 @@
 import {
   radius,
   initNetworkHook,
-  isProcessed_sc5,
-  isProcessed_qng,
+  boolIsProcessed,
+  appIsProcessed,
   setupAntiDetection,
   applyGameHacks,
   state,
@@ -30,8 +30,8 @@ function createUpdateHistoryPanel() {
   const minHistBtn = historyPanel.querySelector("#minHist");
   const historyContent = historyPanel.querySelector("#historyContent");
   let isHidden = false;
-  minHistBtn.onclick = (event) => {
-    event.stopPropagation();
+  minHistBtn.onclick = (v4253Event) => {
+    v4253Event.stopPropagation();
     isHidden = !isHidden;
     historyContent.style.display = isHidden ? "none" : "block";
     historyPanel.style.height = isHidden ? "50px" : "auto";
@@ -40,23 +40,23 @@ function createUpdateHistoryPanel() {
   let offsetX;
   let offsetY;
   let isActive = false;
-  let isActive_fb8 = false;
-  historyPanel.addEventListener("mousedown", (event_z21) => {
+  let v4b0aIsActive = false;
+  historyPanel.addEventListener("mousedown", (dbcdEvent) => {
     if (
-      ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(event_z21.target.tagName)
+      ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(dbcdEvent.target.tagName)
     ) {
       return;
     }
     isActive = true;
-    isActive_fb8 = false;
-    offsetX = event_z21.clientX - historyPanel.getBoundingClientRect().left;
-    offsetY = event_z21.clientY - historyPanel.getBoundingClientRect().top;
+    v4b0aIsActive = false;
+    offsetX = dbcdEvent.clientX - historyPanel.getBoundingClientRect().left;
+    offsetY = dbcdEvent.clientY - historyPanel.getBoundingClientRect().top;
     historyPanel.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
-      const deltaX = mouseEvent.clientX - event_z21.clientX;
-      const deltaY = mouseEvent.clientY - event_z21.clientY;
-      if (!isActive_fb8 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isActive_fb8 = true;
+      const deltaX = mouseEvent.clientX - dbcdEvent.clientX;
+      const deltaY = mouseEvent.clientY - dbcdEvent.clientY;
+      if (!v4b0aIsActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+        v4b0aIsActive = true;
       }
       if (isActive) {
         historyPanel.style.left = mouseEvent.clientX - offsetX + "px";
@@ -74,9 +74,9 @@ function createUpdateHistoryPanel() {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   });
-  historyPanel.addEventListener("click", (event_cbo) => {
-    if (isActive_fb8) {
-      event_cbo.stopImmediatePropagation();
+  historyPanel.addEventListener("click", (v2e7fEvent) => {
+    if (v4b0aIsActive) {
+      v2e7fEvent.stopImmediatePropagation();
     }
   });
   return historyPanel;
@@ -106,13 +106,13 @@ function createDeepToolsPanel() {
   document.body.appendChild(container);
   const minPanel = container.querySelector("#minPanel");
   const panelContent = container.querySelector("#panelContent");
-  let isHidden = false;
-  minPanel.onclick = (event) => {
-    event.stopPropagation();
-    isHidden = !isHidden;
-    panelContent.style.display = isHidden ? "none" : "block";
-    container.style.height = isHidden ? "50px" : "auto";
-    minPanel.textContent = isHidden ? "+" : "−";
+  let v3d2cIsHidden = false;
+  minPanel.onclick = (v3bfaEvent) => {
+    v3bfaEvent.stopPropagation();
+    v3d2cIsHidden = !v3d2cIsHidden;
+    panelContent.style.display = v3d2cIsHidden ? "none" : "block";
+    container.style.height = v3d2cIsHidden ? "50px" : "auto";
+    minPanel.textContent = v3d2cIsHidden ? "+" : "−";
   };
   container.querySelector("#sendBtn").onclick = () => {
     const chatMessage = container.querySelector("#chatMsg").value;
@@ -122,8 +122,8 @@ function createDeepToolsPanel() {
   };
   const spoofButton = container.querySelector("#patchBtn");
   spoofButton.onclick = () => initNetworkHook(spoofButton);
-  const spoofButton_iul = container.querySelector("#spoofBtn");
-  spoofButton_iul.onclick = () => {
+  const v2136SpoofButton = container.querySelector("#spoofBtn");
+  v2136SpoofButton.onclick = () => {
     const maxLength = generateRandomString(8);
     if (simulateTyping(".play-game .el-input__inner", maxLength)) {
       showNotification("Spoofed name!");
@@ -136,7 +136,7 @@ function createDeepToolsPanel() {
   const autoChatButton = container.querySelector("#spinBtn");
   autoChatButton.onclick = () => {
     toggleMouseSimulation();
-    if (featuresentitytrailState.entityTrailInterval_9sd) {
+    if (featuresentitytrailState.modEntityTrailInterval) {
       autoChatButton.textContent = "Disable Auto Spin";
       autoChatButton.style.color = "#27ae60";
     } else {
@@ -151,15 +151,15 @@ function createDeepToolsPanel() {
     lastPressedKey = keyEvent.code || keyEvent.key;
     spinKeyInput.value = lastPressedKey.replace("Key", "").toLowerCase();
   });
-  document.addEventListener("keydown", (event_3l4) => {
+  document.addEventListener("keydown", (v1dedEvent) => {
     if (
       lastPressedKey &&
-      event_3l4.code === lastPressedKey &&
-      !event_3l4.target.matches("input, textarea, button")
+      v1dedEvent.code === lastPressedKey &&
+      !v1dedEvent.target.matches("input, textarea, button")
     ) {
-      event_3l4.preventDefault();
+      v1dedEvent.preventDefault();
       toggleMouseSimulation();
-      if (featuresentitytrailState.entityTrailInterval_9sd) {
+      if (featuresentitytrailState.modEntityTrailInterval) {
         autoChatButton.textContent = "Disable Auto Spin";
         autoChatButton.style.color = "#27ae60";
       } else {
@@ -168,8 +168,8 @@ function createDeepToolsPanel() {
       }
     }
   });
-  const autoChatButton_joo = container.querySelector("#autoChatBtn");
-  autoChatButton_joo.onclick = () => {
+  const v2ffaAutoChatButton = container.querySelector("#autoChatBtn");
+  v2ffaAutoChatButton.onclick = () => {
     const chatMessageText = container.querySelector("#chatMsg").value;
     const delayInput = container.querySelector("#delayInput");
     const delayValue = parseInt(delayInput.value) || 10;
@@ -177,59 +177,62 @@ function createDeepToolsPanel() {
       showNotification("⚠️ Enter a message first!");
       return;
     }
-    if (state.isToggled) {
+    if (state.IsToggled) {
       stopInterval();
-      autoChatButton_joo.textContent = "Enable Auto Chat";
-      autoChatButton_joo.style.color = "#e74c3c";
+      v2ffaAutoChatButton.textContent = "Enable Auto Chat";
+      v2ffaAutoChatButton.style.color = "#e74c3c";
     } else {
       startScheduledTask(chatMessageText, delayValue);
-      autoChatButton_joo.textContent = "Disable Auto Chat";
-      autoChatButton_joo.style.color = "#27ae60";
+      v2ffaAutoChatButton.textContent = "Disable Auto Chat";
+      v2ffaAutoChatButton.style.color = "#27ae60";
     }
   };
-  let offsetX;
-  let offsetY;
-  let isActive = false;
-  let isActive_jtk = false;
-  container.addEventListener("mousedown", (event_2uf) => {
+  let v1985OffsetX;
+  let v12c5OffsetY;
+  let v3a7fIsActive = false;
+  let v41e7IsActive = false;
+  container.addEventListener("mousedown", (v1573Event) => {
     if (
-      event_2uf.target.tagName === "BUTTON" ||
-      event_2uf.target.tagName === "TEXTAREA" ||
-      event_2uf.target.tagName === "INPUT" ||
-      event_2uf.target.classList.contains("credits")
+      v1573Event.target.tagName === "BUTTON" ||
+      v1573Event.target.tagName === "TEXTAREA" ||
+      v1573Event.target.tagName === "INPUT" ||
+      v1573Event.target.classList.contains("credits")
     ) {
       return;
     }
-    isActive = true;
-    isActive_jtk = false;
-    offsetX = event_2uf.clientX - container.getBoundingClientRect().left;
-    offsetY = event_2uf.clientY - container.getBoundingClientRect().top;
+    v3a7fIsActive = true;
+    v41e7IsActive = false;
+    v1985OffsetX = v1573Event.clientX - container.getBoundingClientRect().left;
+    v12c5OffsetY = v1573Event.clientY - container.getBoundingClientRect().top;
     container.style.transition = "none";
-    const handleMouseMove = (mouseEvent) => {
-      const deltaX = mouseEvent.clientX - event_2uf.clientX;
-      const deltaY = mouseEvent.clientY - event_2uf.clientY;
-      if (!isActive_jtk && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isActive_jtk = true;
+    const v4387HandleMouseMove = (v448cMouseEvent) => {
+      const v5b68DeltaX = v448cMouseEvent.clientX - v1573Event.clientX;
+      const v2a22DeltaY = v448cMouseEvent.clientY - v1573Event.clientY;
+      if (
+        !v41e7IsActive &&
+        (Math.abs(v5b68DeltaX) > 5 || Math.abs(v2a22DeltaY) > 5)
+      ) {
+        v41e7IsActive = true;
       }
-      if (isActive) {
-        container.style.left = mouseEvent.clientX - offsetX + "px";
-        container.style.top = mouseEvent.clientY - offsetY + "px";
+      if (v3a7fIsActive) {
+        container.style.left = v448cMouseEvent.clientX - v1985OffsetX + "px";
+        container.style.top = v448cMouseEvent.clientY - v12c5OffsetY + "px";
         container.style.bottom = "auto";
         container.style.right = "auto";
       }
     };
-    const handleMouseUp = () => {
-      isActive = false;
+    const v5038HandleMouseUp = () => {
+      v3a7fIsActive = false;
       container.style.transition = "all 0.3s ease";
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("mousemove", v4387HandleMouseMove);
+      document.removeEventListener("mouseup", v5038HandleMouseUp);
     };
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("mousemove", v4387HandleMouseMove);
+    document.addEventListener("mouseup", v5038HandleMouseUp);
   });
-  container.addEventListener("click", (event_5g4) => {
-    if (isActive_jtk) {
-      event_5g4.stopImmediatePropagation();
+  container.addEventListener("click", (v5baaEvent) => {
+    if (v41e7IsActive) {
+      v5baaEvent.stopImmediatePropagation();
     }
   });
   return container;
@@ -239,37 +242,37 @@ function createPlusPanel() {
   plusPanelStyle.textContent =
     "\n      #plus-panel {\n        font-family: 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n        border: 1px solid #333;\n        background: #1e1e1e;\n      }\n      #plus-panel:hover {\n        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n      }\n      #plus-panel textarea {\n        background: #2d2d2d;\n        border: 1px solid #444;\n        color: #e0e0e0;\n        border-radius: 6px;\n        padding: 8px;\n        transition: border-color 0.2s;\n        font-size: 13px;\n      }\n      #plus-panel textarea:focus {\n        outline: none;\n        border-color: #e74c3c;\n        box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);\n      }\n      #plus-panel input[type=\"number\"] {\n        background: #2d2d2d;\n        border: 1px solid #444;\n        color: #e0e0e0;\n        border-radius: 4px;\n        padding: 4px;\n        width: 60px;\n        text-align: center;\n      }\n      #plus-panel button {\n        background: #2d2d2d;\n        color: #e74c3c;\n        border: 1px solid #444;\n        border-radius: 6px;\n        padding: 8px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        width: 100%;\n        margin-bottom: 8px;\n      }\n      #plus-panel button:hover:not(:disabled) {\n        background: #3d3d3d;\n        border-color: #e74c3c;\n        transform: translateY(-1px);\n        box-shadow: 0 2px 6px rgba(231, 76, 60, 0.2);\n      }\n      #plus-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);\n      }\n      #plus-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #plus-panel button.min-btn {\n        background: none;\n        border: none;\n        color: #e74c3c;\n        font-size: 18px;\n        cursor: pointer;\n        position: absolute;\n        top: 30%;\n        right: 5px;\n        transform: translateY(-50%);\n        z-index: 1;\n        transition: color 0.2s ease;\n        width: 20px;\n        height: 20px;\n        line-height: 20px;\n      }\n      #plus-panel button.min-btn:hover {\n        color: #f39c12;\n      }\n    ";
   document.head.appendChild(plusPanelStyle);
-  const container = document.createElement("div");
-  container.id = "plus-panel";
-  container.style.position = "fixed";
-  container.style.top = "20px";
-  container.style.right = "20px";
-  container.style.color = "#e0e0e0";
-  container.style.padding = "14px";
-  container.style.borderRadius = "8px";
-  container.style.fontSize = "14px";
-  container.style.zIndex = "99999";
-  container.style.userSelect = "none";
-  container.style.width = "220px";
-  container.style.textAlign = "center";
-  container.style.cursor = "move";
-  container.style.overflow = "hidden";
-  container.innerHTML =
+  const v18aeContainer = document.createElement("div");
+  v18aeContainer.id = "plus-panel";
+  v18aeContainer.style.position = "fixed";
+  v18aeContainer.style.top = "20px";
+  v18aeContainer.style.right = "20px";
+  v18aeContainer.style.color = "#e0e0e0";
+  v18aeContainer.style.padding = "14px";
+  v18aeContainer.style.borderRadius = "8px";
+  v18aeContainer.style.fontSize = "14px";
+  v18aeContainer.style.zIndex = "99999";
+  v18aeContainer.style.userSelect = "none";
+  v18aeContainer.style.width = "220px";
+  v18aeContainer.style.textAlign = "center";
+  v18aeContainer.style.cursor = "move";
+  v18aeContainer.style.overflow = "hidden";
+  v18aeContainer.innerHTML =
     '\n      <div style="font-weight:600; margin-bottom:10px; color:#e74c3c; position: relative; height: 40px; line-height: 40px; padding-right: 25px;">\n        ASTRAPHOBIA CLIENT\n        <button class="min-btn" id="minPlus">−</button>\n      </div>\n      <div id="plusContent">\n        <button id="thresherBtn">Enable Thresher Super Boost(ctrl + shift and click)(minumum required 2 boost)</button>\n        <button id="astraVisionBtn">Enable Astra-Vision (no-zoom limit, no ink flash or deep darkness)</button>\n      </div>\n    ';
-  document.body.appendChild(container);
-  const minPlusBtn = container.querySelector("#minPlus");
-  const plusContent = container.querySelector("#plusContent");
-  let isHidden = false;
-  minPlusBtn.onclick = (event) => {
-    event.stopPropagation();
-    isHidden = !isHidden;
-    plusContent.style.display = isHidden ? "none" : "block";
-    container.style.height = isHidden ? "50px" : "auto";
-    minPlusBtn.textContent = isHidden ? "+" : "−";
+  document.body.appendChild(v18aeContainer);
+  const minPlusBtn = v18aeContainer.querySelector("#minPlus");
+  const plusContent = v18aeContainer.querySelector("#plusContent");
+  let v4e99IsHidden = false;
+  minPlusBtn.onclick = (v57c7Event) => {
+    v57c7Event.stopPropagation();
+    v4e99IsHidden = !v4e99IsHidden;
+    plusContent.style.display = v4e99IsHidden ? "none" : "block";
+    v18aeContainer.style.height = v4e99IsHidden ? "50px" : "auto";
+    minPlusBtn.textContent = v4e99IsHidden ? "+" : "−";
   };
-  const astraVisionBtn = container.querySelector("#thresherBtn");
+  const astraVisionBtn = v18aeContainer.querySelector("#thresherBtn");
   astraVisionBtn.onclick = () => {
-    if (isProcessed_qng) {
+    if (appIsProcessed) {
       showNotification("Thresher Super Boost is already active!");
       return;
     }
@@ -278,26 +281,26 @@ function createPlusPanel() {
     astraVisionBtn.style.color = "#27ae60";
     astraVisionBtn.disabled = true;
   };
-  const astraVisionBtn_fg7 = container.querySelector("#astraVisionBtn");
-  astraVisionBtn_fg7.onclick = () => {
-    if (isProcessed_sc5) {
+  const v3fd4AstraVisionBtn = v18aeContainer.querySelector("#astraVisionBtn");
+  v3fd4AstraVisionBtn.onclick = () => {
+    if (boolIsProcessed) {
       showNotification("Astra-Vision already enabled!");
       return;
     }
     setupAntiDetection();
     applyGameHacks();
-    astraVisionBtn_fg7.textContent = "Astra-Vision Active";
-    astraVisionBtn_fg7.style.color = "#27ae60";
-    astraVisionBtn_fg7.disabled = true;
+    v3fd4AstraVisionBtn.textContent = "Astra-Vision Active";
+    v3fd4AstraVisionBtn.style.color = "#27ae60";
+    v3fd4AstraVisionBtn.disabled = true;
     showNotification(
       "👁️ Astra-Vision enabled! (zoom-limit unlocked, no ink-flash or deep darkness effects)",
     );
   };
-  let offsetX;
-  let offsetY;
-  let isActive = false;
-  let isActive_gcu = false;
-  container.addEventListener("mousedown", (clickEvent) => {
+  let v3e3bOffsetX;
+  let v3748OffsetY;
+  let v5540IsActive = false;
+  let v5e22IsActive = false;
+  v18aeContainer.addEventListener("mousedown", (clickEvent) => {
     if (
       clickEvent.target.tagName === "BUTTON" ||
       clickEvent.target.tagName === "TEXTAREA" ||
@@ -306,39 +309,46 @@ function createPlusPanel() {
     ) {
       return;
     }
-    isActive = true;
-    isActive_gcu = false;
-    offsetX = clickEvent.clientX - container.getBoundingClientRect().left;
-    offsetY = clickEvent.clientY - container.getBoundingClientRect().top;
-    container.style.transition = "none";
-    const handleMouseMove = (mouseEvent) => {
-      const deltaX = mouseEvent.clientX - clickEvent.clientX;
-      const deltaY = mouseEvent.clientY - clickEvent.clientY;
-      if (!isActive_gcu && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isActive_gcu = true;
+    v5540IsActive = true;
+    v5e22IsActive = false;
+    v3e3bOffsetX =
+      clickEvent.clientX - v18aeContainer.getBoundingClientRect().left;
+    v3748OffsetY =
+      clickEvent.clientY - v18aeContainer.getBoundingClientRect().top;
+    v18aeContainer.style.transition = "none";
+    const v1ebfHandleMouseMove = (v4a1fMouseEvent) => {
+      const v5d23DeltaX = v4a1fMouseEvent.clientX - clickEvent.clientX;
+      const v1c1fDeltaY = v4a1fMouseEvent.clientY - clickEvent.clientY;
+      if (
+        !v5e22IsActive &&
+        (Math.abs(v5d23DeltaX) > 5 || Math.abs(v1c1fDeltaY) > 5)
+      ) {
+        v5e22IsActive = true;
       }
-      if (isActive) {
-        container.style.left = mouseEvent.clientX - offsetX + "px";
-        container.style.top = mouseEvent.clientY - offsetY + "px";
-        container.style.bottom = "auto";
-        container.style.right = "auto";
+      if (v5540IsActive) {
+        v18aeContainer.style.left =
+          v4a1fMouseEvent.clientX - v3e3bOffsetX + "px";
+        v18aeContainer.style.top =
+          v4a1fMouseEvent.clientY - v3748OffsetY + "px";
+        v18aeContainer.style.bottom = "auto";
+        v18aeContainer.style.right = "auto";
       }
     };
-    const handleMouseUp = () => {
-      isActive = false;
-      container.style.transition = "all 0.3s ease";
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+    const v1767HandleMouseUp = () => {
+      v5540IsActive = false;
+      v18aeContainer.style.transition = "all 0.3s ease";
+      document.removeEventListener("mousemove", v1ebfHandleMouseMove);
+      document.removeEventListener("mouseup", v1767HandleMouseUp);
     };
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("mousemove", v1ebfHandleMouseMove);
+    document.addEventListener("mouseup", v1767HandleMouseUp);
   });
-  container.addEventListener("click", (keyboardEvent) => {
-    if (isActive_gcu) {
-      keyboardEvent.stopImmediatePropagation();
+  v18aeContainer.addEventListener("click", (v33cbKeyboardEvent) => {
+    if (v5e22IsActive) {
+      v33cbKeyboardEvent.stopImmediatePropagation();
     }
   });
-  return container;
+  return v18aeContainer;
 }
 function togglePanels() {
   const deepToolsPanel = document.getElementById("deep-tools-panel");

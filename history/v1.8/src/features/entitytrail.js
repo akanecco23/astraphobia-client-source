@@ -1,28 +1,23 @@
 import {
-  startEntityTrail,
-  currentTime,
-  getFirstAnimalPosition,
-  state,
-} from "../core.js";
-import {
   getNearbyEntities,
   getZoomScale,
   getOrCreateOverlayCanvas,
 } from "../utils.js";
+import { startEntityTrail, getFirstAnimalPosition, state } from "../core.js";
 import { showNotification } from "../ui/interaction.js";
 import { refreshUI } from "../ui/panels.js";
 
-function stopEntityTrail_sl0() {
-  if (featuresentitytrailState.entityTrailInterval_rf6) {
-    clearInterval(featuresentitytrailState.entityTrailInterval_rf6);
-    featuresentitytrailState.entityTrailInterval_rf6 = null;
+function mainStopEntityTrail() {
+  if (featuresentitytrailState.mainEntityTrailInterval) {
+    clearInterval(featuresentitytrailState.mainEntityTrailInterval);
+    featuresentitytrailState.mainEntityTrailInterval = null;
   }
 }
 function toggleEntityTrail() {
   if (window.entityTrailEnabled) {
     window.entityTrailEnabled = false;
     window.entityTrailTargetId = null;
-    stopEntityTrail_sl0();
+    mainStopEntityTrail();
     window.entityTrailHistory = [];
     showNotification("Trail stopped");
     refreshUI();
@@ -47,25 +42,25 @@ function toggleEntityTrail() {
   showNotification("Tracing: " + targetPlayerName);
   refreshUI();
 }
-function drawEntityTrail(ctx, canvas, originPos, zoomScale) {
+function drawEntityTrail(ctx, v29cbCanvas, originPos, zoomScale) {
   if (!window.entityTrailEnabled || window.entityTrailHistory.length < 2) {
     return;
   }
-  const halfWidth = canvas.width / 2;
-  const halfHeight = canvas.height / 2;
-  const currentTime = Date.now();
+  const halfWidth = v29cbCanvas.width / 2;
+  const halfHeight = v29cbCanvas.height / 2;
+  const v4863CurrentTime = Date.now();
   const trailDuration = 30000;
   const { r: red, g: green, b: blue } = window.entityTrailColor;
-  for (let i = 1; i < window.entityTrailHistory.length; i++) {
-    const prevPoint = window.entityTrailHistory[i - 1];
-    const currPoint = window.entityTrailHistory[i];
-    const age = currentTime - currPoint.time;
+  for (let v2df1I = 1; v2df1I < window.entityTrailHistory.length; v2df1I++) {
+    const prevPoint = window.entityTrailHistory[v2df1I - 1];
+    const currPoint = window.entityTrailHistory[v2df1I];
+    const age = v4863CurrentTime - currPoint.time;
     const opacity = Math.max(0.05, 1 - age / trailDuration);
     const startX = halfWidth + (prevPoint.x - originPos.x) * zoomScale;
     const startY = halfHeight + (prevPoint.y - originPos.y) * zoomScale;
     const endX = halfWidth + (currPoint.x - originPos.x) * zoomScale;
     const endY = halfHeight + (currPoint.y - originPos.y) * zoomScale;
-    const progress = i / window.entityTrailHistory.length;
+    const progress = v2df1I / window.entityTrailHistory.length;
     ctx.beginPath();
     ctx.moveTo(startX, startY);
     ctx.lineTo(endX, endY);
@@ -76,7 +71,7 @@ function drawEntityTrail(ctx, canvas, originPos, zoomScale) {
   }
   for (let j = 0; j < window.entityTrailHistory.length; j += 5) {
     const point = window.entityTrailHistory[j];
-    const pointAge = currentTime - point.time;
+    const pointAge = v4863CurrentTime - point.time;
     const pointOpacity = Math.max(0.1, 1 - pointAge / trailDuration);
     const pointX = halfWidth + (point.x - originPos.x) * zoomScale;
     const pointY = halfHeight + (point.y - originPos.y) * zoomScale;
@@ -89,25 +84,35 @@ function drawEntityTrail(ctx, canvas, originPos, zoomScale) {
   if (window.entityTrailHistory.length > 0) {
     const lastTrailPoint =
       window.entityTrailHistory[window.entityTrailHistory.length - 1];
-    const screenY = halfWidth + (lastTrailPoint.x - originPos.x) * zoomScale;
-    const screenY_vbc =
+    const ScreenY = halfWidth + (lastTrailPoint.x - originPos.x) * zoomScale;
+    const d2d3ScreenY =
       halfHeight + (lastTrailPoint.y - originPos.y) * zoomScale;
     ctx.fillStyle = "rgb(" + red + "," + green + "," + blue + ")";
     ctx.font = "bold 10px monospace";
     ctx.fillText(
       "TRAIL (" + window.entityTrailHistory.length + " pts)",
-      screenY + 8,
-      screenY_vbc - 8,
+      ScreenY + 8,
+      d2d3ScreenY - 8,
     );
   }
 }
 function renderOverlay() {
-  const overlayCanvas = getOrCreateOverlayCanvas("ast-overlay", 999997);
-  const overlayCtx = overlayCanvas.getContext("2d");
-  overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-  const entityData = getFirstAnimalPosition();
-  if (entityData && window.entityTrailEnabled) {
-    drawEntityTrail(overlayCtx, overlayCanvas, entityData, getZoomScale());
+  const v3843OverlayCanvas = getOrCreateOverlayCanvas("ast-overlay", 999997);
+  const overlayCtx = v3843OverlayCanvas.getContext("2d");
+  overlayCtx.clearRect(
+    0,
+    0,
+    v3843OverlayCanvas.width,
+    v3843OverlayCanvas.height,
+  );
+  const v152dEntityData = getFirstAnimalPosition();
+  if (v152dEntityData && window.entityTrailEnabled) {
+    drawEntityTrail(
+      overlayCtx,
+      v3843OverlayCanvas,
+      v152dEntityData,
+      getZoomScale(),
+    );
   }
   requestAnimationFrame(renderOverlay);
 }
@@ -123,12 +128,12 @@ window.entityTrailMaxLength = 200;
 window.entityTrailRecordInterval = 100;
 
 export const featuresentitytrailState = {
-  entityTrailInterval_sje: null,
-  entityTrailInterval_rf6: null,
+  sysEntityTrailInterval: null,
+  mainEntityTrailInterval: null,
 };
 
 export {
-  stopEntityTrail_sl0,
+  mainStopEntityTrail,
   toggleEntityTrail,
   drawEntityTrail,
   renderOverlay,

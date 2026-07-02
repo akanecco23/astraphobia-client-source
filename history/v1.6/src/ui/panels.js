@@ -1,19 +1,17 @@
 import {
   radius,
-  config,
   hookTextEncoder,
-  isProcessed_skx,
+  sysIsProcessed,
   initAutoFarm,
   initializeAntiDetection,
   initializeViewportSettings,
-  angle,
   state,
 } from "../core.js";
 import {
   toggleEsp,
   trackPlayer,
-  toggleEsp_sdk,
-  toggleEsp_sl9,
+  globalToggleEsp,
+  v55bbToggleEsp,
   toggleMinimapSize,
 } from "../features/esp.js";
 import {
@@ -64,45 +62,45 @@ function showHalloweenModal(config) {
     closeModal();
     config(false);
   };
-  codeInput.addEventListener("keypress", (event) => {
-    if (event.key === "Enter") {
+  codeInput.addEventListener("keypress", (v8a09Event) => {
+    if (v8a09Event.key === "Enter") {
       modalContainer.querySelector("#hwSubmitBtn").click();
     }
   });
   codeInput.focus();
 }
 function makeDraggable(element) {
-  let offsetX;
-  let offsetY;
+  let v279dOffsetX;
+  let ee7cOffsetY;
   let isDragging = false;
-  let hasMoved = false;
-  element.addEventListener("mousedown", (event) => {
+  let v3fa0HasMoved = false;
+  element.addEventListener("mousedown", (v10c1Event) => {
     if (
       ["BUTTON", "INPUT", "TEXTAREA", "SELECT", "A", "LABEL"].includes(
-        event.target.tagName,
+        v10c1Event.target.tagName,
       )
     ) {
       return;
     }
-    if (event.target.closest("button, input, textarea, select, label")) {
+    if (v10c1Event.target.closest("button, input, textarea, select, label")) {
       return;
     }
     isDragging = true;
-    hasMoved = false;
-    offsetX = event.clientX - element.getBoundingClientRect().left;
-    offsetY = event.clientY - element.getBoundingClientRect().top;
+    v3fa0HasMoved = false;
+    v279dOffsetX = v10c1Event.clientX - element.getBoundingClientRect().left;
+    ee7cOffsetY = v10c1Event.clientY - element.getBoundingClientRect().top;
     element.style.transition = "none";
-    const handleMouseMove = (event) => {
+    const handleMouseMove = (v27ccEvent) => {
       if (
-        !hasMoved &&
-        (Math.abs(event.clientX - event.clientX) > 5 ||
-          Math.abs(event.clientY - event.clientY) > 5)
+        !v3fa0HasMoved &&
+        (Math.abs(v27ccEvent.clientX - v10c1Event.clientX) > 5 ||
+          Math.abs(v27ccEvent.clientY - v10c1Event.clientY) > 5)
       ) {
-        hasMoved = true;
+        v3fa0HasMoved = true;
       }
       if (isDragging) {
-        element.style.left = event.clientX - offsetX + "px";
-        element.style.top = event.clientY - offsetY + "px";
+        element.style.left = v27ccEvent.clientX - v279dOffsetX + "px";
+        element.style.top = v27ccEvent.clientY - ee7cOffsetY + "px";
         element.style.bottom = "auto";
         element.style.right = "auto";
       }
@@ -116,9 +114,9 @@ function makeDraggable(element) {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   });
-  element.addEventListener("click", (event_a8f) => {
-    if (hasMoved) {
-      event_a8f.stopImmediatePropagation();
+  element.addEventListener("click", (v367eEvent) => {
+    if (v3fa0HasMoved) {
+      v367eEvent.stopImmediatePropagation();
     }
   });
 }
@@ -130,12 +128,12 @@ function createToolsPanel() {
   panelElement.innerHTML =
     '\n      <div class="ast-header">\n        <span class="ast-header-title">Astraphobia Client</span>\n        <button class="ast-header-min" id="mainMin">−</button>\n      </div>\n      <div class="ast-body" id="mainBody">\n        <span class="ast-section-label">Chat</span>\n        <textarea class="ast-textarea" id="chatMsg" placeholder="Message..." rows="2"></textarea>\n        <button class="ast-btn" id="sendBtn">Send Chat</button>\n        <div class="ast-row" style="margin-top:4px;">\n          <input class="ast-input" type="number" id="delayInput" min="1" max="300" value="10" style="width:50px;text-align:center;">\n          <span style="font-size:11px;color:#888;">sec</span>\n          <button class="ast-btn" id="autoChatBtn" style="flex:1;margin-bottom:0;">Auto Chat</button>\n        </div>\n\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Tools</span>\n        <button class="ast-btn" id="patchBtn">Special Characters</button>\n        <button class="ast-btn" id="spoofBtn">Spoof Username</button>\n        <button class="ast-btn" id="spinBtn">Auto Spin</button>\n\n        <div class="ast-key-row">\n          <span>Spin key</span>\n          <input class="ast-key-capture" id="spinKeyInput" type="text" placeholder="..." readonly>\n        </div>\n\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Turn Controls</span>\n        <div class="ast-key-row">\n          <span>Turn Left</span>\n          <input class="ast-key-capture" id="turnLeftKeyInput" type="text" value="Q" readonly>\n        </div>\n        <div class="ast-key-row">\n          <span>Turn Right</span>\n          <input class="ast-key-capture" id="turnRightKeyInput" type="text" value="E" readonly>\n        </div>\n\n        <div class="ast-sep"></div>\n        <div class="ast-credits">\n          Made by Astraphobia\n        </div>\n      </div>\n    ';
   document.body.appendChild(panelElement);
-  const mainBody = panelElement.querySelector("#mainBody");
+  const Body = panelElement.querySelector("#mainBody");
   let isHidden = false;
-  panelElement.querySelector("#mainMin").onclick = (event) => {
-    event.stopPropagation();
+  panelElement.querySelector("#mainMin").onclick = (v9a5dEvent) => {
+    v9a5dEvent.stopPropagation();
     isHidden = !isHidden;
-    mainBody.style.display = isHidden ? "none" : "block";
+    Body.style.display = isHidden ? "none" : "block";
     panelElement.querySelector("#mainMin").textContent = isHidden ? "+" : "−";
   };
   panelElement.querySelector("#sendBtn").onclick = () => {
@@ -144,8 +142,8 @@ function createToolsPanel() {
       simulateChatInput(chatMessage);
     }
   };
-  const spinBtn = panelElement.querySelector("#autoChatBtn");
-  spinBtn.onclick = () => {
+  const v4d79SpinBtn = panelElement.querySelector("#autoChatBtn");
+  v4d79SpinBtn.onclick = () => {
     const messageText = panelElement.querySelector("#chatMsg").value;
     const delayValue =
       parseInt(panelElement.querySelector("#delayInput").value) || 10;
@@ -153,14 +151,14 @@ function createToolsPanel() {
       showToast("Enter a message first");
       return;
     }
-    if (state.isToggled) {
+    if (state.IsToggled) {
       stopInterval();
-      spinBtn.textContent = "Auto Chat";
-      spinBtn.classList.remove("toggle-on");
+      v4d79SpinBtn.textContent = "Auto Chat";
+      v4d79SpinBtn.classList.remove("toggle-on");
     } else {
       startScheduledTask(messageText, delayValue);
-      spinBtn.textContent = "Stop Chat";
-      spinBtn.classList.add("toggle-on");
+      v4d79SpinBtn.textContent = "Stop Chat";
+      v4d79SpinBtn.classList.add("toggle-on");
     }
   };
   const patchBtn = panelElement.querySelector("#patchBtn");
@@ -180,23 +178,25 @@ function createToolsPanel() {
       showToast("No name input found");
     }
   };
-  const spinBtn_jno = panelElement.querySelector("#spinBtn");
-  spinBtn_jno.onclick = () => {
+  const v4d79V4d79SpinBtn = panelElement.querySelector("#spinBtn");
+  v4d79V4d79SpinBtn.onclick = () => {
     toggleMouseSimulation();
-    if (featuresentitytrailState.entityTrailInterval_rfg) {
-      spinBtn_jno.textContent = "Stop Spin";
-      spinBtn_jno.classList.add("toggle-on");
+    if (featuresentitytrailState.globalEntityTrailInterval) {
+      v4d79V4d79SpinBtn.textContent = "Stop Spin";
+      v4d79V4d79SpinBtn.classList.add("toggle-on");
     } else {
-      spinBtn_jno.textContent = "Auto Spin";
-      spinBtn_jno.classList.remove("toggle-on");
+      v4d79V4d79SpinBtn.textContent = "Auto Spin";
+      v4d79V4d79SpinBtn.classList.remove("toggle-on");
     }
   };
-  const turnRightKeyInput = panelElement.querySelector("#spinKeyInput");
+  const v38c3TurnRightKeyInput = panelElement.querySelector("#spinKeyInput");
   let lastPressedKey = null;
-  turnRightKeyInput.addEventListener("keydown", (keyEvent) => {
+  v38c3TurnRightKeyInput.addEventListener("keydown", (keyEvent) => {
     keyEvent.preventDefault();
     lastPressedKey = keyEvent.code || keyEvent.key;
-    turnRightKeyInput.value = lastPressedKey.replace("Key", "").toUpperCase();
+    v38c3TurnRightKeyInput.value = lastPressedKey
+      .replace("Key", "")
+      .toUpperCase();
   });
   document.addEventListener("keydown", (keyboardEvent) => {
     if (
@@ -206,32 +206,33 @@ function createToolsPanel() {
     ) {
       keyboardEvent.preventDefault();
       toggleMouseSimulation();
-      if (featuresentitytrailState.entityTrailInterval_rfg) {
-        spinBtn_jno.textContent = "Stop Spin";
-        spinBtn_jno.classList.add("toggle-on");
+      if (featuresentitytrailState.globalEntityTrailInterval) {
+        v4d79V4d79SpinBtn.textContent = "Stop Spin";
+        v4d79V4d79SpinBtn.classList.add("toggle-on");
       } else {
-        spinBtn_jno.textContent = "Auto Spin";
-        spinBtn_jno.classList.remove("toggle-on");
+        v4d79V4d79SpinBtn.textContent = "Auto Spin";
+        v4d79V4d79SpinBtn.classList.remove("toggle-on");
       }
     }
   });
-  const turnRightKeyInput_hid = panelElement.querySelector("#turnLeftKeyInput");
-  const turnRightKeyInput_ij7 =
+  const v13abV38c3TurnRightKeyInput =
+    panelElement.querySelector("#turnLeftKeyInput");
+  const v38c3V38c3TurnRightKeyInput =
     panelElement.querySelector("#turnRightKeyInput");
-  turnRightKeyInput_hid.value = state.keyQ.toUpperCase();
-  turnRightKeyInput_ij7.value = state.keyE.toUpperCase();
-  turnRightKeyInput_hid.addEventListener("keydown", (uiEvent) => {
-    uiEvent.preventDefault();
-    uiEvent.stopPropagation();
-    state.keyQ = uiEvent.key;
-    turnRightKeyInput_hid.value =
-      uiEvent.key.length === 1 ? uiEvent.key.toUpperCase() : uiEvent.key;
+  v13abV38c3TurnRightKeyInput.value = state.keyQ.toUpperCase();
+  v38c3V38c3TurnRightKeyInput.value = state.keyE.toUpperCase();
+  v13abV38c3TurnRightKeyInput.addEventListener("keydown", (Event) => {
+    Event.preventDefault();
+    Event.stopPropagation();
+    state.keyQ = Event.key;
+    v13abV38c3TurnRightKeyInput.value =
+      Event.key.length === 1 ? Event.key.toUpperCase() : Event.key;
   });
-  turnRightKeyInput_ij7.addEventListener("keydown", (inputEvent) => {
+  v38c3V38c3TurnRightKeyInput.addEventListener("keydown", (inputEvent) => {
     inputEvent.preventDefault();
     inputEvent.stopPropagation();
     state.keyE = inputEvent.key;
-    turnRightKeyInput_ij7.value =
+    v38c3V38c3TurnRightKeyInput.value =
       inputEvent.key.length === 1
         ? inputEvent.key.toUpperCase()
         : inputEvent.key;
@@ -248,12 +249,12 @@ function createPlusPanel() {
     '\n      <div class="ast-header">\n        <span class="ast-header-title">Astraphobia Client</span>\n        <button class="ast-header-min" id="plusMin">−</button>\n      </div>\n      <div class="ast-body" id="plusBody">\n        <span class="ast-section-label">Vision</span>\n        <button class="ast-btn patched" id="thresherBtn" disabled>Thresher Boost (Patched)</button>\n        <button class="ast-btn" id="astraVisionBtn">Astra-Vision</button>\n        <button class="ast-btn" id="smallMinimapBtn">Small Minimap</button>\n\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">ESP</span>\n        <button class="ast-btn" id="espBtn">ESP</button>\n        <select class="ast-select" id="espModeSelect">\n          <option value="players">Players</option>\n          <option value="food">Food</option>\n        </select>\n        <button class="ast-btn" id="trackNearestBtn">Track Nearest (F3)</button>\n        <button class="ast-btn" id="untrackBtn">Untrack (F4)</button>\n\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Automation</span>\n        <button class="ast-btn" id="autoDodgeBtn">Auto Dodge</button>\n        <select class="ast-select" id="farmModeSelect">\n          <option value="nearest">Nearest Food</option>\n          <option value="cluster">Food Clusters</option>\n          <option value="patrol">Patrol Route</option>\n        </select>\n        <button class="ast-btn" id="autoFarmBtn">Auto Farm (F5)</button>\n\n        <div class="ast-toggle-row">\n          <label for="farmBoostToggle">Boost</label>\n          <div class="ast-switch">\n            <input type="checkbox" id="farmBoostToggle" checked>\n            <span class="slider"></span>\n          </div>\n        </div>\n        <div class="ast-toggle-row">\n          <label for="farmEvolveToggle">Evolve</label>\n          <div class="ast-switch">\n            <input type="checkbox" id="farmEvolveToggle" checked>\n            <span class="slider"></span>\n          </div>\n        </div>\n        <div class="ast-toggle-row">\n          <label for="farmAvoidToggle">Avoid Players</label>\n          <div class="ast-switch">\n            <input type="checkbox" id="farmAvoidToggle" checked>\n            <span class="slider"></span>\n          </div>\n        </div>\n      </div>\n    ';
   document.body.appendChild(plusPanel);
   const plusBody = plusPanel.querySelector("#plusBody");
-  let isHidden = false;
+  let v573aIsHidden = false;
   plusPanel.querySelector("#plusMin").onclick = (toggleEvent) => {
     toggleEvent.stopPropagation();
-    isHidden = !isHidden;
-    plusBody.style.display = isHidden ? "none" : "block";
-    plusPanel.querySelector("#plusMin").textContent = isHidden ? "+" : "−";
+    v573aIsHidden = !v573aIsHidden;
+    plusBody.style.display = v573aIsHidden ? "none" : "block";
+    plusPanel.querySelector("#plusMin").textContent = v573aIsHidden ? "+" : "−";
   };
   plusPanel.querySelector("#thresherBtn").onclick = (boostEvent) => {
     boostEvent.preventDefault();
@@ -261,7 +262,7 @@ function createPlusPanel() {
   };
   const astraVisionBtn = plusPanel.querySelector("#astraVisionBtn");
   astraVisionBtn.onclick = () => {
-    if (isProcessed_skx) {
+    if (sysIsProcessed) {
       showToast("Already active");
       return;
     }
@@ -271,64 +272,64 @@ function createPlusPanel() {
     astraVisionBtn.classList.add("toggle-on");
     astraVisionBtn.disabled = true;
   };
-  const autoDodgeBtn = plusPanel.querySelector("#smallMinimapBtn");
-  autoDodgeBtn.onclick = () => {
+  const AutoDodgeBtn = plusPanel.querySelector("#smallMinimapBtn");
+  AutoDodgeBtn.onclick = () => {
     initializeAntiDetection();
     toggleMinimapSize();
-    if (state.isToggled_sak) {
-      autoDodgeBtn.textContent = "Minimap: Small";
-      autoDodgeBtn.classList.add("toggle-on");
+    if (state.boolIsToggled) {
+      AutoDodgeBtn.textContent = "Minimap: Small";
+      AutoDodgeBtn.classList.add("toggle-on");
     } else {
-      autoDodgeBtn.textContent = "Small Minimap";
-      autoDodgeBtn.classList.remove("toggle-on");
+      AutoDodgeBtn.textContent = "Small Minimap";
+      AutoDodgeBtn.classList.remove("toggle-on");
     }
   };
-  const autoDodgeBtn_w1m = plusPanel.querySelector("#espBtn");
-  autoDodgeBtn_w1m.onclick = () => {
+  const v2725AutoDodgeBtn = plusPanel.querySelector("#espBtn");
+  v2725AutoDodgeBtn.onclick = () => {
     toggleEsp();
     if (window.espEnabled) {
-      autoDodgeBtn_w1m.textContent = "ESP ✓";
-      autoDodgeBtn_w1m.classList.add("toggle-on");
+      v2725AutoDodgeBtn.textContent = "ESP ✓";
+      v2725AutoDodgeBtn.classList.add("toggle-on");
     } else {
-      autoDodgeBtn_w1m.textContent = "ESP";
-      autoDodgeBtn_w1m.classList.remove("toggle-on");
+      v2725AutoDodgeBtn.textContent = "ESP";
+      v2725AutoDodgeBtn.classList.remove("toggle-on");
     }
   };
-  const farmModeSelect = plusPanel.querySelector("#espModeSelect");
-  farmModeSelect.value = window.espMode || "players";
-  farmModeSelect.onchange = (espModeEvent) => {
+  const v3880FarmModeSelect = plusPanel.querySelector("#espModeSelect");
+  v3880FarmModeSelect.value = window.espMode || "players";
+  v3880FarmModeSelect.onchange = (espModeEvent) => {
     window.espMode = espModeEvent.target.value;
     showToast("ESP: " + espModeEvent.target.value);
   };
   plusPanel.querySelector("#trackNearestBtn").onclick = () => trackPlayer();
-  plusPanel.querySelector("#untrackBtn").onclick = () => toggleEsp_sdk();
-  const autoDodgeBtn_gu6 = plusPanel.querySelector("#autoDodgeBtn");
-  autoDodgeBtn_gu6.onclick = () => {
+  plusPanel.querySelector("#untrackBtn").onclick = () => globalToggleEsp();
+  const a047AutoDodgeBtn = plusPanel.querySelector("#autoDodgeBtn");
+  a047AutoDodgeBtn.onclick = () => {
     if (window.autoDodgeEnabled) {
-      toggleEsp_sl9();
-      autoDodgeBtn_gu6.textContent = "Auto Dodge";
-      autoDodgeBtn_gu6.classList.remove("toggle-on");
+      v55bbToggleEsp();
+      a047AutoDodgeBtn.textContent = "Auto Dodge";
+      a047AutoDodgeBtn.classList.remove("toggle-on");
     } else {
       enableAutoDodge();
-      autoDodgeBtn_gu6.textContent = "Dodging ✓";
-      autoDodgeBtn_gu6.classList.add("toggle-on");
+      a047AutoDodgeBtn.textContent = "Dodging ✓";
+      a047AutoDodgeBtn.classList.add("toggle-on");
     }
   };
   const autoFarmBtn = plusPanel.querySelector("#autoFarmBtn");
   autoFarmBtn.id = "autoFarmBtn";
-  const farmModeSelect_wjb = plusPanel.querySelector("#farmModeSelect");
+  const v3880V3880FarmModeSelect = plusPanel.querySelector("#farmModeSelect");
   autoFarmBtn.onclick = () => {
     if (window.autoFarmActive) {
       stopAutoFarm();
       autoFarmBtn.textContent = "Auto Farm (F5)";
       autoFarmBtn.classList.remove("toggle-on");
     } else {
-      initAutoFarm(farmModeSelect_wjb.value);
+      initAutoFarm(v3880V3880FarmModeSelect.value);
       autoFarmBtn.textContent = "Stop Farm (F5)";
       autoFarmBtn.classList.add("toggle-on");
     }
   };
-  farmModeSelect_wjb.onchange = (autoFarmModeEvent) => {
+  v3880V3880FarmModeSelect.onchange = (autoFarmModeEvent) => {
     if (window.autoFarmActive) {
       window.autoFarmMode = autoFarmModeEvent.target.value;
       if (autoFarmModeEvent.target.value === "patrol") {
@@ -374,30 +375,32 @@ function createSettingsPanel() {
   };
   const toggleKeyInput = settingsPanel.querySelector("#toggleKeyInput");
   toggleKeyInput.value = state.activeKey.toUpperCase();
-  toggleKeyInput.addEventListener("keydown", (keyEvent) => {
-    keyEvent.preventDefault();
-    state.activeKey = keyEvent.key;
+  toggleKeyInput.addEventListener("keydown", (v3f86KeyEvent) => {
+    v3f86KeyEvent.preventDefault();
+    state.activeKey = v3f86KeyEvent.key;
     toggleKeyInput.value =
-      keyEvent.key.length === 1 ? keyEvent.key.toUpperCase() : keyEvent.key;
+      v3f86KeyEvent.key.length === 1
+        ? v3f86KeyEvent.key.toUpperCase()
+        : v3f86KeyEvent.key;
   });
   const bgUrlInput = settingsPanel.querySelector("#bgUrl");
   bgUrlInput.value = localStorage.getItem("bgUrl") || "";
   settingsPanel.querySelector("#applyBg").onclick = () => {
-    const bgUrl = bgUrlInput.value.trim();
-    if (!bgUrl) {
+    const v59ecBgUrl = bgUrlInput.value.trim();
+    if (!v59ecBgUrl) {
       showToast("Enter a URL");
       return;
     }
-    localStorage.setItem("bgUrl", bgUrl);
+    localStorage.setItem("bgUrl", v59ecBgUrl);
     initBackground();
     showToast("Background applied");
   };
   const themeSelect = settingsPanel.querySelector("#themeSelect");
-  const angle = localStorage.getItem("theme") || "grey";
-  themeSelect.value = angle;
+  const v28edAngle = localStorage.getItem("theme") || "grey";
+  themeSelect.value = v28edAngle;
   themeSelect.onchange = (changeEvent) => {
-    const url = changeEvent.target.value;
-    if (url === "halloween") {
+    const v14bcUrl = changeEvent.target.value;
+    if (v14bcUrl === "halloween") {
       showHalloweenModal((isHalloweenMode) => {
         if (isHalloweenMode) {
           applyTheme("halloween");
@@ -406,8 +409,8 @@ function createSettingsPanel() {
         }
       });
     } else {
-      applyTheme(url);
-      showToast("Theme: " + url);
+      applyTheme(v14bcUrl);
+      showToast("Theme: " + v14bcUrl);
     }
   };
   makeDraggable(settingsPanel);
@@ -424,8 +427,8 @@ function createUpdateHistoryPanel() {
   document.body.appendChild(updatePanel);
   const updateBody = updatePanel.querySelector("#updateBody");
   let isUpdateMinimized = false;
-  updatePanel.querySelector("#updateMin").onclick = (event) => {
-    event.stopPropagation();
+  updatePanel.querySelector("#updateMin").onclick = (v7427Event) => {
+    v7427Event.stopPropagation();
     isUpdateMinimized = !isUpdateMinimized;
     updateBody.style.display = isUpdateMinimized ? "none" : "block";
     updatePanel.querySelector("#updateMin").textContent = isUpdateMinimized
@@ -442,16 +445,16 @@ function toggleUiVisibility() {
     "settings-panel",
     "plus-panel",
   ];
-  const mainPanel = document.getElementById("deep-tools-panel");
-  if (!mainPanel) {
+  const Panel = document.getElementById("deep-tools-panel");
+  if (!Panel) {
     return;
   }
-  const isVisible = mainPanel.style.display !== "none";
+  const isVisible = Panel.style.display !== "none";
   const newDisplayState = isVisible ? "none" : "block";
   panelIds.forEach((elementId) => {
-    const element = document.getElementById(elementId);
-    if (element) {
-      element.style.display = newDisplayState;
+    const v1b54Element = document.getElementById(elementId);
+    if (v1b54Element) {
+      v1b54Element.style.display = newDisplayState;
     }
   });
 }

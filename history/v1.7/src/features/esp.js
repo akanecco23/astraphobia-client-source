@@ -9,7 +9,6 @@ import {
 import {
   getEntityPosition,
   calculateDirection,
-  angle,
   getFirstAnimalPosition,
   playerData,
   state,
@@ -32,115 +31,132 @@ window.espTrackedEntityId = null;
 window.espMode = "players";
 window.autoDodgeEnabled = false;
 
-function drawEspEntities(ctx, gameState, offsetX, offsetY, scale) {
-  if (!gameState || gameState.error) {
+function drawEspEntities(
+  v8d34Ctx,
+  v3a5cGameState,
+  v5a9fOffsetX,
+  v3d86OffsetY,
+  scale,
+) {
+  if (!v3a5cGameState || v3a5cGameState.error) {
     return;
   }
-  const myPos = gameState.myPos;
+  const myPos = v3a5cGameState.myPos;
   const espMode = window.espMode;
   const trackedEntityId = window.espTrackedEntityId;
-  let entities =
-    espMode === "players" ? gameState.players || [] : gameState.food || [];
-  entities.forEach((entity) => {
-    const deltaX = entity.x - myPos.x;
-    const deltaY = entity.y - myPos.y;
-    const screenX = offsetX + deltaX * scale;
-    const screenY = offsetY + deltaY * scale;
-    const isTracked = trackedEntityId && entity.id === trackedEntityId;
-    const boxSize = 20;
+  let v528fEntities =
+    espMode === "players"
+      ? v3a5cGameState.players || []
+      : v3a5cGameState.food || [];
+  v528fEntities.forEach((v1be9Entity) => {
+    const v10adDeltaX = v1be9Entity.x - myPos.x;
+    const v5777DeltaY = v1be9Entity.y - myPos.y;
+    const v52faScreenX = v5a9fOffsetX + v10adDeltaX * scale;
+    const v3d34ScreenY = v3d86OffsetY + v5777DeltaY * scale;
+    const isTracked = trackedEntityId && v1be9Entity.id === trackedEntityId;
+    const v4f0eBoxSize = 20;
     let entityColor;
     if (espMode === "players") {
       entityColor = isTracked
         ? window.espColors.tracked
-        : entity.distance < 500
+        : v1be9Entity.distance < 500
           ? window.espColors.close
-          : entity.distance < 1500
+          : v1be9Entity.distance < 1500
             ? window.espColors.medium
-            : entity.distance < 3000
+            : v1be9Entity.distance < 3000
               ? window.espColors.far
               : window.espColors.veryFar;
-      ctx.strokeStyle = entityColor;
-      ctx.lineWidth = isTracked ? 3 : 2;
-      ctx.strokeRect(
-        screenX - boxSize / 2,
-        screenY - boxSize / 2,
-        boxSize,
-        boxSize,
+      v8d34Ctx.strokeStyle = entityColor;
+      v8d34Ctx.lineWidth = isTracked ? 3 : 2;
+      v8d34Ctx.strokeRect(
+        v52faScreenX - v4f0eBoxSize / 2,
+        v3d34ScreenY - v4f0eBoxSize / 2,
+        v4f0eBoxSize,
+        v4f0eBoxSize,
       );
-      ctx.fillStyle = entityColor;
-      ctx.font = "bold 11px monospace";
-      ctx.fillText(
-        entity.entity?.name || "ID:" + entity.id,
-        screenX - boxSize / 2,
-        screenY - boxSize / 2 - 8,
+      v8d34Ctx.fillStyle = entityColor;
+      v8d34Ctx.font = "bold 11px monospace";
+      v8d34Ctx.fillText(
+        v1be9Entity.entity?.name || "ID:" + v1be9Entity.id,
+        v52faScreenX - v4f0eBoxSize / 2,
+        v3d34ScreenY - v4f0eBoxSize / 2 - 8,
       );
-      ctx.font = "10px monospace";
-      ctx.fillText(
-        Math.round(entity.distance).toString(),
-        screenX - boxSize / 2,
-        screenY + boxSize / 2 + 13,
+      v8d34Ctx.font = "10px monospace";
+      v8d34Ctx.fillText(
+        Math.round(v1be9Entity.distance).toString(),
+        v52faScreenX - v4f0eBoxSize / 2,
+        v3d34ScreenY + v4f0eBoxSize / 2 + 13,
       );
-      if (entity.entity?.visibleFishLevel != null) {
-        ctx.fillText(
-          "Lvl:" + entity.entity.visibleFishLevel,
-          screenX - boxSize / 2,
-          screenY + boxSize / 2 + 24,
+      if (v1be9Entity.entity?.visibleFishLevel != null) {
+        v8d34Ctx.fillText(
+          "Lvl:" + v1be9Entity.entity.visibleFishLevel,
+          v52faScreenX - v4f0eBoxSize / 2,
+          v3d34ScreenY + v4f0eBoxSize / 2 + 24,
         );
       }
-      if (window.lockEnabled && window.lockTargetId === entity.id) {
-        ctx.strokeStyle = "#ff0000";
-        ctx.lineWidth = 2;
+      if (window.lockEnabled && window.lockTargetId === v1be9Entity.id) {
+        v8d34Ctx.strokeStyle = "#ff0000";
+        v8d34Ctx.lineWidth = 2;
         const drawOffset = 15;
-        ctx.beginPath();
-        ctx.moveTo(screenX - drawOffset, screenY);
-        ctx.lineTo(screenX + drawOffset, screenY);
-        ctx.moveTo(screenX, screenY - drawOffset);
-        ctx.lineTo(screenX, screenY + drawOffset);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(screenX, screenY, drawOffset, 0, Math.PI * 2);
-        ctx.strokeStyle = "rgba(255,0,0,0.7)";
-        ctx.stroke();
-        ctx.fillStyle = "#ff0000";
-        ctx.font = "bold 10px monospace";
-        ctx.fillText("LOCKED", screenX + drawOffset + 4, screenY - 4);
+        v8d34Ctx.beginPath();
+        v8d34Ctx.moveTo(v52faScreenX - drawOffset, v3d34ScreenY);
+        v8d34Ctx.lineTo(v52faScreenX + drawOffset, v3d34ScreenY);
+        v8d34Ctx.moveTo(v52faScreenX, v3d34ScreenY - drawOffset);
+        v8d34Ctx.lineTo(v52faScreenX, v3d34ScreenY + drawOffset);
+        v8d34Ctx.stroke();
+        v8d34Ctx.beginPath();
+        v8d34Ctx.arc(v52faScreenX, v3d34ScreenY, drawOffset, 0, Math.PI * 2);
+        v8d34Ctx.strokeStyle = "rgba(255,0,0,0.7)";
+        v8d34Ctx.stroke();
+        v8d34Ctx.fillStyle = "#ff0000";
+        v8d34Ctx.font = "bold 10px monospace";
+        v8d34Ctx.fillText(
+          "LOCKED",
+          v52faScreenX + drawOffset + 4,
+          v3d34ScreenY - 4,
+        );
       }
-      ctx.beginPath();
-      ctx.moveTo(offsetX, offsetY);
-      ctx.lineTo(screenX, screenY);
-      ctx.strokeStyle = entityColor;
-      ctx.globalAlpha = 0.25;
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      ctx.globalAlpha = 1;
+      v8d34Ctx.beginPath();
+      v8d34Ctx.moveTo(v5a9fOffsetX, v3d86OffsetY);
+      v8d34Ctx.lineTo(v52faScreenX, v3d34ScreenY);
+      v8d34Ctx.strokeStyle = entityColor;
+      v8d34Ctx.globalAlpha = 0.25;
+      v8d34Ctx.lineWidth = 1;
+      v8d34Ctx.stroke();
+      v8d34Ctx.globalAlpha = 1;
     } else {
       entityColor =
-        entity.distance < 300
+        v1be9Entity.distance < 300
           ? window.espColors.foodClose
-          : entity.distance < 1000
+          : v1be9Entity.distance < 1000
             ? window.espColors.foodMedium
             : window.espColors.foodFar;
-      ctx.strokeStyle = entityColor;
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(
-        screenX - boxSize / 2,
-        screenY - boxSize / 2,
-        boxSize,
-        boxSize,
+      v8d34Ctx.strokeStyle = entityColor;
+      v8d34Ctx.lineWidth = 1.5;
+      v8d34Ctx.strokeRect(
+        v52faScreenX - v4f0eBoxSize / 2,
+        v3d34ScreenY - v4f0eBoxSize / 2,
+        v4f0eBoxSize,
+        v4f0eBoxSize,
       );
-      if (entity.distance < 1000) {
-        ctx.fillStyle = entityColor;
-        ctx.font = "9px monospace";
-        ctx.fillText(
-          Math.round(entity.distance).toString(),
-          screenX + boxSize / 2 + 3,
-          screenY + 3,
+      if (v1be9Entity.distance < 1000) {
+        v8d34Ctx.fillStyle = entityColor;
+        v8d34Ctx.font = "9px monospace";
+        v8d34Ctx.fillText(
+          Math.round(v1be9Entity.distance).toString(),
+          v52faScreenX + v4f0eBoxSize / 2 + 3,
+          v3d34ScreenY + 3,
         );
       }
     }
   });
 }
-function drawTrackedEntityIndicator(ctx, canvas, myPos, scale) {
+function drawTrackedEntityIndicator(
+  v116cCtx,
+  v4641Canvas,
+  v2c54MyPos,
+  v5f42Scale,
+) {
   if (!window.espTrackedEntityId) {
     return;
   }
@@ -153,94 +169,94 @@ function drawTrackedEntityIndicator(ctx, canvas, myPos, scale) {
     return;
   }
   const entityPos = getEntityPosition(trackedEntity);
-  if (!entityPos || !myPos) {
+  if (!entityPos || !v2c54MyPos) {
     return;
   }
-  const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2;
-  const diffX = entityPos.x - myPos.x;
-  const diffY = entityPos.y - myPos.y;
-  const screenX = centerX + diffX * scale;
-  const screenY = centerY + diffY * scale;
-  const distance = calculateDistance(
-    myPos.x,
-    myPos.y,
+  const v44f2CenterX = v4641Canvas.width / 2;
+  const v59f7CenterY = v4641Canvas.height / 2;
+  const v11d1DiffX = entityPos.x - v2c54MyPos.x;
+  const v55e5DiffY = entityPos.y - v2c54MyPos.y;
+  const screenX = v44f2CenterX + v11d1DiffX * v5f42Scale;
+  const screenY = v59f7CenterY + v55e5DiffY * v5f42Scale;
+  const v1637Distance = calculateDistance(
+    v2c54MyPos.x,
+    v2c54MyPos.y,
     entityPos.x,
     entityPos.y,
   );
   const entityDir = calculateDirection(trackedEntity);
   const pulseOpacity = Math.sin(Date.now() / 200) * 0.3 + 0.7;
   const boxSize = 40;
-  ctx.beginPath();
-  ctx.moveTo(centerX, centerY);
-  ctx.lineTo(screenX, screenY);
-  ctx.strokeStyle = "rgba(255,0,255,0.6)";
-  ctx.lineWidth = 2;
-  ctx.setLineDash([8, 4]);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.strokeStyle = "rgba(255,0,255," + pulseOpacity + ")";
-  ctx.lineWidth = 3;
-  ctx.strokeRect(
+  v116cCtx.beginPath();
+  v116cCtx.moveTo(v44f2CenterX, v59f7CenterY);
+  v116cCtx.lineTo(screenX, screenY);
+  v116cCtx.strokeStyle = "rgba(255,0,255,0.6)";
+  v116cCtx.lineWidth = 2;
+  v116cCtx.setLineDash([8, 4]);
+  v116cCtx.stroke();
+  v116cCtx.setLineDash([]);
+  v116cCtx.strokeStyle = "rgba(255,0,255," + pulseOpacity + ")";
+  v116cCtx.lineWidth = 3;
+  v116cCtx.strokeRect(
     screenX - boxSize / 2,
     screenY - boxSize / 2,
     boxSize,
     boxSize,
   );
   const dirLineLength = 50;
-  const angle = Math.atan2(entityDir.dirY, entityDir.dirX);
-  ctx.beginPath();
-  ctx.moveTo(screenX, screenY);
-  ctx.lineTo(
+  const v1e6eAngle = Math.atan2(entityDir.dirY, entityDir.dirX);
+  v116cCtx.beginPath();
+  v116cCtx.moveTo(screenX, screenY);
+  v116cCtx.lineTo(
     screenX + entityDir.dirX * dirLineLength,
     screenY + entityDir.dirY * dirLineLength,
   );
-  ctx.strokeStyle = "#ff00ff";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(
+  v116cCtx.strokeStyle = "#ff00ff";
+  v116cCtx.lineWidth = 2;
+  v116cCtx.stroke();
+  v116cCtx.beginPath();
+  v116cCtx.moveTo(
     screenX + entityDir.dirX * dirLineLength,
     screenY + entityDir.dirY * dirLineLength,
   );
-  ctx.lineTo(
-    screenX + entityDir.dirX * dirLineLength - Math.cos(angle - 0.4) * 10,
-    screenY + entityDir.dirY * dirLineLength - Math.sin(angle - 0.4) * 10,
+  v116cCtx.lineTo(
+    screenX + entityDir.dirX * dirLineLength - Math.cos(v1e6eAngle - 0.4) * 10,
+    screenY + entityDir.dirY * dirLineLength - Math.sin(v1e6eAngle - 0.4) * 10,
   );
-  ctx.moveTo(
+  v116cCtx.moveTo(
     screenX + entityDir.dirX * dirLineLength,
     screenY + entityDir.dirY * dirLineLength,
   );
-  ctx.lineTo(
-    screenX + entityDir.dirX * dirLineLength - Math.cos(angle + 0.4) * 10,
-    screenY + entityDir.dirY * dirLineLength - Math.sin(angle + 0.4) * 10,
+  v116cCtx.lineTo(
+    screenX + entityDir.dirX * dirLineLength - Math.cos(v1e6eAngle + 0.4) * 10,
+    screenY + entityDir.dirY * dirLineLength - Math.sin(v1e6eAngle + 0.4) * 10,
   );
-  ctx.strokeStyle = "#ff00ff";
-  ctx.lineWidth = 2;
-  ctx.stroke();
+  v116cCtx.strokeStyle = "#ff00ff";
+  v116cCtx.lineWidth = 2;
+  v116cCtx.stroke();
   const rectWidth = 180;
   const rectHeight = 70;
   const boxX = Math.min(
     screenX + boxSize / 2 + 10,
-    canvas.width - rectWidth - 5,
+    v4641Canvas.width - rectWidth - 5,
   );
   const boxY = Math.max(
     5,
-    Math.min(screenY - rectHeight / 2, canvas.height - rectHeight - 5),
+    Math.min(screenY - rectHeight / 2, v4641Canvas.height - rectHeight - 5),
   );
-  ctx.fillStyle = "rgba(0,0,0,0.85)";
-  ctx.strokeStyle = "rgba(255,0,255," + pulseOpacity + ")";
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.roundRect(boxX, boxY, rectWidth, rectHeight, 4);
-  ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = "#ff00ff";
-  ctx.font = "bold 12px monospace";
-  ctx.fillText("TRACKING", boxX + 8, boxY + 18);
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "11px monospace";
-  ctx.fillText(
+  v116cCtx.fillStyle = "rgba(0,0,0,0.85)";
+  v116cCtx.strokeStyle = "rgba(255,0,255," + pulseOpacity + ")";
+  v116cCtx.lineWidth = 1.5;
+  v116cCtx.beginPath();
+  v116cCtx.roundRect(boxX, boxY, rectWidth, rectHeight, 4);
+  v116cCtx.fill();
+  v116cCtx.stroke();
+  v116cCtx.fillStyle = "#ff00ff";
+  v116cCtx.font = "bold 12px monospace";
+  v116cCtx.fillText("TRACKING", boxX + 8, boxY + 18);
+  v116cCtx.fillStyle = "#ffffff";
+  v116cCtx.font = "11px monospace";
+  v116cCtx.fillText(
     (trackedEntity.name || "Entity " + window.espTrackedEntityId).substring(
       0,
       18,
@@ -248,46 +264,51 @@ function drawTrackedEntityIndicator(ctx, canvas, myPos, scale) {
     boxX + 8,
     boxY + 34,
   );
-  ctx.fillStyle = "#ff00ff";
-  ctx.font = "bold 14px monospace";
-  ctx.fillText(Math.round(distance) + " units", boxX + 8, boxY + 52);
+  v116cCtx.fillStyle = "#ff00ff";
+  v116cCtx.font = "bold 14px monospace";
+  v116cCtx.fillText(Math.round(v1637Distance) + " units", boxX + 8, boxY + 52);
   if (
     screenX < 0 ||
-    screenX > canvas.width ||
+    screenX > v4641Canvas.width ||
     screenY < 0 ||
-    screenY > canvas.height
+    screenY > v4641Canvas.height
   ) {
-    const targetAngle = Math.atan2(screenY - centerY, screenX - centerX);
-    const posX = centerX + Math.cos(targetAngle) * (canvas.width / 2 - 40);
-    const posY = centerY + Math.sin(targetAngle) * (canvas.height / 2 - 40);
-    ctx.fillStyle = "rgba(0,0,0,0.85)";
-    ctx.beginPath();
-    ctx.roundRect(posX - 40, posY - 15, 80, 30, 4);
-    ctx.fill();
-    ctx.strokeStyle = "#ff00ff";
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(
+    const targetAngle = Math.atan2(
+      screenY - v59f7CenterY,
+      screenX - v44f2CenterX,
+    );
+    const posX =
+      v44f2CenterX + Math.cos(targetAngle) * (v4641Canvas.width / 2 - 40);
+    const posY =
+      v59f7CenterY + Math.sin(targetAngle) * (v4641Canvas.height / 2 - 40);
+    v116cCtx.fillStyle = "rgba(0,0,0,0.85)";
+    v116cCtx.beginPath();
+    v116cCtx.roundRect(posX - 40, posY - 15, 80, 30, 4);
+    v116cCtx.fill();
+    v116cCtx.strokeStyle = "#ff00ff";
+    v116cCtx.lineWidth = 1.5;
+    v116cCtx.stroke();
+    v116cCtx.beginPath();
+    v116cCtx.moveTo(
       posX + Math.cos(targetAngle) * 20,
       posY + Math.sin(targetAngle) * 20,
     );
-    ctx.lineTo(
+    v116cCtx.lineTo(
       posX - Math.cos(targetAngle - 0.5) * 10,
       posY - Math.sin(targetAngle - 0.5) * 10,
     );
-    ctx.lineTo(
+    v116cCtx.lineTo(
       posX - Math.cos(targetAngle + 0.5) * 10,
       posY - Math.sin(targetAngle + 0.5) * 10,
     );
-    ctx.closePath();
-    ctx.fillStyle = "#ff00ff";
-    ctx.fill();
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 11px monospace";
-    ctx.textAlign = "center";
-    ctx.fillText(Math.round(distance).toString(), posX, posY + 4);
-    ctx.textAlign = "left";
+    v116cCtx.closePath();
+    v116cCtx.fillStyle = "#ff00ff";
+    v116cCtx.fill();
+    v116cCtx.fillStyle = "#ffffff";
+    v116cCtx.font = "bold 11px monospace";
+    v116cCtx.textAlign = "center";
+    v116cCtx.fillText(Math.round(v1637Distance).toString(), posX, posY + 4);
+    v116cCtx.textAlign = "left";
   }
 }
 function renderEspOverlay() {
@@ -301,21 +322,26 @@ function renderEspOverlay() {
     requestAnimationFrame(renderEspOverlay);
     return;
   }
-  const canvas = getOrCreateOverlayCanvas("esp-overlay", 999998);
-  const ctx = canvas.getContext("2d");
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  const entities = getNearbyEntities();
+  const v5615Canvas = getOrCreateOverlayCanvas("esp-overlay", 999998);
+  const v5379Ctx = v5615Canvas.getContext("2d");
+  v5379Ctx.clearRect(0, 0, v5615Canvas.width, v5615Canvas.height);
+  const v9036Entities = getNearbyEntities();
   const localPlayer = getFirstAnimalPosition();
-  const zoomLevel = getZoomLevel();
+  const v47a2ZoomLevel = getZoomLevel();
   drawEspEntities(
-    ctx,
-    entities,
-    canvas.width / 2,
-    canvas.height / 2,
-    zoomLevel,
+    v5379Ctx,
+    v9036Entities,
+    v5615Canvas.width / 2,
+    v5615Canvas.height / 2,
+    v47a2ZoomLevel,
   );
-  drawTrackedEntityIndicator(ctx, canvas, localPlayer, zoomLevel);
-  drawRadar(ctx, canvas, entities);
+  drawTrackedEntityIndicator(
+    v5379Ctx,
+    v5615Canvas,
+    localPlayer,
+    v47a2ZoomLevel,
+  );
+  drawRadar(v5379Ctx, v5615Canvas, v9036Entities);
   requestAnimationFrame(renderEspOverlay);
 }
 function toggleEsp() {
@@ -334,11 +360,11 @@ function trackPlayer() {
     showNotification("No players nearby");
   }
 }
-function toggleEsp_tia() {
+function mainToggleEsp() {
   window.espTrackedEntityId = null;
   showNotification("Tracking cleared");
 }
-function toggleEsp_sl0() {
+function sysToggleEsp() {
   window.autoDodgeEnabled = false;
   showNotification("Auto dodge disabled");
 }
@@ -347,15 +373,15 @@ function toggleMinimapSize() {
     showNotification("Minimap not available");
     return;
   }
-  if (state.isToggled_r8c) {
+  if (state.boolIsToggled) {
     playerData.minimap.scale.set(1);
     playerData.minimap.pivot.set(0, 0);
-    state.isToggled_r8c = false;
+    state.boolIsToggled = false;
     showNotification("Minimap restored");
   } else {
     playerData.minimap.scale.set(0.5);
     playerData.minimap.pivot.set(-70, -45);
-    state.isToggled_r8c = true;
+    state.boolIsToggled = true;
     showNotification("Small minimap enabled");
   }
 }
@@ -366,7 +392,7 @@ export {
   renderEspOverlay,
   toggleEsp,
   trackPlayer,
-  toggleEsp_tia,
-  toggleEsp_sl0,
+  mainToggleEsp,
+  sysToggleEsp,
   toggleMinimapSize,
 };

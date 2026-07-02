@@ -1,5 +1,4 @@
 import {
-  radius,
   getEntityPosition,
   findEntityById,
   dragState,
@@ -20,13 +19,13 @@ function updateLockButtonUI() {
     );
   }
 }
-function drawRadar(ctx, canvas, gameState) {
-  if (!gameState || gameState.error) {
+function drawRadar(v2156Ctx, v14bbCanvas, v631aGameState) {
+  if (!v631aGameState || v631aGameState.error) {
     return;
   }
   const radarSize = 150;
   if (dragState.x === null) {
-    dragState.x = canvas.width - radarSize - 20;
+    dragState.x = v14bbCanvas.width - radarSize - 20;
   }
   const radarX = dragState.x;
   const radarY = dragState.y;
@@ -38,66 +37,73 @@ function drawRadar(ctx, canvas, gameState) {
     w: radarSize,
     h: radarSize + 22,
   };
-  ctx.fillStyle = "rgba(20,20,20,0.9)";
-  ctx.beginPath();
-  ctx.roundRect(radarX, radarY, radarSize, radarSize, 4);
-  ctx.fill();
-  ctx.strokeStyle = "#333";
-  ctx.lineWidth = 1;
-  ctx.stroke();
-  ctx.strokeStyle = "rgba(60,60,60,0.5)";
-  ctx.lineWidth = 0.5;
-  ctx.beginPath();
-  ctx.moveTo(radarX + radarSize / 2, radarY);
-  ctx.lineTo(radarX + radarSize / 2, radarY + radarSize);
-  ctx.moveTo(radarX, radarY + radarSize / 2);
-  ctx.lineTo(radarX + radarSize, radarY + radarSize / 2);
-  ctx.stroke();
+  v2156Ctx.fillStyle = "rgba(20,20,20,0.9)";
+  v2156Ctx.beginPath();
+  v2156Ctx.roundRect(radarX, radarY, radarSize, radarSize, 4);
+  v2156Ctx.fill();
+  v2156Ctx.strokeStyle = "#333";
+  v2156Ctx.lineWidth = 1;
+  v2156Ctx.stroke();
+  v2156Ctx.strokeStyle = "rgba(60,60,60,0.5)";
+  v2156Ctx.lineWidth = 0.5;
+  v2156Ctx.beginPath();
+  v2156Ctx.moveTo(radarX + radarSize / 2, radarY);
+  v2156Ctx.lineTo(radarX + radarSize / 2, radarY + radarSize);
+  v2156Ctx.moveTo(radarX, radarY + radarSize / 2);
+  v2156Ctx.lineTo(radarX + radarSize, radarY + radarSize / 2);
+  v2156Ctx.stroke();
   for (
     let circleRadiusFactor = 0.25;
     circleRadiusFactor <= 1;
     circleRadiusFactor += 0.25
   ) {
-    ctx.beginPath();
-    ctx.arc(
+    v2156Ctx.beginPath();
+    v2156Ctx.arc(
       radarX + radarSize / 2,
       radarY + radarSize / 2,
       (radarSize / 2) * circleRadiusFactor,
       0,
       Math.PI * 2,
     );
-    ctx.strokeStyle = "rgba(60,60,60," + (0.2 + circleRadiusFactor * 0.1) + ")";
-    ctx.stroke();
+    v2156Ctx.strokeStyle =
+      "rgba(60,60,60," + (0.2 + circleRadiusFactor * 0.1) + ")";
+    v2156Ctx.stroke();
   }
-  ctx.fillStyle = "#1db954";
-  ctx.beginPath();
-  ctx.arc(radarX + radarSize / 2, radarY + radarSize / 2, 4, 0, Math.PI * 2);
-  ctx.fill();
+  v2156Ctx.fillStyle = "#1db954";
+  v2156Ctx.beginPath();
+  v2156Ctx.arc(
+    radarX + radarSize / 2,
+    radarY + radarSize / 2,
+    4,
+    0,
+    Math.PI * 2,
+  );
+  v2156Ctx.fill();
   const radarEntities =
     window.espMode === "players"
-      ? gameState.players || []
-      : gameState.food || [];
+      ? v631aGameState.players || []
+      : v631aGameState.food || [];
   radarEntities.forEach((target) => {
-    const diffX = target.x - gameState.myPos.x;
-    const diffY = target.y - gameState.myPos.y;
-    let screenX = Math.max(
+    const v1e98DiffX = target.x - v631aGameState.myPos.x;
+    const v484fDiffY = target.y - v631aGameState.myPos.y;
+    let v1a70ScreenX = Math.max(
       radarX + 2,
       Math.min(
         radarX + radarSize - 2,
-        radarX + radarSize / 2 + diffX * radarScale,
+        radarX + radarSize / 2 + v1e98DiffX * radarScale,
       ),
     );
-    let screenY = Math.max(
+    let v5a19ScreenY = Math.max(
       radarY + 2,
       Math.min(
         radarY + radarSize - 2,
-        radarY + radarSize / 2 + diffY * radarScale,
+        radarY + radarSize / 2 + v484fDiffY * radarScale,
       ),
     );
-    let espColor;
-    let radius;
+    let v439cEspColor;
+    let v483cRadius;
     if (window.espMode === "players") {
-      espColor =
+      v439cEspColor =
         target.distance < 500
           ? window.espColors.close
           : target.distance < 1500
@@ -105,74 +111,78 @@ function drawRadar(ctx, canvas, gameState) {
             : target.distance < 3000
               ? window.espColors.far
               : "#888";
-      radius = 3;
+      v483cRadius = 3;
     } else {
-      espColor = window.espColors.foodClose;
-      radius = 1.5;
+      v439cEspColor = window.espColors.foodClose;
+      v483cRadius = 1.5;
     }
     if (window.espTrackedEntityId && target.id === window.espTrackedEntityId) {
-      espColor = window.espColors.tracked;
-      radius = 4;
+      v439cEspColor = window.espColors.tracked;
+      v483cRadius = 4;
     }
     if (window.lockTargetId && target.id === window.lockTargetId) {
-      espColor = "#ff0000";
-      radius = 4;
+      v439cEspColor = "#ff0000";
+      v483cRadius = 4;
     }
-    ctx.fillStyle = espColor;
-    ctx.beginPath();
-    ctx.arc(screenX, screenY, radius, 0, Math.PI * 2);
-    ctx.fill();
+    v2156Ctx.fillStyle = v439cEspColor;
+    v2156Ctx.beginPath();
+    v2156Ctx.arc(v1a70ScreenX, v5a19ScreenY, v483cRadius, 0, Math.PI * 2);
+    v2156Ctx.fill();
   });
   if (window.entityTrailEnabled && window.entityTrailTargetId) {
     const targetId = findEntityById(window.entityTrailTargetId);
     if (targetId) {
-      const targetEntity = getEntityPosition(targetId);
-      if (targetEntity) {
-        const offsetY = targetEntity.x - gameState.myPos.x;
-        const offsetY_n3y = targetEntity.y - gameState.myPos.y;
-        const drawY = Math.max(
+      const v4855TargetEntity = getEntityPosition(targetId);
+      if (v4855TargetEntity) {
+        const v4515OffsetY = v4855TargetEntity.x - v631aGameState.myPos.x;
+        const v4515V4515OffsetY = v4855TargetEntity.y - v631aGameState.myPos.y;
+        const v2a2bDrawY = Math.max(
           radarX + 2,
           Math.min(
             radarX + radarSize - 2,
-            radarX + radarSize / 2 + offsetY * radarScale,
+            radarX + radarSize / 2 + v4515OffsetY * radarScale,
           ),
         );
-        const drawY_z3t = Math.max(
+        const v2a2bV2a2bDrawY = Math.max(
           radarY + 2,
           Math.min(
             radarY + radarSize - 2,
-            radarY + radarSize / 2 + offsetY_n3y * radarScale,
+            radarY + radarSize / 2 + v4515V4515OffsetY * radarScale,
           ),
         );
         const alpha = Math.sin(Date.now() / 200) * 0.3 + 0.7;
-        const { r: red, g: blue, b: blue_lnb } = window.entityTrailColor;
-        const rgbValue = red + "," + blue + "," + blue_lnb;
-        ctx.strokeStyle = "rgba(" + rgbValue + "," + alpha + ")";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(drawY, drawY_z3t, 7, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.strokeStyle = "rgba(" + rgbValue + "," + alpha * 0.5 + ")";
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.arc(drawY, drawY_z3t, 10, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.fillStyle = "rgb(" + rgbValue + ")";
-        ctx.beginPath();
-        ctx.arc(drawY, drawY_z3t, 3, 0, Math.PI * 2);
-        ctx.fill();
+        const {
+          r: v4b2eRed,
+          g: v1283Blue,
+          b: v1283V1283Blue,
+        } = window.entityTrailColor;
+        const rgbValue = v4b2eRed + "," + v1283Blue + "," + v1283V1283Blue;
+        v2156Ctx.strokeStyle = "rgba(" + rgbValue + "," + alpha + ")";
+        v2156Ctx.lineWidth = 2;
+        v2156Ctx.beginPath();
+        v2156Ctx.arc(v2a2bDrawY, v2a2bV2a2bDrawY, 7, 0, Math.PI * 2);
+        v2156Ctx.stroke();
+        v2156Ctx.strokeStyle = "rgba(" + rgbValue + "," + alpha * 0.5 + ")";
+        v2156Ctx.lineWidth = 4;
+        v2156Ctx.beginPath();
+        v2156Ctx.arc(v2a2bDrawY, v2a2bV2a2bDrawY, 10, 0, Math.PI * 2);
+        v2156Ctx.stroke();
+        v2156Ctx.fillStyle = "rgb(" + rgbValue + ")";
+        v2156Ctx.beginPath();
+        v2156Ctx.arc(v2a2bDrawY, v2a2bV2a2bDrawY, 3, 0, Math.PI * 2);
+        v2156Ctx.fill();
         if (window.entityTrailHistory.length > 1) {
-          ctx.strokeStyle = "rgba(" + rgbValue + ",0.3)";
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          window.entityTrailHistory.forEach((entity, i) => {
+          v2156Ctx.strokeStyle = "rgba(" + rgbValue + ",0.3)";
+          v2156Ctx.lineWidth = 1;
+          v2156Ctx.beginPath();
+          window.entityTrailHistory.forEach((v3ea3Entity, v1d1bI) => {
             const drawX = Math.max(
               radarX + 2,
               Math.min(
                 radarX + radarSize - 2,
                 radarX +
                   radarSize / 2 +
-                  (entity.x - gameState.myPos.x) * radarScale,
+                  (v3ea3Entity.x - v631aGameState.myPos.x) * radarScale,
               ),
             );
             const drawY = Math.max(
@@ -181,28 +191,28 @@ function drawRadar(ctx, canvas, gameState) {
                 radarY + radarSize - 2,
                 radarY +
                   radarSize / 2 +
-                  (entity.y - gameState.myPos.y) * radarScale,
+                  (v3ea3Entity.y - v631aGameState.myPos.y) * radarScale,
               ),
             );
-            if (i === 0) {
-              ctx.moveTo(drawX, drawY);
+            if (v1d1bI === 0) {
+              v2156Ctx.moveTo(drawX, drawY);
             } else {
-              ctx.lineTo(drawX, drawY);
+              v2156Ctx.lineTo(drawX, drawY);
             }
           });
-          ctx.stroke();
+          v2156Ctx.stroke();
         }
       }
     }
   }
-  ctx.fillStyle = "rgba(20,20,20,0.9)";
-  ctx.beginPath();
-  ctx.roundRect(radarX, radarY + radarSize, radarSize, 22, [0, 0, 4, 4]);
-  ctx.fill();
-  ctx.fillStyle = "#888";
-  ctx.font = "10px monospace";
-  ctx.fillText("RADAR", radarX + 5, radarY + radarSize + 14);
-  ctx.fillText(
+  v2156Ctx.fillStyle = "rgba(20,20,20,0.9)";
+  v2156Ctx.beginPath();
+  v2156Ctx.roundRect(radarX, radarY + radarSize, radarSize, 22, [0, 0, 4, 4]);
+  v2156Ctx.fill();
+  v2156Ctx.fillStyle = "#888";
+  v2156Ctx.font = "10px monospace";
+  v2156Ctx.fillText("RADAR", radarX + 5, radarY + radarSize + 14);
+  v2156Ctx.fillText(
     (window.espMode === "players" ? "P:" : "F:") + radarEntities.length,
     radarX + radarSize - 50,
     radarY + radarSize + 14,

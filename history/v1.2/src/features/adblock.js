@@ -1,7 +1,7 @@
 import { showNotification } from "../ui/interaction.js";
 
 function initAdBlocker() {
-  const adSelectors = [
+  const Selectors = [
     "div.ad-block",
     'a[href*="ad"]',
     'iframe[src*="ads"], iframe[src*="googlead"]',
@@ -14,7 +14,7 @@ function initAdBlocker() {
     'div.sidebar.left > div:has(> a[href*="doubleclick"]',
   ];
   const removeAds = () => {
-    adSelectors.forEach((elementSelector) => {
+    Selectors.forEach((elementSelector) => {
       document.querySelectorAll(elementSelector).forEach((targetElement) => {
         targetElement.style.display = "none !important";
         targetElement.style.opacity = "0 !important";

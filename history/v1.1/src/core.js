@@ -18,9 +18,9 @@ function wrapWithProxy(targetObject, propertyKey, proxyHandler) {
   targetObject[propertyKey] = proxyValue;
 }
 
-let isProcessed = false;
+let IsProcessed = false;
 function setupTextEncoderHook(unusedParam) {
-  if (isProcessed) {
+  if (IsProcessed) {
     return;
   }
   function unescapeString(inputString) {
@@ -125,7 +125,7 @@ function setupTextEncoderHook(unusedParam) {
     childList: true,
     subtree: true,
   });
-  isProcessed = true;
+  IsProcessed = true;
   if (unusedParam) {
     unusedParam.textContent = "Special Characters Active";
     unusedParam.disabled = true;
@@ -138,10 +138,10 @@ function setupTextEncoderHook(unusedParam) {
 const angles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
 const radius = 300;
 let gameInstance;
-let appState;
+let State;
 let playerData;
-let isProcessed_rot = false;
-let isProcessed_t1s = false;
+let boolIsProcessed = false;
+let sysIsProcessed = false;
 const encryptPacketData = (url, terminatorCode, suffix = "") => {
   const stringPool = [
     "ode",
@@ -167,11 +167,11 @@ const encryptPacketData = (url, terminatorCode, suffix = "") => {
     const buffer = new Uint8Array(
       encodedText1["l" + stringPool[4] + stringPool[6].slice(0, 2)],
     );
-    for (let i = 0; i < encodedText1.length; i++) {
-      buffer[i] =
-        encodedText1[i] ^
+    for (let b471I = 0; b471I < encodedText1.length; b471I++) {
+      buffer[b471I] =
+        encodedText1[b471I] ^
         encodedText2[
-          i %
+          b471I %
             encodedText2[
               "" +
                 stringPool[9].toLowerCase() +
@@ -218,13 +218,13 @@ const config = {
   },
 };
 const sendPacket = (payload, additionalData = "") => {
-  if (gameInstance && appState && config_skh.socketManager) {
-    gameInstance[config_skh.socketManager].sendBytePacket(
-      encryptPacketData(appState.token, payload, additionalData),
+  if (gameInstance && State && Config.socketManager) {
+    gameInstance[Config.socketManager].sendBytePacket(
+      encryptPacketData(State.token, payload, additionalData),
     );
   }
 };
-const config_skh = {};
+const Config = {};
 const currentTime = 0;
 const initHooks = () => {
   const propertyCache = {};
@@ -233,12 +233,12 @@ const initHooks = () => {
   }
   const ProxyConstructor = Proxy;
   const lookupGetter = Object.prototype.__lookupGetter__;
-  const wrapWithProxy = (state, url, value) => {
-    const wrappedValue = new ProxyConstructor(state[url], value);
-    stateCache.set(wrappedValue, state[url]);
-    state[url] = wrappedValue;
+  const v5015WrapWithProxy = (state, v4aaaUrl, value) => {
+    const wrappedValue = new ProxyConstructor(state[v4aaaUrl], value);
+    stateCache.set(wrappedValue, state[v4aaaUrl]);
+    state[v4aaaUrl] = wrappedValue;
   };
-  wrapWithProxy(Function.prototype, "toString", {
+  v5015WrapWithProxy(Function.prototype, "toString", {
     apply(thisContext, key, context) {
       return propertyCache.apply(
         thisContext,
@@ -247,13 +247,13 @@ const initHooks = () => {
       );
     },
   });
-  wrapWithProxy(window, "Proxy", {
+  v5015WrapWithProxy(window, "Proxy", {
     construct(constructor, constructorArgs) {
       const instance = propertyCache.construct(constructor, constructorArgs);
       return instance;
     },
   });
-  wrapWithProxy(ProxyConstructor, "revocable", {
+  v5015WrapWithProxy(ProxyConstructor, "revocable", {
     apply(targetFunction, functionArgs, functionContext) {
       const functionResult = propertyCache.apply(
         targetFunction,
@@ -264,7 +264,7 @@ const initHooks = () => {
     },
   });
   let lastExecutionTime = 0;
-  wrapWithProxy(Function.prototype, "bind", {
+  v5015WrapWithProxy(Function.prototype, "bind", {
     apply(targetFunction2, functionArgs2, functionContext2) {
       try {
         try {
@@ -291,51 +291,49 @@ const initHooks = () => {
           const obfuscatedKeys = allKeys.filter((obfuscatedKey) =>
             obfuscatedKey.startsWith("_0x"),
           );
-          config_skh.setFlash =
+          Config.setFlash =
             Object.getOwnPropertyNames(playerData.__proto__.__proto__)
               .filter((obfuscatedName) => obfuscatedName.startsWith("_0x"))
               .find(
                 (functionKey) => playerData[functionKey] instanceof Function,
-              ) || config_skh.setFlash;
-          config_skh.terrainManager =
+              ) || Config.setFlash;
+          Config.terrainManager =
             obfuscatedKeys.find(
               (shadowObjectKey) =>
                 typeof playerData[shadowObjectKey]?.shadow !== "undefined",
-            ) || config_skh.terrainManager;
-          config_skh.entityManager =
+            ) || Config.terrainManager;
+          Config.entityManager =
             obfuscatedKeys.find(
               (entitiesListKey) =>
                 typeof playerData[entitiesListKey]?.entitiesList !==
                 "undefined",
-            ) || config_skh.entityManager;
-          config_skh.entityManagerProps = {};
+            ) || Config.entityManager;
+          Config.entityManagerProps = {};
           const entityManagerKeys = getAllPropertyNames(
-            playerData[config_skh.entityManager],
+            playerData[Config.entityManager],
           );
           const animalsUpdateInterval = setInterval(() => {
-            config_skh.entityManagerProps.animalsList =
+            Config.entityManagerProps.animalsList =
               entityManagerKeys
                 .filter((variableName) => variableName.startsWith("_0x"))
                 .find(
                   (entityType) =>
-                    typeof playerData?.[config_skh.entityManager]?.[
+                    typeof playerData?.[Config.entityManager]?.[
                       entityType
                     ]?.[0] !== "undefined",
-                ) || config_skh.entityManagerProps.animalsList;
-            if (
-              typeof config_skh.entityManagerProps.animalsList !== "undefined"
-            ) {
+                ) || Config.entityManagerProps.animalsList;
+            if (typeof Config.entityManagerProps.animalsList !== "undefined") {
               clearInterval(animalsUpdateInterval);
             }
           }, 1000);
-          config_skh.socketManager =
+          Config.socketManager =
             getAllPropertyNames(gameInstance).find(
               (packetSenderKey) =>
                 typeof gameInstance[packetSenderKey]?.sendBytePacket !==
                 "undefined",
-            ) || config_skh.socketManager;
+            ) || Config.socketManager;
           try {
-            appState = document
+            State = document
               .getElementById("app")
               ._vnode.appContext.config.globalProperties.$simpleState.states.find(
                 (gameStore) => gameStore._storeMeta.id === "game",
@@ -387,7 +385,7 @@ const initHooks = () => {
   });
 };
 const disableZoomClamp = () => {
-  if (isProcessed_rot) {
+  if (boolIsProcessed) {
     return;
   }
   setInterval(() => {
@@ -400,10 +398,10 @@ const disableZoomClamp = () => {
       gameInstance.viewport.plugins.plugins["clamp-zoom"] = null;
     } catch {}
   }, 300);
-  isProcessed_rot = true;
+  boolIsProcessed = true;
 };
 const initGameCheats = () => {
-  if (isProcessed_t1s) {
+  if (sysIsProcessed) {
     return;
   }
   function sendActionSequence() {
@@ -488,9 +486,9 @@ const initGameCheats = () => {
   );
   window.addEventListener(
     "keyup",
-    (event) => {
+    (v2e3bEvent) => {
       try {
-        if (!event.ctrlKey && !event.altKey) {
+        if (!v2e3bEvent.ctrlKey && !v2e3bEvent.altKey) {
           document.getElementById("ctrl-overlay").style.pointerEvents = "none";
         }
       } catch {}
@@ -502,29 +500,29 @@ const initGameCheats = () => {
       document.getElementById("ctrl-overlay").style.pointerEvents = "none";
     } catch {}
   });
-  isProcessed_t1s = true;
+  sysIsProcessed = true;
 };
 
 function initAllPanels() {
-  const mainPanel = createToolsPanel();
-  const historyPanel = createUpdateHistoryPanel();
-  const settingsPanel = initSettingsPanel();
-  const plusPanel = initPlusPanel();
+  const Panel = createToolsPanel();
+  const v99a0HistoryPanel = createUpdateHistoryPanel();
+  const v499bSettingsPanel = initSettingsPanel();
+  const fffbPlusPanel = initPlusPanel();
   initAdBlocker();
   return {
-    mainPanel: mainPanel,
-    historyPanel: historyPanel,
-    settingsPanel: settingsPanel,
-    plusPanel: plusPanel,
+    mainPanel: Panel,
+    historyPanel: v99a0HistoryPanel,
+    settingsPanel: v499bSettingsPanel,
+    plusPanel: fffbPlusPanel,
   };
 }
-document.addEventListener("keydown", (keyboardEvent) => {
+document.addEventListener("keydown", (v1656KeyboardEvent) => {
   if (
-    keyboardEvent.key === state.activeKey &&
-    !keyboardEvent.repeat &&
-    !keyboardEvent.target.matches("input, textarea, button")
+    v1656KeyboardEvent.key === state.activeKey &&
+    !v1656KeyboardEvent.repeat &&
+    !v1656KeyboardEvent.target.matches("input, textarea, button")
   ) {
-    keyboardEvent.preventDefault();
+    v1656KeyboardEvent.preventDefault();
     togglePanels();
   }
 });
@@ -536,8 +534,7 @@ window.addEventListener("load", () => {
 });
 
 export const state = {
-  entityTrailInterval: null,
-  isToggled: false,
+  IsToggled: false,
   angleIndex: 0,
   activeKey: "Shift",
 };
@@ -554,6 +551,6 @@ export {
   angles,
   radius,
   playerData,
-  isProcessed_t1s,
+  sysIsProcessed,
   config,
 };

@@ -1,16 +1,15 @@
 import {
   toggleEsp,
   trackPlayer,
-  toggleEsp_qot,
+  modToggleEsp,
   toggleMinimapSize,
-  toggleEsp_slh,
+  v571eToggleEsp,
 } from "../features/esp.js";
 import {
   radius,
   interceptTextEncoder,
   initGameHooks,
   startAutoFarm,
-  angle,
   state,
 } from "../core.js";
 import {
@@ -73,37 +72,37 @@ function showHalloweenModal(onUnlockCallback) {
   codeInput.focus();
 }
 function makeDraggable(element) {
-  let offsetX;
-  let offsetY;
+  let v26b8OffsetX;
+  let v58cdOffsetY;
   let isDragging = false;
   let hasMoved = false;
-  element.addEventListener("mousedown", (event) => {
+  element.addEventListener("mousedown", (v5309Event) => {
     if (
       ["BUTTON", "INPUT", "TEXTAREA", "SELECT", "A", "LABEL"].includes(
-        event.target.tagName,
+        v5309Event.target.tagName,
       )
     ) {
       return;
     }
-    if (event.target.closest("button,input,textarea,select,label")) {
+    if (v5309Event.target.closest("button,input,textarea,select,label")) {
       return;
     }
     isDragging = true;
     hasMoved = false;
-    offsetX = event.clientX - element.getBoundingClientRect().left;
-    offsetY = event.clientY - element.getBoundingClientRect().top;
+    v26b8OffsetX = v5309Event.clientX - element.getBoundingClientRect().left;
+    v58cdOffsetY = v5309Event.clientY - element.getBoundingClientRect().top;
     element.style.transition = "none";
-    const handleMouseMove = (event) => {
+    const handleMouseMove = (v2a7cEvent) => {
       if (
         !hasMoved &&
-        (Math.abs(event.clientX - event.clientX) > 5 ||
-          Math.abs(event.clientY - event.clientY) > 5)
+        (Math.abs(v2a7cEvent.clientX - v5309Event.clientX) > 5 ||
+          Math.abs(v2a7cEvent.clientY - v5309Event.clientY) > 5)
       ) {
         hasMoved = true;
       }
       if (isDragging) {
-        element.style.left = event.clientX - offsetX + "px";
-        element.style.top = event.clientY - offsetY + "px";
+        element.style.left = v2a7cEvent.clientX - v26b8OffsetX + "px";
+        element.style.top = v2a7cEvent.clientY - v58cdOffsetY + "px";
         element.style.bottom = "auto";
         element.style.right = "auto";
       }
@@ -117,9 +116,9 @@ function makeDraggable(element) {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   });
-  element.addEventListener("click", (event_re9) => {
+  element.addEventListener("click", (v5d21Event) => {
     if (hasMoved) {
-      event_re9.stopImmediatePropagation();
+      v5d21Event.stopImmediatePropagation();
     }
   });
 }
@@ -131,12 +130,12 @@ function createToolsPanel() {
   toolsPanel.innerHTML =
     '\n      <div class="ast-header"><span class="ast-header-title">Astraphobia Client</span><button class="ast-header-min" id="mainMin">−</button></div>\n      <div class="ast-body" id="mainBody">\n        <span class="ast-section-label">Chat</span>\n        <textarea class="ast-textarea" id="chatMsg" placeholder="Message..." rows="2"></textarea>\n        <button class="ast-btn" id="sendBtn">Send Chat</button>\n        <div class="ast-row" style="margin-top:4px;">\n          <input class="ast-input" type="number" id="delayInput" min="1" max="300" value="10" style="width:50px;text-align:center;">\n          <span style="font-size:11px;color:#888;">sec</span>\n          <button class="ast-btn" id="autoChatBtn" style="flex:1;margin-bottom:0;">Auto Chat</button>\n        </div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Tools</span>\n        <button class="ast-btn" id="patchBtn">Special Characters</button>\n        <button class="ast-btn" id="spoofBtn">Spoof Username</button>\n        <button class="ast-btn" id="spinBtn">Auto Spin</button>\n        <div class="ast-key-row"><span>Spin key</span><input class="ast-key-capture" id="spinKeyInput" type="text" placeholder="..." readonly></div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Turn Controls</span>\n        <div class="ast-key-row">\n          <span>Turn Left</span>\n          <input class="ast-key-capture" id="turnLeftKeyInput" type="text" value="Q" readonly>\n        </div>\n        <div class="ast-key-row">\n          <span>Turn Right</span>\n          <input class="ast-key-capture" id="turnRightKeyInput" type="text" value="E" readonly>\n        </div>\n        <div class="ast-credits">Made by Astraphobia</div>\n      </div>';
   document.body.appendChild(toolsPanel);
-  const mainBody = toolsPanel.querySelector("#mainBody");
+  const Body = toolsPanel.querySelector("#mainBody");
   let isHidden = false;
   toolsPanel.querySelector("#mainMin").onclick = (toggleEvent) => {
     toggleEvent.stopPropagation();
     isHidden = !isHidden;
-    mainBody.style.display = isHidden ? "none" : "block";
+    Body.style.display = isHidden ? "none" : "block";
     toolsPanel.querySelector("#mainMin").textContent = isHidden ? "+" : "−";
   };
   toolsPanel.querySelector("#sendBtn").onclick = () => {
@@ -145,8 +144,8 @@ function createToolsPanel() {
       typeAndSendMessage(chatMessage);
     }
   };
-  const spinBtn = toolsPanel.querySelector("#autoChatBtn");
-  spinBtn.onclick = () => {
+  const v3fd5SpinBtn = toolsPanel.querySelector("#autoChatBtn");
+  v3fd5SpinBtn.onclick = () => {
     const chatInputContent = toolsPanel.querySelector("#chatMsg").value;
     const messageDelay =
       parseInt(toolsPanel.querySelector("#delayInput").value) || 10;
@@ -154,14 +153,14 @@ function createToolsPanel() {
       showNotification("Enter a message first");
       return;
     }
-    if (state.isToggled) {
+    if (state.IsToggled) {
       stopInterval();
-      spinBtn.textContent = "Auto Chat";
-      spinBtn.classList.remove("toggle-on");
+      v3fd5SpinBtn.textContent = "Auto Chat";
+      v3fd5SpinBtn.classList.remove("toggle-on");
     } else {
       startScheduledTask(chatInputContent, messageDelay);
-      spinBtn.textContent = "Stop Chat";
-      spinBtn.classList.add("toggle-on");
+      v3fd5SpinBtn.textContent = "Stop Chat";
+      v3fd5SpinBtn.classList.add("toggle-on");
     }
   };
   const patchBtn = toolsPanel.querySelector("#patchBtn");
@@ -181,23 +180,26 @@ function createToolsPanel() {
       showNotification("No name input found");
     }
   };
-  const spinBtn_oj8 = toolsPanel.querySelector("#spinBtn");
-  spinBtn_oj8.onclick = () => {
+  const v3fd5V3fd5SpinBtn = toolsPanel.querySelector("#spinBtn");
+  v3fd5V3fd5SpinBtn.onclick = () => {
     toggleMouseSimulation();
-    spinBtn_oj8.textContent = featuresentitytrailState.entityTrailInterval_sje
-      ? "Stop Spin"
-      : "Auto Spin";
-    spinBtn_oj8.classList.toggle(
+    v3fd5V3fd5SpinBtn.textContent =
+      featuresentitytrailState.sysEntityTrailInterval
+        ? "Stop Spin"
+        : "Auto Spin";
+    v3fd5V3fd5SpinBtn.classList.toggle(
       "toggle-on",
-      !!featuresentitytrailState.entityTrailInterval_sje,
+      !!featuresentitytrailState.sysEntityTrailInterval,
     );
   };
-  const turnRightKeyInput = toolsPanel.querySelector("#spinKeyInput");
+  const v239bTurnRightKeyInput = toolsPanel.querySelector("#spinKeyInput");
   let lastPressedKey = null;
-  turnRightKeyInput.addEventListener("keydown", (keyboardEvent) => {
+  v239bTurnRightKeyInput.addEventListener("keydown", (keyboardEvent) => {
     keyboardEvent.preventDefault();
     lastPressedKey = keyboardEvent.code || keyboardEvent.key;
-    turnRightKeyInput.value = lastPressedKey.replace("Key", "").toUpperCase();
+    v239bTurnRightKeyInput.value = lastPressedKey
+      .replace("Key", "")
+      .toUpperCase();
   });
   document.addEventListener("keydown", (shortcutEvent) => {
     if (
@@ -207,33 +209,39 @@ function createToolsPanel() {
     ) {
       shortcutEvent.preventDefault();
       toggleMouseSimulation();
-      spinBtn_oj8.textContent = featuresentitytrailState.entityTrailInterval_sje
-        ? "Stop Spin"
-        : "Auto Spin";
-      spinBtn_oj8.classList.toggle(
+      v3fd5V3fd5SpinBtn.textContent =
+        featuresentitytrailState.sysEntityTrailInterval
+          ? "Stop Spin"
+          : "Auto Spin";
+      v3fd5V3fd5SpinBtn.classList.toggle(
         "toggle-on",
-        !!featuresentitytrailState.entityTrailInterval_sje,
+        !!featuresentitytrailState.sysEntityTrailInterval,
       );
     }
   });
-  const turnRightKeyInput_q3j = toolsPanel.querySelector("#turnLeftKeyInput");
-  const turnRightKeyInput_n9e = toolsPanel.querySelector("#turnRightKeyInput");
-  turnRightKeyInput_q3j.value = state.keyQ.toUpperCase();
-  turnRightKeyInput_n9e.value = state.keyE.toUpperCase();
-  turnRightKeyInput_q3j.addEventListener("keydown", (contextMenuEvent) => {
-    contextMenuEvent.preventDefault();
-    contextMenuEvent.stopPropagation();
-    state.keyQ = contextMenuEvent.key;
-    turnRightKeyInput_q3j.value =
-      contextMenuEvent.key.length === 1
-        ? contextMenuEvent.key.toUpperCase()
-        : contextMenuEvent.key;
-  });
-  turnRightKeyInput_n9e.addEventListener("keydown", (dragEvent) => {
+  const v8332V239bTurnRightKeyInput =
+    toolsPanel.querySelector("#turnLeftKeyInput");
+  const v239bV239bTurnRightKeyInput =
+    toolsPanel.querySelector("#turnRightKeyInput");
+  v8332V239bTurnRightKeyInput.value = state.keyQ.toUpperCase();
+  v239bV239bTurnRightKeyInput.value = state.keyE.toUpperCase();
+  v8332V239bTurnRightKeyInput.addEventListener(
+    "keydown",
+    (contextMenuEvent) => {
+      contextMenuEvent.preventDefault();
+      contextMenuEvent.stopPropagation();
+      state.keyQ = contextMenuEvent.key;
+      v8332V239bTurnRightKeyInput.value =
+        contextMenuEvent.key.length === 1
+          ? contextMenuEvent.key.toUpperCase()
+          : contextMenuEvent.key;
+    },
+  );
+  v239bV239bTurnRightKeyInput.addEventListener("keydown", (dragEvent) => {
     dragEvent.preventDefault();
     dragEvent.stopPropagation();
     state.keyE = dragEvent.key;
-    turnRightKeyInput_n9e.value =
+    v239bV239bTurnRightKeyInput.value =
       dragEvent.key.length === 1 ? dragEvent.key.toUpperCase() : dragEvent.key;
   });
   makeDraggable(toolsPanel);
@@ -247,13 +255,15 @@ function createVisionPanel() {
   visionPanel.innerHTML =
     '\n      <div class="ast-header"><span class="ast-header-title">Astraphobia Client</span><button class="ast-header-min" id="visionMin">−</button></div>\n      <div class="ast-body" id="visionBody">\n        <span class="ast-section-label">Vision</span>\n        <button class="ast-btn patched" id="thresherBtn" disabled>Thresher Boost (Patched)</button>\n        <button class="ast-btn" id="astraVisionBtn">Astra-Vision</button>\n        <button class="ast-btn" id="smallMinimapBtn">Small Minimap</button>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">ESP</span>\n        <button class="ast-btn" id="espBtn">ESP</button>\n        <select class="ast-select" id="espModeSelect"><option value="players">Players</option><option value="food">Food</option></select>\n        <button class="ast-btn" id="trackNearestBtn">Track Nearest (F3)</button>\n        <button class="ast-btn" id="untrackBtn">Untrack (F4)</button>\n        <div class="ast-sep"></div>\n        <button class="ast-btn" id="espColorsToggleBtn" style="display:flex;align-items:center;justify-content:space-between;">\n          <span style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-sec,#888);">ESP Colors</span>\n          <span id="espColorsArrow" style="color:var(--text-sec,#888);font-size:12px;">▼</span>\n        </button>\n        <div id="espColorsSection" style="display:none;">\n          <div class="ast-key-row"><span>Close (&lt;500)</span><input type="color" id="espColorClose" value="#ff0000" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Medium (&lt;1500)</span><input type="color" id="espColorMedium" value="#ffff00" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Far (&lt;3000)</span><input type="color" id="espColorFar" value="#00ffff" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Very Far</span><input type="color" id="espColorVeryFar" value="#00ff00" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Tracked</span><input type="color" id="espColorTracked" value="#ff00ff" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Food Close</span><input type="color" id="espColorFoodClose" value="#00ff00" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Food Medium</span><input type="color" id="espColorFoodMedium" value="#88ff88" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n          <div class="ast-key-row"><span>Food Far</span><input type="color" id="espColorFoodFar" value="#44cc44" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n        </div>\n      </div>';
   document.body.appendChild(visionPanel);
-  const espColorsSection = visionPanel.querySelector("#visionBody");
-  let isHidden = false;
-  visionPanel.querySelector("#visionMin").onclick = (toggleEvent) => {
-    toggleEvent.stopPropagation();
-    isHidden = !isHidden;
-    espColorsSection.style.display = isHidden ? "none" : "block";
-    visionPanel.querySelector("#visionMin").textContent = isHidden ? "+" : "−";
+  const v1386EspColorsSection = visionPanel.querySelector("#visionBody");
+  let v1bcfIsHidden = false;
+  visionPanel.querySelector("#visionMin").onclick = (v5654ToggleEvent) => {
+    v5654ToggleEvent.stopPropagation();
+    v1bcfIsHidden = !v1bcfIsHidden;
+    v1386EspColorsSection.style.display = v1bcfIsHidden ? "none" : "block";
+    visionPanel.querySelector("#visionMin").textContent = v1bcfIsHidden
+      ? "+"
+      : "−";
   };
   visionPanel.querySelector("#thresherBtn").onclick = (boostEvent) => {
     boostEvent.preventDefault();
@@ -261,7 +271,7 @@ function createVisionPanel() {
   };
   const astraVisionBtn = visionPanel.querySelector("#astraVisionBtn");
   astraVisionBtn.onclick = () => {
-    if (state.isProcessed_rjn) {
+    if (state.globalIsProcessed) {
       showNotification("Already active");
       return;
     }
@@ -271,20 +281,20 @@ function createVisionPanel() {
     astraVisionBtn.classList.add("toggle-on");
     astraVisionBtn.disabled = true;
   };
-  const espBtn = visionPanel.querySelector("#smallMinimapBtn");
-  espBtn.onclick = () => {
+  const v2735EspBtn = visionPanel.querySelector("#smallMinimapBtn");
+  v2735EspBtn.onclick = () => {
     initGameHooks();
     toggleMinimapSize();
-    espBtn.textContent = state.isToggled_sl0
+    v2735EspBtn.textContent = state.boolIsToggled
       ? "Minimap: Small"
       : "Small Minimap";
-    espBtn.classList.toggle("toggle-on", state.isToggled_sl0);
+    v2735EspBtn.classList.toggle("toggle-on", state.boolIsToggled);
   };
-  const espBtn_6rn = visionPanel.querySelector("#espBtn");
-  espBtn_6rn.onclick = () => {
+  const v2735V2735EspBtn = visionPanel.querySelector("#espBtn");
+  v2735V2735EspBtn.onclick = () => {
     toggleEsp();
-    espBtn_6rn.textContent = window.espEnabled ? "ESP ✓" : "ESP";
-    espBtn_6rn.classList.toggle("toggle-on", window.espEnabled);
+    v2735V2735EspBtn.textContent = window.espEnabled ? "ESP ✓" : "ESP";
+    v2735V2735EspBtn.classList.toggle("toggle-on", window.espEnabled);
   };
   const espModeSelect = visionPanel.querySelector("#espModeSelect");
   espModeSelect.value = window.espMode || "players";
@@ -293,15 +303,18 @@ function createVisionPanel() {
     showNotification("ESP: " + espModeEvent.target.value);
   };
   visionPanel.querySelector("#trackNearestBtn").onclick = () => trackPlayer();
-  visionPanel.querySelector("#untrackBtn").onclick = () => toggleEsp_qot();
+  visionPanel.querySelector("#untrackBtn").onclick = () => modToggleEsp();
   const espColorsToggleBtn = visionPanel.querySelector("#espColorsToggleBtn");
-  const espColorsSection_68h = visionPanel.querySelector("#espColorsSection");
+  const v1386V1386EspColorsSection =
+    visionPanel.querySelector("#espColorsSection");
   const espColorsArrow = visionPanel.querySelector("#espColorsArrow");
-  let isHidden_6z4 = false;
+  let v1bcfV1bcfIsHidden = false;
   espColorsToggleBtn.onclick = () => {
-    isHidden_6z4 = !isHidden_6z4;
-    espColorsSection_68h.style.display = isHidden_6z4 ? "block" : "none";
-    espColorsArrow.textContent = isHidden_6z4 ? "▲" : "▼";
+    v1bcfV1bcfIsHidden = !v1bcfV1bcfIsHidden;
+    v1386V1386EspColorsSection.style.display = v1bcfV1bcfIsHidden
+      ? "block"
+      : "none";
+    espColorsArrow.textContent = v1bcfV1bcfIsHidden ? "▲" : "▼";
   };
   const eventInit = {
     espColorClose: "close",
@@ -314,10 +327,10 @@ function createVisionPanel() {
     espColorFoodFar: "foodFar",
   };
   Object.entries(eventInit).forEach(([elementId, colorKey]) => {
-    const targetElement = visionPanel.querySelector("#" + elementId);
-    if (targetElement) {
-      targetElement.addEventListener("input", (event) => {
-        window.espColors[colorKey] = event.target.value;
+    const v28c3TargetElement = visionPanel.querySelector("#" + elementId);
+    if (v28c3TargetElement) {
+      v28c3TargetElement.addEventListener("input", (d8c8Event) => {
+        window.espColors[colorKey] = d8c8Event.target.value;
       });
     }
   });
@@ -334,16 +347,16 @@ function createCombatPanel() {
   document.body.appendChild(combatPanel);
   const combatBody = combatPanel.querySelector("#combatBody");
   let isCombatMinimized = false;
-  combatPanel.querySelector("#combatMin").onclick = (toggleEvent) => {
-    toggleEvent.stopPropagation();
+  combatPanel.querySelector("#combatMin").onclick = (v5e01ToggleEvent) => {
+    v5e01ToggleEvent.stopPropagation();
     isCombatMinimized = !isCombatMinimized;
     combatBody.style.display = isCombatMinimized ? "none" : "block";
     combatPanel.querySelector("#combatMin").textContent = isCombatMinimized
       ? "+"
       : "−";
   };
-  const lockButton = combatPanel.querySelector("#lockBtn");
-  lockButton.onclick = () => toggleLock();
+  const v5301LockButton = combatPanel.querySelector("#lockBtn");
+  v5301LockButton.onclick = () => toggleLock();
   const lockKeyInput = combatPanel.querySelector("#lockKeyInput");
   lockKeyInput.value = window.lockKey.toUpperCase();
   lockKeyInput.addEventListener("keydown", (lockEvent) => {
@@ -397,7 +410,7 @@ function createAutomationPanel() {
   const autoDodgeButton = automationPanel.querySelector("#autoDodgeBtn");
   autoDodgeButton.onclick = () => {
     if (window.autoDodgeEnabled) {
-      toggleEsp_slh();
+      v571eToggleEsp();
       autoDodgeButton.textContent = "Auto Dodge";
       autoDodgeButton.classList.remove("toggle-on");
     } else {
@@ -429,38 +442,42 @@ function createAutomationPanel() {
       showNotification("Farm: " + farmModeChangeEvent.target.value);
     }
   };
-  const farmAvoidToggle = automationPanel.querySelector("#farmBoostToggle");
-  const farmAvoidToggle_k0h =
+  const v3419FarmAvoidToggle =
+    automationPanel.querySelector("#farmBoostToggle");
+  const fa20V3419FarmAvoidToggle =
     automationPanel.querySelector("#farmEvolveToggle");
-  const farmAvoidToggle_q6k = automationPanel.querySelector("#farmAvoidToggle");
-  farmAvoidToggle.checked = window.autoFarmBoost;
-  farmAvoidToggle_k0h.checked = window.autoFarmEvolve;
-  farmAvoidToggle_q6k.checked = window.autoFarmAvoidPlayers;
-  const farmBoostLabel = farmAvoidToggle.nextElementSibling;
+  const v3419V3419FarmAvoidToggle =
+    automationPanel.querySelector("#farmAvoidToggle");
+  v3419FarmAvoidToggle.checked = window.autoFarmBoost;
+  fa20V3419FarmAvoidToggle.checked = window.autoFarmEvolve;
+  v3419V3419FarmAvoidToggle.checked = window.autoFarmAvoidPlayers;
+  const farmBoostLabel = v3419FarmAvoidToggle.nextElementSibling;
   farmBoostLabel.addEventListener("click", (farmOptionEvent1) => {
     farmOptionEvent1.stopPropagation();
-    farmAvoidToggle.checked = !farmAvoidToggle.checked;
-    window.autoFarmBoost = farmAvoidToggle.checked;
+    v3419FarmAvoidToggle.checked = !v3419FarmAvoidToggle.checked;
+    window.autoFarmBoost = v3419FarmAvoidToggle.checked;
     showNotification(
-      farmAvoidToggle.checked ? "Farm boost ON" : "Farm boost OFF",
+      v3419FarmAvoidToggle.checked ? "Farm boost ON" : "Farm boost OFF",
     );
   });
-  const farmEvolveLabel = farmAvoidToggle_k0h.nextElementSibling;
+  const farmEvolveLabel = fa20V3419FarmAvoidToggle.nextElementSibling;
   farmEvolveLabel.addEventListener("click", (farmOptionEvent2) => {
     farmOptionEvent2.stopPropagation();
-    farmAvoidToggle_k0h.checked = !farmAvoidToggle_k0h.checked;
-    window.autoFarmEvolve = farmAvoidToggle_k0h.checked;
+    fa20V3419FarmAvoidToggle.checked = !fa20V3419FarmAvoidToggle.checked;
+    window.autoFarmEvolve = fa20V3419FarmAvoidToggle.checked;
     showNotification(
-      farmAvoidToggle_k0h.checked ? "Auto evolve ON" : "Auto evolve OFF",
+      fa20V3419FarmAvoidToggle.checked ? "Auto evolve ON" : "Auto evolve OFF",
     );
   });
-  const farmAvoidLabel = farmAvoidToggle_q6k.nextElementSibling;
+  const farmAvoidLabel = v3419V3419FarmAvoidToggle.nextElementSibling;
   farmAvoidLabel.addEventListener("click", (farmOptionEvent3) => {
     farmOptionEvent3.stopPropagation();
-    farmAvoidToggle_q6k.checked = !farmAvoidToggle_q6k.checked;
-    window.autoFarmAvoidPlayers = farmAvoidToggle_q6k.checked;
+    v3419V3419FarmAvoidToggle.checked = !v3419V3419FarmAvoidToggle.checked;
+    window.autoFarmAvoidPlayers = v3419V3419FarmAvoidToggle.checked;
     showNotification(
-      farmAvoidToggle_q6k.checked ? "Avoid players ON" : "Avoid players OFF",
+      v3419V3419FarmAvoidToggle.checked
+        ? "Avoid players ON"
+        : "Avoid players OFF",
     );
   });
   makeDraggable(automationPanel);
@@ -474,25 +491,25 @@ function createSettingsPanel() {
   settingsPanel.innerHTML =
     '\n      <div class="ast-header"><span class="ast-header-title">Settings</span><button class="ast-header-min" id="settingsMin">−</button></div>\n      <div class="ast-body" id="settingsBody">\n        <div class="ast-key-row"><span>Toggle UI</span><input class="ast-key-capture" id="toggleKeyInput" type="text" value="SHIFT" readonly></div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Background</span>\n        <div class="ast-row"><input class="ast-input" type="text" id="bgUrl" placeholder="Image URL..." style="flex:1;"><button class="ast-btn" id="applyBg" style="width:auto;padding:6px 10px;margin:0;">Set</button></div>\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Theme</span>\n        <select class="ast-select" id="themeSelect">\n          <option value="grey">Grey</option><option value="blue">Blue</option><option value="red">Red</option>\n          <option value="green">Green</option><option value="pink">Pink</option><option value="starwars">Star Wars</option>\n          <option value="kfc">KFC</option><option value="halloween">Halloween 🔒</option>\n        </select>\n        <div class="ast-sep"></div>\n        <button class="ast-btn" id="customThemeToggleBtn" style="display:flex;align-items:center;justify-content:space-between;">\n          <span style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-sec,#888);">Create Theme</span>\n          <span id="customThemeArrow" style="color:var(--text-sec,#888);font-size:12px;">▼</span>\n        </button>\n        <div id="customThemeSection" style="display:none;padding-top:4px;">\n          <input class="ast-input" type="text" id="customThemeName" placeholder="Theme name..." style="width:100%;box-sizing:border-box;margin-bottom:4px;">\n<div class="ast-key-row"><span>Accent</span><input type="color" id="ctAcc" value="#888888" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n<div class="ast-key-row"><span>Background</span><input type="color" id="ctBg" value="#1a1a1a" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n<div class="ast-key-row"><span>Panel</span><input type="color" id="ctPanel" value="#242424" style="width:40px;height:24px;border:1px solid var(--bdr,#333);border-radius:4px;cursor:pointer;padding:0;background:var(--bg2,#242424);"></div>\n<button class="ast-btn" id="saveCustomTheme" style="margin-top:4px;">Save Theme</button>\n        </div>\n        <div class="ast-sep"></div>\n        <button class="ast-btn" id="myThemesToggleBtn" style="display:flex;align-items:center;justify-content:space-between;">\n          <span style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-sec,#888);">My Themes</span>\n          <span id="myThemesArrow" style="color:var(--text-sec,#888);font-size:12px;">▼</span>\n        </button>\n        <div id="myThemesSection" style="display:none;padding-top:4px;">\n          <div id="customThemeList"></div>\n          <div id="noThemesMsg" style="font-size:11px;color:#555;text-align:center;padding:8px 0;">No custom themes yet</div>\n        </div>\n      </div>';
   document.body.appendChild(settingsPanel);
-  const myThemesSection = settingsPanel.querySelector("#settingsBody");
-  let isHidden = false;
-  settingsPanel.querySelector("#settingsMin").onclick = (event) => {
-    event.stopPropagation();
-    isHidden = !isHidden;
-    myThemesSection.style.display = isHidden ? "none" : "block";
-    settingsPanel.querySelector("#settingsMin").textContent = isHidden
+  const MyThemesSection = settingsPanel.querySelector("#settingsBody");
+  let v4198IsHidden = false;
+  settingsPanel.querySelector("#settingsMin").onclick = (v253cEvent) => {
+    v253cEvent.stopPropagation();
+    v4198IsHidden = !v4198IsHidden;
+    MyThemesSection.style.display = v4198IsHidden ? "none" : "block";
+    settingsPanel.querySelector("#settingsMin").textContent = v4198IsHidden
       ? "+"
       : "−";
   };
   const toggleKeyInput = settingsPanel.querySelector("#toggleKeyInput");
   toggleKeyInput.value = state.activeKey.toUpperCase();
-  toggleKeyInput.addEventListener("keydown", (keyboardEvent) => {
-    keyboardEvent.preventDefault();
-    state.activeKey = keyboardEvent.key;
+  toggleKeyInput.addEventListener("keydown", (v32f1KeyboardEvent) => {
+    v32f1KeyboardEvent.preventDefault();
+    state.activeKey = v32f1KeyboardEvent.key;
     toggleKeyInput.value =
-      keyboardEvent.key.length === 1
-        ? keyboardEvent.key.toUpperCase()
-        : keyboardEvent.key;
+      v32f1KeyboardEvent.key.length === 1
+        ? v32f1KeyboardEvent.key.toUpperCase()
+        : v32f1KeyboardEvent.key;
   });
   const bgUrlInput = settingsPanel.querySelector("#bgUrl");
   bgUrlInput.value = localStorage.getItem("bgUrl") || "";
@@ -507,7 +524,7 @@ function createSettingsPanel() {
     showNotification("Background applied");
   };
   const themeSelect = settingsPanel.querySelector("#themeSelect");
-  const angle = localStorage.getItem("theme") || "grey";
+  const v17a7Angle = localStorage.getItem("theme") || "grey";
   const customThemes = JSON.parse(localStorage.getItem("customThemes") || "{}");
   const presetThemes = [
     "grey",
@@ -520,10 +537,12 @@ function createSettingsPanel() {
     "halloween",
   ];
   themeSelect.value =
-    presetThemes.includes(angle) || customThemes[angle] ? angle : "grey";
+    presetThemes.includes(v17a7Angle) || customThemes[v17a7Angle]
+      ? v17a7Angle
+      : "grey";
   themeSelect.onchange = (themeChangeEvent) => {
-    const myY = themeChangeEvent.target.value;
-    if (myY === "halloween") {
+    const v48deMyY = themeChangeEvent.target.value;
+    if (v48deMyY === "halloween") {
       showHalloweenModal((isHalloween) => {
         if (isHalloween) {
           applyTheme("halloween");
@@ -533,47 +552,47 @@ function createSettingsPanel() {
         }
       });
     } else {
-      applyTheme(myY);
-      showNotification("Theme: " + myY);
+      applyTheme(v48deMyY);
+      showNotification("Theme: " + v48deMyY);
     }
   };
   const renderCustomThemes = () => {
     const customThemeList = settingsPanel.querySelector("#customThemeList");
     const noThemesMessage = settingsPanel.querySelector("#noThemesMsg");
-    const customThemes = JSON.parse(
+    const v4d42CustomThemes = JSON.parse(
       localStorage.getItem("customThemes") || "{}",
     );
-    const customThemeKeys = Object.keys(customThemes);
+    const customThemeKeys = Object.keys(v4d42CustomThemes);
     customThemeList.innerHTML = "";
     noThemesMessage.style.display =
       customThemeKeys.length === 0 ? "block" : "none";
-    customThemeKeys.forEach((myY) => {
+    customThemeKeys.forEach((v1928MyY) => {
       const themeElement = document.createElement("div");
       themeElement.style.cssText = "display:flex;gap:4px;margin-bottom:3px;";
-      const isThemeActive = localStorage.getItem("theme") === myY;
+      const isThemeActive = localStorage.getItem("theme") === v1928MyY;
       themeElement.innerHTML =
         '\n          <button class="ast-btn' +
         (isThemeActive ? " toggle-on" : "") +
         '" style="flex:1;margin:0;">' +
-        myY +
+        v1928MyY +
         '</button>\n          <button class="ast-btn" style="width:32px;margin:0;text-align:center;color:#f44336;">✕</button>';
       themeElement.querySelectorAll("button")[0].onclick = () => {
-        applyTheme(myY);
-        showNotification("Theme: " + myY);
+        applyTheme(v1928MyY);
+        showNotification("Theme: " + v1928MyY);
         renderCustomThemes();
       };
       themeElement.querySelectorAll("button")[1].onclick = () => {
-        const customThemes = JSON.parse(
+        const v2f0cCustomThemes = JSON.parse(
           localStorage.getItem("customThemes") || "{}",
         );
-        delete customThemes[myY];
-        localStorage.setItem("customThemes", JSON.stringify(customThemes));
-        if (localStorage.getItem("theme") === myY) {
+        delete v2f0cCustomThemes[v1928MyY];
+        localStorage.setItem("customThemes", JSON.stringify(v2f0cCustomThemes));
+        if (localStorage.getItem("theme") === v1928MyY) {
           applyTheme("grey");
           themeSelect.value = "grey";
           showNotification("Theme reset to Grey");
         } else {
-          showNotification("Deleted: " + myY);
+          showNotification("Deleted: " + v1928MyY);
         }
         renderCustomThemes();
       };
@@ -606,9 +625,9 @@ function createSettingsPanel() {
     const accountValue = settingsPanel.querySelector("#ctAcc").value;
     const themeBgColor = settingsPanel.querySelector("#ctBg").value;
     const themePanelColor = settingsPanel.querySelector("#ctPanel").value;
-    const red = parseInt(accountValue.slice(1, 3), 16);
-    const green = parseInt(accountValue.slice(3, 5), 16);
-    const blue = parseInt(accountValue.slice(5, 7), 16);
+    const v2cacRed = parseInt(accountValue.slice(1, 3), 16);
+    const v11cfGreen = parseInt(accountValue.slice(3, 5), 16);
+    const v3783Blue = parseInt(accountValue.slice(5, 7), 16);
     const adjustColor = (hexColor) => {
       const redComponent = parseInt(hexColor.slice(1, 3), 16) + 10;
       const greenComponent = parseInt(hexColor.slice(3, 5), 16) + 10;
@@ -616,8 +635,8 @@ function createSettingsPanel() {
       return (
         "#" +
         [redComponent, greenComponent, blueComponent]
-          .map((colorValue) =>
-            Math.min(255, colorValue).toString(16).padStart(2, "0"),
+          .map((v5bd4ColorValue) =>
+            Math.min(255, v5bd4ColorValue).toString(16).padStart(2, "0"),
           )
           .join("")
       );
@@ -625,7 +644,7 @@ function createSettingsPanel() {
     const themeSettings = {
       acc: accountValue,
       accH: adjustColor(accountValue),
-      accRGB: red + "," + green + "," + blue,
+      accRGB: v2cacRed + "," + v11cfGreen + "," + v3783Blue,
       text: "#e0e0e0",
       textSec: "#888",
       bg1: themeBgColor,
@@ -634,39 +653,39 @@ function createSettingsPanel() {
       border: "#333",
       hover: adjustColor(themePanelColor),
     };
-    const customThemes_wtz = JSON.parse(
+    const v551fCustomThemes = JSON.parse(
       localStorage.getItem("customThemes") || "{}",
     );
-    customThemes_wtz[customThemeName] = themeSettings;
-    localStorage.setItem("customThemes", JSON.stringify(customThemes_wtz));
+    v551fCustomThemes[customThemeName] = themeSettings;
+    localStorage.setItem("customThemes", JSON.stringify(v551fCustomThemes));
     applyTheme(customThemeName);
     settingsPanel.querySelector("#customThemeName").value = "";
     renderCustomThemes();
     showNotification("Theme saved: " + customThemeName);
   };
-  const myThemesToggleBtn = settingsPanel.querySelector(
+  const v4b6aMyThemesToggleBtn = settingsPanel.querySelector(
     "#customThemeToggleBtn",
   );
-  const myThemesSection_uwk = settingsPanel.querySelector(
+  const cf1dMyThemesSection = settingsPanel.querySelector(
     "#customThemeSection",
   );
-  const myThemesArrow = settingsPanel.querySelector("#customThemeArrow");
-  let isHidden_9db = false;
-  myThemesToggleBtn.onclick = () => {
-    isHidden_9db = !isHidden_9db;
-    myThemesSection_uwk.style.display = isHidden_9db ? "block" : "none";
-    myThemesArrow.textContent = isHidden_9db ? "▲" : "▼";
+  const v465cMyThemesArrow = settingsPanel.querySelector("#customThemeArrow");
+  let v781fV4198IsHidden = false;
+  v4b6aMyThemesToggleBtn.onclick = () => {
+    v781fV4198IsHidden = !v781fV4198IsHidden;
+    cf1dMyThemesSection.style.display = v781fV4198IsHidden ? "block" : "none";
+    v465cMyThemesArrow.textContent = v781fV4198IsHidden ? "▲" : "▼";
   };
-  const myThemesToggleBtn_8lc =
+  const v4b6aV4b6aMyThemesToggleBtn =
     settingsPanel.querySelector("#myThemesToggleBtn");
-  const myThemesSection_u3r = settingsPanel.querySelector("#myThemesSection");
-  const myThemesArrow_7x5 = settingsPanel.querySelector("#myThemesArrow");
-  let isHidden_7uf = false;
-  myThemesToggleBtn_8lc.onclick = () => {
-    isHidden_7uf = !isHidden_7uf;
-    myThemesSection_u3r.style.display = isHidden_7uf ? "block" : "none";
-    myThemesArrow_7x5.textContent = isHidden_7uf ? "▲" : "▼";
-    if (isHidden_7uf) {
+  const c0ccMyThemesSection = settingsPanel.querySelector("#myThemesSection");
+  const v465cV465cMyThemesArrow = settingsPanel.querySelector("#myThemesArrow");
+  let v4198V4198IsHidden = false;
+  v4b6aV4b6aMyThemesToggleBtn.onclick = () => {
+    v4198V4198IsHidden = !v4198V4198IsHidden;
+    c0ccMyThemesSection.style.display = v4198V4198IsHidden ? "block" : "none";
+    v465cV465cMyThemesArrow.textContent = v4198V4198IsHidden ? "▲" : "▼";
+    if (v4198V4198IsHidden) {
       renderCustomThemes();
     }
   };
@@ -684,8 +703,8 @@ function createUpdateHistoryPanel() {
   document.body.appendChild(updatePanel);
   const updateBody = updatePanel.querySelector("#updateBody");
   let isMinimized = false;
-  updatePanel.querySelector("#updateMin").onclick = (event) => {
-    event.stopPropagation();
+  updatePanel.querySelector("#updateMin").onclick = (da88Event) => {
+    da88Event.stopPropagation();
     isMinimized = !isMinimized;
     updateBody.style.display = isMinimized ? "none" : "block";
     updatePanel.querySelector("#updateMin").textContent = isMinimized
@@ -704,15 +723,15 @@ function togglePanelsVisibility() {
     "update-history",
     "settings-panel",
   ];
-  const mainPanel = document.getElementById("deep-tools-panel");
-  if (!mainPanel) {
+  const Panel = document.getElementById("deep-tools-panel");
+  if (!Panel) {
     return;
   }
-  const isMainPanelVisible = mainPanel.style.display !== "none";
-  panelIds.forEach((elementId) => {
-    const targetElement = document.getElementById(elementId);
-    if (targetElement) {
-      targetElement.style.display = isMainPanelVisible ? "none" : "block";
+  const isMainPanelVisible = Panel.style.display !== "none";
+  panelIds.forEach((v7986ElementId) => {
+    const v123eTargetElement = document.getElementById(v7986ElementId);
+    if (v123eTargetElement) {
+      v123eTargetElement.style.display = isMainPanelVisible ? "none" : "block";
     }
   });
 }

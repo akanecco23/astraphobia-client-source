@@ -2,9 +2,9 @@ import {
   radius,
   gameInstance,
   playerData,
-  config,
+  objConfig,
   initInterceptor,
-  isProcessed_run,
+  boolIsProcessed,
   initializeAntiTamper,
   disableGameRestrictions,
   state,
@@ -22,7 +22,7 @@ import { generateRandomString } from "../utils.js";
 import { toggleMinimapScale } from "./radar.js";
 import { applyThemeColors } from "./theme.js";
 
-let isProcessed_r36 = false;
+let modIsProcessed = false;
 function createHalloweenModal(modalConfig) {
   const modalContainer = document.createElement("div");
   modalContainer.id = "halloween-code-modal";
@@ -82,7 +82,7 @@ function createHalloweenModal(modalConfig) {
   halloweenCodeInput.focus();
 }
 const initControlOverlay = () => {
-  if (isProcessed_r36) {
+  if (modIsProcessed) {
     return;
   }
   function sendActionSequence() {
@@ -112,7 +112,9 @@ const initControlOverlay = () => {
       '<div id="ctrl-overlay" style="width: 100%;height: 100%;position: absolute;display: block;z-index:10000;pointer-events:none;"></div>';
     document
       .getElementById("ctrl-overlay")
-      .addEventListener("contextmenu", (event) => event.preventDefault());
+      .addEventListener("contextmenu", (v4fb5Event) =>
+        v4fb5Event.preventDefault(),
+      );
   }
   createControlOverlay();
   window.addEventListener(
@@ -124,8 +126,8 @@ const initControlOverlay = () => {
         }
         const visibleFishLevel = playerData.myAnimals[0].visibleFishLevel;
         const mergedFishConfig = {
-          ...config.default,
-          ...config[visibleFishLevel],
+          ...objConfig.default,
+          ...objConfig[visibleFishLevel],
         };
         if (processAnimals.ctrlKey) {
           if (processAnimals.shiftKey && visibleFishLevel === 107) {
@@ -177,13 +179,13 @@ const initControlOverlay = () => {
       document.getElementById("ctrl-overlay").style.pointerEvents = "none";
     } catch {}
   });
-  isProcessed_r36 = true;
+  modIsProcessed = true;
 };
 function createUpdateHistoryStyles() {
-  const styleElement = document.createElement("style");
-  styleElement.textContent =
+  const v4226StyleElement = document.createElement("style");
+  v4226StyleElement.textContent =
     "\n      #update-history {\n        position: fixed;\n        bottom: 20px;\n        left: 20px;\n        background: var(--bg-primary);\n        color: var(--text-primary);\n        padding: 16px;\n        border-radius: 16px;\n        font-size: 13px;\n        z-index: 9999;\n        max-width: 240px;\n        max-height: 280px;\n        overflow-y: auto;\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        cursor: move;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        transition: all 0.3s ease;\n        backdrop-filter: blur(20px);\n      }\n      #update-history:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #update-history ul {\n        margin: 0;\n        padding-left: 18px;\n      }\n      #update-history li {\n        margin-bottom: 6px;\n        line-height: 1.4;\n        color: var(--text-primary);\n      }\n      #update-history h3 {\n        margin: 0 0 12px 0;\n        font-size: 15px;\n        color: var(--accent);\n        position: relative;\n        padding-right: 28px;\n        font-weight: 600;\n      }\n      #update-history button.min-btn {\n        background: none;\n        border: none;\n        color: var(--accent);\n        font-size: 20px;\n        cursor: pointer;\n        position: absolute;\n        top: 30%;\n        right: 8px;\n        transform: translateY(-50%);\n        z-index: 1;\n        transition: all 0.2s ease;\n        width: 24px;\n        height: 24px;\n        line-height: 24px;\n        border-radius: 50%;\n      }\n      #update-history button.min-btn:hover {\n        color: var(--accent-hover);\n        background: rgba(var(--accent-rgb), 0.2);\n      }\n      #update-history.themestarwars::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at center, rgba(255,255,255,0.1) 1px, transparent 1px);\n        background-size: 20px 20px;\n        animation: twinkle-stars 20s linear infinite;\n      }\n      #update-history.themekfc::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 20% 30%, rgba(244,0,0,0.1) 2px, transparent 2px),\n                    radial-gradient(circle at 80% 70%, rgba(255,204,0,0.05) 1px, transparent 1px);\n        background-size: 40px 40px;\n      }\n      #update-history.themehalloween::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 30% 20%, rgba(255, 102, 0, 0.1) 1px, transparent 1px),\n                    radial-gradient(circle at 70% 80%, rgba(139, 0, 255, 0.05) 2px, transparent 2px);\n        background-size: 30px 30px;\n        animation: halloween-glow 15s ease-in-out infinite alternate;\n      }\n      #update-history.themehalloween .bat {\n        position: absolute;\n        font-size: 20px;\n        animation: fly-bat 10s linear infinite;\n        pointer-events: none;\n        opacity: 0.7;\n      }\n      #update-history.themehalloween .bat:nth-child(1) { top: 10%; left: -10%; animation-delay: 0s; }\n      #update-history.themehalloween .bat:nth-child(2) { top: 50%; right: -10%; animation-delay: 3s; animation-direction: reverse; }\n      #update-history.themehalloween .bat:nth-child(3) { top: 80%; left: -10%; animation-delay: 6s; }\n      @keyframes fly-bat {\n        0% { transform: translateX(0) rotate(0deg); }\n        100% { transform: translateX(120%) rotate(360deg); }\n      }\n      @keyframes twinkle-stars {\n        0% { background-position: 0 0; }\n        100% { background-position: 20px 20px; }\n      }\n      @keyframes halloween-glow {\n        0% { opacity: 0.8; }\n        100% { opacity: 1; }\n      }\n    ";
-  document.head.appendChild(styleElement);
+  document.head.appendChild(v4226StyleElement);
   const draggableElement = document.createElement("div");
   draggableElement.id = "update-history";
   draggableElement.innerHTML =
@@ -193,8 +195,8 @@ function createUpdateHistoryStyles() {
   const historyContentElement =
     draggableElement.querySelector("#historyContent");
   let isHidden = false;
-  minHistElement.onclick = (event) => {
-    event.stopPropagation();
+  minHistElement.onclick = (v16e7Event) => {
+    v16e7Event.stopPropagation();
     isHidden = !isHidden;
     historyContentElement.style.display = isHidden ? "none" : "block";
     draggableElement.style.height = isHidden ? "60px" : "auto";
@@ -244,7 +246,7 @@ function createUpdateHistoryStyles() {
     }
   });
   if (localStorage.getItem("theme") === "halloween") {
-    for (let i = 0; i < 3; i++) {
+    for (let cfecI = 0; cfecI < 3; cfecI++) {
       const spanElement = document.createElement("span");
       spanElement.className = "bat";
       spanElement.textContent = "🦇";
@@ -284,8 +286,8 @@ function injectDeepToolsStyles() {
   };
   const spoofButton = deepToolsPanel.querySelector("#patchBtn");
   spoofButton.onclick = () => initInterceptor(spoofButton);
-  const spoofButton_251 = deepToolsPanel.querySelector("#spoofBtn");
-  spoofButton_251.onclick = () => {
+  const v2413SpoofButton = deepToolsPanel.querySelector("#spoofBtn");
+  v2413SpoofButton.onclick = () => {
     const inputLimit = generateRandomString(8);
     if (simulateTyping(".play-game .el-input__inner", inputLimit)) {
       showNotification("Spoofed name!");
@@ -298,7 +300,7 @@ function injectDeepToolsStyles() {
   const autoChatButton = deepToolsPanel.querySelector("#spinBtn");
   autoChatButton.onclick = () => {
     toggleMouseSimulation();
-    if (featuresentitytrailState.entityTrailInterval_s4i) {
+    if (featuresentitytrailState.appEntityTrailInterval) {
       autoChatButton.textContent = "Disable Auto Spin";
       autoChatButton.style.color = "var(--accent)";
       autoChatButton.style.opacity = "0.6";
@@ -310,20 +312,20 @@ function injectDeepToolsStyles() {
   };
   const spinKeyInput = deepToolsPanel.querySelector("#spinKeyInput");
   let lastPressedKey = null;
-  spinKeyInput.addEventListener("keydown", (event) => {
-    event.preventDefault();
-    lastPressedKey = event.code || event.key;
+  spinKeyInput.addEventListener("keydown", (v1d76Event) => {
+    v1d76Event.preventDefault();
+    lastPressedKey = v1d76Event.code || v1d76Event.key;
     spinKeyInput.value = lastPressedKey.replace("Key", "").toLowerCase();
   });
-  document.addEventListener("keydown", (event_1u9) => {
+  document.addEventListener("keydown", (b92fEvent) => {
     if (
       lastPressedKey &&
-      event_1u9.code === lastPressedKey &&
-      !event_1u9.target.matches("input, textarea, button")
+      b92fEvent.code === lastPressedKey &&
+      !b92fEvent.target.matches("input, textarea, button")
     ) {
-      event_1u9.preventDefault();
+      b92fEvent.preventDefault();
       toggleMouseSimulation();
-      if (featuresentitytrailState.entityTrailInterval_s4i) {
+      if (featuresentitytrailState.appEntityTrailInterval) {
         autoChatButton.textContent = "Disable Auto Spin";
         autoChatButton.style.color = "var(--accent)";
         autoChatButton.style.opacity = "0.6";
@@ -334,8 +336,8 @@ function injectDeepToolsStyles() {
       }
     }
   });
-  const autoChatButton_3ud = deepToolsPanel.querySelector("#autoChatBtn");
-  autoChatButton_3ud.onclick = () => {
+  const v4da6AutoChatButton = deepToolsPanel.querySelector("#autoChatBtn");
+  v4da6AutoChatButton.onclick = () => {
     const chatMessageValue = deepToolsPanel.querySelector("#chatMsg").value;
     const delayInput = deepToolsPanel.querySelector("#delayInput");
     const delayValue = parseInt(delayInput.value) || 10;
@@ -343,75 +345,76 @@ function injectDeepToolsStyles() {
       showNotification("⚠️ Enter a message first!");
       return;
     }
-    if (state.isToggled) {
+    if (state.IsToggled) {
       stopInterval();
-      autoChatButton_3ud.textContent = "Enable Auto Chat";
-      autoChatButton_3ud.style.color = "var(--accent)";
-      autoChatButton_3ud.style.opacity = "1";
+      v4da6AutoChatButton.textContent = "Enable Auto Chat";
+      v4da6AutoChatButton.style.color = "var(--accent)";
+      v4da6AutoChatButton.style.opacity = "1";
     } else {
       startScheduledTask(chatMessageValue, delayValue);
-      autoChatButton_3ud.textContent = "Disable Auto Chat";
-      autoChatButton_3ud.style.color = "var(--accent)";
-      autoChatButton_3ud.style.opacity = "0.6";
+      v4da6AutoChatButton.textContent = "Disable Auto Chat";
+      v4da6AutoChatButton.style.color = "var(--accent)";
+      v4da6AutoChatButton.style.opacity = "0.6";
     }
   };
   let deepToolsOffsetX;
   let deepToolsOffsetY;
   let deepToolsDragActive = false;
   let deepToolsIsDragging = false;
-  deepToolsPanel.addEventListener("mousedown", (event_xe9) => {
+  deepToolsPanel.addEventListener("mousedown", (bd3eEvent) => {
     if (
-      event_xe9.target.tagName === "BUTTON" ||
-      event_xe9.target.tagName === "TEXTAREA" ||
-      event_xe9.target.tagName === "INPUT" ||
-      event_xe9.target.classList.contains("credits")
+      bd3eEvent.target.tagName === "BUTTON" ||
+      bd3eEvent.target.tagName === "TEXTAREA" ||
+      bd3eEvent.target.tagName === "INPUT" ||
+      bd3eEvent.target.classList.contains("credits")
     ) {
       return;
     }
     deepToolsDragActive = true;
     deepToolsIsDragging = false;
     deepToolsOffsetX =
-      event_xe9.clientX - deepToolsPanel.getBoundingClientRect().left;
+      bd3eEvent.clientX - deepToolsPanel.getBoundingClientRect().left;
     deepToolsOffsetY =
-      event_xe9.clientY - deepToolsPanel.getBoundingClientRect().top;
+      bd3eEvent.clientY - deepToolsPanel.getBoundingClientRect().top;
     deepToolsPanel.style.transition = "none";
-    const handleMouseMove = (mouseEvent) => {
-      const deltaX = mouseEvent.clientX - event_xe9.clientX;
-      const deltaY = mouseEvent.clientY - event_xe9.clientY;
+    const v5a97HandleMouseMove = (v5217MouseEvent) => {
+      const v16fbDeltaX = v5217MouseEvent.clientX - bd3eEvent.clientX;
+      const v575bDeltaY = v5217MouseEvent.clientY - bd3eEvent.clientY;
       if (
         !deepToolsIsDragging &&
-        (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)
+        (Math.abs(v16fbDeltaX) > 5 || Math.abs(v575bDeltaY) > 5)
       ) {
         deepToolsIsDragging = true;
       }
       if (deepToolsDragActive) {
         deepToolsPanel.style.left =
-          mouseEvent.clientX - deepToolsOffsetX + "px";
-        deepToolsPanel.style.top = mouseEvent.clientY - deepToolsOffsetY + "px";
+          v5217MouseEvent.clientX - deepToolsOffsetX + "px";
+        deepToolsPanel.style.top =
+          v5217MouseEvent.clientY - deepToolsOffsetY + "px";
         deepToolsPanel.style.bottom = "auto";
         deepToolsPanel.style.right = "auto";
       }
     };
-    const handleMouseUp = () => {
+    const v4224HandleMouseUp = () => {
       deepToolsDragActive = false;
       deepToolsPanel.style.transition = "all 0.3s ease";
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("mousemove", v5a97HandleMouseMove);
+      document.removeEventListener("mouseup", v4224HandleMouseUp);
     };
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("mousemove", v5a97HandleMouseMove);
+    document.addEventListener("mouseup", v4224HandleMouseUp);
   });
-  deepToolsPanel.addEventListener("click", (event_mr3) => {
+  deepToolsPanel.addEventListener("click", (v4a4cEvent) => {
     if (deepToolsIsDragging) {
-      event_mr3.stopImmediatePropagation();
+      v4a4cEvent.stopImmediatePropagation();
     }
   });
   if (localStorage.getItem("theme") === "halloween") {
-    for (let i = 0; i < 3; i++) {
-      const spanElement = document.createElement("span");
-      spanElement.className = "bat";
-      spanElement.textContent = "🦇";
-      deepToolsPanel.appendChild(spanElement);
+    for (let v21d6I = 0; v21d6I < 3; v21d6I++) {
+      const v4543SpanElement = document.createElement("span");
+      v4543SpanElement.className = "bat";
+      v4543SpanElement.textContent = "🦇";
+      deepToolsPanel.appendChild(v4543SpanElement);
     }
   }
   return deepToolsPanel;
@@ -441,7 +444,7 @@ function injectPlusPanelStyles() {
   document.body.appendChild(plusPanel);
   const astraVisionButton = plusPanel.querySelector("#thresherBtn");
   astraVisionButton.onclick = () => {
-    if (isProcessed_r36) {
+    if (modIsProcessed) {
       showNotification("Thresher Super Boost is already active!");
       return;
     }
@@ -451,18 +454,18 @@ function injectPlusPanelStyles() {
     astraVisionButton.style.opacity = "0.6";
     astraVisionButton.disabled = true;
   };
-  const astraVisionButton_cs5 = plusPanel.querySelector("#astraVisionBtn");
-  astraVisionButton_cs5.onclick = () => {
-    if (isProcessed_run) {
+  const v2414AstraVisionButton = plusPanel.querySelector("#astraVisionBtn");
+  v2414AstraVisionButton.onclick = () => {
+    if (boolIsProcessed) {
       showNotification("Astra-Vision already enabled!");
       return;
     }
     initializeAntiTamper();
     disableGameRestrictions();
-    astraVisionButton_cs5.textContent = "Astra-Vision Active";
-    astraVisionButton_cs5.style.color = "var(--accent)";
-    astraVisionButton_cs5.style.opacity = "0.6";
-    astraVisionButton_cs5.disabled = true;
+    v2414AstraVisionButton.textContent = "Astra-Vision Active";
+    v2414AstraVisionButton.style.color = "var(--accent)";
+    v2414AstraVisionButton.style.opacity = "0.6";
+    v2414AstraVisionButton.disabled = true;
     showNotification(
       "👁️ Astra-Vision enabled! (zoom-limit unlocked, no ink-flash or deep darkness effects)",
     );
@@ -471,7 +474,7 @@ function injectPlusPanelStyles() {
   smallMinimapButton.onclick = () => {
     initializeAntiTamper();
     toggleMinimapScale();
-    if (state.isToggled_r5u) {
+    if (state.boolIsToggled) {
       smallMinimapButton.textContent = "Disable Small Minimap";
       smallMinimapButton.style.color = "var(--accent)";
       smallMinimapButton.style.opacity = "0.6";
@@ -485,73 +488,76 @@ function injectPlusPanelStyles() {
   let plusPanelOffsetY;
   let plusPanelDragActive = false;
   let plusPanelIsDragging = false;
-  plusPanel.addEventListener("mousedown", (event) => {
+  plusPanel.addEventListener("mousedown", (v6c59Event) => {
     if (
-      event.target.tagName === "BUTTON" ||
-      event.target.tagName === "TEXTAREA" ||
-      event.target.tagName === "INPUT" ||
-      event.target.classList.contains("credits")
+      v6c59Event.target.tagName === "BUTTON" ||
+      v6c59Event.target.tagName === "TEXTAREA" ||
+      v6c59Event.target.tagName === "INPUT" ||
+      v6c59Event.target.classList.contains("credits")
     ) {
       return;
     }
     plusPanelDragActive = true;
     plusPanelIsDragging = false;
-    plusPanelOffsetX = event.clientX - plusPanel.getBoundingClientRect().left;
-    plusPanelOffsetY = event.clientY - plusPanel.getBoundingClientRect().top;
+    plusPanelOffsetX =
+      v6c59Event.clientX - plusPanel.getBoundingClientRect().left;
+    plusPanelOffsetY =
+      v6c59Event.clientY - plusPanel.getBoundingClientRect().top;
     plusPanel.style.transition = "none";
-    const handleMouseMove = (mouseEvent) => {
-      const deltaX = mouseEvent.clientX - event.clientX;
-      const deltaY = mouseEvent.clientY - event.clientY;
+    const v23ccHandleMouseMove = (v5270MouseEvent) => {
+      const v25d9DeltaX = v5270MouseEvent.clientX - v6c59Event.clientX;
+      const v3000DeltaY = v5270MouseEvent.clientY - v6c59Event.clientY;
       if (
         !plusPanelIsDragging &&
-        (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)
+        (Math.abs(v25d9DeltaX) > 5 || Math.abs(v3000DeltaY) > 5)
       ) {
         plusPanelIsDragging = true;
       }
       if (plusPanelDragActive) {
-        plusPanel.style.left = mouseEvent.clientX - plusPanelOffsetX + "px";
-        plusPanel.style.top = mouseEvent.clientY - plusPanelOffsetY + "px";
+        plusPanel.style.left =
+          v5270MouseEvent.clientX - plusPanelOffsetX + "px";
+        plusPanel.style.top = v5270MouseEvent.clientY - plusPanelOffsetY + "px";
         plusPanel.style.bottom = "auto";
         plusPanel.style.right = "auto";
       }
     };
-    const handleMouseUp = () => {
+    const v1f41HandleMouseUp = () => {
       plusPanelDragActive = false;
       plusPanel.style.transition = "all 0.3s ease";
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("mousemove", v23ccHandleMouseMove);
+      document.removeEventListener("mouseup", v1f41HandleMouseUp);
     };
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("mousemove", v23ccHandleMouseMove);
+    document.addEventListener("mouseup", v1f41HandleMouseUp);
   });
-  plusPanel.addEventListener("click", (event_wtd) => {
+  plusPanel.addEventListener("click", (v18d4Event) => {
     if (plusPanelIsDragging) {
-      event_wtd.stopImmediatePropagation();
+      v18d4Event.stopImmediatePropagation();
     }
   });
   if (localStorage.getItem("theme") === "halloween") {
-    for (let i = 0; i < 3; i++) {
-      const spanElement = document.createElement("span");
-      spanElement.className = "bat";
-      spanElement.textContent = "🦇";
-      plusPanel.appendChild(spanElement);
+    for (let v1218I = 0; v1218I < 3; v1218I++) {
+      const ecd4SpanElement = document.createElement("span");
+      ecd4SpanElement.className = "bat";
+      ecd4SpanElement.textContent = "🦇";
+      plusPanel.appendChild(ecd4SpanElement);
     }
   }
   return plusPanel;
 }
 function injectSettingsPanelStyles() {
-  const styleElement = document.createElement("style");
-  styleElement.textContent =
+  const v13abStyleElement = document.createElement("style");
+  v13abStyleElement.textContent =
     "\n      #settings-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n        position: fixed;\n        top: 20px;\n        left: 20px;\n        color: var(--text-primary);\n        padding: 16px;\n        font-size: 14px;\n        z-index: 99999;\n        user-select: none;\n        width: 240px;\n        text-align: center;\n        cursor: move;\n        overflow: hidden;\n        position: relative;\n      }\n      #settings-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #settings-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        width: 100%;\n        margin-bottom: 10px;\n        position: relative;\n        overflow: hidden;\n      }\n      #settings-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #settings-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #settings-panel button:hover:not(:disabled) {\n        background: var(--hover-bg);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2);\n        color: var(--accent-hover);\n      }\n      #settings-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #settings-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #settings-panel .keybind-set, #settings-panel .bg-set {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        margin-bottom: 10px;\n        font-size: 12px;\n      }\n      #settings-panel .keybind-set label, #settings-panel .bg-set label {\n        color: var(--text-primary);\n      }\n      #settings-panel #toggleKeyInput, #settings-panel #bgUrl {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #settings-panel #toggleKeyInput {\n        width: 80px;\n      }\n      #settings-panel #bgUrl {\n        width: 120px;\n      }\n      #settings-panel .section-header {\n        font-weight: bold;\n        color: var(--accent);\n        margin: 12px 0 6px 0;\n        font-size: 13px;\n      }\n      #settings-panel select {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 100%;\n        margin-bottom: 10px;\n        transition: all 0.2s ease;\n      }\n      #settings-panel select:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);\n      }\n      #settings-panel .limited-edition {\n        font-size: 11px;\n        color: #ff6600;\n        font-style: italic;\n        margin-top: 4px;\n      }\n      /* Theme-specific panel animations */\n      #settings-panel.themestarwars::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        background: radial-gradient(circle at center, rgba(255,255,255,0.1) 1px, transparent 1px);\n        background-size: 20px 20px;\n        animation: twinkle-stars 20s linear infinite;\n        z-index: -1;\n        border-radius: 16px;\n      }\n      #settings-panel.themekfc::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 20% 30%, rgba(244,0,0,0.1) 2px, transparent 2px),\n                    radial-gradient(circle at 80% 70%, rgba(255,204,0,0.05) 1px, transparent 1px);\n        background-size: 40px 40px;\n      }\n      #settings-panel.themehalloween::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 30% 20%, rgba(255, 102, 0, 0.1) 1px, transparent 1px),\n                    radial-gradient(circle at 70% 80%, rgba(139, 0, 255, 0.05) 2px, transparent 2px);\n        background-size: 30px 30px;\n        animation: halloween-glow 15s ease-in-out infinite alternate;\n      }\n      #settings-panel.themehalloween .bat {\n        position: absolute;\n        font-size: 20px;\n        animation: fly-bat 10s linear infinite;\n        pointer-events: none;\n        opacity: 0.7;\n      }\n      #settings-panel.themehalloween .bat:nth-child(1) { top: 10%; left: -10%; animation-delay: 0s; }\n      #settings-panel.themehalloween .bat:nth-child(2) { top: 50%; right: -10%; animation-delay: 3s; animation-direction: reverse; }\n      #settings-panel.themehalloween .bat:nth-child(3) { top: 80%; left: -10%; animation-delay: 6s; }\n      @keyframes fly-bat {\n        0% { transform: translateX(0) rotate(0deg); }\n        100% { transform: translateX(120%) rotate(360deg); }\n      }\n      @keyframes twinkle-stars {\n        0% { background-position: 0 0; }\n        100% { background-position: 20px 20px; }\n      }\n      @keyframes halloween-glow {\n        0% { opacity: 0.8; }\n        100% { opacity: 1; }\n      }\n    ";
-  document.head.appendChild(styleElement);
-  const draggableElement = document.createElement("div");
-  draggableElement.id = "settings-panel";
-  draggableElement.innerHTML =
+  document.head.appendChild(v13abStyleElement);
+  const v5893DraggableElement = document.createElement("div");
+  v5893DraggableElement.id = "settings-panel";
+  v5893DraggableElement.innerHTML =
     '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        SETTINGS\n      </div>\n      <div id="settingsContent">\n        <div class="keybind-set">\n          <label for="toggleKeyInput">Toggle Client:</label>\n          <input type="text" id="toggleKeyInput" placeholder="PRESS" readonly>\n        </div>\n        <div class="section-header">Custom Background</div>\n        <div class="bg-set">\n          <label for="bgUrl">BG URL:</label>\n          <input type="text" id="bgUrl" placeholder="Image/GIF URL">\n        </div>\n        <button id="applyBg">Apply Custom Background</button>\n        <div class="section-header">Themes</div>\n        <select id="themeSelect">\n          <option value="blue">Blue (Default)</option>\n          <option value="red">Red</option>\n          <option value="green">Green</option>\n          <option value="pink">Pink</option>\n          <option value="starwars">Star Wars</option>\n          <option value="kfc">KFC🍗</option>\n          <option value="halloween">Halloween 🎃</option>\n        </select>\n        <div id="limitedEdition" class="limited-edition" style="display:none;">Limited Edition</div>\n      </div>\n    ';
-  document.body.appendChild(draggableElement);
-  const bgUrlInput = draggableElement.querySelector("#bgUrl");
+  document.body.appendChild(v5893DraggableElement);
+  const bgUrlInput = v5893DraggableElement.querySelector("#bgUrl");
   bgUrlInput.value = localStorage.getItem("bgUrl") || "";
-  const applyBgButton = draggableElement.querySelector("#applyBg");
+  const applyBgButton = v5893DraggableElement.querySelector("#applyBg");
   applyBgButton.onclick = () => {
     const bgUrl = bgUrlInput.value.trim();
     if (bgUrl === "") {
@@ -559,21 +565,21 @@ function injectSettingsPanelStyles() {
       return;
     }
     localStorage.setItem("bgUrl", bgUrl);
-    let homeBgElement = document.querySelector(".home-bg");
+    let v1331HomeBgElement = document.querySelector(".home-bg");
     const updateHomeBackgroundImage = () => {
-      homeBgElement = document.querySelector(".home-bg");
-      if (homeBgElement) {
-        homeBgElement.style.setProperty(
+      v1331HomeBgElement = document.querySelector(".home-bg");
+      if (v1331HomeBgElement) {
+        v1331HomeBgElement.style.setProperty(
           "background-image",
           'url("' + bgUrl + '")',
           "important",
         );
       }
     };
-    if (homeBgElement == null) {
+    if (v1331HomeBgElement == null) {
       const pollInterval = setInterval(() => {
-        homeBgElement = document.querySelector(".home-bg");
-        if (homeBgElement != null) {
+        v1331HomeBgElement = document.querySelector(".home-bg");
+        if (v1331HomeBgElement != null) {
           clearInterval(pollInterval);
           updateHomeBackgroundImage();
         }
@@ -583,13 +589,13 @@ function injectSettingsPanelStyles() {
     }
     showNotification("Custom Background applied!");
   };
-  const themeSelect = draggableElement.querySelector("#themeSelect");
+  const themeSelect = v5893DraggableElement.querySelector("#themeSelect");
   const angle = localStorage.getItem("theme") || "blue";
   themeSelect.value = angle;
   applyThemeColors(angle);
   themeSelect.onchange = (themeChangeEvent) => {
-    const myY = themeChangeEvent.target.value;
-    if (myY === "halloween") {
+    const v1263MyY = themeChangeEvent.target.value;
+    if (v1263MyY === "halloween") {
       createHalloweenModal((isHalloween) => {
         if (isHalloween) {
           applyThemeColors("halloween");
@@ -599,83 +605,91 @@ function injectSettingsPanelStyles() {
         }
       });
     } else {
-      applyThemeColors(myY);
-      showNotification("Theme changed to " + myY);
+      applyThemeColors(v1263MyY);
+      showNotification("Theme changed to " + v1263MyY);
     }
   };
-  const toggleKeyInput = draggableElement.querySelector("#toggleKeyInput");
+  const toggleKeyInput = v5893DraggableElement.querySelector("#toggleKeyInput");
   toggleKeyInput.value = state.activeKey;
-  toggleKeyInput.addEventListener("keydown", (keyboardEvent) => {
-    keyboardEvent.preventDefault();
-    state.activeKey = keyboardEvent.key;
+  toggleKeyInput.addEventListener("keydown", (v55b9KeyboardEvent) => {
+    v55b9KeyboardEvent.preventDefault();
+    state.activeKey = v55b9KeyboardEvent.key;
     toggleKeyInput.value = state.activeKey;
   });
-  let offsetX;
-  let offsetY;
+  let v76deOffsetX;
+  let v1330OffsetY;
   let isDraggingActive = false;
-  let isDragging = false;
-  draggableElement.addEventListener("mousedown", (clickEvent) => {
+  let v30f1IsDragging = false;
+  v5893DraggableElement.addEventListener("mousedown", (v1442ClickEvent) => {
     if (
-      clickEvent.target.tagName === "BUTTON" ||
-      clickEvent.target.tagName === "INPUT" ||
-      clickEvent.target.classList.contains("credits")
+      v1442ClickEvent.target.tagName === "BUTTON" ||
+      v1442ClickEvent.target.tagName === "INPUT" ||
+      v1442ClickEvent.target.classList.contains("credits")
     ) {
       return;
     }
     isDraggingActive = true;
-    isDragging = false;
-    offsetX =
-      clickEvent.clientX - draggableElement.getBoundingClientRect().left;
-    offsetY = clickEvent.clientY - draggableElement.getBoundingClientRect().top;
-    draggableElement.style.transition = "none";
-    const handleMouseMove = (mouseEvent) => {
-      const deltaX = mouseEvent.clientX - clickEvent.clientX;
-      const deltaY = mouseEvent.clientY - clickEvent.clientY;
-      if (!isDragging && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isDragging = true;
+    v30f1IsDragging = false;
+    v76deOffsetX =
+      v1442ClickEvent.clientX -
+      v5893DraggableElement.getBoundingClientRect().left;
+    v1330OffsetY =
+      v1442ClickEvent.clientY -
+      v5893DraggableElement.getBoundingClientRect().top;
+    v5893DraggableElement.style.transition = "none";
+    const v18d0HandleMouseMove = (v59a0MouseEvent) => {
+      const v3520DeltaX = v59a0MouseEvent.clientX - v1442ClickEvent.clientX;
+      const v182dDeltaY = v59a0MouseEvent.clientY - v1442ClickEvent.clientY;
+      if (
+        !v30f1IsDragging &&
+        (Math.abs(v3520DeltaX) > 5 || Math.abs(v182dDeltaY) > 5)
+      ) {
+        v30f1IsDragging = true;
       }
       if (isDraggingActive) {
-        draggableElement.style.left = mouseEvent.clientX - offsetX + "px";
-        draggableElement.style.top = mouseEvent.clientY - offsetY + "px";
-        draggableElement.style.bottom = "auto";
-        draggableElement.style.right = "auto";
+        v5893DraggableElement.style.left =
+          v59a0MouseEvent.clientX - v76deOffsetX + "px";
+        v5893DraggableElement.style.top =
+          v59a0MouseEvent.clientY - v1330OffsetY + "px";
+        v5893DraggableElement.style.bottom = "auto";
+        v5893DraggableElement.style.right = "auto";
       }
     };
-    const handleMouseUp = () => {
+    const v1dd5HandleMouseUp = () => {
       isDraggingActive = false;
-      draggableElement.style.transition = "all 0.3s ease";
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      v5893DraggableElement.style.transition = "all 0.3s ease";
+      document.removeEventListener("mousemove", v18d0HandleMouseMove);
+      document.removeEventListener("mouseup", v1dd5HandleMouseUp);
     };
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("mousemove", v18d0HandleMouseMove);
+    document.addEventListener("mouseup", v1dd5HandleMouseUp);
   });
-  draggableElement.addEventListener("click", (propagationEvent) => {
-    if (isDragging) {
+  v5893DraggableElement.addEventListener("click", (propagationEvent) => {
+    if (v30f1IsDragging) {
       propagationEvent.stopImmediatePropagation();
     }
   });
   if (localStorage.getItem("theme") === "halloween") {
-    for (let i = 0; i < 3; i++) {
-      const spanElement = document.createElement("span");
-      spanElement.className = "bat";
-      spanElement.textContent = "🦇";
-      draggableElement.appendChild(spanElement);
+    for (let v8b93I = 0; v8b93I < 3; v8b93I++) {
+      const ab2fSpanElement = document.createElement("span");
+      ab2fSpanElement.className = "bat";
+      ab2fSpanElement.textContent = "🦇";
+      v5893DraggableElement.appendChild(ab2fSpanElement);
     }
   }
-  return draggableElement;
+  return v5893DraggableElement;
 }
 function togglePanels() {
-  const deepToolsPanel = document.getElementById("deep-tools-panel");
+  const v2267DeepToolsPanel = document.getElementById("deep-tools-panel");
   const updateHistoryPanel = document.getElementById("update-history");
   const settingsPanel = document.getElementById("settings-panel");
-  const plusPanel = document.getElementById("plus-panel");
-  const currentDisplay = deepToolsPanel.style.display;
+  const v1194PlusPanel = document.getElementById("plus-panel");
+  const currentDisplay = v2267DeepToolsPanel.style.display;
   const newDisplay = currentDisplay === "none" ? "block" : "none";
-  deepToolsPanel.style.display = newDisplay;
+  v2267DeepToolsPanel.style.display = newDisplay;
   updateHistoryPanel.style.display = newDisplay;
   settingsPanel.style.display = newDisplay;
-  plusPanel.style.display = newDisplay;
+  v1194PlusPanel.style.display = newDisplay;
 }
 
 export {

@@ -10,9 +10,9 @@ import {
   angles,
   radius,
   playerData,
-  isProcessed_sc5,
-  isProcessed_qng,
-  config,
+  boolIsProcessed,
+  appIsProcessed,
+  objConfig,
   state,
 } from "./src/core.js";
 import {

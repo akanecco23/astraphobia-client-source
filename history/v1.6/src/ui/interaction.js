@@ -1,4 +1,4 @@
-import { currentTime, radius, state } from "../core.js";
+import { radius, state } from "../core.js";
 import { getMyAnimal } from "../utils.js";
 
 function typeText(selector, text) {
@@ -35,13 +35,14 @@ function typeText(selector, text) {
   typeChar();
   return true;
 }
+let CurrentTime = 0;
 function showToast(message) {
   const currentTime = Date.now();
-  if (message === state.currentTrackId && currentTime - currentTime < 3000) {
+  if (message === state.currentTrackId && currentTime - CurrentTime < 3000) {
     return;
   }
   state.currentTrackId = message;
-  currentTime = currentTime;
+  CurrentTime = currentTime;
   const toastElement = document.createElement("div");
   toastElement.style.cssText =
     "\n      position: fixed; top: 16px; right: 16px;\n      background: #282828; color: #e0e0e0;\n      padding: 10px 16px; border-radius: 4px;\n      z-index: 10000000; font-size: 13px;\n      opacity: 0; transition: opacity 0.2s ease, transform 0.2s ease;\n      pointer-events: none; font-family: 'Segoe UI', system-ui, sans-serif;\n      border-left: 3px solid var(--acc, #888);\n      transform: translateX(20px);\n    ";
@@ -76,13 +77,13 @@ function restoreUIInteractivity() {
       const interactiveElements = document.querySelectorAll(
         "input, button, select, .play-game, .home, .start-screen, .el-dialog, .el-button, a",
       );
-      interactiveElements.forEach((targetElement) => {
-        targetElement.style.pointerEvents = "auto";
+      interactiveElements.forEach((acdbTargetElement) => {
+        acdbTargetElement.style.pointerEvents = "auto";
         if (
-          targetElement.tagName === "BUTTON" ||
-          targetElement.tagName === "INPUT"
+          acdbTargetElement.tagName === "BUTTON" ||
+          acdbTargetElement.tagName === "INPUT"
         ) {
-          targetElement.disabled = false;
+          acdbTargetElement.disabled = false;
         }
       });
       const vfmElements = document.querySelectorAll(
@@ -91,8 +92,8 @@ function restoreUIInteractivity() {
       vfmElements.forEach((topLayerElement) => {
         topLayerElement.style.pointerEvents = "auto";
         topLayerElement.style.zIndex = "100000";
-        topLayerElement.querySelectorAll("*").forEach((targetElement) => {
-          targetElement.style.pointerEvents = "auto";
+        topLayerElement.querySelectorAll("*").forEach((v2afcTargetElement) => {
+          v2afcTargetElement.style.pointerEvents = "auto";
         });
       });
       const gameOverElements = document.querySelectorAll(
@@ -101,9 +102,9 @@ function restoreUIInteractivity() {
       gameOverElements.forEach((interactiveElement) => {
         interactiveElement.style.pointerEvents = "auto";
       });
-      const appElement = document.getElementById("app");
-      if (appElement) {
-        appElement.style.pointerEvents = "auto";
+      const Element = document.getElementById("app");
+      if (Element) {
+        Element.style.pointerEvents = "auto";
       }
       const playButtons = document.querySelectorAll(
         '.play-btn, .respawn-btn, .startButton, .el-button, button.play, [class*="play"], [class*="start"]',
@@ -121,10 +122,10 @@ function restoreUIInteractivity() {
         }
       });
     } else {
-      const uiPanels = document.querySelectorAll(
+      const Panels = document.querySelectorAll(
         "#deep-tools-panel, #plus-panel, #settings-panel, #update-history",
       );
-      uiPanels.forEach((middleLayerElement) => {
+      Panels.forEach((middleLayerElement) => {
         if (middleLayerElement) {
           middleLayerElement.style.zIndex = "99999";
         }

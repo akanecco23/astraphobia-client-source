@@ -4,7 +4,6 @@ import {
   getFirstAnimal,
   getFirstAnimalPosition,
   getEntityPosition,
-  angle,
   gameInstance,
   state,
 } from "./core.js";
@@ -24,10 +23,10 @@ function getGameCanvas() {
     document.querySelector("#canvas-container canvas")
   );
 }
-const getAllPropertyNames = (targetObject) => {
+const getAllPropertyNames = (v1353TargetObject) => {
   return [
-    ...Object.getOwnPropertyNames(Object.getPrototypeOf(targetObject)),
-    ...Object.getOwnPropertyNames(targetObject),
+    ...Object.getOwnPropertyNames(Object.getPrototypeOf(v1353TargetObject)),
+    ...Object.getOwnPropertyNames(v1353TargetObject),
   ];
 };
 function isPlayer(entity) {
@@ -71,11 +70,11 @@ function calculateDistance(x1, y1, x2, y2) {
 }
 function getNearbyEntities() {
   try {
-    const rawState = getGameState();
-    const gameState = getEntityManager(rawState);
+    const v169cRawState = getGameState();
+    const v56d6GameState = getEntityManager(v169cRawState);
     const myPlayer = getFirstAnimal();
     const myPosition = getFirstAnimalPosition();
-    if (!gameState || !myPlayer || !myPosition) {
+    if (!v56d6GameState || !myPlayer || !myPosition) {
       return null;
     }
     const entityData = {
@@ -85,19 +84,19 @@ function getNearbyEntities() {
       players: [],
       food: [],
     };
-    const entitiesList = gameState.entitiesList || [];
-    for (let i = 0; i < entitiesList.length; i++) {
-      const entity = entitiesList[i];
-      if (!entity || entity.id === myPlayer.id) {
+    const entitiesList = v56d6GameState.entitiesList || [];
+    for (let v11d5I = 0; v11d5I < entitiesList.length; v11d5I++) {
+      const v2414Entity = entitiesList[v11d5I];
+      if (!v2414Entity || v2414Entity.id === myPlayer.id) {
         continue;
       }
       if (
         myPlayer.playerRoomId &&
-        entity.playerRoomId === myPlayer.playerRoomId
+        v2414Entity.playerRoomId === myPlayer.playerRoomId
       ) {
         continue;
       }
-      const pos = getEntityPosition(entity);
+      const pos = getEntityPosition(v2414Entity);
       if (!pos || pos.x == null || pos.y == null) {
         continue;
       }
@@ -105,15 +104,15 @@ function getNearbyEntities() {
       const dy = pos.y - myPosition.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
       const entityInfo = {
-        id: entity.id,
+        id: v2414Entity.id,
         x: pos.x,
         y: pos.y,
         distance: distance,
         angle: Math.atan2(dy, dx),
-        entity: entity,
+        entity: v2414Entity,
       };
       entityData.entities.push(entityInfo);
-      if (isPlayer(entity)) {
+      if (isPlayer(v2414Entity)) {
         entityData.players.push(entityInfo);
       } else {
         entityData.food.push(entityInfo);
@@ -122,9 +121,9 @@ function getNearbyEntities() {
     entityData.players.sort((itemA, itemB) => itemA.distance - itemB.distance);
     entityData.food.sort((itemC, itemD) => itemC.distance - itemD.distance);
     return entityData;
-  } catch (error) {
+  } catch (v2f85Error) {
     return {
-      error: error.message,
+      error: v2f85Error.message,
     };
   }
 }
@@ -156,7 +155,7 @@ function getZoomScale() {
         return viewport.scaled;
       }
     }
-  } catch (error) {}
+  } catch (v1daeError) {}
   return 0.15;
 }
 function getOrCreateOverlayCanvas(canvasId, zIndex) {

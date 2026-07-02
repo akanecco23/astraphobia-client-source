@@ -3,7 +3,6 @@ import {
   getEntityPosition,
   calculateDirection,
   findEntityById,
-  angle,
   getFirstAnimalPosition,
   playerData,
   state,
@@ -33,126 +32,132 @@ window.espTrackedEntityId = null;
 window.espMode = "players";
 window.autoDodgeEnabled = false;
 
-function drawEsp(ctx, gameState, offsetX, offsetY, scale) {
-  if (!gameState || gameState.error) {
+function drawEsp(v5568Ctx, v136aGameState, v4893OffsetX, v5815OffsetY, scale) {
+  if (!v136aGameState || v136aGameState.error) {
     return;
   }
-  const myPos = gameState.myPos;
+  const myPos = v136aGameState.myPos;
   const espMode = window.espMode;
   const trackedId = window.espTrackedEntityId;
   let entities =
-    espMode === "players" ? gameState.players || [] : gameState.food || [];
+    espMode === "players"
+      ? v136aGameState.players || []
+      : v136aGameState.food || [];
   let viewportOffsetX = 0;
   let viewportOffsetY = 0;
   try {
     if (gameInstance?.viewport) {
-      const viewport = gameInstance.viewport;
-      if (viewport.center && viewport.center.x != null) {
-        viewportOffsetX = (viewport.center.x - myPos.x) * scale;
-        viewportOffsetY = (viewport.center.y - myPos.y) * scale;
+      const v2067Viewport = gameInstance.viewport;
+      if (v2067Viewport.center && v2067Viewport.center.x != null) {
+        viewportOffsetX = (v2067Viewport.center.x - myPos.x) * scale;
+        viewportOffsetY = (v2067Viewport.center.y - myPos.y) * scale;
       }
     }
   } catch (err) {}
-  entities.forEach((entity) => {
-    const deltaX = entity.x - myPos.x;
-    const deltaY = entity.y - myPos.y;
-    const screenX = offsetX + deltaX * scale - viewportOffsetX;
-    const screenY = offsetY + deltaY * scale - viewportOffsetY;
-    const isTracked = trackedId && entity.id === trackedId;
+  entities.forEach((v2f06Entity) => {
+    const v431cDeltaX = v2f06Entity.x - myPos.x;
+    const v1e95DeltaY = v2f06Entity.y - myPos.y;
+    const v2dd0ScreenX = v4893OffsetX + v431cDeltaX * scale - viewportOffsetX;
+    const v3ff3ScreenY = v5815OffsetY + v1e95DeltaY * scale - viewportOffsetY;
+    const isTracked = trackedId && v2f06Entity.id === trackedId;
     const boxSize = 20;
-    let espColor;
+    let v344aEspColor;
     if (espMode === "players") {
-      espColor = isTracked
+      v344aEspColor = isTracked
         ? window.espColors.tracked
-        : entity.distance < 500
+        : v2f06Entity.distance < 500
           ? window.espColors.close
-          : entity.distance < 1500
+          : v2f06Entity.distance < 1500
             ? window.espColors.medium
-            : entity.distance < 3000
+            : v2f06Entity.distance < 3000
               ? window.espColors.far
               : window.espColors.veryFar;
-      ctx.strokeStyle = espColor;
-      ctx.lineWidth = isTracked ? 3 : 2;
-      ctx.strokeRect(
-        screenX - boxSize / 2,
-        screenY - boxSize / 2,
+      v5568Ctx.strokeStyle = v344aEspColor;
+      v5568Ctx.lineWidth = isTracked ? 3 : 2;
+      v5568Ctx.strokeRect(
+        v2dd0ScreenX - boxSize / 2,
+        v3ff3ScreenY - boxSize / 2,
         boxSize,
         boxSize,
       );
-      ctx.fillStyle = espColor;
-      ctx.font = "bold 11px monospace";
-      ctx.fillText(
-        entity.entity?.name || "ID:" + entity.id,
-        screenX - boxSize / 2,
-        screenY - boxSize / 2 - 8,
+      v5568Ctx.fillStyle = v344aEspColor;
+      v5568Ctx.font = "bold 11px monospace";
+      v5568Ctx.fillText(
+        v2f06Entity.entity?.name || "ID:" + v2f06Entity.id,
+        v2dd0ScreenX - boxSize / 2,
+        v3ff3ScreenY - boxSize / 2 - 8,
       );
-      ctx.font = "10px monospace";
-      ctx.fillText(
-        Math.round(entity.distance).toString(),
-        screenX - boxSize / 2,
-        screenY + boxSize / 2 + 13,
+      v5568Ctx.font = "10px monospace";
+      v5568Ctx.fillText(
+        Math.round(v2f06Entity.distance).toString(),
+        v2dd0ScreenX - boxSize / 2,
+        v3ff3ScreenY + boxSize / 2 + 13,
       );
-      if (entity.entity?.visibleFishLevel != null) {
-        ctx.fillText(
-          "Lvl:" + entity.entity.visibleFishLevel,
-          screenX - boxSize / 2,
-          screenY + boxSize / 2 + 24,
+      if (v2f06Entity.entity?.visibleFishLevel != null) {
+        v5568Ctx.fillText(
+          "Lvl:" + v2f06Entity.entity.visibleFishLevel,
+          v2dd0ScreenX - boxSize / 2,
+          v3ff3ScreenY + boxSize / 2 + 24,
         );
       }
-      if (window.lockEnabled && window.lockTargetId === entity.id) {
-        ctx.strokeStyle = "#ff0000";
-        ctx.lineWidth = 2;
+      if (window.lockEnabled && window.lockTargetId === v2f06Entity.id) {
+        v5568Ctx.strokeStyle = "#ff0000";
+        v5568Ctx.lineWidth = 2;
         const offset = 15;
-        ctx.beginPath();
-        ctx.moveTo(screenX - offset, screenY);
-        ctx.lineTo(screenX + offset, screenY);
-        ctx.moveTo(screenX, screenY - offset);
-        ctx.lineTo(screenX, screenY + offset);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(screenX, screenY, offset, 0, Math.PI * 2);
-        ctx.strokeStyle = "rgba(255,0,0,0.7)";
-        ctx.stroke();
-        ctx.fillStyle = "#ff0000";
-        ctx.font = "bold 10px monospace";
-        ctx.fillText("LOCKED", screenX + offset + 4, screenY - 4);
+        v5568Ctx.beginPath();
+        v5568Ctx.moveTo(v2dd0ScreenX - offset, v3ff3ScreenY);
+        v5568Ctx.lineTo(v2dd0ScreenX + offset, v3ff3ScreenY);
+        v5568Ctx.moveTo(v2dd0ScreenX, v3ff3ScreenY - offset);
+        v5568Ctx.lineTo(v2dd0ScreenX, v3ff3ScreenY + offset);
+        v5568Ctx.stroke();
+        v5568Ctx.beginPath();
+        v5568Ctx.arc(v2dd0ScreenX, v3ff3ScreenY, offset, 0, Math.PI * 2);
+        v5568Ctx.strokeStyle = "rgba(255,0,0,0.7)";
+        v5568Ctx.stroke();
+        v5568Ctx.fillStyle = "#ff0000";
+        v5568Ctx.font = "bold 10px monospace";
+        v5568Ctx.fillText(
+          "LOCKED",
+          v2dd0ScreenX + offset + 4,
+          v3ff3ScreenY - 4,
+        );
       }
-      ctx.beginPath();
-      ctx.moveTo(offsetX, offsetY);
-      ctx.lineTo(screenX, screenY);
-      ctx.strokeStyle = espColor;
-      ctx.globalAlpha = 0.25;
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      ctx.globalAlpha = 1;
+      v5568Ctx.beginPath();
+      v5568Ctx.moveTo(v4893OffsetX, v5815OffsetY);
+      v5568Ctx.lineTo(v2dd0ScreenX, v3ff3ScreenY);
+      v5568Ctx.strokeStyle = v344aEspColor;
+      v5568Ctx.globalAlpha = 0.25;
+      v5568Ctx.lineWidth = 1;
+      v5568Ctx.stroke();
+      v5568Ctx.globalAlpha = 1;
     } else {
-      espColor =
-        entity.distance < 300
+      v344aEspColor =
+        v2f06Entity.distance < 300
           ? window.espColors.foodClose
-          : entity.distance < 1000
+          : v2f06Entity.distance < 1000
             ? window.espColors.foodMedium
             : window.espColors.foodFar;
-      ctx.strokeStyle = espColor;
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(
-        screenX - boxSize / 2,
-        screenY - boxSize / 2,
+      v5568Ctx.strokeStyle = v344aEspColor;
+      v5568Ctx.lineWidth = 1.5;
+      v5568Ctx.strokeRect(
+        v2dd0ScreenX - boxSize / 2,
+        v3ff3ScreenY - boxSize / 2,
         boxSize,
         boxSize,
       );
-      if (entity.distance < 1000) {
-        ctx.fillStyle = espColor;
-        ctx.font = "9px monospace";
-        ctx.fillText(
-          Math.round(entity.distance).toString(),
-          screenX + boxSize / 2 + 3,
-          screenY + 3,
+      if (v2f06Entity.distance < 1000) {
+        v5568Ctx.fillStyle = v344aEspColor;
+        v5568Ctx.font = "9px monospace";
+        v5568Ctx.fillText(
+          Math.round(v2f06Entity.distance).toString(),
+          v2dd0ScreenX + boxSize / 2 + 3,
+          v3ff3ScreenY + 3,
         );
       }
     }
   });
 }
-function drawTrackedEntity(ctx, canvas, myPos, scale) {
+function drawTrackedEntity(v3ef8Ctx, v704bCanvas, v22dcMyPos, v2af4Scale) {
   if (!window.espTrackedEntityId) {
     return;
   }
@@ -165,94 +170,94 @@ function drawTrackedEntity(ctx, canvas, myPos, scale) {
     return;
   }
   const entityPos = getEntityPosition(trackedEntity);
-  if (!entityPos || !myPos) {
+  if (!entityPos || !v22dcMyPos) {
     return;
   }
-  const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2;
-  const deltaX = entityPos.x - myPos.x;
-  const deltaY = entityPos.y - myPos.y;
-  const screenX = centerX + deltaX * scale;
-  const screenY = centerY + deltaY * scale;
-  const distance = calculateDistance(
-    myPos.x,
-    myPos.y,
+  const v552bCenterX = v704bCanvas.width / 2;
+  const v171aCenterY = v704bCanvas.height / 2;
+  const deltaX = entityPos.x - v22dcMyPos.x;
+  const deltaY = entityPos.y - v22dcMyPos.y;
+  const screenX = v552bCenterX + deltaX * v2af4Scale;
+  const screenY = v171aCenterY + deltaY * v2af4Scale;
+  const v400eDistance = calculateDistance(
+    v22dcMyPos.x,
+    v22dcMyPos.y,
     entityPos.x,
     entityPos.y,
   );
   const entityDir = calculateDirection(trackedEntity);
   const pulseOpacity = Math.sin(Date.now() / 200) * 0.3 + 0.7;
   const markerSize = 40;
-  ctx.beginPath();
-  ctx.moveTo(centerX, centerY);
-  ctx.lineTo(screenX, screenY);
-  ctx.strokeStyle = "rgba(255,0,255,0.6)";
-  ctx.lineWidth = 2;
-  ctx.setLineDash([8, 4]);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.strokeStyle = "rgba(255,0,255," + pulseOpacity + ")";
-  ctx.lineWidth = 3;
-  ctx.strokeRect(
+  v3ef8Ctx.beginPath();
+  v3ef8Ctx.moveTo(v552bCenterX, v171aCenterY);
+  v3ef8Ctx.lineTo(screenX, screenY);
+  v3ef8Ctx.strokeStyle = "rgba(255,0,255,0.6)";
+  v3ef8Ctx.lineWidth = 2;
+  v3ef8Ctx.setLineDash([8, 4]);
+  v3ef8Ctx.stroke();
+  v3ef8Ctx.setLineDash([]);
+  v3ef8Ctx.strokeStyle = "rgba(255,0,255," + pulseOpacity + ")";
+  v3ef8Ctx.lineWidth = 3;
+  v3ef8Ctx.strokeRect(
     screenX - markerSize / 2,
     screenY - markerSize / 2,
     markerSize,
     markerSize,
   );
   const arrowLength = 50;
-  const angle = Math.atan2(entityDir.dirY, entityDir.dirX);
-  ctx.beginPath();
-  ctx.moveTo(screenX, screenY);
-  ctx.lineTo(
+  const f734Angle = Math.atan2(entityDir.dirY, entityDir.dirX);
+  v3ef8Ctx.beginPath();
+  v3ef8Ctx.moveTo(screenX, screenY);
+  v3ef8Ctx.lineTo(
     screenX + entityDir.dirX * arrowLength,
     screenY + entityDir.dirY * arrowLength,
   );
-  ctx.strokeStyle = "#ff00ff";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(
+  v3ef8Ctx.strokeStyle = "#ff00ff";
+  v3ef8Ctx.lineWidth = 2;
+  v3ef8Ctx.stroke();
+  v3ef8Ctx.beginPath();
+  v3ef8Ctx.moveTo(
     screenX + entityDir.dirX * arrowLength,
     screenY + entityDir.dirY * arrowLength,
   );
-  ctx.lineTo(
-    screenX + entityDir.dirX * arrowLength - Math.cos(angle - 0.4) * 10,
-    screenY + entityDir.dirY * arrowLength - Math.sin(angle - 0.4) * 10,
+  v3ef8Ctx.lineTo(
+    screenX + entityDir.dirX * arrowLength - Math.cos(f734Angle - 0.4) * 10,
+    screenY + entityDir.dirY * arrowLength - Math.sin(f734Angle - 0.4) * 10,
   );
-  ctx.moveTo(
+  v3ef8Ctx.moveTo(
     screenX + entityDir.dirX * arrowLength,
     screenY + entityDir.dirY * arrowLength,
   );
-  ctx.lineTo(
-    screenX + entityDir.dirX * arrowLength - Math.cos(angle + 0.4) * 10,
-    screenY + entityDir.dirY * arrowLength - Math.sin(angle + 0.4) * 10,
+  v3ef8Ctx.lineTo(
+    screenX + entityDir.dirX * arrowLength - Math.cos(f734Angle + 0.4) * 10,
+    screenY + entityDir.dirY * arrowLength - Math.sin(f734Angle + 0.4) * 10,
   );
-  ctx.strokeStyle = "#ff00ff";
-  ctx.lineWidth = 2;
-  ctx.stroke();
+  v3ef8Ctx.strokeStyle = "#ff00ff";
+  v3ef8Ctx.lineWidth = 2;
+  v3ef8Ctx.stroke();
   const rectWidth = 180;
   const rectHeight = 70;
   const boxX = Math.min(
     screenX + markerSize / 2 + 10,
-    canvas.width - rectWidth - 5,
+    v704bCanvas.width - rectWidth - 5,
   );
   const boxY = Math.max(
     5,
-    Math.min(screenY - rectHeight / 2, canvas.height - rectHeight - 5),
+    Math.min(screenY - rectHeight / 2, v704bCanvas.height - rectHeight - 5),
   );
-  ctx.fillStyle = "rgba(0,0,0,0.85)";
-  ctx.strokeStyle = "rgba(255,0,255," + pulseOpacity + ")";
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.roundRect(boxX, boxY, rectWidth, rectHeight, 4);
-  ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = "#ff00ff";
-  ctx.font = "bold 12px monospace";
-  ctx.fillText("TRACKING", boxX + 8, boxY + 18);
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "11px monospace";
-  ctx.fillText(
+  v3ef8Ctx.fillStyle = "rgba(0,0,0,0.85)";
+  v3ef8Ctx.strokeStyle = "rgba(255,0,255," + pulseOpacity + ")";
+  v3ef8Ctx.lineWidth = 1.5;
+  v3ef8Ctx.beginPath();
+  v3ef8Ctx.roundRect(boxX, boxY, rectWidth, rectHeight, 4);
+  v3ef8Ctx.fill();
+  v3ef8Ctx.stroke();
+  v3ef8Ctx.fillStyle = "#ff00ff";
+  v3ef8Ctx.font = "bold 12px monospace";
+  v3ef8Ctx.fillText("TRACKING", boxX + 8, boxY + 18);
+  v3ef8Ctx.fillStyle = "#ffffff";
+  v3ef8Ctx.font = "11px monospace";
+  v3ef8Ctx.fillText(
     (trackedEntity.name || "Entity " + window.espTrackedEntityId).substring(
       0,
       18,
@@ -260,46 +265,51 @@ function drawTrackedEntity(ctx, canvas, myPos, scale) {
     boxX + 8,
     boxY + 34,
   );
-  ctx.fillStyle = "#ff00ff";
-  ctx.font = "bold 14px monospace";
-  ctx.fillText(Math.round(distance) + " units", boxX + 8, boxY + 52);
+  v3ef8Ctx.fillStyle = "#ff00ff";
+  v3ef8Ctx.font = "bold 14px monospace";
+  v3ef8Ctx.fillText(Math.round(v400eDistance) + " units", boxX + 8, boxY + 52);
   if (
     screenX < 0 ||
-    screenX > canvas.width ||
+    screenX > v704bCanvas.width ||
     screenY < 0 ||
-    screenY > canvas.height
+    screenY > v704bCanvas.height
   ) {
-    const targetAngle = Math.atan2(screenY - centerY, screenX - centerX);
-    const posX = centerX + Math.cos(targetAngle) * (canvas.width / 2 - 40);
-    const posY = centerY + Math.sin(targetAngle) * (canvas.height / 2 - 40);
-    ctx.fillStyle = "rgba(0,0,0,0.85)";
-    ctx.beginPath();
-    ctx.roundRect(posX - 40, posY - 15, 80, 30, 4);
-    ctx.fill();
-    ctx.strokeStyle = "#ff00ff";
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(
+    const targetAngle = Math.atan2(
+      screenY - v171aCenterY,
+      screenX - v552bCenterX,
+    );
+    const posX =
+      v552bCenterX + Math.cos(targetAngle) * (v704bCanvas.width / 2 - 40);
+    const posY =
+      v171aCenterY + Math.sin(targetAngle) * (v704bCanvas.height / 2 - 40);
+    v3ef8Ctx.fillStyle = "rgba(0,0,0,0.85)";
+    v3ef8Ctx.beginPath();
+    v3ef8Ctx.roundRect(posX - 40, posY - 15, 80, 30, 4);
+    v3ef8Ctx.fill();
+    v3ef8Ctx.strokeStyle = "#ff00ff";
+    v3ef8Ctx.lineWidth = 1.5;
+    v3ef8Ctx.stroke();
+    v3ef8Ctx.beginPath();
+    v3ef8Ctx.moveTo(
       posX + Math.cos(targetAngle) * 20,
       posY + Math.sin(targetAngle) * 20,
     );
-    ctx.lineTo(
+    v3ef8Ctx.lineTo(
       posX - Math.cos(targetAngle - 0.5) * 10,
       posY - Math.sin(targetAngle - 0.5) * 10,
     );
-    ctx.lineTo(
+    v3ef8Ctx.lineTo(
       posX - Math.cos(targetAngle + 0.5) * 10,
       posY - Math.sin(targetAngle + 0.5) * 10,
     );
-    ctx.closePath();
-    ctx.fillStyle = "#ff00ff";
-    ctx.fill();
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 11px monospace";
-    ctx.textAlign = "center";
-    ctx.fillText(Math.round(distance).toString(), posX, posY + 4);
-    ctx.textAlign = "left";
+    v3ef8Ctx.closePath();
+    v3ef8Ctx.fillStyle = "#ff00ff";
+    v3ef8Ctx.fill();
+    v3ef8Ctx.fillStyle = "#ffffff";
+    v3ef8Ctx.font = "bold 11px monospace";
+    v3ef8Ctx.textAlign = "center";
+    v3ef8Ctx.fillText(Math.round(v400eDistance).toString(), posX, posY + 4);
+    v3ef8Ctx.textAlign = "left";
   }
 }
 function renderEspLoop() {
@@ -314,20 +324,20 @@ function renderEspLoop() {
     return;
   }
   const espCanvas = getOrCreateOverlayCanvas("esp-overlay", 999998);
-  const ctx = espCanvas.getContext("2d");
-  ctx.clearRect(0, 0, espCanvas.width, espCanvas.height);
+  const eba1Ctx = espCanvas.getContext("2d");
+  eba1Ctx.clearRect(0, 0, espCanvas.width, espCanvas.height);
   const crosshairPos = getNearbyEntities();
-  const playerPos = getFirstAnimalPosition();
+  const v4929PlayerPos = getFirstAnimalPosition();
   const espColor = getZoomScale();
   drawEsp(
-    ctx,
+    eba1Ctx,
     crosshairPos,
     espCanvas.width / 2,
     espCanvas.height / 2,
     espColor,
   );
-  drawTrackedEntity(ctx, espCanvas, playerPos, espColor);
-  drawRadar(ctx, espCanvas, crosshairPos);
+  drawTrackedEntity(eba1Ctx, espCanvas, v4929PlayerPos, espColor);
+  drawRadar(eba1Ctx, espCanvas, crosshairPos);
   requestAnimationFrame(renderEspLoop);
 }
 function toggleEsp() {
@@ -346,11 +356,11 @@ function trackPlayer() {
     showNotification("No players nearby");
   }
 }
-function toggleEsp_qot() {
+function modToggleEsp() {
   window.espTrackedEntityId = null;
   showNotification("Tracking cleared");
 }
-function toggleEsp_slh() {
+function v571eToggleEsp() {
   window.autoDodgeEnabled = false;
   showNotification("Auto dodge disabled");
 }
@@ -359,15 +369,15 @@ function toggleMinimapSize() {
     showNotification("Minimap not available");
     return;
   }
-  if (state.isToggled_sl0) {
+  if (state.boolIsToggled) {
     playerData.minimap.scale.set(1);
     playerData.minimap.pivot.set(0, 0);
-    state.isToggled_sl0 = false;
+    state.boolIsToggled = false;
     showNotification("Minimap restored");
   } else {
     playerData.minimap.scale.set(0.5);
     playerData.minimap.pivot.set(-70, -45);
-    state.isToggled_sl0 = true;
+    state.boolIsToggled = true;
     showNotification("Small minimap enabled");
   }
 }
@@ -378,7 +388,7 @@ export {
   renderEspLoop,
   toggleEsp,
   trackPlayer,
-  toggleEsp_qot,
-  toggleEsp_slh,
+  modToggleEsp,
+  v571eToggleEsp,
   toggleMinimapSize,
 };

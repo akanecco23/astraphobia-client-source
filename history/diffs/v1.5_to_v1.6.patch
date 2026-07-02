@@ -2,7 +2,7 @@ Index: content.js
 ===================================================================
 --- content.js	v1.5
 +++ content.js	v1.6
-@@ -1,49 +1,98 @@
+@@ -1,49 +1,95 @@
  import {
 -  wrapPropertyWithProxy,
 -  initInterceptor,
@@ -18,26 +18,25 @@ Index: content.js
 +  getEntityPosition,
 +  calculateDirection,
 +  findEntityById,
-+  isAreaSkipped_sc8,
++  modIsAreaSkipped,
 +  initAutoFarm,
 +  initializeAntiDetection,
 +  initializeViewportSettings,
 +  initializeClient,
-+  currentTime,
    angles,
    radius,
 +  offsetValue,
    gameInstance,
-   playerData,
--  isProcessed_run,
-+  isProcessed_skx,
-   config,
+-  playerData,
+-  boolIsProcessed,
+-  objConfig,
++  PlayerData,
++  sysIsProcessed,
 +  dragState,
 +  tickInterval,
 +  deltaThreshold,
 +  maxFailCount,
 +  timeoutLimit,
-+  angle,
    state,
  } from "./src/core.js";
  import {
@@ -69,8 +68,8 @@ Index: content.js
 +  renderEspLoop,
 +  toggleEsp,
 +  trackPlayer,
-+  toggleEsp_sdk,
-+  toggleEsp_sl9,
++  globalToggleEsp,
++  v55bbToggleEsp,
 +  toggleMinimapSize,
 +} from "./src/features/esp.js";
 +import {
@@ -145,7 +144,7 @@ Index: src/core.js
 ===================================================================
 --- src/core.js	v1.5
 +++ src/core.js	v1.6
-@@ -1,31 +1,44 @@
+@@ -1,31 +1,43 @@
 -import { initControlOverlay, togglePanels } from "./ui/panels.js";
 -import { showNotification } from "./ui/interaction.js";
 +import {
@@ -159,7 +158,7 @@ Index: src/core.js
 +  generatePatrolPoints,
 +  startAutoFarmLoop,
 +} from "./features/autofarm.js";
-+import { renderEspLoop, trackPlayer, toggleEsp_sdk } from "./features/esp.js";
++import { renderEspLoop, trackPlayer, globalToggleEsp } from "./features/esp.js";
 +import { applyTheme, initBackground, injectStyles } from "./ui/theme.js";
 +import { showToast, restoreUIInteractivity } from "./ui/interaction.js";
 +import { calculateDistance, getAllPropertyNames } from "./utils.js";
@@ -182,13 +181,12 @@ Index: src/core.js
 +  targetObject[propertyKey] = proxyValue;
  }
 -
--let isProcessed = false;
+-let IsProcessed = false;
 -function initInterceptor(config) {
--  if (isProcessed) {
-+let currentTime = 0;
-+let isProcessed_ln9 = false;
+-  if (IsProcessed) {
++let boolIsProcessed = false;
 +function hookTextEncoder() {
-+  if (isProcessed_ln9) {
++  if (boolIsProcessed) {
      return;
    }
    function unescapeString(inputString) {
@@ -205,7 +203,7 @@ Index: src/core.js
              return "\\";
            case "n":
              return "\n";
-@@ -46,25 +59,27 @@
+@@ -46,25 +58,27 @@
            case "4":
            case "5":
            case "6":
@@ -241,7 +239,7 @@ Index: src/core.js
        },
      );
    }
-@@ -88,24 +103,24 @@
+@@ -88,24 +102,24 @@
          patternIndex++
        ) {
          const matchResult = commandPatterns[patternIndex].exec(inputArgs[0]);
@@ -269,7 +267,7 @@ Index: src/core.js
        .querySelector(".play-game .el-input__inner")
        ?.setAttribute("maxlength", "80");
      document
-@@ -114,261 +129,344 @@
+@@ -114,261 +128,347 @@
      document
        .querySelector(".chat-input input")
        ?.setAttribute("maxLength", "1000");
@@ -279,7 +277,7 @@ Index: src/core.js
      childList: true,
      subtree: true,
    });
--  isProcessed = true;
+-  IsProcessed = true;
 -  if (config) {
 -    config.textContent = "Special Characters Active";
 -    config.disabled = true;
@@ -287,7 +285,7 @@ Index: src/core.js
 -    config.style.cursor = "not-allowed";
 -  }
 -  showNotification("✅ Special Characters enabled! (One-time use)");
-+  isProcessed_ln9 = true;
++  boolIsProcessed = true;
 +  showToast("Special characters enabled");
  }
 -
@@ -295,9 +293,9 @@ Index: src/core.js
  const radius = 300;
 +const offsetValue = 400;
  let gameInstance;
- let appState;
- let playerData;
--let isProcessed_run = false;
+ let State;
+-let playerData;
+-let boolIsProcessed = false;
 -
 -const encryptPacketData = (isActive, charCode, suffix = "") => {
 -  const stringTable = [
@@ -315,32 +313,33 @@ Index: src/core.js
 -    "setter",
 -  ];
 -  if (!isActive) {
-+let isProcessed_skx = false;
-+const config = {};
++let PlayerData;
++let sysIsProcessed = false;
++const Config = {};
 +function getGameState() {
 +  try {
-+    if (playerData && playerData.myAnimals && playerData.myAnimals.length > 0) {
-+      return playerData;
++    if (PlayerData && PlayerData.myAnimals && PlayerData.myAnimals.length > 0) {
++      return PlayerData;
 +    }
 +    const states = window.__ss?.states;
 +    if (!states) {
-+      return playerData || null;
++      return PlayerData || null;
 +    }
-+    for (let i = 0; i < states.length; i++) {
-+      if (states[i]?.gameScene?.myAnimals) {
-+        return states[i].gameScene;
++    for (let v415eI = 0; v415eI < states.length; v415eI++) {
++      if (states[v415eI]?.gameScene?.myAnimals) {
++        return states[v415eI].gameScene;
 +      }
-+      if (states[i]?.gameManager) {
-+        for (const managerKey of Object.keys(states[i].gameManager)) {
-+          if (states[i].gameManager[managerKey]?.myAnimals) {
-+            return states[i].gameManager[managerKey];
++      if (states[v415eI]?.gameManager) {
++        for (const managerKey of Object.keys(states[v415eI].gameManager)) {
++          if (states[v415eI].gameManager[managerKey]?.myAnimals) {
++            return states[v415eI].gameManager[managerKey];
 +          }
 +        }
 +      }
 +    }
-+    return playerData || null;
++    return PlayerData || null;
 +  } catch (error) {
-+    return playerData || null;
++    return PlayerData || null;
 +  }
 +}
 +function getEntityManager(gameState) {
@@ -350,19 +349,19 @@ Index: src/core.js
 +  if (!gameState) {
      return null;
    }
--  const plainText = ((inputString, keyString) => {
+-  const plainText = ((v5062InputString, keyString) => {
 -    const textEncoder = new TextEncoder();
 -    const encodedInput =
--      textEncoder[stringTable[5] + stringTable[0]](inputString);
+-      textEncoder[stringTable[5] + stringTable[0]](v5062InputString);
 -    const encodedKey = textEncoder[stringTable[10] + stringTable[7]](keyString);
 -    const resultBuffer = new Uint8Array(
 -      encodedInput["l" + stringTable[4] + stringTable[6].slice(0, 2)],
 -    );
--    for (let i = 0; i < encodedInput.length; i++) {
--      resultBuffer[i] =
--        encodedInput[i] ^
+-    for (let v5912I = 0; v5912I < encodedInput.length; v5912I++) {
+-      resultBuffer[v5912I] =
+-        encodedInput[v5912I] ^
 -        encodedKey[
--          i %
+-          v5912I %
 -            encodedKey[
 -              "" +
 -                stringTable[9].toLowerCase() +
@@ -374,8 +373,8 @@ Index: src/core.js
 +  if (window.__cachedEM) {
 +    return window.__cachedEM;
 +  }
-+  if (config.entityManager) {
-+    const entityManager = gameState[config.entityManager];
++  if (Config.entityManager) {
++    const entityManager = gameState[Config.entityManager];
 +    if (entityManager) {
 +      window.__cachedEM = entityManager;
 +      return entityManager;
@@ -403,28 +402,28 @@ Index: src/core.js
 +  try {
 +    const animal = getGameState();
 +    const position = animal?.myAnimals?.[0];
-+    if (!state.position) {
++    if (!position) {
 +      return null;
 +    }
 +    return {
-+      x: state.position.position._x ?? state.position.position.x,
-+      y: state.position.position._y ?? state.position.position.y,
++      x: position.position._x ?? position.position.x,
++      y: position.position._y ?? position.position.y,
 +    };
-+  } catch (error) {
++  } catch (v407fError) {
 +    return null;
 +  }
 +}
-+function getEntityPosition(entity) {
-+  if (!entity || !entity.position) {
++function getEntityPosition(b0eeEntity) {
++  if (!b0eeEntity || !b0eeEntity.position) {
 +    return null;
 +  }
 +  return {
-+    x: entity.position._x || entity.position.x,
-+    y: entity.position._y || entity.position.y,
++    x: b0eeEntity.position._x || b0eeEntity.position.x,
++    y: b0eeEntity.position._y || b0eeEntity.position.y,
 +  };
 +}
-+function calculateDirection(entity) {
-+  if (!entity) {
++function calculateDirection(v56c0Entity) {
++  if (!v56c0Entity) {
 +    return {
 +      dirX: 1,
 +      dirY: 0,
@@ -432,12 +431,13 @@ Index: src/core.js
 +  }
 +  let dirX = 0;
 +  let dirY = 0;
-+  if (entity.velocity) {
-+    dirX = entity.velocity._x || entity.velocity.x || 0;
-+    dirY = entity.velocity._y || entity.velocity.y || 0;
++  if (v56c0Entity.velocity) {
++    dirX = v56c0Entity.velocity._x || v56c0Entity.velocity.x || 0;
++    dirY = v56c0Entity.velocity._y || v56c0Entity.velocity.y || 0;
 +  }
 +  if (Math.abs(dirX) < 0.01 && Math.abs(dirY) < 0.01) {
-+    const angle = entity.rotation || entity.angle || entity._rotation || 0;
++    const angle =
++      v56c0Entity.rotation || v56c0Entity.angle || v56c0Entity._rotation || 0;
 +    dirX = Math.cos(angle);
 +    dirY = Math.sin(angle);
 +  }
@@ -464,29 +464,31 @@ Index: src/core.js
 +    if (!parsedState) {
 +      return null;
 +    }
-+    let entity = parsedState.entitiesById
++    let v7565Entity = parsedState.entitiesById
 +      ? parsedState.entitiesById[entityId]
 +      : null;
-+    if (!entity && parsedState.entitiesList) {
-+      entity = parsedState.entitiesList.find((item) => item.id === entityId);
++    if (!v7565Entity && parsedState.entitiesList) {
++      v7565Entity = parsedState.entitiesList.find(
++        (item) => item.id === entityId,
++      );
 +    }
-+    if (!entity && parsedState.animalsByPlayerRoomId) {
++    if (!v7565Entity && parsedState.animalsByPlayerRoomId) {
 +      for (let roomId of Object.keys(parsedState.animalsByPlayerRoomId)) {
 +        const animals = parsedState.animalsByPlayerRoomId[roomId];
 +        if (Array.isArray(animals)) {
-+          entity = animals.find(
++          v7565Entity = animals.find(
 +            (selectedItem) => selectedItem && selectedItem.id === entityId,
 +          );
 +        } else if (animals && animals.id === entityId) {
-+          entity = animals;
++          v7565Entity = animals;
 +        }
-+        if (entity) {
++        if (v7565Entity) {
 +          break;
 +        }
 +      }
 +    }
-+    return entity;
-+  } catch (error) {
++    return v7565Entity;
++  } catch (v7eb9Error) {
 +    return null;
 +  }
 +}
@@ -501,17 +503,18 @@ Index: src/core.js
 +const deltaThreshold = 800;
 +const maxFailCount = 2;
 +const timeoutLimit = 20000;
-+function isAreaSkipped_sc8(x, y) {
-+  const currentTime = Date.now();
++function modIsAreaSkipped(v13a0X, v599cY) {
++  const v5c00CurrentTime = Date.now();
 +  window.autoFarmSkipAreas = window.autoFarmSkipAreas.filter(
-+    (timerState) => currentTime - timerState.time < timeoutLimit,
++    (timerState) => v5c00CurrentTime - timerState.time < timeoutLimit,
    );
 -  const encodedBytes = new TextEncoder()[stringTable[5] + stringTable[0]](
 -    plainText,
 +  return window.autoFarmSkipAreas.some(
 +    (cellData) =>
 +      cellData.skipped &&
-+      calculateDistance(x, y, cellData.x, cellData.y) < cellData.radius,
++      calculateDistance(v13a0X, v599cY, cellData.x, cellData.y) <
++        cellData.radius,
    );
 -  const bufferLength = 1 + encodedBytes.byteLength + 1;
 -  const arrayBuffer = new ArrayBuffer(bufferLength);
@@ -524,7 +527,7 @@ Index: src/core.js
 -  dataView.setUint8(bufferLength - 1, charCode);
 -  return arrayBuffer;
 -};
--const config = {
+-const objConfig = {
 -  107: {
 -    hasSec: true,
 -    secLoadTime: 750,
@@ -537,12 +540,11 @@ Index: src/core.js
 -  },
 -};
 -const sendPacket = (payload, additionalData = "") => {
--  if (gameInstance && appState && config_rk6.socketManager) {
--    gameInstance[config_rk6.socketManager].sendBytePacket(
--      encryptPacketData(appState.token._value, payload, additionalData),
+-  if (gameInstance && State && mainConfig.socketManager) {
+-    gameInstance[mainConfig.socketManager].sendBytePacket(
+-      encryptPacketData(State.token._value, payload, additionalData),
 -    );
 +}
-+let angle = 0;
 +function initAutoFarm(farmMode) {
 +  window.autoFarmMode = farmMode || "nearest";
 +  window.autoFarmActive = true;
@@ -553,33 +555,34 @@ Index: src/core.js
 +  window.autoFarmSkipIds.clear();
 +  window.autoFarmSkipAreas = [];
 +  window.autoFarmSkipClearTime = Date.now();
-+  state.position_t9s = null;
-+  state.counter_sm3 = 0;
-+  state.counter_tkq = 0;
-+  state.counter_agp = 0;
++  state.modPosition = null;
++  state.numCounter = 0;
++  state.modCounter = 0;
++  state.Counter = 0;
 +  if (farmMode === "patrol") {
 +    generatePatrolPoints();
    }
 -};
--const config_rk6 = {};
+-const mainConfig = {};
 -const currentTime = 0;
 -const initializeAntiTamper = () => {
 -  const storage = {};
+-  for (const v3beaPropertyKey of Object.getOwnPropertyNames(Reflect)) {
+-    storage[v3beaPropertyKey] = Reflect[v3beaPropertyKey];
 +  showToast("Auto farm started (" + window.autoFarmMode + ")");
 +  startAutoFarmLoop();
 +}
-+let isProcessed_k73 = false;
++let mainIsProcessed = false;
 +const initializeAntiDetection = () => {
-+  if (isProcessed_k73) {
++  if (mainIsProcessed) {
 +    return;
-+  }
-+  isProcessed_k73 = true;
-+  const cache = {};
-   for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
--    storage[propertyKey] = Reflect[propertyKey];
-+    cache[propertyKey] = Reflect[propertyKey];
    }
 -  const ProxyConstructor = Proxy;
++  mainIsProcessed = true;
++  const cache = {};
++  for (const v231fPropertyKey of Object.getOwnPropertyNames(Reflect)) {
++    cache[v231fPropertyKey] = Reflect[v231fPropertyKey];
++  }
 +  const Proxy = Proxy;
    const lookupGetter = Object.prototype.__lookupGetter__;
 -  const createProxyHook = (dataStore, storeIndex, storeValue) => {
@@ -648,78 +651,79 @@ Index: src/core.js
 -          const obfuscatedKeys = allKeys.filter((obfuscatedVarName) =>
 -            obfuscatedVarName.startsWith("_0x"),
 +        if (extraArgs[0] && extraArgs[0].aboveBgPlatformsContainer != null) {
-+          playerData = extraArgs[0];
++          PlayerData = extraArgs[0];
 +          gameInstance = extraArgs[0].game;
 +          window.__cachedEM = null;
-+          const allProperties = getAllPropertyNames(playerData);
++          const allProperties = getAllPropertyNames(PlayerData);
 +          const obfuscatedProperties = allProperties.filter((varName) =>
 +            varName.startsWith("_0x"),
            );
--          config_rk6.setFlash =
-+          config.setFlash =
-             Object.getOwnPropertyNames(playerData.__proto__.__proto__)
+-          mainConfig.setFlash =
+-            Object.getOwnPropertyNames(playerData.__proto__.__proto__)
 -              .filter((obfuscatedPropName) =>
 -                obfuscatedPropName.startsWith("_0x"),
 -              )
++          Config.setFlash =
++            Object.getOwnPropertyNames(PlayerData.__proto__.__proto__)
 +              .filter((propName) => propName.startsWith("_0x"))
                .find(
 -                (methodName) => playerData[methodName] instanceof Function,
--              ) || config_rk6.setFlash;
--          config_rk6.terrainManager =
+-              ) || mainConfig.setFlash;
+-          mainConfig.terrainManager =
 -            obfuscatedKeys.find(
 -              (shadowEntityKey) =>
 -                typeof playerData[shadowEntityKey]?.shadow !== "undefined",
--            ) || config_rk6.terrainManager;
--          config_rk6.entityManager =
+-            ) || mainConfig.terrainManager;
+-          mainConfig.entityManager =
 -            obfuscatedKeys.find(
 -              (entitiesListKey) =>
 -                typeof playerData[entitiesListKey]?.entitiesList !==
 -                "undefined",
--            ) || config_rk6.entityManager;
--          config_rk6.entityManagerProps = {};
+-            ) || mainConfig.entityManager;
+-          mainConfig.entityManagerProps = {};
 -          const entityManagerKeys = getAllPropertyNames(
--            playerData[config_rk6.entityManager],
+-            playerData[mainConfig.entityManager],
 -          );
 -          const animalsUpdateInterval = setInterval(() => {
--            config_rk6.entityManagerProps.animalsList =
+-            mainConfig.entityManagerProps.animalsList =
 -              entityManagerKeys
 -                .filter((variableName) => variableName.startsWith("_0x"))
 -                .find(
 -                  (entityName) =>
--                    typeof playerData?.[config_rk6.entityManager]?.[
+-                    typeof playerData?.[mainConfig.entityManager]?.[
 -                      entityName
 -                    ]?.[0] !== "undefined",
--                ) || config_rk6.entityManagerProps.animalsList;
+-                ) || mainConfig.entityManagerProps.animalsList;
 -            if (
--              typeof config_rk6.entityManagerProps.animalsList !== "undefined"
+-              typeof mainConfig.entityManagerProps.animalsList !== "undefined"
 -            ) {
 -              clearInterval(animalsUpdateInterval);
 -            }
 -          }, 1000);
--          config_rk6.socketManager =
-+                (functionKey) => playerData[functionKey] instanceof Function,
-+              ) || config.setFlash;
-+          config.terrainManager =
+-          mainConfig.socketManager =
++                (functionKey) => PlayerData[functionKey] instanceof Function,
++              ) || Config.setFlash;
++          Config.terrainManager =
 +            obfuscatedProperties.find(
 +              (shadowKey) =>
-+                typeof playerData[shadowKey]?.shadow !== "undefined",
-+            ) || config.terrainManager;
-+          config.entityManager =
++                typeof PlayerData[shadowKey]?.shadow !== "undefined",
++            ) || Config.terrainManager;
++          Config.entityManager =
 +            obfuscatedProperties.find(
 +              (entitiesKey) =>
-+                typeof playerData[entitiesKey]?.entitiesList !== "undefined",
-+            ) || config.entityManager;
-+          config.socketManager =
++                typeof PlayerData[entitiesKey]?.entitiesList !== "undefined",
++            ) || Config.entityManager;
++          Config.socketManager =
              getAllPropertyNames(gameInstance).find(
 -              (networkClientKey) =>
 -                typeof gameInstance[networkClientKey]?.sendBytePacket !==
 -                "undefined",
--            ) || config_rk6.socketManager;
+-            ) || mainConfig.socketManager;
 +              (networkKey) =>
 +                typeof gameInstance[networkKey]?.sendBytePacket !== "undefined",
-+            ) || config.socketManager;
++            ) || Config.socketManager;
            try {
-             appState = document
+             State = document
                .getElementById("app")
                ._vnode.appContext.config.globalProperties.$simpleState.states.find(
                  (gameStore) => gameStore._storeMeta.id === "game",
@@ -734,14 +738,15 @@ Index: src/core.js
 -          animalsCheckInterval = setInterval(() => {
 +          intervalId = setInterval(() => {
              try {
-               if (!playerData?.myAnimals?.[0]) {
+-              if (!playerData?.myAnimals?.[0]) {
++              if (!PlayerData?.myAnimals?.[0]) {
                  return;
                }
 -              const myAnimal = playerData.myAnimals[0];
 -              if (myAnimal.fadingTrail) {
 -                const fadingTrailPrototype = Object.getPrototypeOf(
 -                  myAnimal.fadingTrail,
-+              const firstAnimal = playerData.myAnimals[0];
++              const firstAnimal = PlayerData.myAnimals[0];
 +              if (firstAnimal.fadingTrail) {
 +                wrapWithProxy(
 +                  Object.getPrototypeOf(firstAnimal.fadingTrail),
@@ -787,56 +792,59 @@ Index: src/core.js
    });
  };
 -const disableGameRestrictions = () => {
--  if (isProcessed_run) {
+-  if (boolIsProcessed) {
 +const initializeViewportSettings = () => {
-+  if (isProcessed_skx) {
++  if (sysIsProcessed) {
      return;
    }
-   if (!playerData) {
+-  if (!playerData) {
 -    setTimeout(disableGameRestrictions, 500);
++  if (!PlayerData) {
 +    setTimeout(initializeViewportSettings, 500);
      return;
    }
    setInterval(() => {
      try {
-@@ -380,60 +478,141 @@
+@@ -380,59 +480,136 @@
        gameInstance.viewport.plugins.plugins["clamp-zoom"] = null;
      } catch {}
    }, 300);
    try {
--    if (config_rk6.setFlash) {
--      playerData[config_rk6.setFlash] = () => {};
-+    if (config.setFlash) {
-+      playerData[config.setFlash] = () => {};
+-    if (mainConfig.setFlash) {
+-      playerData[mainConfig.setFlash] = () => {};
++    if (Config.setFlash) {
++      PlayerData[Config.setFlash] = () => {};
      }
--    if (config_rk6.terrainManager) {
--      const terrainManager = playerData[config_rk6.terrainManager];
+-    if (mainConfig.terrainManager) {
+-      const terrainManager = playerData[mainConfig.terrainManager];
 -      if (terrainManager && terrainManager.shadow) {
-+    if (config.terrainManager) {
-+      const terrainManager = playerData[config.terrainManager];
++    if (Config.terrainManager) {
++      const terrainManager = PlayerData[Config.terrainManager];
 +      if (terrainManager?.shadow) {
          terrainManager.shadow.setShadowSize(1000000);
          terrainManager.shadow.setShadowSize = () => {};
        }
      }
-   } catch (url) {
-     console.error(url);
+-  } catch (url) {
+-    console.error(url);
++  } catch (v4f07Url) {
++    console.error(v4f07Url);
    }
--  isProcessed_run = true;
-+  isProcessed_skx = true;
+-  boolIsProcessed = true;
++  sysIsProcessed = true;
  };
 -
--document.addEventListener("keydown", (keyboardEvent) => {
-+let isProcessed_sby = false;
+-document.addEventListener("keydown", (v485bKeyboardEvent) => {
++let v3befIsProcessed = false;
 +function initializeClient() {
-+  if (isProcessed_sby) {
++  if (v3befIsProcessed) {
 +    return;
 +  }
-+  isProcessed_sby = true;
++  v3befIsProcessed = true;
 +  setTimeout(() => {
 +    injectStyles();
-+    const myY = localStorage.getItem("theme") || "grey";
-+    applyTheme(myY);
++    const v2898MyY = localStorage.getItem("theme") || "grey";
++    applyTheme(v2898MyY);
 +    createToolsPanel();
 +    createPlusPanel();
 +    createSettingsPanel();
@@ -846,57 +854,57 @@ Index: src/core.js
 +    restoreUIInteractivity();
 +    initRadarDrag();
 +    renderEspLoop();
-+    state.isProcessed_rdh = true;
++    state.modIsProcessed = true;
 +    autoDodgeLoop();
 +  }, 1000);
 +}
 +document.addEventListener(
 +  "keydown",
-+  (event) => {
-+    if (event.target.matches("input,textarea,select,[contenteditable]")) {
++  (v369cEvent) => {
++    if (v369cEvent.target.matches("input,textarea,select,[contenteditable]")) {
 +      return;
 +    }
-+    if (event.repeat) {
++    if (v369cEvent.repeat) {
 +      return;
 +    }
-+    if (event.key.toLowerCase() === state.keyQ.toLowerCase()) {
-+      event.preventDefault();
-+      event.stopPropagation();
++    if (v369cEvent.key.toLowerCase() === state.keyQ.toLowerCase()) {
++      v369cEvent.preventDefault();
++      v369cEvent.stopPropagation();
 +      moveMouseToSide("left");
 +    }
-+    if (event.key.toLowerCase() === state.keyE.toLowerCase()) {
-+      event.preventDefault();
-+      event.stopPropagation();
++    if (v369cEvent.key.toLowerCase() === state.keyE.toLowerCase()) {
++      v369cEvent.preventDefault();
++      v369cEvent.stopPropagation();
 +      moveMouseToSide("right");
 +    }
 +  },
 +  true,
 +);
-+document.addEventListener("keydown", (event_4pb) => {
-+  if (event_4pb.target.matches("input,textarea,select")) {
++document.addEventListener("keydown", (v19b8Event) => {
++  if (v19b8Event.target.matches("input,textarea,select")) {
 +    return;
 +  }
-+  if (event_4pb.key === "F3") {
-+    event_4pb.preventDefault();
++  if (v19b8Event.key === "F3") {
++    v19b8Event.preventDefault();
 +    trackPlayer();
 +  }
-+  if (event_4pb.key === "F4") {
-+    event_4pb.preventDefault();
-+    toggleEsp_sdk();
++  if (v19b8Event.key === "F4") {
++    v19b8Event.preventDefault();
++    globalToggleEsp();
 +  }
 +});
-+document.addEventListener("keydown", (event_4kz) => {
++document.addEventListener("keydown", (v11deEvent) => {
    if (
--    keyboardEvent.key === state.activeKey &&
--    !keyboardEvent.repeat &&
--    !keyboardEvent.target.matches("input, textarea, button")
-+    event_4kz.key === state.activeKey &&
-+    !event_4kz.repeat &&
-+    !event_4kz.target.matches("input,textarea,button,select")
+-    v485bKeyboardEvent.key === state.activeKey &&
+-    !v485bKeyboardEvent.repeat &&
+-    !v485bKeyboardEvent.target.matches("input, textarea, button")
++    v11deEvent.key === state.activeKey &&
++    !v11deEvent.repeat &&
++    !v11deEvent.target.matches("input,textarea,button,select")
    ) {
--    keyboardEvent.preventDefault();
+-    v485bKeyboardEvent.preventDefault();
 -    togglePanels();
-+    event_4kz.preventDefault();
++    v11deEvent.preventDefault();
 +    toggleUiVisibility();
    }
  });
@@ -912,22 +920,19 @@ Index: src/core.js
 -
  export const state = {
 +  currentTrackId: "",
-+  isProcessed: false,
-   entityTrailInterval: null,
-   isToggled: false,
+   IsToggled: false,
    angleIndex: 0,
--  isToggled_r5u: false,
 +  keyQ: "q",
 +  keyE: "e",
-+  isToggled_sak: false,
-+  isProcessed_rdh: false,
-+  position: null,
+   boolIsToggled: false,
++  modIsProcessed: false,
 +  counter: 0,
++  entityTrailInterval: null,
 +  dataList: [],
-+  counter_agp: 0,
-+  position_t9s: null,
-+  counter_sm3: 0,
-+  counter_tkq: 0,
++  Counter: 0,
++  modPosition: null,
++  numCounter: 0,
++  modCounter: 0,
    activeKey: "Shift",
  };
 -
@@ -946,26 +951,25 @@ Index: src/core.js
 +  getEntityPosition,
 +  calculateDirection,
 +  findEntityById,
-+  isAreaSkipped_sc8,
++  modIsAreaSkipped,
 +  initAutoFarm,
 +  initializeAntiDetection,
 +  initializeViewportSettings,
 +  initializeClient,
-+  currentTime,
    angles,
    radius,
 +  offsetValue,
    gameInstance,
-   playerData,
--  isProcessed_run,
-+  isProcessed_skx,
-   config,
+-  playerData,
+-  boolIsProcessed,
+-  objConfig,
++  PlayerData,
++  sysIsProcessed,
 +  dragState,
 +  tickInterval,
 +  deltaThreshold,
 +  maxFailCount,
 +  timeoutLimit,
-+  angle,
  };
 Index: src/features/adblock.js
 ===================================================================
@@ -974,14 +978,14 @@ Index: src/features/adblock.js
 @@ -1,7 +1,12 @@
 -import { showNotification } from "../ui/interaction.js";
 +import { showToast } from "../ui/interaction.js";
-+import { state } from "../core.js";
  
++let IsProcessed = false;
  function initAdBlocker() {
-+  if (state.isProcessed) {
++  if (IsProcessed) {
 +    return;
 +  }
-+  state.isProcessed = true;
-   const adSelectors = [
++  IsProcessed = true;
+   const Selectors = [
      "div.ad-block",
      'a[href*="ad"]',
      'iframe[src*="ads"], iframe[src*="googlead"]',
@@ -991,21 +995,23 @@ Index: src/features/adblock.js
      'div.sidebar.left > div:has(> a[href*="doubleclick"])',
    ];
 -  const removeAds = () => {
--    adSelectors.forEach((elementSelector) => {
+-    Selectors.forEach((elementSelector) => {
 -      document.querySelectorAll(elementSelector).forEach((targetElement) => {
 -        targetElement.style.display = "none !important";
 -        targetElement.style.opacity = "0 !important";
 -        targetElement.style.pointerEvents = "none !important";
 -        targetElement.style.visibility = "hidden !important";
+-        targetElement.removeAttribute("src");
+-        targetElement.remove();
 +  const hideElementsAndAdjustSidebar = () => {
-+    adSelectors.forEach((cssSelector) => {
-+      document.querySelectorAll(cssSelector).forEach((targetElement) => {
-+        targetElement.style.display = "none";
-+        targetElement.style.opacity = "0";
-+        targetElement.style.pointerEvents = "none";
-+        targetElement.style.visibility = "hidden";
-         targetElement.removeAttribute("src");
-         targetElement.remove();
++    Selectors.forEach((cssSelector) => {
++      document.querySelectorAll(cssSelector).forEach((v24f3TargetElement) => {
++        v24f3TargetElement.style.display = "none";
++        v24f3TargetElement.style.opacity = "0";
++        v24f3TargetElement.style.pointerEvents = "none";
++        v24f3TargetElement.style.visibility = "hidden";
++        v24f3TargetElement.removeAttribute("src");
++        v24f3TargetElement.remove();
        });
      });
      const leftSidebar = document.querySelector("div.sidebar.left");
@@ -1036,26 +1042,24 @@ Index: src/features/aimbot.js
 ===================================================================
 --- src/features/aimbot.js	v1.5
 +++ src/features/aimbot.js	v1.6
-@@ -0,0 +1,185 @@
+@@ -0,0 +1,189 @@
 +import {
-+  currentTime,
 +  getGameState,
 +  getEntityManager,
 +  getFirstAnimalPosition,
 +  tickInterval,
 +  deltaThreshold,
-+  angle,
 +  state,
 +} from "../core.js";
 +import { isPlayer, calculateDistance } from "../utils.js";
 +import { simulateMoveAndClick } from "./movement.js";
 +import { showToast } from "../ui/interaction.js";
 +
-+let currentTime_qq5 = 0;
-+let currentTime_re6 = 0;
-+let entityTrailInterval_jft = null;
++let numCurrentTime = 0;
++let Position = null;
++let globalCurrentTime = 0;
 +function autoDodgeLoop() {
-+  if (!state.isProcessed_rdh) {
++  if (!state.modIsProcessed) {
 +    return;
 +  }
 +  setTimeout(autoDodgeLoop, 80);
@@ -1063,61 +1067,63 @@ Index: src/features/aimbot.js
 +    return;
 +  }
 +  try {
-+    const playerPosition = getFirstAnimalPosition();
-+    if (!playerPosition) {
++    const v1057PlayerPosition = getFirstAnimalPosition();
++    if (!v1057PlayerPosition) {
 +      return;
 +    }
-+    const gameState = getGameState();
-+    const entityManager = getEntityManager(gameState);
-+    const myAnimal = gameState?.myAnimals?.[0];
-+    if (!entityManager || !myAnimal) {
++    const v3223GameState = getGameState();
++    const v2901EntityManager = getEntityManager(v3223GameState);
++    const v1f29MyAnimal = v3223GameState?.myAnimals?.[0];
++    if (!v2901EntityManager || !v1f29MyAnimal) {
 +      return;
 +    }
-+    const entitiesList = entityManager.entitiesList || [];
++    const c71aEntitiesList = v2901EntityManager.entitiesList || [];
 +    let nearbyEntities = [];
-+    entitiesList.forEach((targetEntity) => {
-+      if (!targetEntity || targetEntity.id === myAnimal.id) {
++    c71aEntitiesList.forEach((v2c47TargetEntity) => {
++      if (!v2c47TargetEntity || v2c47TargetEntity.id === v1f29MyAnimal.id) {
 +        return;
 +      }
-+      if (!isPlayer(targetEntity)) {
++      if (!isPlayer(v2c47TargetEntity)) {
 +        return;
 +      }
-+      const myY = targetEntity.position?._x || targetEntity.position?.x;
-+      const posY = targetEntity.position?._y || targetEntity.position?.y;
-+      if (myY == null || posY == null) {
++      const v38c0MyY =
++        v2c47TargetEntity.position?._x || v2c47TargetEntity.position?.x;
++      const v461aPosY =
++        v2c47TargetEntity.position?._y || v2c47TargetEntity.position?.y;
++      if (v38c0MyY == null || v461aPosY == null) {
 +        return;
 +      }
 +      const distanceToTarget = calculateDistance(
-+        playerPosition.x,
-+        playerPosition.y,
-+        myY,
-+        posY,
++        v1057PlayerPosition.x,
++        v1057PlayerPosition.y,
++        v38c0MyY,
++        v461aPosY,
 +      );
 +      if (distanceToTarget < tickInterval) {
 +        nearbyEntities.push({
-+          x: myY,
-+          y: posY,
++          x: v38c0MyY,
++          y: v461aPosY,
 +          dist: distanceToTarget,
 +        });
 +      }
 +    });
 +    if (nearbyEntities.length === 0) {
-+      state.position = null;
++      Position = null;
 +      state.counter = 0;
 +      state.dataList = [];
-+      entityTrailInterval_jft = null;
++      state.entityTrailInterval = null;
 +      return;
 +    }
-+    const currentTime = Date.now();
++    const v2bc0CurrentTime = Date.now();
 +    let hasMoved = false;
-+    if (currentTime - currentTime_re6 > 600) {
-+      currentTime_re6 = currentTime;
-+      if (state.position) {
++    if (v2bc0CurrentTime - globalCurrentTime > 600) {
++      globalCurrentTime = v2bc0CurrentTime;
++      if (Position) {
 +        const distFromLastPos = calculateDistance(
-+          playerPosition.x,
-+          playerPosition.y,
-+          state.position.x,
-+          state.position.y,
++          v1057PlayerPosition.x,
++          v1057PlayerPosition.y,
++          Position.x,
++          Position.y,
 +        );
 +        if (distFromLastPos < 20) {
 +          state.counter++;
@@ -1127,32 +1133,34 @@ Index: src/features/aimbot.js
 +          state.dataList = [];
 +        }
 +      }
-+      state.position = {
-+        x: playerPosition.x,
-+        y: playerPosition.y,
++      Position = {
++        x: v1057PlayerPosition.x,
++        y: v1057PlayerPosition.y,
 +      };
 +    }
 +    let sumX = 0;
 +    let sumY = 0;
 +    nearbyEntities.forEach((sourceEntity) => {
-+      const deltaX = playerPosition.x - sourceEntity.x;
-+      const deltaY = playerPosition.y - sourceEntity.y;
-+      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-+      if (distance > 0.01) {
++      const v52fcDeltaX = v1057PlayerPosition.x - sourceEntity.x;
++      const v231bDeltaY = v1057PlayerPosition.y - sourceEntity.y;
++      const v2110Distance = Math.sqrt(
++        v52fcDeltaX * v52fcDeltaX + v231bDeltaY * v231bDeltaY,
++      );
++      if (v2110Distance > 0.01) {
 +        const distanceRatio = (tickInterval - sourceEntity.dist) / tickInterval;
-+        sumX += (deltaX / distance) * distanceRatio;
-+        sumY += (deltaY / distance) * distanceRatio;
++        sumX += (v52fcDeltaX / v2110Distance) * distanceRatio;
++        sumY += (v231bDeltaY / v2110Distance) * distanceRatio;
 +      }
 +    });
-+    let magnitude = Math.sqrt(sumX * sumX + sumY * sumY);
-+    if (magnitude < 0.01) {
++    let v4fc5Magnitude = Math.sqrt(sumX * sumX + sumY * sumY);
++    if (v4fc5Magnitude < 0.01) {
 +      sumX = 1;
 +      sumY = 0;
-+      magnitude = 1;
++      v4fc5Magnitude = 1;
 +    }
-+    sumX /= magnitude;
-+    sumY /= magnitude;
-+    let angle = Math.atan2(sumY, sumX);
++    sumX /= v4fc5Magnitude;
++    sumY /= v4fc5Magnitude;
++    let v6818Angle = Math.atan2(sumY, sumX);
 +    if (hasMoved && state.counter >= 1) {
 +      const anglePresets = [
 +        Math.PI / 4,
@@ -1162,12 +1170,13 @@ Index: src/features/aimbot.js
 +        (Math.PI * 3) / 4,
 +        (-Math.PI * 3) / 4,
 +      ];
-+      let tempAngle = angle;
++      let tempAngle = v6818Angle;
 +      let maxValue = -Infinity;
 +      for (const angleOffset of anglePresets) {
-+        const adjustedAngle = angle + angleOffset;
++        const adjustedAngle = v6818Angle + angleOffset;
 +        const isAngleSimilar = state.dataList.some(
-+          (currentValue) => Math.abs(currentValue - adjustedAngle) < 0.3,
++          (v3574CurrentValue) =>
++            Math.abs(v3574CurrentValue - adjustedAngle) < 0.3,
 +        );
 +        if (isAngleSimilar && state.counter < 5) {
 +          continue;
@@ -1176,10 +1185,10 @@ Index: src/features/aimbot.js
 +        const cosAdjustedAngle = Math.cos(adjustedAngle);
 +        const sinAdjustedAngle = Math.sin(adjustedAngle);
 +        nearbyEntities.forEach((otherEntity) => {
-+          const diffX = otherEntity.x - playerPosition.x;
-+          const deltaY_u6o = otherEntity.y - playerPosition.y;
++          const v58e5DiffX = otherEntity.x - v1057PlayerPosition.x;
++          const v3beaDeltaY = otherEntity.y - v1057PlayerPosition.y;
 +          const totalOffset =
-+            cosAdjustedAngle * diffX + sinAdjustedAngle * deltaY_u6o;
++            cosAdjustedAngle * v58e5DiffX + sinAdjustedAngle * v3beaDeltaY;
 +          currentValue -= totalOffset;
 +        });
 +        if (currentValue > maxValue) {
@@ -1187,35 +1196,36 @@ Index: src/features/aimbot.js
 +          tempAngle = adjustedAngle;
 +        }
 +      }
-+      angle = tempAngle;
-+      state.dataList.push(angle);
++      v6818Angle = tempAngle;
++      state.dataList.push(v6818Angle);
 +      if (state.dataList.length > 8) {
 +        state.dataList.shift();
 +      }
 +      if (state.counter >= 5) {
-+        angle = angle + (Math.random() > 0.5 ? Math.PI / 2 : -Math.PI / 2);
++        v6818Angle =
++          v6818Angle + (Math.random() > 0.5 ? Math.PI / 2 : -Math.PI / 2);
 +        state.counter = 0;
 +        state.dataList = [];
 +      }
 +    }
-+    entityTrailInterval_jft = angle;
-+    const angle_p9p = playerPosition.x + Math.cos(angle) * 2000;
-+    const angle_q62 = playerPosition.y + Math.sin(angle) * 2000;
-+    const angle_q0o = currentTime - currentTime_qq5 > deltaThreshold;
-+    if (angle_q0o) {
-+      currentTime_qq5 = currentTime;
++    state.entityTrailInterval = v6818Angle;
++    const v3f83Angle = v1057PlayerPosition.x + Math.cos(v6818Angle) * 2000;
++    const v5224V3f83Angle = v1057PlayerPosition.y + Math.sin(v6818Angle) * 2000;
++    const v3f83V3f83Angle = v2bc0CurrentTime - numCurrentTime > deltaThreshold;
++    if (v3f83V3f83Angle) {
++      numCurrentTime = v2bc0CurrentTime;
 +    }
-+    simulateMoveAndClick(angle_p9p, angle_q62, angle_q0o);
++    simulateMoveAndClick(v3f83Angle, v5224V3f83Angle, v3f83V3f83Angle);
 +  } catch (data) {}
 +}
 +function enableAutoDodge() {
 +  window.autoDodgeEnabled = true;
-+  state.position = null;
++  Position = null;
 +  state.counter = 0;
 +  state.dataList = [];
-+  entityTrailInterval_jft = null;
-+  if (!state.isProcessed_rdh) {
-+    state.isProcessed_rdh = true;
++  state.entityTrailInterval = null;
++  if (!state.modIsProcessed) {
++    state.modIsProcessed = true;
 +    autoDodgeLoop();
 +  }
 +  showToast("Auto dodge enabled");
@@ -1233,7 +1243,7 @@ Index: src/features/antidetection.js
 -import { getGameCanvas } from "../utils.js";
 -
 -function startAntiAfk() {
--  if (featuresentitytrailState.entityTrailInterval_s4i) {
+-  if (featuresentitytrailState.appEntityTrailInterval) {
 -    return;
 -  }
 -  const gameCanvas = getGameCanvas();
@@ -1241,15 +1251,15 @@ Index: src/features/antidetection.js
 -    showNotification("Game canvas not found!");
 -    return;
 -  }
--  featuresentitytrailState.entityTrailInterval_s4i = setInterval(() => {
+-  featuresentitytrailState.appEntityTrailInterval = setInterval(() => {
 -    const angleDegrees = angles[state.angleIndex];
 -    const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
--    const offsetX = Math.round(radius * Math.sin(angleRadians));
--    const offsetY = Math.round(radius * Math.cos(angleRadians));
+-    const v54bdOffsetX = Math.round(radius * Math.sin(angleRadians));
+-    const v2219OffsetY = Math.round(radius * Math.cos(angleRadians));
 -    gameCanvas.dispatchEvent(
 -      new MouseEvent("pointermove", {
--        clientX: window.innerWidth / 2 + offsetX,
--        clientY: window.innerHeight / 2 + offsetY,
+-        clientX: window.innerWidth / 2 + v54bdOffsetX,
+-        clientY: window.innerHeight / 2 + v2219OffsetY,
 -        bubbles: true,
 -      }),
 -    );
@@ -1262,18 +1272,16 @@ Index: src/features/autofarm.js
 ===================================================================
 --- src/features/autofarm.js	v1.5
 +++ src/features/autofarm.js	v1.6
-@@ -1,28 +1,637 @@
--import { playerData, config, sendPacket, state } from "../core.js";
+@@ -1,28 +1,669 @@
+-import { playerData, objConfig, sendPacket, state } from "../core.js";
 +import {
-+  currentTime,
 +  radius,
 +  timeoutLimit,
 +  maxFailCount,
 +  getGameState,
 +  getEntityManager,
-+  isAreaSkipped_sc8,
++  modIsAreaSkipped,
 +  getFirstAnimalPosition,
-+  angle,
 +  initAutoFarm,
 +  state,
 +} from "../core.js";
@@ -1304,40 +1312,42 @@ Index: src/features/autofarm.js
 +window.autoFarmSkipClearTime = 0;
 +window.autoFarmSkipAreas = [];
 +
-+const offsetValue_tz2 = 400;
-+const tickInterval_sco = 600;
++const OffsetValue = 400;
++const TickInterval = 600;
 +function isAreaSkipped(x, y) {
-+  const currentTime = Date.now();
++  const v39acCurrentTime = Date.now();
 +  window.autoFarmSkipAreas = window.autoFarmSkipAreas.filter(
-+    (currentTime) => currentTime - currentTime.time < timeoutLimit,
++    (v13e5CurrentTime) =>
++      v39acCurrentTime - v13e5CurrentTime.time < timeoutLimit,
 +  );
 +  return window.autoFarmSkipAreas.some(
 +    (circle) => calculateDistance(x, y, circle.x, circle.y) < circle.radius,
 +  );
 +}
-+function handleFarmFailure(x, y) {
-+  const currentTime = Date.now();
++function handleFarmFailure(v1bc0X, v1a0cY) {
++  const v1cf7CurrentTime = Date.now();
 +  window.autoFarmSkipAreas = window.autoFarmSkipAreas.filter(
-+    (currentTime) => currentTime - currentTime.time < timeoutLimit,
++    (v4a43CurrentTime) =>
++      v1cf7CurrentTime - v4a43CurrentTime.time < timeoutLimit,
 +  );
 +  let existingArea = window.autoFarmSkipAreas.find(
-+    (position) =>
-+      calculateDistance(x, y, state.position.x, state.position.y) <
-+      offsetValue_tz2,
++    (v3df3Position) =>
++      calculateDistance(v1bc0X, v1a0cY, v3df3Position.x, v3df3Position.y) <
++      OffsetValue,
 +  );
 +  if (existingArea) {
 +    existingArea.failCount++;
-+    existingArea.time = currentTime;
++    existingArea.time = v1cf7CurrentTime;
 +    if (existingArea.failCount >= maxFailCount) {
 +      existingArea.skipped = true;
 +      showToast("Skipping unreachable food area");
 +    }
 +  } else {
 +    window.autoFarmSkipAreas.push({
-+      x: x,
-+      y: y,
-+      radius: offsetValue_tz2,
-+      time: currentTime,
++      x: v1bc0X,
++      y: v1a0cY,
++      radius: OffsetValue,
++      time: v1cf7CurrentTime,
 +      failCount: 1,
 +      skipped: false,
 +    });
@@ -1347,108 +1357,125 @@ Index: src/features/autofarm.js
 +  farmRange = farmRange || window.autoFarmRange;
    try {
 -    const fishLevelSettings = {
--      ...config.default,
--      ...(config[playerData?.myAnimals?.[0]?.visibleFishLevel] || {}),
-+    const gameState = getGameState();
-+    const worldData = getEntityManager(gameState);
-+    const playerAnimal = gameState?.myAnimals?.[0];
+-      ...objConfig.default,
+-      ...(objConfig[playerData?.myAnimals?.[0]?.visibleFishLevel] || {}),
++    const v286cGameState = getGameState();
++    const worldData = getEntityManager(v286cGameState);
++    const playerAnimal = v286cGameState?.myAnimals?.[0];
 +    if (!worldData || !playerAnimal) {
 +      return null;
 +    }
 +    const playerX = playerAnimal.position._x || playerAnimal.position.x;
 +    const playerY = playerAnimal.position._y || playerAnimal.position.y;
-+    const entities = worldData.entitiesList || [];
++    const v52a6Entities = worldData.entitiesList || [];
 +    let closestEntity = null;
 +    let minDistance = Infinity;
-+    entities.forEach((targetEntity) => {
-+      if (!targetEntity || targetEntity.id === playerAnimal.id) {
++    v52a6Entities.forEach((v4a18TargetEntity) => {
++      if (!v4a18TargetEntity || v4a18TargetEntity.id === playerAnimal.id) {
 +        return;
 +      }
-+      if (window.autoFarmSkipIds.has(targetEntity.id)) {
++      if (window.autoFarmSkipIds.has(v4a18TargetEntity.id)) {
 +        return;
 +      }
-+      const myY = targetEntity.position?._x || targetEntity.position?.x;
-+      const posY = targetEntity.position?._y || targetEntity.position?.y;
-+      if (myY == null || posY == null) {
++      const v27c8MyY =
++        v4a18TargetEntity.position?._x || v4a18TargetEntity.position?.x;
++      const v28caPosY =
++        v4a18TargetEntity.position?._y || v4a18TargetEntity.position?.y;
++      if (v27c8MyY == null || v28caPosY == null) {
 +        return;
 +      }
-+      if (isPlayer(targetEntity)) {
++      if (isPlayer(v4a18TargetEntity)) {
 +        return;
 +      }
-+      if (isAreaSkipped_sc8(myY, posY)) {
++      if (modIsAreaSkipped(v27c8MyY, v28caPosY)) {
 +        return;
 +      }
-+      const distance = calculateDistance(playerX, playerY, myY, posY);
-+      if (distance < minDistance && distance < farmRange) {
-+        minDistance = distance;
++      const v1d58Distance = calculateDistance(
++        playerX,
++        playerY,
++        v27c8MyY,
++        v28caPosY,
++      );
++      if (v1d58Distance < minDistance && v1d58Distance < farmRange) {
++        minDistance = v1d58Distance;
 +        closestEntity = {
-+          id: targetEntity.id,
-+          x: myY,
-+          y: posY,
-+          distance: distance,
-+          entity: targetEntity,
++          id: v4a18TargetEntity.id,
++          x: v27c8MyY,
++          y: v28caPosY,
++          distance: v1d58Distance,
++          entity: v4a18TargetEntity,
 +        };
 +      }
 +    });
 +    return closestEntity;
-+  } catch (error) {
++  } catch (b76cError) {
 +    return null;
 +  }
 +}
-+function getFarmableEntities(farmRange) {
-+  farmRange = farmRange || window.autoFarmRange;
++function getFarmableEntities(v2ebbFarmRange) {
++  v2ebbFarmRange = v2ebbFarmRange || window.autoFarmRange;
 +  try {
-+    const gameState = getGameState();
-+    const worldData = getEntityManager(gameState);
-+    const playerAnimal = gameState?.myAnimals?.[0];
-+    if (!worldData || !playerAnimal) {
++    const v4e0dGameState = getGameState();
++    const v3570WorldData = getEntityManager(v4e0dGameState);
++    const v50dbPlayerAnimal = v4e0dGameState?.myAnimals?.[0];
++    if (!v3570WorldData || !v50dbPlayerAnimal) {
 +      return [];
 +    }
-+    const playerX = playerAnimal.position._x || playerAnimal.position.x;
-+    const playerY = playerAnimal.position._y || playerAnimal.position.y;
-+    const entities = worldData.entitiesList || [];
++    const v2d86PlayerX =
++      v50dbPlayerAnimal.position._x || v50dbPlayerAnimal.position.x;
++    const v3903PlayerY =
++      v50dbPlayerAnimal.position._y || v50dbPlayerAnimal.position.y;
++    const v4086Entities = v3570WorldData.entitiesList || [];
 +    const farmableList = [];
-+    entities.forEach((targetEntity) => {
-+      if (!targetEntity || targetEntity.id === playerAnimal.id) {
++    v4086Entities.forEach((v467bTargetEntity) => {
++      if (!v467bTargetEntity || v467bTargetEntity.id === v50dbPlayerAnimal.id) {
 +        return;
 +      }
-+      if (window.autoFarmSkipIds.has(targetEntity.id)) {
++      if (window.autoFarmSkipIds.has(v467bTargetEntity.id)) {
 +        return;
 +      }
-+      const posX = targetEntity.position?._x || targetEntity.position?.x;
-+      const posY = targetEntity.position?._y || targetEntity.position?.y;
-+      if (posX == null || posY == null) {
++      const v1818PosX =
++        v467bTargetEntity.position?._x || v467bTargetEntity.position?.x;
++      const v209fPosY =
++        v467bTargetEntity.position?._y || v467bTargetEntity.position?.y;
++      if (v1818PosX == null || v209fPosY == null) {
 +        return;
 +      }
-+      if (isPlayer(targetEntity)) {
++      if (isPlayer(v467bTargetEntity)) {
 +        return;
 +      }
-+      if (isAreaSkipped_sc8(posX, posY)) {
++      if (modIsAreaSkipped(v1818PosX, v209fPosY)) {
 +        return;
 +      }
-+      const distance = calculateDistance(playerX, playerY, posX, posY);
-+      if (distance < farmRange) {
++      const v4664Distance = calculateDistance(
++        v2d86PlayerX,
++        v3903PlayerY,
++        v1818PosX,
++        v209fPosY,
++      );
++      if (v4664Distance < v2ebbFarmRange) {
 +        farmableList.push({
-+          id: targetEntity.id,
-+          x: posX,
-+          y: posY,
-+          distance: distance,
-+          entity: targetEntity,
++          id: v467bTargetEntity.id,
++          x: v1818PosX,
++          y: v209fPosY,
++          distance: v4664Distance,
++          entity: v467bTargetEntity,
 +        });
 +      }
 +    });
 +    farmableList.sort(
-+      (entityA, entityB) => entityA.distance - entityB.distance,
++      (v3407EntityA, v1492EntityB) =>
++        v3407EntityA.distance - v1492EntityB.distance,
 +    );
 +    return farmableList;
-+  } catch (error) {
++  } catch (d2b2Error) {
 +    return [];
 +  }
 +}
-+function findOptimalFarmPosition(clusterRadius, farmRange) {
++function findOptimalFarmPosition(clusterRadius, v5362FarmRange) {
 +  clusterRadius = clusterRadius || 500;
-+  farmRange = farmRange || window.autoFarmRange;
-+  const farmables = getFarmableEntities(farmRange);
++  v5362FarmRange = v5362FarmRange || window.autoFarmRange;
++  const farmables = getFarmableEntities(v5362FarmRange);
 +  if (farmables.length === 0) {
 +    return null;
 +  }
@@ -1456,8 +1483,8 @@ Index: src/features/autofarm.js
 +  let maxCount = 0;
 +  farmables.forEach((calculateAveragePosition) => {
 +    let elementCount = 0;
-+    let sumX = 0;
-+    let sumY = 0;
++    let v6a21SumX = 0;
++    let v5516SumY = 0;
 +    farmables.forEach((targetPosition) => {
 +      if (
 +        calculateDistance(
@@ -1468,15 +1495,15 @@ Index: src/features/autofarm.js
 +        ) < clusterRadius
 +      ) {
 +        elementCount++;
-+        sumX += targetPosition.x;
-+        sumY += targetPosition.y;
++        v6a21SumX += targetPosition.x;
++        v5516SumY += targetPosition.y;
 +      }
 +    });
 +    if (elementCount > maxCount) {
 +      maxCount = elementCount;
 +      bestPosition = {
-+        x: sumX / elementCount,
-+        y: sumY / elementCount,
++        x: v6a21SumX / elementCount,
++        y: v5516SumY / elementCount,
 +        foodCount: elementCount,
 +      };
 +    }
@@ -1486,41 +1513,50 @@ Index: src/features/autofarm.js
 +function getNearbyAvoidEntities(avoidDistance) {
 +  avoidDistance = avoidDistance || window.autoFarmAvoidDistance;
 +  try {
-+    const gameState = getGameState();
-+    const worldData = getEntityManager(gameState);
-+    const playerAnimal = gameState?.myAnimals?.[0];
-+    if (!worldData || !playerAnimal) {
++    const v342eGameState = getGameState();
++    const v4c53WorldData = getEntityManager(v342eGameState);
++    const f07aPlayerAnimal = v342eGameState?.myAnimals?.[0];
++    if (!v4c53WorldData || !f07aPlayerAnimal) {
 +      return [];
 +    }
-+    const playerX = playerAnimal.position._x || playerAnimal.position.x;
-+    const playerY = playerAnimal.position._y || playerAnimal.position.y;
-+    const entities = worldData.entitiesList || [];
++    const v5ed8PlayerX =
++      f07aPlayerAnimal.position._x || f07aPlayerAnimal.position.x;
++    const v2a18PlayerY =
++      f07aPlayerAnimal.position._y || f07aPlayerAnimal.position.y;
++    const v3a21Entities = v4c53WorldData.entitiesList || [];
 +    const avoidList = [];
-+    entities.forEach((targetObject) => {
-+      if (!targetObject || targetObject.id === playerAnimal.id) {
++    v3a21Entities.forEach((v587dTargetObject) => {
++      if (!v587dTargetObject || v587dTargetObject.id === f07aPlayerAnimal.id) {
 +        return;
 +      }
-+      const myY = targetObject.position?._x || targetObject.position?.x;
-+      const posY = targetObject.position?._y || targetObject.position?.y;
-+      if (myY == null || posY == null) {
++      const v33d0MyY =
++        v587dTargetObject.position?._x || v587dTargetObject.position?.x;
++      const v544aPosY =
++        v587dTargetObject.position?._y || v587dTargetObject.position?.y;
++      if (v33d0MyY == null || v544aPosY == null) {
 +        return;
 +      }
-+      if (!isPlayer(targetObject)) {
++      if (!isPlayer(v587dTargetObject)) {
 +        return;
 +      }
-+      const calculatedDistance = calculateDistance(playerX, playerY, myY, posY);
++      const calculatedDistance = calculateDistance(
++        v5ed8PlayerX,
++        v2a18PlayerY,
++        v33d0MyY,
++        v544aPosY,
++      );
 +      if (calculatedDistance < avoidDistance) {
 +        avoidList.push({
-+          id: targetObject.id,
-+          x: myY,
-+          y: posY,
++          id: v587dTargetObject.id,
++          x: v33d0MyY,
++          y: v544aPosY,
 +          distance: calculatedDistance,
 +        });
 +      }
 +    });
 +    avoidList.sort((itemA, itemB) => itemA.distance - itemB.distance);
 +    return avoidList;
-+  } catch (error) {
++  } catch (v1a2aError) {
 +    return [];
 +  }
 +}
@@ -1550,16 +1586,18 @@ Index: src/features/autofarm.js
 +  let avoidX = 0;
 +  let avoidY = 0;
 +  nearbyPlayers.forEach((avoidancePoint) => {
-+    const deltaX = localPlayer.x - avoidancePoint.x;
-+    const deltaY = localPlayer.y - avoidancePoint.y;
++    const v4fe7DeltaX = localPlayer.x - avoidancePoint.x;
++    const v1d29DeltaY = localPlayer.y - avoidancePoint.y;
 +    const clampedAvoidDistance = Math.max(avoidancePoint.distance, 50);
 +    const avoidanceFactor =
 +      (window.autoFarmAvoidDistance - clampedAvoidDistance) /
 +      window.autoFarmAvoidDistance;
-+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-+    if (distance > 0) {
-+      avoidX += (deltaX / distance) * avoidanceFactor * 500;
-+      avoidY += (deltaY / distance) * avoidanceFactor * 500;
++    const c71eDistance = Math.sqrt(
++      v4fe7DeltaX * v4fe7DeltaX + v1d29DeltaY * v1d29DeltaY,
++    );
++    if (c71eDistance > 0) {
++      avoidX += (v4fe7DeltaX / c71eDistance) * avoidanceFactor * 500;
++      avoidY += (v1d29DeltaY / c71eDistance) * avoidanceFactor * 500;
      }
 -    if (playerData?.myAnimals?.[0]?._standing) {
 -      return sendPacket(id5, currentValue);
@@ -1569,16 +1607,16 @@ Index: src/features/autofarm.js
 +    y: avoidY,
 +  };
 +}
-+let currentTime_sky = 0;
++let mainCurrentTime = 0;
 +function simulateEvolveKeyPress() {
 +  if (!window.autoFarmEvolve) {
 +    return;
 +  }
 +  const now = Date.now();
-+  if (now - currentTime_sky < 5000) {
++  if (now - mainCurrentTime < 5000) {
 +    return;
 +  }
-+  currentTime_sky = now;
++  mainCurrentTime = now;
 +  const gameElement = getGameCanvas();
 +  const randomDigit = Math.floor(Math.random() * 9) + 1;
 +  const digitString = String(randomDigit);
@@ -1590,42 +1628,43 @@ Index: src/features/autofarm.js
 +    bubbles: true,
 +    cancelable: true,
 +  };
-+  [window, document, document.body, gameElement].forEach((targetElement) => {
-+    if (!targetElement) {
-+      return;
-     }
--    if (fishLevelSettings.hasScaling) {
--      return sendPacket(id5, currentValue);
-+    try {
-+      targetElement.dispatchEvent(
-+        new KeyboardEvent("keydown", keyboardEventInit),
-+      );
-+      setTimeout(() => {
-+        targetElement.dispatchEvent(
-+          new KeyboardEvent("keyup", keyboardEventInit),
++  [window, document, document.body, gameElement].forEach(
++    (v135bTargetElement) => {
++      if (!v135bTargetElement) {
++        return;
++      }
++      try {
++        v135bTargetElement.dispatchEvent(
++          new KeyboardEvent("keydown", keyboardEventInit),
 +        );
-+      }, 50);
-+    } catch (context) {}
-+  });
++        setTimeout(() => {
++          v135bTargetElement.dispatchEvent(
++            new KeyboardEvent("keyup", keyboardEventInit),
++          );
++        }, 50);
++      } catch (context) {}
++    },
++  );
 +}
-+let isToggled_rg1 = false;
-+let currentTime_r36 = 0;
++let appIsToggled = false;
++let Angle = 0;
++let modCurrentTime = 0;
 +function checkAntiStuck(currentPos) {
-+  const now = Date.now();
-+  if (now - state.counter_tkq < 1500) {
++  const v4793Now = Date.now();
++  if (v4793Now - state.modCounter < 1500) {
 +    return false;
 +  }
-+  state.counter_tkq = now;
-+  if (state.position_t9s) {
++  state.modCounter = v4793Now;
++  if (state.modPosition) {
 +    const dist = calculateDistance(
 +      currentPos.x,
 +      currentPos.y,
-+      state.position_t9s.x,
-+      state.position_t9s.y,
++      state.modPosition.x,
++      state.modPosition.y,
 +    );
 +    if (dist < 25) {
-+      state.counter_sm3++;
-+      if (state.counter_sm3 >= 1 && window.autoFarmCurrentTarget) {
++      state.numCounter++;
++      if (state.numCounter >= 1 && window.autoFarmCurrentTarget) {
 +        handleFarmFailure(
 +          window.autoFarmCurrentTarget.x,
 +          window.autoFarmCurrentTarget.y,
@@ -1633,10 +1672,10 @@ Index: src/features/autofarm.js
 +        window.autoFarmSkipIds.add(window.autoFarmCurrentTarget.id);
 +        window.autoFarmCurrentTarget = null;
 +        window.autoFarmTargetStartTime = 0;
-+        state.counter_sm3 = 0;
++        state.numCounter = 0;
 +      }
-+      if (state.counter_sm3 >= 2) {
-+        state.counter_sm3 = 0;
++      if (state.numCounter >= 2) {
++        state.numCounter = 0;
 +        window.autoFarmCurrentTarget = null;
 +        window.autoFarmTargetStartTime = 0;
 +        const randomAngle = Math.random() * Math.PI * 2;
@@ -1646,46 +1685,46 @@ Index: src/features/autofarm.js
 +        return true;
 +      }
 +    } else {
-+      state.counter_sm3 = 0;
++      state.numCounter = 0;
      }
--    if (fishLevelSettings.hasSec) {
--      return sendPacket(id4, currentValue);
+-    if (fishLevelSettings.hasScaling) {
+-      return sendPacket(id5, currentValue);
 +  }
-+  state.position_t9s = {
++  state.modPosition = {
 +    x: currentPos.x,
 +    y: currentPos.y,
 +  };
 +  return false;
 +}
 +function generatePatrolPoints() {
-+  const localPlayer = getFirstAnimalPosition();
-+  if (!localPlayer) {
++  const v4942LocalPlayer = getFirstAnimalPosition();
++  if (!v4942LocalPlayer) {
 +    return;
 +  }
 +  const patrolRadius = 2000;
 +  const pointCount = 6;
 +  window.autoFarmPatrolPoints = [];
-+  for (let i = 0; i < pointCount; i++) {
-+    const angle = (Math.PI * 2 * i) / pointCount;
++  for (let ffe3I = 0; ffe3I < pointCount; ffe3I++) {
++    const v40f0Angle = (Math.PI * 2 * ffe3I) / pointCount;
 +    window.autoFarmPatrolPoints.push({
-+      x: localPlayer.x + Math.cos(angle) * patrolRadius,
-+      y: localPlayer.y + Math.sin(angle) * patrolRadius,
++      x: v4942LocalPlayer.x + Math.cos(v40f0Angle) * patrolRadius,
++      y: v4942LocalPlayer.y + Math.sin(v40f0Angle) * patrolRadius,
 +    });
 +  }
 +  window.autoFarmPatrolIndex = 0;
 +}
 +function autoFarmUpdate() {
 +  if (!window.autoFarmActive) {
-+    isToggled_rg1 = false;
++    appIsToggled = false;
 +    return;
 +  }
-+  const now = Date.now();
-+  if (now - window.autoFarmSkipClearTime > 15000) {
++  const v2a82Now = Date.now();
++  if (v2a82Now - window.autoFarmSkipClearTime > 15000) {
 +    window.autoFarmSkipIds.clear();
-+    window.autoFarmSkipClearTime = now;
++    window.autoFarmSkipClearTime = v2a82Now;
 +  }
 +  if (window.autoFarmCurrentTarget && window.autoFarmTargetStartTime > 0) {
-+    if (now - window.autoFarmTargetStartTime > 1000) {
++    if (v2a82Now - window.autoFarmTargetStartTime > 1000) {
 +      handleFarmFailure(
 +        window.autoFarmCurrentTarget.x,
 +        window.autoFarmCurrentTarget.y,
@@ -1696,26 +1735,28 @@ Index: src/features/autofarm.js
 +      setTimeout(autoFarmUpdate, 100);
 +      return;
      }
--    return sendPacket(id1);
--  } catch {}
--};
+-    if (fishLevelSettings.hasSec) {
+-      return sendPacket(id4, currentValue);
 +  }
 +  try {
-+    const localPlayer = getFirstAnimalPosition();
-+    if (!localPlayer) {
++    const v3269LocalPlayer = getFirstAnimalPosition();
++    if (!v3269LocalPlayer) {
 +      window.autoFarmActive = false;
-+      isToggled_rg1 = false;
++      appIsToggled = false;
 +      const farmButton = document.getElementById("autoFarmBtn");
 +      if (farmButton) {
 +        farmButton.textContent = "Auto Farm";
 +        farmButton.classList.remove("toggle-on");
 +      }
 +      return;
-+    }
+     }
+-    return sendPacket(id1);
+-  } catch {}
+-};
 +    if (Math.random() < 0.015) {
 +      simulateEvolveKeyPress();
 +    }
-+    if (checkAntiStuck(localPlayer)) {
++    if (checkAntiStuck(v3269LocalPlayer)) {
 +      setTimeout(autoFarmUpdate, 100);
 +      return;
 +    }
@@ -1723,26 +1764,26 @@ Index: src/features/autofarm.js
 +    const shouldAvoid =
 +      Math.abs(avoidanceVector.x) > 100 || Math.abs(avoidanceVector.y) > 100;
 +    if (shouldAvoid && window.autoFarmAvoidPlayers) {
-+      const targetX = localPlayer.x + avoidanceVector.x;
-+      const targetY = localPlayer.y + avoidanceVector.y;
++      const v37b1TargetX = v3269LocalPlayer.x + avoidanceVector.x;
++      const v4051TargetY = v3269LocalPlayer.y + avoidanceVector.y;
 +      const isBoosting =
-+        window.autoFarmBoost && now - state.counter_agp > tickInterval_sco;
++        window.autoFarmBoost && v2a82Now - state.Counter > TickInterval;
 +      if (isBoosting) {
-+        state.counter_agp = now;
++        state.Counter = v2a82Now;
 +      }
-+      simulateMoveAndClick(targetX, targetY, isBoosting);
++      simulateMoveAndClick(v37b1TargetX, v4051TargetY, isBoosting);
 +      setTimeout(autoFarmUpdate, 60);
 +      return;
 +    }
-+    let finalX = null;
-+    let finalY = null;
-+    let minDistance = Infinity;
++    let v2cffFinalX = null;
++    let v556bFinalY = null;
++    let v13a2MinDistance = Infinity;
 +    if (window.autoFarmMode === "nearest") {
 +      const nearestTarget = findClosestFarmable();
 +      if (nearestTarget) {
-+        finalX = nearestTarget.x + avoidanceVector.x * 0.3;
-+        finalY = nearestTarget.y + avoidanceVector.y * 0.3;
-+        minDistance = nearestTarget.distance;
++        v2cffFinalX = nearestTarget.x + avoidanceVector.x * 0.3;
++        v556bFinalY = nearestTarget.y + avoidanceVector.y * 0.3;
++        v13a2MinDistance = nearestTarget.distance;
 +        if (
 +          !window.autoFarmCurrentTarget ||
 +          window.autoFarmCurrentTarget.id !== nearestTarget.id
@@ -1751,75 +1792,75 @@ Index: src/features/autofarm.js
 +            window.autoFarmStats.collected++;
 +          }
 +          window.autoFarmCurrentTarget = nearestTarget;
-+          window.autoFarmTargetStartTime = now;
-+          state.counter_sm3 = 0;
++          window.autoFarmTargetStartTime = v2a82Now;
++          state.numCounter = 0;
 +        }
 +        if (nearestTarget.distance < 40) {
-+          finalX += (Math.random() - 0.5) * 80;
-+          finalY += (Math.random() - 0.5) * 80;
++          v2cffFinalX += (Math.random() - 0.5) * 80;
++          v556bFinalY += (Math.random() - 0.5) * 80;
 +        }
 +      } else {
 +        window.autoFarmCurrentTarget = null;
 +        window.autoFarmTargetStartTime = 0;
-+        if (now - currentTime_r36 > 2500) {
-+          angle = Math.random() * Math.PI * 2;
-+          currentTime_r36 = now;
++        if (v2a82Now - modCurrentTime > 2500) {
++          Angle = Math.random() * Math.PI * 2;
++          modCurrentTime = v2a82Now;
 +        }
-+        finalX = localPlayer.x + Math.cos(angle) * 1000;
-+        finalY = localPlayer.y + Math.sin(angle) * 1000;
-+        minDistance = 1000;
++        v2cffFinalX = v3269LocalPlayer.x + Math.cos(Angle) * 1000;
++        v556bFinalY = v3269LocalPlayer.y + Math.sin(Angle) * 1000;
++        v13a2MinDistance = 1000;
 +      }
 +    } else if (window.autoFarmMode === "cluster") {
 +      const foodSource = findOptimalFarmPosition(500, window.autoFarmRange);
 +      if (foodSource && foodSource.foodCount >= 2) {
-+        finalX = foodSource.x + avoidanceVector.x * 0.3;
-+        finalY = foodSource.y + avoidanceVector.y * 0.3;
-+        minDistance = calculateDistance(
-+          localPlayer.x,
-+          localPlayer.y,
++        v2cffFinalX = foodSource.x + avoidanceVector.x * 0.3;
++        v556bFinalY = foodSource.y + avoidanceVector.y * 0.3;
++        v13a2MinDistance = calculateDistance(
++          v3269LocalPlayer.x,
++          v3269LocalPlayer.y,
 +          foodSource.x,
 +          foodSource.y,
 +        );
 +      } else {
-+        const nearbyTarget = findClosestFarmable();
-+        if (nearbyTarget) {
-+          finalX = nearbyTarget.x;
-+          finalY = nearbyTarget.y;
-+          minDistance = nearbyTarget.distance;
++        const v5d64NearbyTarget = findClosestFarmable();
++        if (v5d64NearbyTarget) {
++          v2cffFinalX = v5d64NearbyTarget.x;
++          v556bFinalY = v5d64NearbyTarget.y;
++          v13a2MinDistance = v5d64NearbyTarget.distance;
 +          if (
 +            !window.autoFarmCurrentTarget ||
-+            window.autoFarmCurrentTarget.id !== nearbyTarget.id
++            window.autoFarmCurrentTarget.id !== v5d64NearbyTarget.id
 +          ) {
-+            window.autoFarmCurrentTarget = nearbyTarget;
-+            window.autoFarmTargetStartTime = now;
++            window.autoFarmCurrentTarget = v5d64NearbyTarget;
++            window.autoFarmTargetStartTime = v2a82Now;
 +          }
 +        } else {
 +          window.autoFarmCurrentTarget = null;
 +          window.autoFarmTargetStartTime = 0;
-+          if (now - currentTime_r36 > 2500) {
-+            angle = Math.random() * Math.PI * 2;
-+            currentTime_r36 = now;
++          if (v2a82Now - modCurrentTime > 2500) {
++            Angle = Math.random() * Math.PI * 2;
++            modCurrentTime = v2a82Now;
 +          }
-+          finalX = localPlayer.x + Math.cos(angle) * 1000;
-+          finalY = localPlayer.y + Math.sin(angle) * 1000;
-+          minDistance = 1000;
++          v2cffFinalX = v3269LocalPlayer.x + Math.cos(Angle) * 1000;
++          v556bFinalY = v3269LocalPlayer.y + Math.sin(Angle) * 1000;
++          v13a2MinDistance = 1000;
 +        }
 +      }
 +    } else if (window.autoFarmMode === "patrol") {
 +      if (window.autoFarmPatrolPoints.length === 0) {
 +        generatePatrolPoints();
 +      }
-+      const nearbyTarget_5dl = findClosestFarmable(800);
-+      if (nearbyTarget_5dl) {
-+        finalX = nearbyTarget_5dl.x;
-+        finalY = nearbyTarget_5dl.y;
-+        minDistance = nearbyTarget_5dl.distance;
++      const v5d64V5d64NearbyTarget = findClosestFarmable(800);
++      if (v5d64V5d64NearbyTarget) {
++        v2cffFinalX = v5d64V5d64NearbyTarget.x;
++        v556bFinalY = v5d64V5d64NearbyTarget.y;
++        v13a2MinDistance = v5d64V5d64NearbyTarget.distance;
 +        if (
 +          !window.autoFarmCurrentTarget ||
-+          window.autoFarmCurrentTarget.id !== nearbyTarget_5dl.id
++          window.autoFarmCurrentTarget.id !== v5d64V5d64NearbyTarget.id
 +        ) {
-+          window.autoFarmCurrentTarget = nearbyTarget_5dl;
-+          window.autoFarmTargetStartTime = now;
++          window.autoFarmCurrentTarget = v5d64V5d64NearbyTarget;
++          window.autoFarmTargetStartTime = v2a82Now;
 +        }
 +      } else {
 +        window.autoFarmCurrentTarget = null;
@@ -1827,46 +1868,47 @@ Index: src/features/autofarm.js
 +        const currentPatrolPoint =
 +          window.autoFarmPatrolPoints[window.autoFarmPatrolIndex];
 +        if (currentPatrolPoint) {
-+          minDistance = calculateDistance(
-+            localPlayer.x,
-+            localPlayer.y,
++          v13a2MinDistance = calculateDistance(
++            v3269LocalPlayer.x,
++            v3269LocalPlayer.y,
 +            currentPatrolPoint.x,
 +            currentPatrolPoint.y,
 +          );
-+          if (minDistance < 200) {
++          if (v13a2MinDistance < 200) {
 +            window.autoFarmPatrolIndex =
 +              (window.autoFarmPatrolIndex + 1) %
 +              window.autoFarmPatrolPoints.length;
 +          }
-+          finalX = currentPatrolPoint.x;
-+          finalY = currentPatrolPoint.y;
++          v2cffFinalX = currentPatrolPoint.x;
++          v556bFinalY = currentPatrolPoint.y;
 +        }
 +      }
 +    }
-+    if (finalX != null && finalY != null) {
-+      const angle = minDistance > 350;
-+      const angle_6iu = now - state.counter_agp > tickInterval_sco;
-+      const angle_6jy = window.autoFarmBoost && angle && angle_6iu;
-+      if (angle_6jy) {
-+        state.counter_agp = now;
++    if (v2cffFinalX != null && v556bFinalY != null) {
++      const v463eAngle = v13a2MinDistance > 350;
++      const v4857V463eAngle = v2a82Now - state.Counter > TickInterval;
++      const v463eV463eAngle =
++        window.autoFarmBoost && v463eAngle && v4857V463eAngle;
++      if (v463eV463eAngle) {
++        state.Counter = v2a82Now;
 +      }
-+      simulateMoveAndClick(finalX, finalY, angle_6jy);
++      simulateMoveAndClick(v2cffFinalX, v556bFinalY, v463eV463eAngle);
 +    }
-+  } catch (data) {
-+    console.error("[AutoFarm] Error:", data);
++  } catch (v4630Data) {
++    console.error("[AutoFarm] Error:", v4630Data);
 +  }
 +  setTimeout(autoFarmUpdate, 60);
 +}
 +function startAutoFarmLoop() {
-+  if (isToggled_rg1) {
++  if (appIsToggled) {
 +    return;
 +  }
-+  isToggled_rg1 = true;
++  appIsToggled = true;
 +  autoFarmUpdate();
 +}
 +function stopAutoFarm() {
 +  window.autoFarmActive = false;
-+  isToggled_rg1 = false;
++  appIsToggled = false;
 +  const elapsedTime = (
 +    (Date.now() - window.autoFarmStats.startTime) /
 +    1000
@@ -1879,18 +1921,18 @@ Index: src/features/autofarm.js
 +      "s",
 +  );
 +}
-+document.addEventListener("keydown", (event_7o7) => {
-+  if (event_7o7.target.matches("input,textarea,select")) {
++document.addEventListener("keydown", (v6b14Event) => {
++  if (v6b14Event.target.matches("input,textarea,select")) {
 +    return;
 +  }
-+  if (event_7o7.key === "F5") {
-+    event_7o7.preventDefault();
++  if (v6b14Event.key === "F5") {
++    v6b14Event.preventDefault();
 +    if (window.autoFarmActive) {
 +      stopAutoFarm();
-+      const farmBtn = document.getElementById("autoFarmBtn");
-+      if (farmBtn) {
-+        farmBtn.textContent = "Auto Farm";
-+        farmBtn.classList.remove("toggle-on");
++      const v3b29FarmBtn = document.getElementById("autoFarmBtn");
++      if (v3b29FarmBtn) {
++        v3b29FarmBtn.textContent = "Auto Farm";
++        v3b29FarmBtn.classList.remove("toggle-on");
 +      }
 +    } else {
 +      const farmModeSelect = document.getElementById("farmModeSelect");
@@ -1924,21 +1966,21 @@ Index: src/features/chat.js
 ===================================================================
 --- src/features/chat.js	v1.5
 +++ src/features/chat.js	v1.6
-@@ -5,9 +5,9 @@
-     clearInterval(state.entityTrailInterval);
+@@ -6,9 +6,9 @@
+     clearInterval(EntityTrailInterval);
    }
-   state.isToggled = true;
-   state.entityTrailInterval = setInterval(() => {
+   state.IsToggled = true;
+   EntityTrailInterval = setInterval(() => {
 -    autoChat(taskData);
 +    simulateChatInput(taskData);
    }, intervalSeconds * 1000);
  }
  function stopInterval() {
-   if (state.entityTrailInterval) {
-@@ -15,26 +15,24 @@
-     state.entityTrailInterval = null;
+   if (EntityTrailInterval) {
+@@ -16,26 +16,24 @@
+     EntityTrailInterval = null;
    }
-   state.isToggled = false;
+   state.IsToggled = false;
  }
 -function autoChat(messageText) {
 +function simulateChatInput(textToType) {
@@ -1952,9 +1994,10 @@ Index: src/features/chat.js
    }
    chatInput.focus();
    chatInput.value = "";
-   let charIndex = 0;
--  const typeCharacter = () => {
--    if (charIndex >= messageText.length) {
+-  let v291aCharIndex = 0;
+-  const v147bTypeCharacter = () => {
+-    if (v291aCharIndex >= messageText.length) {
++  let charIndex = 0;
 +  const typeTextRecursively = () => {
 +    if (charIndex >= textToType.length) {
        const sendButton =
@@ -1966,23 +2009,24 @@ Index: src/features/chat.js
          sendButton.click();
        } else {
          chatInput.dispatchEvent(
-@@ -53,17 +51,17 @@
+@@ -54,17 +52,17 @@
          }, 100);
        }
        return;
      }
--    chatInput.value += messageText[charIndex];
+-    chatInput.value += messageText[v291aCharIndex];
 +    chatInput.value += textToType[charIndex];
      chatInput.dispatchEvent(
        new InputEvent("input", {
          bubbles: true,
        }),
      );
-     charIndex++;
--    setTimeout(typeCharacter, 25);
+-    v291aCharIndex++;
+-    setTimeout(v147bTypeCharacter, 25);
++    charIndex++;
 +    setTimeout(typeTextRecursively, 25);
    };
--  typeCharacter();
+-  v147bTypeCharacter();
 +  typeTextRecursively();
  }
  
@@ -1994,8 +2038,8 @@ Index: src/features/entitytrail.js
 +++ src/features/entitytrail.js	v1.6
 @@ -1,5 +1,5 @@
  export const featuresentitytrailState = {
--  entityTrailInterval_s4i: null,
-+  entityTrailInterval_rfg: null,
+-  appEntityTrailInterval: null,
++  globalEntityTrailInterval: null,
  };
  
  export {};
@@ -2003,14 +2047,13 @@ Index: src/features/esp.js
 ===================================================================
 --- src/features/esp.js	v1.5
 +++ src/features/esp.js	v1.6
-@@ -0,0 +1,378 @@
+@@ -0,0 +1,393 @@
 +import {
 +  getEntityPosition,
 +  calculateDirection,
 +  findEntityById,
-+  angle,
-+  playerData,
 +  getFirstAnimalPosition,
++  PlayerData,
 +  state,
 +} from "../core.js";
 +import {
@@ -2037,37 +2080,39 @@ Index: src/features/esp.js
 +      "position:fixed;top:0;left:0;pointer-events:none;z-index:999998;";
 +    document.body.appendChild(overlayCanvas);
 +  }
-+  const canvas = getGameCanvas();
-+  if (canvas) {
-+    const rect = canvas.getBoundingClientRect();
-+    overlayCanvas.width = rect.width;
-+    overlayCanvas.height = rect.height;
-+    overlayCanvas.style.left = rect.left + "px";
-+    overlayCanvas.style.top = rect.top + "px";
-+    overlayCanvas.style.width = rect.width + "px";
-+    overlayCanvas.style.height = rect.height + "px";
++  const v3da5Canvas = getGameCanvas();
++  if (v3da5Canvas) {
++    const v2bf8Rect = v3da5Canvas.getBoundingClientRect();
++    overlayCanvas.width = v2bf8Rect.width;
++    overlayCanvas.height = v2bf8Rect.height;
++    overlayCanvas.style.left = v2bf8Rect.left + "px";
++    overlayCanvas.style.top = v2bf8Rect.top + "px";
++    overlayCanvas.style.width = v2bf8Rect.width + "px";
++    overlayCanvas.style.height = v2bf8Rect.height + "px";
 +  } else {
 +    overlayCanvas.width = window.innerWidth;
 +    overlayCanvas.height = window.innerHeight;
 +  }
 +  return overlayCanvas;
 +}
-+function drawEsp(ctx, gameState, offsetX, offsetY, scale) {
-+  if (!gameState || gameState.error) {
++function drawEsp(ctx, v3025GameState, offsetX, offsetY, scale) {
++  if (!v3025GameState || v3025GameState.error) {
 +    return;
 +  }
-+  const myPos = gameState.myPos;
++  const myPos = v3025GameState.myPos;
 +  const espMode = window.espMode;
 +  const trackedEntityId = window.espTrackedEntityId;
 +  let entities =
-+    espMode === "players" ? gameState.players || [] : gameState.food || [];
++    espMode === "players"
++      ? v3025GameState.players || []
++      : v3025GameState.food || [];
 +  entities.forEach((targetEntity) => {
-+    const deltaX = targetEntity.x - myPos.x;
-+    const deltaY = targetEntity.y - myPos.y;
-+    const screenX = offsetX + deltaX * scale;
-+    const screenY = offsetY + deltaY * scale;
++    const v921eDeltaX = targetEntity.x - myPos.x;
++    const v2d32DeltaY = targetEntity.y - myPos.y;
++    const d712ScreenX = offsetX + v921eDeltaX * scale;
++    const v560dScreenY = offsetY + v2d32DeltaY * scale;
 +    const isSelected = trackedEntityId && targetEntity.id === trackedEntityId;
-+    const boxSize = 20;
++    const v58a2BoxSize = 20;
 +    let markerColor;
 +    if (espMode === "players") {
 +      markerColor = isSelected
@@ -2082,35 +2127,35 @@ Index: src/features/esp.js
 +      ctx.strokeStyle = markerColor;
 +      ctx.lineWidth = isSelected ? 3 : 2;
 +      ctx.strokeRect(
-+        screenX - boxSize / 2,
-+        screenY - boxSize / 2,
-+        boxSize,
-+        boxSize,
++        d712ScreenX - v58a2BoxSize / 2,
++        v560dScreenY - v58a2BoxSize / 2,
++        v58a2BoxSize,
++        v58a2BoxSize,
 +      );
 +      ctx.fillStyle = markerColor;
 +      ctx.font = "bold 11px monospace";
 +      const entityLabel = targetEntity.entity?.name || "ID:" + targetEntity.id;
 +      ctx.fillText(
 +        entityLabel,
-+        screenX - boxSize / 2,
-+        screenY - boxSize / 2 - 8,
++        d712ScreenX - v58a2BoxSize / 2,
++        v560dScreenY - v58a2BoxSize / 2 - 8,
 +      );
 +      ctx.font = "10px monospace";
 +      ctx.fillText(
 +        Math.round(targetEntity.distance).toString(),
-+        screenX - boxSize / 2,
-+        screenY + boxSize / 2 + 13,
++        d712ScreenX - v58a2BoxSize / 2,
++        v560dScreenY + v58a2BoxSize / 2 + 13,
 +      );
 +      if (targetEntity.entity?.visibleFishLevel != null) {
 +        ctx.fillText(
 +          "Lvl:" + targetEntity.entity.visibleFishLevel,
-+          screenX - boxSize / 2,
-+          screenY + boxSize / 2 + 24,
++          d712ScreenX - v58a2BoxSize / 2,
++          v560dScreenY + v58a2BoxSize / 2 + 24,
 +        );
 +      }
 +      ctx.beginPath();
 +      ctx.moveTo(offsetX, offsetY);
-+      ctx.lineTo(screenX, screenY);
++      ctx.lineTo(d712ScreenX, v560dScreenY);
 +      ctx.strokeStyle = markerColor;
 +      ctx.globalAlpha = 0.25;
 +      ctx.lineWidth = 1;
@@ -2126,24 +2171,24 @@ Index: src/features/esp.js
 +      ctx.strokeStyle = markerColor;
 +      ctx.lineWidth = 1.5;
 +      ctx.strokeRect(
-+        screenX - boxSize / 2,
-+        screenY - boxSize / 2,
-+        boxSize,
-+        boxSize,
++        d712ScreenX - v58a2BoxSize / 2,
++        v560dScreenY - v58a2BoxSize / 2,
++        v58a2BoxSize,
++        v58a2BoxSize,
 +      );
 +      if (targetEntity.distance < 1000) {
 +        ctx.fillStyle = markerColor;
 +        ctx.font = "9px monospace";
 +        ctx.fillText(
 +          Math.round(targetEntity.distance).toString(),
-+          screenX + boxSize / 2 + 3,
-+          screenY + 3,
++          d712ScreenX + v58a2BoxSize / 2 + 3,
++          v560dScreenY + 3,
 +        );
 +      }
 +    }
 +  });
 +}
-+function drawTrackedEntity(ctx, canvas, myPos, scale) {
++function drawTrackedEntity(v14f1Ctx, v4581Canvas, v2270MyPos, v3ffcScale) {
 +  if (!window.espTrackedEntityId) {
 +    return;
 +  }
@@ -2156,177 +2201,187 @@ Index: src/features/esp.js
 +    return;
 +  }
 +  const entityPos = getEntityPosition(trackedEntity);
-+  if (!entityPos || !myPos) {
++  if (!entityPos || !v2270MyPos) {
 +    return;
 +  }
-+  const centerX = canvas.width / 2;
-+  const centerY = canvas.height / 2;
-+  const diffX = entityPos.x - myPos.x;
-+  const diffY = entityPos.y - myPos.y;
-+  const screenX = centerX + diffX * scale;
-+  const screenY = centerY + diffY * scale;
++  const v15eaCenterX = v4581Canvas.width / 2;
++  const v4812CenterY = v4581Canvas.height / 2;
++  const diffX = entityPos.x - v2270MyPos.x;
++  const diffY = entityPos.y - v2270MyPos.y;
++  const screenX = v15eaCenterX + diffX * v3ffcScale;
++  const screenY = v4812CenterY + diffY * v3ffcScale;
 +  const distance = calculateDistance(
-+    myPos.x,
-+    myPos.y,
++    v2270MyPos.x,
++    v2270MyPos.y,
 +    entityPos.x,
 +    entityPos.y,
 +  );
 +  const entityDir = calculateDirection(trackedEntity);
 +  const pulseAlpha = Math.sin(Date.now() / 200) * 0.3 + 0.7;
 +  const boxSize = 40;
-+  ctx.beginPath();
-+  ctx.moveTo(centerX, centerY);
-+  ctx.lineTo(screenX, screenY);
-+  ctx.strokeStyle = "rgba(255,0,255,0.6)";
-+  ctx.lineWidth = 2;
-+  ctx.setLineDash([8, 4]);
-+  ctx.stroke();
-+  ctx.setLineDash([]);
-+  ctx.strokeStyle = "rgba(255,0,255," + pulseAlpha + ")";
-+  ctx.lineWidth = 3;
-+  ctx.strokeRect(
++  v14f1Ctx.beginPath();
++  v14f1Ctx.moveTo(v15eaCenterX, v4812CenterY);
++  v14f1Ctx.lineTo(screenX, screenY);
++  v14f1Ctx.strokeStyle = "rgba(255,0,255,0.6)";
++  v14f1Ctx.lineWidth = 2;
++  v14f1Ctx.setLineDash([8, 4]);
++  v14f1Ctx.stroke();
++  v14f1Ctx.setLineDash([]);
++  v14f1Ctx.strokeStyle = "rgba(255,0,255," + pulseAlpha + ")";
++  v14f1Ctx.lineWidth = 3;
++  v14f1Ctx.strokeRect(
 +    screenX - boxSize / 2,
 +    screenY - boxSize / 2,
 +    boxSize,
 +    boxSize,
 +  );
-+  ctx.beginPath();
-+  ctx.moveTo(screenX - boxSize, screenY);
-+  ctx.lineTo(screenX + boxSize, screenY);
-+  ctx.moveTo(screenX, screenY - boxSize);
-+  ctx.lineTo(screenX, screenY + boxSize);
-+  ctx.strokeStyle = "rgba(255,0,255,0.5)";
-+  ctx.lineWidth = 1;
-+  ctx.stroke();
++  v14f1Ctx.beginPath();
++  v14f1Ctx.moveTo(screenX - boxSize, screenY);
++  v14f1Ctx.lineTo(screenX + boxSize, screenY);
++  v14f1Ctx.moveTo(screenX, screenY - boxSize);
++  v14f1Ctx.lineTo(screenX, screenY + boxSize);
++  v14f1Ctx.strokeStyle = "rgba(255,0,255,0.5)";
++  v14f1Ctx.lineWidth = 1;
++  v14f1Ctx.stroke();
 +  const dirLineLength = 50;
-+  ctx.beginPath();
-+  ctx.moveTo(screenX, screenY);
-+  ctx.lineTo(
++  v14f1Ctx.beginPath();
++  v14f1Ctx.moveTo(screenX, screenY);
++  v14f1Ctx.lineTo(
 +    screenX + entityDir.dirX * dirLineLength,
 +    screenY + entityDir.dirY * dirLineLength,
 +  );
-+  ctx.strokeStyle = "#ff00ff";
-+  ctx.lineWidth = 2;
-+  ctx.stroke();
++  v14f1Ctx.strokeStyle = "#ff00ff";
++  v14f1Ctx.lineWidth = 2;
++  v14f1Ctx.stroke();
 +  const offsetDistance = 10;
-+  const angle = Math.atan2(entityDir.dirY, entityDir.dirX);
-+  ctx.beginPath();
-+  ctx.moveTo(
++  const v45b4Angle = Math.atan2(entityDir.dirY, entityDir.dirX);
++  v14f1Ctx.beginPath();
++  v14f1Ctx.moveTo(
 +    screenX + entityDir.dirX * dirLineLength,
 +    screenY + entityDir.dirY * dirLineLength,
 +  );
-+  ctx.lineTo(
++  v14f1Ctx.lineTo(
 +    screenX +
 +      entityDir.dirX * dirLineLength -
-+      offsetDistance * Math.cos(angle - 0.4),
++      offsetDistance * Math.cos(v45b4Angle - 0.4),
 +    screenY +
 +      entityDir.dirY * dirLineLength -
-+      offsetDistance * Math.sin(angle - 0.4),
++      offsetDistance * Math.sin(v45b4Angle - 0.4),
 +  );
-+  ctx.moveTo(
++  v14f1Ctx.moveTo(
 +    screenX + entityDir.dirX * dirLineLength,
 +    screenY + entityDir.dirY * dirLineLength,
 +  );
-+  ctx.lineTo(
++  v14f1Ctx.lineTo(
 +    screenX +
 +      entityDir.dirX * dirLineLength -
-+      offsetDistance * Math.cos(angle + 0.4),
++      offsetDistance * Math.cos(v45b4Angle + 0.4),
 +    screenY +
 +      entityDir.dirY * dirLineLength -
-+      offsetDistance * Math.sin(angle + 0.4),
++      offsetDistance * Math.sin(v45b4Angle + 0.4),
 +  );
-+  ctx.strokeStyle = "#ff00ff";
-+  ctx.lineWidth = 2;
-+  ctx.stroke();
++  v14f1Ctx.strokeStyle = "#ff00ff";
++  v14f1Ctx.lineWidth = 2;
++  v14f1Ctx.stroke();
 +  const boxWidth = 180;
 +  const boxHeight = 70;
 +  const boxX = Math.min(
 +    screenX + boxSize / 2 + 10,
-+    canvas.width - boxWidth - 5,
++    v4581Canvas.width - boxWidth - 5,
 +  );
 +  const boxY = Math.max(
 +    5,
-+    Math.min(screenY - boxHeight / 2, canvas.height - boxHeight - 5),
++    Math.min(screenY - boxHeight / 2, v4581Canvas.height - boxHeight - 5),
 +  );
-+  ctx.fillStyle = "rgba(0,0,0,0.85)";
-+  ctx.strokeStyle = "rgba(255,0,255," + pulseAlpha + ")";
-+  ctx.lineWidth = 1.5;
-+  ctx.beginPath();
-+  ctx.roundRect(boxX, boxY, boxWidth, boxHeight, 4);
-+  ctx.fill();
-+  ctx.stroke();
-+  ctx.fillStyle = "#ff00ff";
-+  ctx.font = "bold 12px monospace";
-+  ctx.fillText("TRACKING", boxX + 8, boxY + 18);
-+  ctx.fillStyle = "#ffffff";
-+  ctx.font = "11px monospace";
++  v14f1Ctx.fillStyle = "rgba(0,0,0,0.85)";
++  v14f1Ctx.strokeStyle = "rgba(255,0,255," + pulseAlpha + ")";
++  v14f1Ctx.lineWidth = 1.5;
++  v14f1Ctx.beginPath();
++  v14f1Ctx.roundRect(boxX, boxY, boxWidth, boxHeight, 4);
++  v14f1Ctx.fill();
++  v14f1Ctx.stroke();
++  v14f1Ctx.fillStyle = "#ff00ff";
++  v14f1Ctx.font = "bold 12px monospace";
++  v14f1Ctx.fillText("TRACKING", boxX + 8, boxY + 18);
++  v14f1Ctx.fillStyle = "#ffffff";
++  v14f1Ctx.font = "11px monospace";
 +  const entityName = (
 +    trackedEntity.name || "Entity " + window.espTrackedEntityId
 +  ).substring(0, 18);
-+  ctx.fillText(entityName, boxX + 8, boxY + 34);
-+  ctx.fillStyle = "#ff00ff";
-+  ctx.font = "bold 14px monospace";
-+  ctx.fillText(Math.round(distance) + " units", boxX + 8, boxY + 52);
++  v14f1Ctx.fillText(entityName, boxX + 8, boxY + 34);
++  v14f1Ctx.fillStyle = "#ff00ff";
++  v14f1Ctx.font = "bold 14px monospace";
++  v14f1Ctx.fillText(Math.round(distance) + " units", boxX + 8, boxY + 52);
 +  if (
 +    screenX < 0 ||
-+    screenX > canvas.width ||
++    screenX > v4581Canvas.width ||
 +    screenY < 0 ||
-+    screenY > canvas.height
++    screenY > v4581Canvas.height
 +  ) {
-+    const targetAngle = Math.atan2(screenY - centerY, screenX - centerX);
-+    const posX = centerX + Math.cos(targetAngle) * (canvas.width / 2 - 40);
-+    const posY = centerY + Math.sin(targetAngle) * (canvas.height / 2 - 40);
-+    ctx.fillStyle = "rgba(0,0,0,0.85)";
-+    ctx.beginPath();
-+    ctx.roundRect(posX - 40, posY - 15, 80, 30, 4);
-+    ctx.fill();
-+    ctx.strokeStyle = "#ff00ff";
-+    ctx.lineWidth = 1.5;
-+    ctx.stroke();
-+    ctx.beginPath();
-+    ctx.moveTo(
++    const targetAngle = Math.atan2(
++      screenY - v4812CenterY,
++      screenX - v15eaCenterX,
++    );
++    const posX =
++      v15eaCenterX + Math.cos(targetAngle) * (v4581Canvas.width / 2 - 40);
++    const posY =
++      v4812CenterY + Math.sin(targetAngle) * (v4581Canvas.height / 2 - 40);
++    v14f1Ctx.fillStyle = "rgba(0,0,0,0.85)";
++    v14f1Ctx.beginPath();
++    v14f1Ctx.roundRect(posX - 40, posY - 15, 80, 30, 4);
++    v14f1Ctx.fill();
++    v14f1Ctx.strokeStyle = "#ff00ff";
++    v14f1Ctx.lineWidth = 1.5;
++    v14f1Ctx.stroke();
++    v14f1Ctx.beginPath();
++    v14f1Ctx.moveTo(
 +      posX + Math.cos(targetAngle) * 20,
 +      posY + Math.sin(targetAngle) * 20,
 +    );
-+    ctx.lineTo(
++    v14f1Ctx.lineTo(
 +      posX - Math.cos(targetAngle - 0.5) * 10,
 +      posY - Math.sin(targetAngle - 0.5) * 10,
 +    );
-+    ctx.lineTo(
++    v14f1Ctx.lineTo(
 +      posX - Math.cos(targetAngle + 0.5) * 10,
 +      posY - Math.sin(targetAngle + 0.5) * 10,
 +    );
-+    ctx.closePath();
-+    ctx.fillStyle = "#ff00ff";
-+    ctx.fill();
-+    ctx.fillStyle = "#ffffff";
-+    ctx.font = "bold 11px monospace";
-+    ctx.textAlign = "center";
-+    ctx.fillText(Math.round(distance).toString(), posX, posY + 4);
-+    ctx.textAlign = "left";
++    v14f1Ctx.closePath();
++    v14f1Ctx.fillStyle = "#ff00ff";
++    v14f1Ctx.fill();
++    v14f1Ctx.fillStyle = "#ffffff";
++    v14f1Ctx.font = "bold 11px monospace";
++    v14f1Ctx.textAlign = "center";
++    v14f1Ctx.fillText(Math.round(distance).toString(), posX, posY + 4);
++    v14f1Ctx.textAlign = "left";
 +  }
 +}
 +function renderEspLoop() {
 +  if (!window.espEnabled) {
-+    const overlayCanvas = document.getElementById("esp-overlay");
-+    if (overlayCanvas) {
-+      const overlayCtx = overlayCanvas.getContext("2d");
-+      overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
++    const v39f2OverlayCanvas = document.getElementById("esp-overlay");
++    if (v39f2OverlayCanvas) {
++      const overlayCtx = v39f2OverlayCanvas.getContext("2d");
++      overlayCtx.clearRect(
++        0,
++        0,
++        v39f2OverlayCanvas.width,
++        v39f2OverlayCanvas.height,
++      );
 +    }
 +    requestAnimationFrame(renderEspLoop);
 +    return;
 +  }
 +  const espCanvas = createEspOverlay();
-+  const ctx = espCanvas.getContext("2d");
-+  ctx.clearRect(0, 0, espCanvas.width, espCanvas.height);
-+  const entities = getNearbyEntities();
++  const c073Ctx = espCanvas.getContext("2d");
++  c073Ctx.clearRect(0, 0, espCanvas.width, espCanvas.height);
++  const v237fEntities = getNearbyEntities();
 +  const playerData = getFirstAnimalPosition();
 +  const renderScale = getZoomLevel();
-+  const centerX = espCanvas.width / 2;
-+  const centerY = espCanvas.height / 2;
-+  drawEsp(ctx, entities, centerX, centerY, renderScale);
-+  drawTrackedEntity(ctx, espCanvas, playerData, renderScale);
-+  drawRadar(ctx, espCanvas, entities);
++  const v2cc0CenterX = espCanvas.width / 2;
++  const v441fCenterY = espCanvas.height / 2;
++  drawEsp(c073Ctx, v237fEntities, v2cc0CenterX, v441fCenterY, renderScale);
++  drawTrackedEntity(c073Ctx, espCanvas, playerData, renderScale);
++  drawRadar(c073Ctx, espCanvas, v237fEntities);
 +  requestAnimationFrame(renderEspLoop);
 +}
 +function toggleEsp() {
@@ -2334,39 +2389,43 @@ Index: src/features/esp.js
 +  showToast(window.espEnabled ? "ESP enabled" : "ESP disabled");
 +}
 +function trackPlayer() {
-+  const gameData = getNearbyEntities();
-+  if (gameData && gameData.players && gameData.players.length > 0) {
-+    window.espTrackedEntityId = gameData.players[0].id;
++  const v11abGameData = getNearbyEntities();
++  if (
++    v11abGameData &&
++    v11abGameData.players &&
++    v11abGameData.players.length > 0
++  ) {
++    window.espTrackedEntityId = v11abGameData.players[0].id;
 +    showToast(
 +      "Tracking: " +
-+        (gameData.players[0].entity?.name || window.espTrackedEntityId),
++        (v11abGameData.players[0].entity?.name || window.espTrackedEntityId),
 +    );
 +  } else {
 +    showToast("No players nearby");
 +  }
 +}
-+function toggleEsp_sdk() {
++function globalToggleEsp() {
 +  window.espTrackedEntityId = null;
 +  showToast("Tracking cleared");
 +}
-+function toggleEsp_sl9() {
++function v55bbToggleEsp() {
 +  window.autoDodgeEnabled = false;
 +  showToast("Auto dodge disabled");
 +}
 +function toggleMinimapSize() {
-+  if (!playerData || !playerData.minimap) {
++  if (!PlayerData || !PlayerData.minimap) {
 +    showToast("Minimap not available");
 +    return;
 +  }
-+  if (state.isToggled_sak) {
-+    playerData.minimap.scale.set(1);
-+    playerData.minimap.pivot.set(0, 0);
-+    state.isToggled_sak = false;
++  if (state.boolIsToggled) {
++    PlayerData.minimap.scale.set(1);
++    PlayerData.minimap.pivot.set(0, 0);
++    state.boolIsToggled = false;
 +    showToast("Minimap restored");
 +  } else {
-+    playerData.minimap.scale.set(0.5);
-+    playerData.minimap.pivot.set(-70, -45);
-+    state.isToggled_sak = true;
++    PlayerData.minimap.scale.set(0.5);
++    PlayerData.minimap.pivot.set(-70, -45);
++    state.boolIsToggled = true;
 +    showToast("Small minimap enabled");
 +  }
 +}
@@ -2378,15 +2437,15 @@ Index: src/features/esp.js
 +  renderEspLoop,
 +  toggleEsp,
 +  trackPlayer,
-+  toggleEsp_sdk,
-+  toggleEsp_sl9,
++  globalToggleEsp,
++  v55bbToggleEsp,
 +  toggleMinimapSize,
 +};
 Index: src/features/movement.js
 ===================================================================
 --- src/features/movement.js	v1.5
 +++ src/features/movement.js	v1.6
-@@ -1,18 +1,155 @@
+@@ -1,18 +1,157 @@
 +import {
 +  angles,
 +  radius,
@@ -2400,7 +2459,7 @@ Index: src/features/movement.js
 +import { getGameCanvas } from "../utils.js";
  
 +function startCircularMovement() {
-+  if (featuresentitytrailState.entityTrailInterval_rfg) {
++  if (featuresentitytrailState.globalEntityTrailInterval) {
 +    return;
 +  }
 +  const canvas = getGameCanvas();
@@ -2408,15 +2467,15 @@ Index: src/features/movement.js
 +    showToast("Canvas not found");
 +    return;
 +  }
-+  featuresentitytrailState.entityTrailInterval_rfg = setInterval(() => {
++  featuresentitytrailState.globalEntityTrailInterval = setInterval(() => {
 +    const angleDegrees = angles[state.angleIndex];
 +    const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
-+    const offsetX = Math.round(radius * Math.sin(angleRadians));
-+    const offsetY = Math.round(radius * Math.cos(angleRadians));
++    const v5ecdOffsetX = Math.round(radius * Math.sin(angleRadians));
++    const v504cOffsetY = Math.round(radius * Math.cos(angleRadians));
 +    canvas.dispatchEvent(
 +      new MouseEvent("pointermove", {
-+        clientX: window.innerWidth / 2 + offsetX,
-+        clientY: window.innerHeight / 2 + offsetY,
++        clientX: window.innerWidth / 2 + v5ecdOffsetX,
++        clientY: window.innerHeight / 2 + v504cOffsetY,
 +        bubbles: true,
 +      }),
 +    );
@@ -2424,17 +2483,17 @@ Index: src/features/movement.js
 +  }, 15);
 +}
  function stopEntityTrail() {
--  if (featuresentitytrailState.entityTrailInterval_s4i) {
--    clearInterval(featuresentitytrailState.entityTrailInterval_s4i);
--    featuresentitytrailState.entityTrailInterval_s4i = null;
-+  if (featuresentitytrailState.entityTrailInterval_rfg) {
-+    clearInterval(featuresentitytrailState.entityTrailInterval_rfg);
-+    featuresentitytrailState.entityTrailInterval_rfg = null;
+-  if (featuresentitytrailState.appEntityTrailInterval) {
+-    clearInterval(featuresentitytrailState.appEntityTrailInterval);
+-    featuresentitytrailState.appEntityTrailInterval = null;
++  if (featuresentitytrailState.globalEntityTrailInterval) {
++    clearInterval(featuresentitytrailState.globalEntityTrailInterval);
++    featuresentitytrailState.globalEntityTrailInterval = null;
    }
  }
  function toggleMouseSimulation() {
--  if (featuresentitytrailState.entityTrailInterval_s4i) {
-+  if (featuresentitytrailState.entityTrailInterval_rfg) {
+-  if (featuresentitytrailState.appEntityTrailInterval) {
++  if (featuresentitytrailState.globalEntityTrailInterval) {
      stopEntityTrail();
    } else {
 -    startAntiAfk();
@@ -2442,16 +2501,16 @@ Index: src/features/movement.js
    }
  }
 +function moveMouseToSide(side) {
-+  const canvas = getGameCanvas();
-+  if (!canvas) {
++  const v3e63Canvas = getGameCanvas();
++  if (!v3e63Canvas) {
 +    return;
 +  }
-+  const rect = canvas.getBoundingClientRect();
++  const rect = v3e63Canvas.getBoundingClientRect();
 +  const centerX = rect.left + rect.width / 2;
 +  const centerY = rect.top + rect.height / 2;
 +  const targetX =
 +    side === "left" ? centerX - offsetValue : centerX + offsetValue;
-+  canvas.dispatchEvent(
++  v3e63Canvas.dispatchEvent(
 +    new MouseEvent("pointermove", {
 +      clientX: targetX,
 +      clientY: centerY,
@@ -2487,47 +2546,49 @@ Index: src/features/movement.js
 +    );
 +  }, 80);
 +}
-+function simulateMoveAndClick(targetX, targetY, shouldClick) {
-+  const targetElement = getGameCanvas();
-+  if (!targetElement) {
++function simulateMoveAndClick(v3f58TargetX, targetY, shouldClick) {
++  const v21d7TargetElement = getGameCanvas();
++  if (!v21d7TargetElement) {
 +    return;
 +  }
 +  const playerPosition = getFirstAnimalPosition();
 +  if (!playerPosition) {
 +    return;
 +  }
-+  const elementRect = targetElement.getBoundingClientRect();
-+  const centerX = elementRect.left + elementRect.width / 2;
-+  const centerY = elementRect.top + elementRect.height / 2;
-+  const deltaX = targetX - playerPosition.x;
++  const elementRect = v21d7TargetElement.getBoundingClientRect();
++  const v39c0CenterX = elementRect.left + elementRect.width / 2;
++  const v11cfCenterY = elementRect.top + elementRect.height / 2;
++  const deltaX = v3f58TargetX - playerPosition.x;
 +  const deltaY = targetY - playerPosition.y;
-+  const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
++  const e1adDistance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 +  let speedMultiplier = 1;
-+  if (distance > 5000) {
++  if (e1adDistance > 5000) {
 +    speedMultiplier = 3;
-+  } else if (distance > 2000) {
++  } else if (e1adDistance > 2000) {
 +    speedMultiplier = 2;
-+  } else if (distance > 1000) {
++  } else if (e1adDistance > 1000) {
 +    speedMultiplier = 1.5;
-+  } else if (distance > 500) {
++  } else if (e1adDistance > 500) {
 +    speedMultiplier = 1.2;
-+  } else if (distance < 50) {
++  } else if (e1adDistance < 50) {
 +    speedMultiplier = 0.5;
-+  } else if (distance < 150) {
++  } else if (e1adDistance < 150) {
 +    speedMultiplier = 0.8;
 +  }
-+  const offsetX = deltaX * speedMultiplier;
-+  const offsetY = deltaY * speedMultiplier;
++  const v4daeOffsetX = deltaX * speedMultiplier;
++  const v1429OffsetY = deltaY * speedMultiplier;
 +  const maxOffset = Math.min(elementRect.width, elementRect.height) * 0.85;
-+  const currentOffset = Math.sqrt(offsetX * offsetX + offsetY * offsetY);
-+  let finalX = centerX + offsetX;
-+  let finalY = centerY + offsetY;
++  const currentOffset = Math.sqrt(
++    v4daeOffsetX * v4daeOffsetX + v1429OffsetY * v1429OffsetY,
++  );
++  let finalX = v39c0CenterX + v4daeOffsetX;
++  let finalY = v11cfCenterY + v1429OffsetY;
 +  if (currentOffset > maxOffset) {
 +    const clampFactor = maxOffset / currentOffset;
-+    finalX = centerX + offsetX * clampFactor;
-+    finalY = centerY + offsetY * clampFactor;
++    finalX = v39c0CenterX + v4daeOffsetX * clampFactor;
++    finalY = v11cfCenterY + v1429OffsetY * clampFactor;
 +  }
-+  targetElement.dispatchEvent(
++  v21d7TargetElement.dispatchEvent(
 +    new MouseEvent("pointermove", {
 +      clientX: finalX,
 +      clientY: finalY,
@@ -2554,8 +2615,7 @@ Index: src/ui/interaction.js
 --- src/ui/interaction.js	v1.5
 +++ src/ui/interaction.js	v1.6
 @@ -1,16 +1,17 @@
--import { radius, state } from "../core.js";
-+import { currentTime, radius, state } from "../core.js";
+ import { radius, state } from "../core.js";
 +import { getMyAnimal } from "../utils.js";
  
 -function simulateTyping(inputSelector, textToType) {
@@ -2577,7 +2637,7 @@ Index: src/ui/interaction.js
          new Event("change", {
            bubbles: true,
          }),
-@@ -19,37 +20,123 @@
+@@ -19,37 +20,124 @@
          new Event("input", {
            bubbles: true,
          }),
@@ -2607,13 +2667,14 @@ Index: src/ui/interaction.js
 -    "position: fixed; top: 20px; right: 20px; background: var(--bg-primary); color: var(--text-primary); padding: 12px 18px; border-radius: 12px; z-index: 10001; font-size: 14px; opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease; pointer-events: none; backdrop-filter: blur(10px); border: 1px solid var(--border);";
 -  notificationElement.textContent = message;
 -  document.body.appendChild(notificationElement);
++let CurrentTime = 0;
 +function showToast(message) {
 +  const currentTime = Date.now();
-+  if (message === state.currentTrackId && currentTime - currentTime < 3000) {
++  if (message === state.currentTrackId && currentTime - CurrentTime < 3000) {
 +    return;
 +  }
 +  state.currentTrackId = message;
-+  currentTime = currentTime;
++  CurrentTime = currentTime;
 +  const toastElement = document.createElement("div");
 +  toastElement.style.cssText =
 +    "\n      position: fixed; top: 16px; right: 16px;\n      background: #282828; color: #e0e0e0;\n      padding: 10px 16px; border-radius: 4px;\n      z-index: 10000000; font-size: 13px;\n      opacity: 0; transition: opacity 0.2s ease, transform 0.2s ease;\n      pointer-events: none; font-family: 'Segoe UI', system-ui, sans-serif;\n      border-left: 3px solid var(--acc, #888);\n      transform: translateX(20px);\n    ";
@@ -2656,13 +2717,13 @@ Index: src/ui/interaction.js
 +      const interactiveElements = document.querySelectorAll(
 +        "input, button, select, .play-game, .home, .start-screen, .el-dialog, .el-button, a",
 +      );
-+      interactiveElements.forEach((targetElement) => {
-+        targetElement.style.pointerEvents = "auto";
++      interactiveElements.forEach((acdbTargetElement) => {
++        acdbTargetElement.style.pointerEvents = "auto";
 +        if (
-+          targetElement.tagName === "BUTTON" ||
-+          targetElement.tagName === "INPUT"
++          acdbTargetElement.tagName === "BUTTON" ||
++          acdbTargetElement.tagName === "INPUT"
 +        ) {
-+          targetElement.disabled = false;
++          acdbTargetElement.disabled = false;
 +        }
 +      });
 +      const vfmElements = document.querySelectorAll(
@@ -2671,8 +2732,8 @@ Index: src/ui/interaction.js
 +      vfmElements.forEach((topLayerElement) => {
 +        topLayerElement.style.pointerEvents = "auto";
 +        topLayerElement.style.zIndex = "100000";
-+        topLayerElement.querySelectorAll("*").forEach((targetElement) => {
-+          targetElement.style.pointerEvents = "auto";
++        topLayerElement.querySelectorAll("*").forEach((v2afcTargetElement) => {
++          v2afcTargetElement.style.pointerEvents = "auto";
 +        });
 +      });
 +      const gameOverElements = document.querySelectorAll(
@@ -2681,9 +2742,9 @@ Index: src/ui/interaction.js
 +      gameOverElements.forEach((interactiveElement) => {
 +        interactiveElement.style.pointerEvents = "auto";
 +      });
-+      const appElement = document.getElementById("app");
-+      if (appElement) {
-+        appElement.style.pointerEvents = "auto";
++      const Element = document.getElementById("app");
++      if (Element) {
++        Element.style.pointerEvents = "auto";
 +      }
 +      const playButtons = document.querySelectorAll(
 +        '.play-btn, .respawn-btn, .startButton, .el-button, button.play, [class*="play"], [class*="start"]',
@@ -2701,10 +2762,10 @@ Index: src/ui/interaction.js
 +        }
 +      });
 +    } else {
-+      const uiPanels = document.querySelectorAll(
++      const Panels = document.querySelectorAll(
 +        "#deep-tools-panel, #plus-panel, #settings-panel, #update-history",
 +      );
-+      uiPanels.forEach((middleLayerElement) => {
++      Panels.forEach((middleLayerElement) => {
 +        if (middleLayerElement) {
 +          middleLayerElement.style.zIndex = "99999";
 +        }
@@ -2725,29 +2786,28 @@ Index: src/ui/panels.js
 ===================================================================
 --- src/ui/panels.js	v1.5
 +++ src/ui/panels.js	v1.6
-@@ -1,689 +1,467 @@
+@@ -1,703 +1,470 @@
  import {
    radius,
 -  gameInstance,
 -  playerData,
-   config,
+-  objConfig,
 -  initInterceptor,
--  isProcessed_run,
+-  boolIsProcessed,
 -  initializeAntiTamper,
 -  disableGameRestrictions,
 +  hookTextEncoder,
-+  isProcessed_skx,
++  sysIsProcessed,
 +  initAutoFarm,
 +  initializeAntiDetection,
 +  initializeViewportSettings,
-+  angle,
    state,
  } from "../core.js";
  import {
 +  toggleEsp,
 +  trackPlayer,
-+  toggleEsp_sdk,
-+  toggleEsp_sl9,
++  globalToggleEsp,
++  v55bbToggleEsp,
 +  toggleMinimapSize,
 +} from "../features/esp.js";
 +import {
@@ -2768,7 +2828,7 @@ Index: src/ui/panels.js
 -import { toggleMinimapScale } from "./radar.js";
 -import { applyThemeColors } from "./theme.js";
  
--let isProcessed_r36 = false;
+-let modIsProcessed = false;
 -function createHalloweenModal(modalConfig) {
 +function showHalloweenModal(config) {
    const modalContainer = document.createElement("div");
@@ -2839,9 +2899,10 @@ Index: src/ui/panels.js
 +    config(false);
    };
 -  halloweenCodeInput.addEventListener("keypress", (event) => {
-+  codeInput.addEventListener("keypress", (event) => {
-     if (event.key === "Enter") {
+-    if (event.key === "Enter") {
 -      submitHalloweenCodeButton.click();
++  codeInput.addEventListener("keypress", (v8a09Event) => {
++    if (v8a09Event.key === "Enter") {
 +      modalContainer.querySelector("#hwSubmitBtn").click();
      }
    });
@@ -2849,7 +2910,7 @@ Index: src/ui/panels.js
 +  codeInput.focus();
  }
 -const initControlOverlay = () => {
--  if (isProcessed_r36) {
+-  if (modIsProcessed) {
 -    return;
 -  }
 -  function sendActionSequence() {
@@ -2879,7 +2940,9 @@ Index: src/ui/panels.js
 -      '<div id="ctrl-overlay" style="width: 100%;height: 100%;position: absolute;display: block;z-index:10000;pointer-events:none;"></div>';
 -    document
 -      .getElementById("ctrl-overlay")
--      .addEventListener("contextmenu", (event) => event.preventDefault());
+-      .addEventListener("contextmenu", (v4fb5Event) =>
+-        v4fb5Event.preventDefault(),
+-      );
 -  }
 -  createControlOverlay();
 -  window.addEventListener(
@@ -2891,8 +2954,8 @@ Index: src/ui/panels.js
 -        }
 -        const visibleFishLevel = playerData.myAnimals[0].visibleFishLevel;
 -        const mergedFishConfig = {
--          ...config.default,
--          ...config[visibleFishLevel],
+-          ...objConfig.default,
+-          ...objConfig[visibleFishLevel],
 -        };
 -        if (processAnimals.ctrlKey) {
 -          if (processAnimals.shiftKey && visibleFishLevel === 107) {
@@ -2944,13 +3007,13 @@ Index: src/ui/panels.js
 -      document.getElementById("ctrl-overlay").style.pointerEvents = "none";
 -    } catch {}
 -  });
--  isProcessed_r36 = true;
+-  modIsProcessed = true;
 -};
 -function createUpdateHistoryStyles() {
--  const styleElement = document.createElement("style");
--  styleElement.textContent =
+-  const v4226StyleElement = document.createElement("style");
+-  v4226StyleElement.textContent =
 -    "\n      #update-history {\n        position: fixed;\n        bottom: 20px;\n        left: 20px;\n        background: var(--bg-primary);\n        color: var(--text-primary);\n        padding: 16px;\n        border-radius: 16px;\n        font-size: 13px;\n        z-index: 9999;\n        max-width: 240px;\n        max-height: 280px;\n        overflow-y: auto;\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        cursor: move;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        transition: all 0.3s ease;\n        backdrop-filter: blur(20px);\n      }\n      #update-history:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #update-history ul {\n        margin: 0;\n        padding-left: 18px;\n      }\n      #update-history li {\n        margin-bottom: 6px;\n        line-height: 1.4;\n        color: var(--text-primary);\n      }\n      #update-history h3 {\n        margin: 0 0 12px 0;\n        font-size: 15px;\n        color: var(--accent);\n        position: relative;\n        padding-right: 28px;\n        font-weight: 600;\n      }\n      #update-history button.min-btn {\n        background: none;\n        border: none;\n        color: var(--accent);\n        font-size: 20px;\n        cursor: pointer;\n        position: absolute;\n        top: 30%;\n        right: 8px;\n        transform: translateY(-50%);\n        z-index: 1;\n        transition: all 0.2s ease;\n        width: 24px;\n        height: 24px;\n        line-height: 24px;\n        border-radius: 50%;\n      }\n      #update-history button.min-btn:hover {\n        color: var(--accent-hover);\n        background: rgba(var(--accent-rgb), 0.2);\n      }\n      #update-history.themestarwars::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at center, rgba(255,255,255,0.1) 1px, transparent 1px);\n        background-size: 20px 20px;\n        animation: twinkle-stars 20s linear infinite;\n      }\n      #update-history.themekfc::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 20% 30%, rgba(244,0,0,0.1) 2px, transparent 2px),\n                    radial-gradient(circle at 80% 70%, rgba(255,204,0,0.05) 1px, transparent 1px);\n        background-size: 40px 40px;\n      }\n      #update-history.themehalloween::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 30% 20%, rgba(255, 102, 0, 0.1) 1px, transparent 1px),\n                    radial-gradient(circle at 70% 80%, rgba(139, 0, 255, 0.05) 2px, transparent 2px);\n        background-size: 30px 30px;\n        animation: halloween-glow 15s ease-in-out infinite alternate;\n      }\n      #update-history.themehalloween .bat {\n        position: absolute;\n        font-size: 20px;\n        animation: fly-bat 10s linear infinite;\n        pointer-events: none;\n        opacity: 0.7;\n      }\n      #update-history.themehalloween .bat:nth-child(1) { top: 10%; left: -10%; animation-delay: 0s; }\n      #update-history.themehalloween .bat:nth-child(2) { top: 50%; right: -10%; animation-delay: 3s; animation-direction: reverse; }\n      #update-history.themehalloween .bat:nth-child(3) { top: 80%; left: -10%; animation-delay: 6s; }\n      @keyframes fly-bat {\n        0% { transform: translateX(0) rotate(0deg); }\n        100% { transform: translateX(120%) rotate(360deg); }\n      }\n      @keyframes twinkle-stars {\n        0% { background-position: 0 0; }\n        100% { background-position: 20px 20px; }\n      }\n      @keyframes halloween-glow {\n        0% { opacity: 0.8; }\n        100% { opacity: 1; }\n      }\n    ";
--  document.head.appendChild(styleElement);
+-  document.head.appendChild(v4226StyleElement);
 -  const draggableElement = document.createElement("div");
 -  draggableElement.id = "update-history";
 -  draggableElement.innerHTML =
@@ -2960,25 +3023,27 @@ Index: src/ui/panels.js
 -  const historyContentElement =
 -    draggableElement.querySelector("#historyContent");
 -  let isHidden = false;
--  minHistElement.onclick = (event) => {
--    event.stopPropagation();
+-  minHistElement.onclick = (v16e7Event) => {
+-    v16e7Event.stopPropagation();
 -    isHidden = !isHidden;
 -    historyContentElement.style.display = isHidden ? "none" : "block";
 -    draggableElement.style.height = isHidden ? "60px" : "auto";
 -    minHistElement.textContent = isHidden ? "+" : "−";
 -  };
-+function makeDraggable(element) {
-   let offsetX;
-   let offsetY;
+-  let offsetX;
+-  let offsetY;
 -  let isMoving = false;
++function makeDraggable(element) {
++  let v279dOffsetX;
++  let ee7cOffsetY;
    let isDragging = false;
 -  draggableElement.addEventListener("mousedown", (clickEvent) => {
-+  let hasMoved = false;
-+  element.addEventListener("mousedown", (event) => {
++  let v3fa0HasMoved = false;
++  element.addEventListener("mousedown", (v10c1Event) => {
      if (
 -      ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(clickEvent.target.tagName)
 +      ["BUTTON", "INPUT", "TEXTAREA", "SELECT", "A", "LABEL"].includes(
-+        event.target.tagName,
++        v10c1Event.target.tagName,
 +      )
      ) {
        return;
@@ -2994,21 +3059,21 @@ Index: src/ui/panels.js
 -      const deltaY = mouseEvent.clientY - clickEvent.clientY;
 -      if (!isDragging && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
 -        isDragging = true;
-+    if (event.target.closest("button, input, textarea, select, label")) {
++    if (v10c1Event.target.closest("button, input, textarea, select, label")) {
 +      return;
 +    }
 +    isDragging = true;
-+    hasMoved = false;
-+    offsetX = event.clientX - element.getBoundingClientRect().left;
-+    offsetY = event.clientY - element.getBoundingClientRect().top;
++    v3fa0HasMoved = false;
++    v279dOffsetX = v10c1Event.clientX - element.getBoundingClientRect().left;
++    ee7cOffsetY = v10c1Event.clientY - element.getBoundingClientRect().top;
 +    element.style.transition = "none";
-+    const handleMouseMove = (event) => {
++    const handleMouseMove = (v27ccEvent) => {
 +      if (
-+        !hasMoved &&
-+        (Math.abs(event.clientX - event.clientX) > 5 ||
-+          Math.abs(event.clientY - event.clientY) > 5)
++        !v3fa0HasMoved &&
++        (Math.abs(v27ccEvent.clientX - v10c1Event.clientX) > 5 ||
++          Math.abs(v27ccEvent.clientY - v10c1Event.clientY) > 5)
 +      ) {
-+        hasMoved = true;
++        v3fa0HasMoved = true;
        }
 -      if (isMoving) {
 -        draggableElement.style.left = mouseEvent.clientX - offsetX + "px";
@@ -3016,8 +3081,8 @@ Index: src/ui/panels.js
 -        draggableElement.style.bottom = "auto";
 -        draggableElement.style.right = "auto";
 +      if (isDragging) {
-+        element.style.left = event.clientX - offsetX + "px";
-+        element.style.top = event.clientY - offsetY + "px";
++        element.style.left = v27ccEvent.clientX - v279dOffsetX + "px";
++        element.style.top = v27ccEvent.clientY - ee7cOffsetY + "px";
 +        element.style.bottom = "auto";
 +        element.style.right = "auto";
        }
@@ -3036,13 +3101,13 @@ Index: src/ui/panels.js
 -  draggableElement.addEventListener("click", (inputEvent) => {
 -    if (isDragging) {
 -      inputEvent.stopImmediatePropagation();
-+  element.addEventListener("click", (event_a8f) => {
-+    if (hasMoved) {
-+      event_a8f.stopImmediatePropagation();
++  element.addEventListener("click", (v367eEvent) => {
++    if (v3fa0HasMoved) {
++      v367eEvent.stopImmediatePropagation();
      }
    });
 -  if (localStorage.getItem("theme") === "halloween") {
--    for (let i = 0; i < 3; i++) {
+-    for (let cfecI = 0; cfecI < 3; cfecI++) {
 -      const spanElement = document.createElement("span");
 -      spanElement.className = "bat";
 -      spanElement.textContent = "🦇";
@@ -3084,12 +3149,12 @@ Index: src/ui/panels.js
 +  panelElement.innerHTML =
 +    '\n      <div class="ast-header">\n        <span class="ast-header-title">Astraphobia Client</span>\n        <button class="ast-header-min" id="mainMin">−</button>\n      </div>\n      <div class="ast-body" id="mainBody">\n        <span class="ast-section-label">Chat</span>\n        <textarea class="ast-textarea" id="chatMsg" placeholder="Message..." rows="2"></textarea>\n        <button class="ast-btn" id="sendBtn">Send Chat</button>\n        <div class="ast-row" style="margin-top:4px;">\n          <input class="ast-input" type="number" id="delayInput" min="1" max="300" value="10" style="width:50px;text-align:center;">\n          <span style="font-size:11px;color:#888;">sec</span>\n          <button class="ast-btn" id="autoChatBtn" style="flex:1;margin-bottom:0;">Auto Chat</button>\n        </div>\n\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Tools</span>\n        <button class="ast-btn" id="patchBtn">Special Characters</button>\n        <button class="ast-btn" id="spoofBtn">Spoof Username</button>\n        <button class="ast-btn" id="spinBtn">Auto Spin</button>\n\n        <div class="ast-key-row">\n          <span>Spin key</span>\n          <input class="ast-key-capture" id="spinKeyInput" type="text" placeholder="..." readonly>\n        </div>\n\n        <div class="ast-sep"></div>\n        <span class="ast-section-label">Turn Controls</span>\n        <div class="ast-key-row">\n          <span>Turn Left</span>\n          <input class="ast-key-capture" id="turnLeftKeyInput" type="text" value="Q" readonly>\n        </div>\n        <div class="ast-key-row">\n          <span>Turn Right</span>\n          <input class="ast-key-capture" id="turnRightKeyInput" type="text" value="E" readonly>\n        </div>\n\n        <div class="ast-sep"></div>\n        <div class="ast-credits">\n          Made by Astraphobia\n        </div>\n      </div>\n    ';
 +  document.body.appendChild(panelElement);
-+  const mainBody = panelElement.querySelector("#mainBody");
++  const Body = panelElement.querySelector("#mainBody");
 +  let isHidden = false;
-+  panelElement.querySelector("#mainMin").onclick = (event) => {
-+    event.stopPropagation();
++  panelElement.querySelector("#mainMin").onclick = (v9a5dEvent) => {
++    v9a5dEvent.stopPropagation();
 +    isHidden = !isHidden;
-+    mainBody.style.display = isHidden ? "none" : "block";
++    Body.style.display = isHidden ? "none" : "block";
 +    panelElement.querySelector("#mainMin").textContent = isHidden ? "+" : "−";
 +  };
 +  panelElement.querySelector("#sendBtn").onclick = () => {
@@ -3101,15 +3166,15 @@ Index: src/ui/panels.js
    };
 -  const spoofButton = deepToolsPanel.querySelector("#patchBtn");
 -  spoofButton.onclick = () => initInterceptor(spoofButton);
--  const spoofButton_251 = deepToolsPanel.querySelector("#spoofBtn");
--  spoofButton_251.onclick = () => {
+-  const v2413SpoofButton = deepToolsPanel.querySelector("#spoofBtn");
+-  v2413SpoofButton.onclick = () => {
 -    const inputLimit = generateRandomString(8);
 -    if (simulateTyping(".play-game .el-input__inner", inputLimit)) {
 -      showNotification("Spoofed name!");
 -    } else if (simulateTyping(".new-tribe .el-input__inner", inputLimit)) {
 -      showNotification("Spoofed tribe name!");
-+  const spinBtn = panelElement.querySelector("#autoChatBtn");
-+  spinBtn.onclick = () => {
++  const v4d79SpinBtn = panelElement.querySelector("#autoChatBtn");
++  v4d79SpinBtn.onclick = () => {
 +    const messageText = panelElement.querySelector("#chatMsg").value;
 +    const delayValue =
 +      parseInt(panelElement.querySelector("#delayInput").value) || 10;
@@ -3117,15 +3182,15 @@ Index: src/ui/panels.js
 +      showToast("Enter a message first");
 +      return;
 +    }
-+    if (state.isToggled) {
++    if (state.IsToggled) {
 +      stopInterval();
-+      spinBtn.textContent = "Auto Chat";
-+      spinBtn.classList.remove("toggle-on");
++      v4d79SpinBtn.textContent = "Auto Chat";
++      v4d79SpinBtn.classList.remove("toggle-on");
      } else {
 -      showNotification("No name input found! Enable special characters first.");
 +      startScheduledTask(messageText, delayValue);
-+      spinBtn.textContent = "Stop Chat";
-+      spinBtn.classList.add("toggle-on");
++      v4d79SpinBtn.textContent = "Stop Chat";
++      v4d79SpinBtn.classList.add("toggle-on");
      }
    };
 -  const autoChatButton = deepToolsPanel.querySelector("#spinBtn");
@@ -3147,66 +3212,68 @@ Index: src/ui/panels.js
 +      showToast("No name input found");
 +    }
 +  };
-+  const spinBtn_jno = panelElement.querySelector("#spinBtn");
-+  spinBtn_jno.onclick = () => {
++  const v4d79V4d79SpinBtn = panelElement.querySelector("#spinBtn");
++  v4d79V4d79SpinBtn.onclick = () => {
      toggleMouseSimulation();
--    if (featuresentitytrailState.entityTrailInterval_s4i) {
+-    if (featuresentitytrailState.appEntityTrailInterval) {
 -      autoChatButton.textContent = "Disable Auto Spin";
 -      autoChatButton.style.color = "var(--accent)";
 -      autoChatButton.style.opacity = "0.6";
-+    if (featuresentitytrailState.entityTrailInterval_rfg) {
-+      spinBtn_jno.textContent = "Stop Spin";
-+      spinBtn_jno.classList.add("toggle-on");
++    if (featuresentitytrailState.globalEntityTrailInterval) {
++      v4d79V4d79SpinBtn.textContent = "Stop Spin";
++      v4d79V4d79SpinBtn.classList.add("toggle-on");
      } else {
 -      autoChatButton.textContent = "Enable Auto Spin";
 -      autoChatButton.style.color = "var(--accent)";
 -      autoChatButton.style.opacity = "1";
-+      spinBtn_jno.textContent = "Auto Spin";
-+      spinBtn_jno.classList.remove("toggle-on");
++      v4d79V4d79SpinBtn.textContent = "Auto Spin";
++      v4d79V4d79SpinBtn.classList.remove("toggle-on");
      }
    };
 -  const spinKeyInput = deepToolsPanel.querySelector("#spinKeyInput");
-+  const turnRightKeyInput = panelElement.querySelector("#spinKeyInput");
++  const v38c3TurnRightKeyInput = panelElement.querySelector("#spinKeyInput");
    let lastPressedKey = null;
--  spinKeyInput.addEventListener("keydown", (event) => {
--    event.preventDefault();
--    lastPressedKey = event.code || event.key;
+-  spinKeyInput.addEventListener("keydown", (v1d76Event) => {
+-    v1d76Event.preventDefault();
+-    lastPressedKey = v1d76Event.code || v1d76Event.key;
 -    spinKeyInput.value = lastPressedKey.replace("Key", "").toLowerCase();
-+  turnRightKeyInput.addEventListener("keydown", (keyEvent) => {
++  v38c3TurnRightKeyInput.addEventListener("keydown", (keyEvent) => {
 +    keyEvent.preventDefault();
 +    lastPressedKey = keyEvent.code || keyEvent.key;
-+    turnRightKeyInput.value = lastPressedKey.replace("Key", "").toUpperCase();
++    v38c3TurnRightKeyInput.value = lastPressedKey
++      .replace("Key", "")
++      .toUpperCase();
    });
--  document.addEventListener("keydown", (event_1u9) => {
+-  document.addEventListener("keydown", (b92fEvent) => {
 +  document.addEventListener("keydown", (keyboardEvent) => {
      if (
        lastPressedKey &&
--      event_1u9.code === lastPressedKey &&
--      !event_1u9.target.matches("input, textarea, button")
+-      b92fEvent.code === lastPressedKey &&
+-      !b92fEvent.target.matches("input, textarea, button")
 +      keyboardEvent.code === lastPressedKey &&
 +      !keyboardEvent.target.matches("input,textarea,button,select")
      ) {
--      event_1u9.preventDefault();
+-      b92fEvent.preventDefault();
 +      keyboardEvent.preventDefault();
        toggleMouseSimulation();
--      if (featuresentitytrailState.entityTrailInterval_s4i) {
+-      if (featuresentitytrailState.appEntityTrailInterval) {
 -        autoChatButton.textContent = "Disable Auto Spin";
 -        autoChatButton.style.color = "var(--accent)";
 -        autoChatButton.style.opacity = "0.6";
-+      if (featuresentitytrailState.entityTrailInterval_rfg) {
-+        spinBtn_jno.textContent = "Stop Spin";
-+        spinBtn_jno.classList.add("toggle-on");
++      if (featuresentitytrailState.globalEntityTrailInterval) {
++        v4d79V4d79SpinBtn.textContent = "Stop Spin";
++        v4d79V4d79SpinBtn.classList.add("toggle-on");
        } else {
 -        autoChatButton.textContent = "Enable Auto Spin";
 -        autoChatButton.style.color = "var(--accent)";
 -        autoChatButton.style.opacity = "1";
-+        spinBtn_jno.textContent = "Auto Spin";
-+        spinBtn_jno.classList.remove("toggle-on");
++        v4d79V4d79SpinBtn.textContent = "Auto Spin";
++        v4d79V4d79SpinBtn.classList.remove("toggle-on");
        }
      }
    });
--  const autoChatButton_3ud = deepToolsPanel.querySelector("#autoChatBtn");
--  autoChatButton_3ud.onclick = () => {
+-  const v4da6AutoChatButton = deepToolsPanel.querySelector("#autoChatBtn");
+-  v4da6AutoChatButton.onclick = () => {
 -    const chatMessageValue = deepToolsPanel.querySelector("#chatMsg").value;
 -    const delayInput = deepToolsPanel.querySelector("#delayInput");
 -    const delayValue = parseInt(delayInput.value) || 10;
@@ -3214,94 +3281,96 @@ Index: src/ui/panels.js
 -      showNotification("⚠️ Enter a message first!");
 -      return;
 -    }
--    if (state.isToggled) {
+-    if (state.IsToggled) {
 -      stopInterval();
--      autoChatButton_3ud.textContent = "Enable Auto Chat";
--      autoChatButton_3ud.style.color = "var(--accent)";
--      autoChatButton_3ud.style.opacity = "1";
+-      v4da6AutoChatButton.textContent = "Enable Auto Chat";
+-      v4da6AutoChatButton.style.color = "var(--accent)";
+-      v4da6AutoChatButton.style.opacity = "1";
 -    } else {
 -      startScheduledTask(chatMessageValue, delayValue);
--      autoChatButton_3ud.textContent = "Disable Auto Chat";
--      autoChatButton_3ud.style.color = "var(--accent)";
--      autoChatButton_3ud.style.opacity = "0.6";
+-      v4da6AutoChatButton.textContent = "Disable Auto Chat";
+-      v4da6AutoChatButton.style.color = "var(--accent)";
+-      v4da6AutoChatButton.style.opacity = "0.6";
 -    }
 -  };
 -  let deepToolsOffsetX;
 -  let deepToolsOffsetY;
 -  let deepToolsDragActive = false;
 -  let deepToolsIsDragging = false;
--  deepToolsPanel.addEventListener("mousedown", (event_xe9) => {
+-  deepToolsPanel.addEventListener("mousedown", (bd3eEvent) => {
 -    if (
--      event_xe9.target.tagName === "BUTTON" ||
--      event_xe9.target.tagName === "TEXTAREA" ||
--      event_xe9.target.tagName === "INPUT" ||
--      event_xe9.target.classList.contains("credits")
+-      bd3eEvent.target.tagName === "BUTTON" ||
+-      bd3eEvent.target.tagName === "TEXTAREA" ||
+-      bd3eEvent.target.tagName === "INPUT" ||
+-      bd3eEvent.target.classList.contains("credits")
 -    ) {
 -      return;
 -    }
 -    deepToolsDragActive = true;
 -    deepToolsIsDragging = false;
 -    deepToolsOffsetX =
--      event_xe9.clientX - deepToolsPanel.getBoundingClientRect().left;
+-      bd3eEvent.clientX - deepToolsPanel.getBoundingClientRect().left;
 -    deepToolsOffsetY =
--      event_xe9.clientY - deepToolsPanel.getBoundingClientRect().top;
+-      bd3eEvent.clientY - deepToolsPanel.getBoundingClientRect().top;
 -    deepToolsPanel.style.transition = "none";
--    const handleMouseMove = (mouseEvent) => {
--      const deltaX = mouseEvent.clientX - event_xe9.clientX;
--      const deltaY = mouseEvent.clientY - event_xe9.clientY;
+-    const v5a97HandleMouseMove = (v5217MouseEvent) => {
+-      const v16fbDeltaX = v5217MouseEvent.clientX - bd3eEvent.clientX;
+-      const v575bDeltaY = v5217MouseEvent.clientY - bd3eEvent.clientY;
 -      if (
 -        !deepToolsIsDragging &&
--        (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)
+-        (Math.abs(v16fbDeltaX) > 5 || Math.abs(v575bDeltaY) > 5)
 -      ) {
 -        deepToolsIsDragging = true;
 -      }
 -      if (deepToolsDragActive) {
 -        deepToolsPanel.style.left =
--          mouseEvent.clientX - deepToolsOffsetX + "px";
--        deepToolsPanel.style.top = mouseEvent.clientY - deepToolsOffsetY + "px";
+-          v5217MouseEvent.clientX - deepToolsOffsetX + "px";
+-        deepToolsPanel.style.top =
+-          v5217MouseEvent.clientY - deepToolsOffsetY + "px";
 -        deepToolsPanel.style.bottom = "auto";
 -        deepToolsPanel.style.right = "auto";
 -      }
 -    };
--    const handleMouseUp = () => {
+-    const v4224HandleMouseUp = () => {
 -      deepToolsDragActive = false;
 -      deepToolsPanel.style.transition = "all 0.3s ease";
--      document.removeEventListener("mousemove", handleMouseMove);
--      document.removeEventListener("mouseup", handleMouseUp);
+-      document.removeEventListener("mousemove", v5a97HandleMouseMove);
+-      document.removeEventListener("mouseup", v4224HandleMouseUp);
 -    };
--    document.addEventListener("mousemove", handleMouseMove);
--    document.addEventListener("mouseup", handleMouseUp);
-+  const turnRightKeyInput_hid = panelElement.querySelector("#turnLeftKeyInput");
-+  const turnRightKeyInput_ij7 =
+-    document.addEventListener("mousemove", v5a97HandleMouseMove);
+-    document.addEventListener("mouseup", v4224HandleMouseUp);
++  const v13abV38c3TurnRightKeyInput =
++    panelElement.querySelector("#turnLeftKeyInput");
++  const v38c3V38c3TurnRightKeyInput =
 +    panelElement.querySelector("#turnRightKeyInput");
-+  turnRightKeyInput_hid.value = state.keyQ.toUpperCase();
-+  turnRightKeyInput_ij7.value = state.keyE.toUpperCase();
-+  turnRightKeyInput_hid.addEventListener("keydown", (uiEvent) => {
-+    uiEvent.preventDefault();
-+    uiEvent.stopPropagation();
-+    state.keyQ = uiEvent.key;
-+    turnRightKeyInput_hid.value =
-+      uiEvent.key.length === 1 ? uiEvent.key.toUpperCase() : uiEvent.key;
++  v13abV38c3TurnRightKeyInput.value = state.keyQ.toUpperCase();
++  v38c3V38c3TurnRightKeyInput.value = state.keyE.toUpperCase();
++  v13abV38c3TurnRightKeyInput.addEventListener("keydown", (Event) => {
++    Event.preventDefault();
++    Event.stopPropagation();
++    state.keyQ = Event.key;
++    v13abV38c3TurnRightKeyInput.value =
++      Event.key.length === 1 ? Event.key.toUpperCase() : Event.key;
    });
--  deepToolsPanel.addEventListener("click", (event_mr3) => {
+-  deepToolsPanel.addEventListener("click", (v4a4cEvent) => {
 -    if (deepToolsIsDragging) {
--      event_mr3.stopImmediatePropagation();
+-      v4a4cEvent.stopImmediatePropagation();
 -    }
-+  turnRightKeyInput_ij7.addEventListener("keydown", (inputEvent) => {
++  v38c3V38c3TurnRightKeyInput.addEventListener("keydown", (inputEvent) => {
 +    inputEvent.preventDefault();
 +    inputEvent.stopPropagation();
 +    state.keyE = inputEvent.key;
-+    turnRightKeyInput_ij7.value =
++    v38c3V38c3TurnRightKeyInput.value =
 +      inputEvent.key.length === 1
 +        ? inputEvent.key.toUpperCase()
 +        : inputEvent.key;
    });
 -  if (localStorage.getItem("theme") === "halloween") {
--    for (let i = 0; i < 3; i++) {
--      const spanElement = document.createElement("span");
--      spanElement.className = "bat";
--      spanElement.textContent = "🦇";
--      deepToolsPanel.appendChild(spanElement);
+-    for (let v21d6I = 0; v21d6I < 3; v21d6I++) {
+-      const v4543SpanElement = document.createElement("span");
+-      v4543SpanElement.className = "bat";
+-      v4543SpanElement.textContent = "🦇";
+-      deepToolsPanel.appendChild(v4543SpanElement);
 -    }
 -  }
 -  return deepToolsPanel;
@@ -3337,180 +3406,183 @@ Index: src/ui/panels.js
    document.body.appendChild(plusPanel);
 -  const astraVisionButton = plusPanel.querySelector("#thresherBtn");
 -  astraVisionButton.onclick = () => {
--    if (isProcessed_r36) {
+-    if (modIsProcessed) {
 -      showNotification("Thresher Super Boost is already active!");
+-      return;
+-    }
+-    initializeAntiTamper();
+-    astraVisionButton.textContent = "Thresher Super Boost Active";
+-    astraVisionButton.style.color = "var(--accent)";
+-    astraVisionButton.style.opacity = "0.6";
+-    astraVisionButton.disabled = true;
 +  const plusBody = plusPanel.querySelector("#plusBody");
-+  let isHidden = false;
++  let v573aIsHidden = false;
 +  plusPanel.querySelector("#plusMin").onclick = (toggleEvent) => {
 +    toggleEvent.stopPropagation();
-+    isHidden = !isHidden;
-+    plusBody.style.display = isHidden ? "none" : "block";
-+    plusPanel.querySelector("#plusMin").textContent = isHidden ? "+" : "−";
-+  };
++    v573aIsHidden = !v573aIsHidden;
++    plusBody.style.display = v573aIsHidden ? "none" : "block";
++    plusPanel.querySelector("#plusMin").textContent = v573aIsHidden ? "+" : "−";
+   };
+-  const v2414AstraVisionButton = plusPanel.querySelector("#astraVisionBtn");
+-  v2414AstraVisionButton.onclick = () => {
+-    if (boolIsProcessed) {
+-      showNotification("Astra-Vision already enabled!");
 +  plusPanel.querySelector("#thresherBtn").onclick = (boostEvent) => {
 +    boostEvent.preventDefault();
 +    showToast("Thresher boost has been patched");
 +  };
 +  const astraVisionBtn = plusPanel.querySelector("#astraVisionBtn");
 +  astraVisionBtn.onclick = () => {
-+    if (isProcessed_skx) {
++    if (sysIsProcessed) {
 +      showToast("Already active");
        return;
      }
 -    initializeAntiTamper();
--    astraVisionButton.textContent = "Thresher Super Boost Active";
--    astraVisionButton.style.color = "var(--accent)";
--    astraVisionButton.style.opacity = "0.6";
--    astraVisionButton.disabled = true;
+-    disableGameRestrictions();
+-    v2414AstraVisionButton.textContent = "Astra-Vision Active";
+-    v2414AstraVisionButton.style.color = "var(--accent)";
+-    v2414AstraVisionButton.style.opacity = "0.6";
+-    v2414AstraVisionButton.disabled = true;
+-    showNotification(
+-      "👁️ Astra-Vision enabled! (zoom-limit unlocked, no ink-flash or deep darkness effects)",
+-    );
 +    initializeAntiDetection();
 +    initializeViewportSettings();
 +    astraVisionBtn.textContent = "Astra-Vision ✓";
 +    astraVisionBtn.classList.add("toggle-on");
 +    astraVisionBtn.disabled = true;
    };
--  const astraVisionButton_cs5 = plusPanel.querySelector("#astraVisionBtn");
--  astraVisionButton_cs5.onclick = () => {
--    if (isProcessed_run) {
--      showNotification("Astra-Vision already enabled!");
--      return;
-+  const autoDodgeBtn = plusPanel.querySelector("#smallMinimapBtn");
-+  autoDodgeBtn.onclick = () => {
-+    initializeAntiDetection();
-+    toggleMinimapSize();
-+    if (state.isToggled_sak) {
-+      autoDodgeBtn.textContent = "Minimap: Small";
-+      autoDodgeBtn.classList.add("toggle-on");
-+    } else {
-+      autoDodgeBtn.textContent = "Small Minimap";
-+      autoDodgeBtn.classList.remove("toggle-on");
-     }
--    initializeAntiTamper();
--    disableGameRestrictions();
--    astraVisionButton_cs5.textContent = "Astra-Vision Active";
--    astraVisionButton_cs5.style.color = "var(--accent)";
--    astraVisionButton_cs5.style.opacity = "0.6";
--    astraVisionButton_cs5.disabled = true;
--    showNotification(
--      "👁️ Astra-Vision enabled! (zoom-limit unlocked, no ink-flash or deep darkness effects)",
--    );
-   };
 -  const smallMinimapButton = plusPanel.querySelector("#smallMinimapBtn");
 -  smallMinimapButton.onclick = () => {
 -    initializeAntiTamper();
 -    toggleMinimapScale();
--    if (state.isToggled_r5u) {
++  const AutoDodgeBtn = plusPanel.querySelector("#smallMinimapBtn");
++  AutoDodgeBtn.onclick = () => {
++    initializeAntiDetection();
++    toggleMinimapSize();
+     if (state.boolIsToggled) {
 -      smallMinimapButton.textContent = "Disable Small Minimap";
 -      smallMinimapButton.style.color = "var(--accent)";
 -      smallMinimapButton.style.opacity = "0.6";
-+  const autoDodgeBtn_w1m = plusPanel.querySelector("#espBtn");
-+  autoDodgeBtn_w1m.onclick = () => {
-+    toggleEsp();
-+    if (window.espEnabled) {
-+      autoDodgeBtn_w1m.textContent = "ESP ✓";
-+      autoDodgeBtn_w1m.classList.add("toggle-on");
++      AutoDodgeBtn.textContent = "Minimap: Small";
++      AutoDodgeBtn.classList.add("toggle-on");
      } else {
 -      smallMinimapButton.textContent = "Enable Small Minimap";
 -      smallMinimapButton.style.color = "var(--accent)";
 -      smallMinimapButton.style.opacity = "1";
-+      autoDodgeBtn_w1m.textContent = "ESP";
-+      autoDodgeBtn_w1m.classList.remove("toggle-on");
++      AutoDodgeBtn.textContent = "Small Minimap";
++      AutoDodgeBtn.classList.remove("toggle-on");
      }
    };
 -  let plusPanelOffsetX;
 -  let plusPanelOffsetY;
 -  let plusPanelDragActive = false;
 -  let plusPanelIsDragging = false;
--  plusPanel.addEventListener("mousedown", (event) => {
+-  plusPanel.addEventListener("mousedown", (v6c59Event) => {
 -    if (
--      event.target.tagName === "BUTTON" ||
--      event.target.tagName === "TEXTAREA" ||
--      event.target.tagName === "INPUT" ||
--      event.target.classList.contains("credits")
+-      v6c59Event.target.tagName === "BUTTON" ||
+-      v6c59Event.target.tagName === "TEXTAREA" ||
+-      v6c59Event.target.tagName === "INPUT" ||
+-      v6c59Event.target.classList.contains("credits")
 -    ) {
 -      return;
-+  const farmModeSelect = plusPanel.querySelector("#espModeSelect");
-+  farmModeSelect.value = window.espMode || "players";
-+  farmModeSelect.onchange = (espModeEvent) => {
++  const v2725AutoDodgeBtn = plusPanel.querySelector("#espBtn");
++  v2725AutoDodgeBtn.onclick = () => {
++    toggleEsp();
++    if (window.espEnabled) {
++      v2725AutoDodgeBtn.textContent = "ESP ✓";
++      v2725AutoDodgeBtn.classList.add("toggle-on");
++    } else {
++      v2725AutoDodgeBtn.textContent = "ESP";
++      v2725AutoDodgeBtn.classList.remove("toggle-on");
+     }
+-    plusPanelDragActive = true;
+-    plusPanelIsDragging = false;
+-    plusPanelOffsetX =
+-      v6c59Event.clientX - plusPanel.getBoundingClientRect().left;
+-    plusPanelOffsetY =
+-      v6c59Event.clientY - plusPanel.getBoundingClientRect().top;
+-    plusPanel.style.transition = "none";
+-    const v23ccHandleMouseMove = (v5270MouseEvent) => {
+-      const v25d9DeltaX = v5270MouseEvent.clientX - v6c59Event.clientX;
+-      const v3000DeltaY = v5270MouseEvent.clientY - v6c59Event.clientY;
+-      if (
+-        !plusPanelIsDragging &&
+-        (Math.abs(v25d9DeltaX) > 5 || Math.abs(v3000DeltaY) > 5)
+-      ) {
+-        plusPanelIsDragging = true;
+-      }
+-      if (plusPanelDragActive) {
+-        plusPanel.style.left =
+-          v5270MouseEvent.clientX - plusPanelOffsetX + "px";
+-        plusPanel.style.top = v5270MouseEvent.clientY - plusPanelOffsetY + "px";
+-        plusPanel.style.bottom = "auto";
+-        plusPanel.style.right = "auto";
+-      }
+-    };
+-    const v1f41HandleMouseUp = () => {
+-      plusPanelDragActive = false;
+-      plusPanel.style.transition = "all 0.3s ease";
+-      document.removeEventListener("mousemove", v23ccHandleMouseMove);
+-      document.removeEventListener("mouseup", v1f41HandleMouseUp);
+-    };
+-    document.addEventListener("mousemove", v23ccHandleMouseMove);
+-    document.addEventListener("mouseup", v1f41HandleMouseUp);
+-  });
+-  plusPanel.addEventListener("click", (v18d4Event) => {
+-    if (plusPanelIsDragging) {
+-      v18d4Event.stopImmediatePropagation();
++  };
++  const v3880FarmModeSelect = plusPanel.querySelector("#espModeSelect");
++  v3880FarmModeSelect.value = window.espMode || "players";
++  v3880FarmModeSelect.onchange = (espModeEvent) => {
 +    window.espMode = espModeEvent.target.value;
 +    showToast("ESP: " + espModeEvent.target.value);
 +  };
 +  plusPanel.querySelector("#trackNearestBtn").onclick = () => trackPlayer();
-+  plusPanel.querySelector("#untrackBtn").onclick = () => toggleEsp_sdk();
-+  const autoDodgeBtn_gu6 = plusPanel.querySelector("#autoDodgeBtn");
-+  autoDodgeBtn_gu6.onclick = () => {
++  plusPanel.querySelector("#untrackBtn").onclick = () => globalToggleEsp();
++  const a047AutoDodgeBtn = plusPanel.querySelector("#autoDodgeBtn");
++  a047AutoDodgeBtn.onclick = () => {
 +    if (window.autoDodgeEnabled) {
-+      toggleEsp_sl9();
-+      autoDodgeBtn_gu6.textContent = "Auto Dodge";
-+      autoDodgeBtn_gu6.classList.remove("toggle-on");
++      v55bbToggleEsp();
++      a047AutoDodgeBtn.textContent = "Auto Dodge";
++      a047AutoDodgeBtn.classList.remove("toggle-on");
 +    } else {
 +      enableAutoDodge();
-+      autoDodgeBtn_gu6.textContent = "Dodging ✓";
-+      autoDodgeBtn_gu6.classList.add("toggle-on");
++      a047AutoDodgeBtn.textContent = "Dodging ✓";
++      a047AutoDodgeBtn.classList.add("toggle-on");
      }
--    plusPanelDragActive = true;
--    plusPanelIsDragging = false;
--    plusPanelOffsetX = event.clientX - plusPanel.getBoundingClientRect().left;
--    plusPanelOffsetY = event.clientY - plusPanel.getBoundingClientRect().top;
--    plusPanel.style.transition = "none";
--    const handleMouseMove = (mouseEvent) => {
--      const deltaX = mouseEvent.clientX - event.clientX;
--      const deltaY = mouseEvent.clientY - event.clientY;
--      if (
--        !plusPanelIsDragging &&
--        (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)
--      ) {
--        plusPanelIsDragging = true;
+-  });
+-  if (localStorage.getItem("theme") === "halloween") {
+-    for (let v1218I = 0; v1218I < 3; v1218I++) {
+-      const ecd4SpanElement = document.createElement("span");
+-      ecd4SpanElement.className = "bat";
+-      ecd4SpanElement.textContent = "🦇";
+-      plusPanel.appendChild(ecd4SpanElement);
 +  };
 +  const autoFarmBtn = plusPanel.querySelector("#autoFarmBtn");
 +  autoFarmBtn.id = "autoFarmBtn";
-+  const farmModeSelect_wjb = plusPanel.querySelector("#farmModeSelect");
++  const v3880V3880FarmModeSelect = plusPanel.querySelector("#farmModeSelect");
 +  autoFarmBtn.onclick = () => {
 +    if (window.autoFarmActive) {
 +      stopAutoFarm();
 +      autoFarmBtn.textContent = "Auto Farm (F5)";
 +      autoFarmBtn.classList.remove("toggle-on");
 +    } else {
-+      initAutoFarm(farmModeSelect_wjb.value);
++      initAutoFarm(v3880V3880FarmModeSelect.value);
 +      autoFarmBtn.textContent = "Stop Farm (F5)";
 +      autoFarmBtn.classList.add("toggle-on");
-+    }
+     }
+-  }
 +  };
-+  farmModeSelect_wjb.onchange = (autoFarmModeEvent) => {
++  v3880V3880FarmModeSelect.onchange = (autoFarmModeEvent) => {
 +    if (window.autoFarmActive) {
 +      window.autoFarmMode = autoFarmModeEvent.target.value;
 +      if (autoFarmModeEvent.target.value === "patrol") {
 +        generatePatrolPoints();
-       }
--      if (plusPanelDragActive) {
--        plusPanel.style.left = mouseEvent.clientX - plusPanelOffsetX + "px";
--        plusPanel.style.top = mouseEvent.clientY - plusPanelOffsetY + "px";
--        plusPanel.style.bottom = "auto";
--        plusPanel.style.right = "auto";
--      }
--    };
--    const handleMouseUp = () => {
--      plusPanelDragActive = false;
--      plusPanel.style.transition = "all 0.3s ease";
--      document.removeEventListener("mousemove", handleMouseMove);
--      document.removeEventListener("mouseup", handleMouseUp);
--    };
--    document.addEventListener("mousemove", handleMouseMove);
--    document.addEventListener("mouseup", handleMouseUp);
--  });
--  plusPanel.addEventListener("click", (event_wtd) => {
--    if (plusPanelIsDragging) {
--      event_wtd.stopImmediatePropagation();
++      }
 +      showToast("Farm: " + autoFarmModeEvent.target.value);
-     }
--  });
--  if (localStorage.getItem("theme") === "halloween") {
--    for (let i = 0; i < 3; i++) {
--      const spanElement = document.createElement("span");
--      spanElement.className = "bat";
--      spanElement.textContent = "🦇";
--      plusPanel.appendChild(spanElement);
--    }
--  }
++    }
 +  };
 +  plusPanel.querySelector("#farmBoostToggle").onchange = (
 +    autoFarmBoostEvent,
@@ -3531,16 +3603,16 @@ Index: src/ui/panels.js
    return plusPanel;
  }
 -function injectSettingsPanelStyles() {
--  const styleElement = document.createElement("style");
--  styleElement.textContent =
+-  const v13abStyleElement = document.createElement("style");
+-  v13abStyleElement.textContent =
 -    "\n      #settings-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n        position: fixed;\n        top: 20px;\n        left: 20px;\n        color: var(--text-primary);\n        padding: 16px;\n        font-size: 14px;\n        z-index: 99999;\n        user-select: none;\n        width: 240px;\n        text-align: center;\n        cursor: move;\n        overflow: hidden;\n        position: relative;\n      }\n      #settings-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #settings-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        width: 100%;\n        margin-bottom: 10px;\n        position: relative;\n        overflow: hidden;\n      }\n      #settings-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #settings-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #settings-panel button:hover:not(:disabled) {\n        background: var(--hover-bg);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2);\n        color: var(--accent-hover);\n      }\n      #settings-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #settings-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #settings-panel .keybind-set, #settings-panel .bg-set {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        margin-bottom: 10px;\n        font-size: 12px;\n      }\n      #settings-panel .keybind-set label, #settings-panel .bg-set label {\n        color: var(--text-primary);\n      }\n      #settings-panel #toggleKeyInput, #settings-panel #bgUrl {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #settings-panel #toggleKeyInput {\n        width: 80px;\n      }\n      #settings-panel #bgUrl {\n        width: 120px;\n      }\n      #settings-panel .section-header {\n        font-weight: bold;\n        color: var(--accent);\n        margin: 12px 0 6px 0;\n        font-size: 13px;\n      }\n      #settings-panel select {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 100%;\n        margin-bottom: 10px;\n        transition: all 0.2s ease;\n      }\n      #settings-panel select:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);\n      }\n      #settings-panel .limited-edition {\n        font-size: 11px;\n        color: #ff6600;\n        font-style: italic;\n        margin-top: 4px;\n      }\n      /* Theme-specific panel animations */\n      #settings-panel.themestarwars::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        background: radial-gradient(circle at center, rgba(255,255,255,0.1) 1px, transparent 1px);\n        background-size: 20px 20px;\n        animation: twinkle-stars 20s linear infinite;\n        z-index: -1;\n        border-radius: 16px;\n      }\n      #settings-panel.themekfc::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 20% 30%, rgba(244,0,0,0.1) 2px, transparent 2px),\n                    radial-gradient(circle at 80% 70%, rgba(255,204,0,0.05) 1px, transparent 1px);\n        background-size: 40px 40px;\n      }\n      #settings-panel.themehalloween::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: -1;\n        border-radius: 16px;\n        background: radial-gradient(circle at 30% 20%, rgba(255, 102, 0, 0.1) 1px, transparent 1px),\n                    radial-gradient(circle at 70% 80%, rgba(139, 0, 255, 0.05) 2px, transparent 2px);\n        background-size: 30px 30px;\n        animation: halloween-glow 15s ease-in-out infinite alternate;\n      }\n      #settings-panel.themehalloween .bat {\n        position: absolute;\n        font-size: 20px;\n        animation: fly-bat 10s linear infinite;\n        pointer-events: none;\n        opacity: 0.7;\n      }\n      #settings-panel.themehalloween .bat:nth-child(1) { top: 10%; left: -10%; animation-delay: 0s; }\n      #settings-panel.themehalloween .bat:nth-child(2) { top: 50%; right: -10%; animation-delay: 3s; animation-direction: reverse; }\n      #settings-panel.themehalloween .bat:nth-child(3) { top: 80%; left: -10%; animation-delay: 6s; }\n      @keyframes fly-bat {\n        0% { transform: translateX(0) rotate(0deg); }\n        100% { transform: translateX(120%) rotate(360deg); }\n      }\n      @keyframes twinkle-stars {\n        0% { background-position: 0 0; }\n        100% { background-position: 20px 20px; }\n      }\n      @keyframes halloween-glow {\n        0% { opacity: 0.8; }\n        100% { opacity: 1; }\n      }\n    ";
--  document.head.appendChild(styleElement);
--  const draggableElement = document.createElement("div");
--  draggableElement.id = "settings-panel";
--  draggableElement.innerHTML =
+-  document.head.appendChild(v13abStyleElement);
+-  const v5893DraggableElement = document.createElement("div");
+-  v5893DraggableElement.id = "settings-panel";
+-  v5893DraggableElement.innerHTML =
 -    '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        SETTINGS\n      </div>\n      <div id="settingsContent">\n        <div class="keybind-set">\n          <label for="toggleKeyInput">Toggle Client:</label>\n          <input type="text" id="toggleKeyInput" placeholder="PRESS" readonly>\n        </div>\n        <div class="section-header">Custom Background</div>\n        <div class="bg-set">\n          <label for="bgUrl">BG URL:</label>\n          <input type="text" id="bgUrl" placeholder="Image/GIF URL">\n        </div>\n        <button id="applyBg">Apply Custom Background</button>\n        <div class="section-header">Themes</div>\n        <select id="themeSelect">\n          <option value="blue">Blue (Default)</option>\n          <option value="red">Red</option>\n          <option value="green">Green</option>\n          <option value="pink">Pink</option>\n          <option value="starwars">Star Wars</option>\n          <option value="kfc">KFC🍗</option>\n          <option value="halloween">Halloween 🎃</option>\n        </select>\n        <div id="limitedEdition" class="limited-edition" style="display:none;">Limited Edition</div>\n      </div>\n    ';
--  document.body.appendChild(draggableElement);
--  const bgUrlInput = draggableElement.querySelector("#bgUrl");
+-  document.body.appendChild(v5893DraggableElement);
+-  const bgUrlInput = v5893DraggableElement.querySelector("#bgUrl");
 +function createSettingsPanel() {
 +  const settingsPanel = document.createElement("div");
 +  settingsPanel.id = "settings-panel";
@@ -3560,40 +3632,43 @@ Index: src/ui/panels.js
 +  };
 +  const toggleKeyInput = settingsPanel.querySelector("#toggleKeyInput");
 +  toggleKeyInput.value = state.activeKey.toUpperCase();
-+  toggleKeyInput.addEventListener("keydown", (keyEvent) => {
-+    keyEvent.preventDefault();
-+    state.activeKey = keyEvent.key;
++  toggleKeyInput.addEventListener("keydown", (v3f86KeyEvent) => {
++    v3f86KeyEvent.preventDefault();
++    state.activeKey = v3f86KeyEvent.key;
 +    toggleKeyInput.value =
-+      keyEvent.key.length === 1 ? keyEvent.key.toUpperCase() : keyEvent.key;
++      v3f86KeyEvent.key.length === 1
++        ? v3f86KeyEvent.key.toUpperCase()
++        : v3f86KeyEvent.key;
 +  });
 +  const bgUrlInput = settingsPanel.querySelector("#bgUrl");
    bgUrlInput.value = localStorage.getItem("bgUrl") || "";
--  const applyBgButton = draggableElement.querySelector("#applyBg");
+-  const applyBgButton = v5893DraggableElement.querySelector("#applyBg");
 -  applyBgButton.onclick = () => {
-+  settingsPanel.querySelector("#applyBg").onclick = () => {
-     const bgUrl = bgUrlInput.value.trim();
+-    const bgUrl = bgUrlInput.value.trim();
 -    if (bgUrl === "") {
 -      showNotification("Enter a URL first!");
-+    if (!bgUrl) {
++  settingsPanel.querySelector("#applyBg").onclick = () => {
++    const v59ecBgUrl = bgUrlInput.value.trim();
++    if (!v59ecBgUrl) {
 +      showToast("Enter a URL");
        return;
      }
-     localStorage.setItem("bgUrl", bgUrl);
--    let homeBgElement = document.querySelector(".home-bg");
+-    localStorage.setItem("bgUrl", bgUrl);
+-    let v1331HomeBgElement = document.querySelector(".home-bg");
 -    const updateHomeBackgroundImage = () => {
--      homeBgElement = document.querySelector(".home-bg");
--      if (homeBgElement) {
--        homeBgElement.style.setProperty(
+-      v1331HomeBgElement = document.querySelector(".home-bg");
+-      if (v1331HomeBgElement) {
+-        v1331HomeBgElement.style.setProperty(
 -          "background-image",
 -          'url("' + bgUrl + '")',
 -          "important",
 -        );
 -      }
 -    };
--    if (homeBgElement == null) {
+-    if (v1331HomeBgElement == null) {
 -      const pollInterval = setInterval(() => {
--        homeBgElement = document.querySelector(".home-bg");
--        if (homeBgElement != null) {
+-        v1331HomeBgElement = document.querySelector(".home-bg");
+-        if (v1331HomeBgElement != null) {
 -          clearInterval(pollInterval);
 -          updateHomeBackgroundImage();
 -        }
@@ -3602,24 +3677,26 @@ Index: src/ui/panels.js
 -      updateHomeBackgroundImage();
 -    }
 -    showNotification("Custom Background applied!");
++    localStorage.setItem("bgUrl", v59ecBgUrl);
 +    initBackground();
 +    showToast("Background applied");
    };
--  const themeSelect = draggableElement.querySelector("#themeSelect");
+-  const themeSelect = v5893DraggableElement.querySelector("#themeSelect");
 -  const angle = localStorage.getItem("theme") || "blue";
-+  const themeSelect = settingsPanel.querySelector("#themeSelect");
-+  const angle = localStorage.getItem("theme") || "grey";
-   themeSelect.value = angle;
+-  themeSelect.value = angle;
 -  applyThemeColors(angle);
 -  themeSelect.onchange = (themeChangeEvent) => {
--    const myY = themeChangeEvent.target.value;
--    if (myY === "halloween") {
+-    const v1263MyY = themeChangeEvent.target.value;
+-    if (v1263MyY === "halloween") {
 -      createHalloweenModal((isHalloween) => {
 -        if (isHalloween) {
 -          applyThemeColors("halloween");
++  const themeSelect = settingsPanel.querySelector("#themeSelect");
++  const v28edAngle = localStorage.getItem("theme") || "grey";
++  themeSelect.value = v28edAngle;
 +  themeSelect.onchange = (changeEvent) => {
-+    const url = changeEvent.target.value;
-+    if (url === "halloween") {
++    const v14bcUrl = changeEvent.target.value;
++    if (v14bcUrl === "halloween") {
 +      showHalloweenModal((isHalloweenMode) => {
 +        if (isHalloweenMode) {
 +          applyTheme("halloween");
@@ -3630,28 +3707,28 @@ Index: src/ui/panels.js
          }
        });
      } else {
--      applyThemeColors(myY);
--      showNotification("Theme changed to " + myY);
-+      applyTheme(url);
-+      showToast("Theme: " + url);
+-      applyThemeColors(v1263MyY);
+-      showNotification("Theme changed to " + v1263MyY);
++      applyTheme(v14bcUrl);
++      showToast("Theme: " + v14bcUrl);
      }
    };
--  const toggleKeyInput = draggableElement.querySelector("#toggleKeyInput");
+-  const toggleKeyInput = v5893DraggableElement.querySelector("#toggleKeyInput");
 -  toggleKeyInput.value = state.activeKey;
--  toggleKeyInput.addEventListener("keydown", (keyboardEvent) => {
--    keyboardEvent.preventDefault();
--    state.activeKey = keyboardEvent.key;
+-  toggleKeyInput.addEventListener("keydown", (v55b9KeyboardEvent) => {
+-    v55b9KeyboardEvent.preventDefault();
+-    state.activeKey = v55b9KeyboardEvent.key;
 -    toggleKeyInput.value = state.activeKey;
 -  });
--  let offsetX;
--  let offsetY;
+-  let v76deOffsetX;
+-  let v1330OffsetY;
 -  let isDraggingActive = false;
--  let isDragging = false;
--  draggableElement.addEventListener("mousedown", (clickEvent) => {
+-  let v30f1IsDragging = false;
+-  v5893DraggableElement.addEventListener("mousedown", (v1442ClickEvent) => {
 -    if (
--      clickEvent.target.tagName === "BUTTON" ||
--      clickEvent.target.tagName === "INPUT" ||
--      clickEvent.target.classList.contains("credits")
+-      v1442ClickEvent.target.tagName === "BUTTON" ||
+-      v1442ClickEvent.target.tagName === "INPUT" ||
+-      v1442ClickEvent.target.classList.contains("credits")
 -    ) {
 -      return;
 +  makeDraggable(settingsPanel);
@@ -3668,8 +3745,8 @@ Index: src/ui/panels.js
 +  document.body.appendChild(updatePanel);
 +  const updateBody = updatePanel.querySelector("#updateBody");
 +  let isUpdateMinimized = false;
-+  updatePanel.querySelector("#updateMin").onclick = (event) => {
-+    event.stopPropagation();
++  updatePanel.querySelector("#updateMin").onclick = (v7427Event) => {
++    v7427Event.stopPropagation();
 +    isUpdateMinimized = !isUpdateMinimized;
 +    updateBody.style.display = isUpdateMinimized ? "none" : "block";
 +    updatePanel.querySelector("#updateMin").textContent = isUpdateMinimized
@@ -3686,71 +3763,79 @@ Index: src/ui/panels.js
 +    "settings-panel",
 +    "plus-panel",
 +  ];
-+  const mainPanel = document.getElementById("deep-tools-panel");
-+  if (!mainPanel) {
++  const Panel = document.getElementById("deep-tools-panel");
++  if (!Panel) {
 +    return;
 +  }
-+  const isVisible = mainPanel.style.display !== "none";
++  const isVisible = Panel.style.display !== "none";
 +  const newDisplayState = isVisible ? "none" : "block";
 +  panelIds.forEach((elementId) => {
-+    const element = document.getElementById(elementId);
-+    if (element) {
-+      element.style.display = newDisplayState;
++    const v1b54Element = document.getElementById(elementId);
++    if (v1b54Element) {
++      v1b54Element.style.display = newDisplayState;
      }
 -    isDraggingActive = true;
--    isDragging = false;
--    offsetX =
--      clickEvent.clientX - draggableElement.getBoundingClientRect().left;
--    offsetY = clickEvent.clientY - draggableElement.getBoundingClientRect().top;
--    draggableElement.style.transition = "none";
--    const handleMouseMove = (mouseEvent) => {
--      const deltaX = mouseEvent.clientX - clickEvent.clientX;
--      const deltaY = mouseEvent.clientY - clickEvent.clientY;
--      if (!isDragging && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
--        isDragging = true;
+-    v30f1IsDragging = false;
+-    v76deOffsetX =
+-      v1442ClickEvent.clientX -
+-      v5893DraggableElement.getBoundingClientRect().left;
+-    v1330OffsetY =
+-      v1442ClickEvent.clientY -
+-      v5893DraggableElement.getBoundingClientRect().top;
+-    v5893DraggableElement.style.transition = "none";
+-    const v18d0HandleMouseMove = (v59a0MouseEvent) => {
+-      const v3520DeltaX = v59a0MouseEvent.clientX - v1442ClickEvent.clientX;
+-      const v182dDeltaY = v59a0MouseEvent.clientY - v1442ClickEvent.clientY;
+-      if (
+-        !v30f1IsDragging &&
+-        (Math.abs(v3520DeltaX) > 5 || Math.abs(v182dDeltaY) > 5)
+-      ) {
+-        v30f1IsDragging = true;
 -      }
 -      if (isDraggingActive) {
--        draggableElement.style.left = mouseEvent.clientX - offsetX + "px";
--        draggableElement.style.top = mouseEvent.clientY - offsetY + "px";
--        draggableElement.style.bottom = "auto";
--        draggableElement.style.right = "auto";
+-        v5893DraggableElement.style.left =
+-          v59a0MouseEvent.clientX - v76deOffsetX + "px";
+-        v5893DraggableElement.style.top =
+-          v59a0MouseEvent.clientY - v1330OffsetY + "px";
+-        v5893DraggableElement.style.bottom = "auto";
+-        v5893DraggableElement.style.right = "auto";
 -      }
 -    };
--    const handleMouseUp = () => {
+-    const v1dd5HandleMouseUp = () => {
 -      isDraggingActive = false;
--      draggableElement.style.transition = "all 0.3s ease";
--      document.removeEventListener("mousemove", handleMouseMove);
--      document.removeEventListener("mouseup", handleMouseUp);
+-      v5893DraggableElement.style.transition = "all 0.3s ease";
+-      document.removeEventListener("mousemove", v18d0HandleMouseMove);
+-      document.removeEventListener("mouseup", v1dd5HandleMouseUp);
 -    };
--    document.addEventListener("mousemove", handleMouseMove);
--    document.addEventListener("mouseup", handleMouseUp);
+-    document.addEventListener("mousemove", v18d0HandleMouseMove);
+-    document.addEventListener("mouseup", v1dd5HandleMouseUp);
    });
--  draggableElement.addEventListener("click", (propagationEvent) => {
--    if (isDragging) {
+-  v5893DraggableElement.addEventListener("click", (propagationEvent) => {
+-    if (v30f1IsDragging) {
 -      propagationEvent.stopImmediatePropagation();
 -    }
 -  });
 -  if (localStorage.getItem("theme") === "halloween") {
--    for (let i = 0; i < 3; i++) {
--      const spanElement = document.createElement("span");
--      spanElement.className = "bat";
--      spanElement.textContent = "🦇";
--      draggableElement.appendChild(spanElement);
+-    for (let v8b93I = 0; v8b93I < 3; v8b93I++) {
+-      const ab2fSpanElement = document.createElement("span");
+-      ab2fSpanElement.className = "bat";
+-      ab2fSpanElement.textContent = "🦇";
+-      v5893DraggableElement.appendChild(ab2fSpanElement);
 -    }
 -  }
--  return draggableElement;
+-  return v5893DraggableElement;
  }
 -function togglePanels() {
--  const deepToolsPanel = document.getElementById("deep-tools-panel");
+-  const v2267DeepToolsPanel = document.getElementById("deep-tools-panel");
 -  const updateHistoryPanel = document.getElementById("update-history");
 -  const settingsPanel = document.getElementById("settings-panel");
--  const plusPanel = document.getElementById("plus-panel");
--  const currentDisplay = deepToolsPanel.style.display;
+-  const v1194PlusPanel = document.getElementById("plus-panel");
+-  const currentDisplay = v2267DeepToolsPanel.style.display;
 -  const newDisplay = currentDisplay === "none" ? "block" : "none";
--  deepToolsPanel.style.display = newDisplay;
+-  v2267DeepToolsPanel.style.display = newDisplay;
 -  updateHistoryPanel.style.display = newDisplay;
 -  settingsPanel.style.display = newDisplay;
--  plusPanel.style.display = newDisplay;
+-  v1194PlusPanel.style.display = newDisplay;
 -}
  
  export {
@@ -3773,7 +3858,7 @@ Index: src/ui/radar.js
 ===================================================================
 --- src/ui/radar.js	v1.5
 +++ src/ui/radar.js	v1.6
-@@ -1,22 +1,158 @@
+@@ -1,22 +1,171 @@
 -import { showNotification } from "./interaction.js";
 -import { playerData, state } from "../core.js";
 +import { dragState, state } from "../core.js";
@@ -3781,23 +3866,23 @@ Index: src/ui/radar.js
 -function toggleMinimapScale() {
 -  if (!playerData || !playerData.minimap) {
 -    showNotification("Minimap not available yet!");
-+function drawRadar(ctx, canvas, gameState) {
-+  if (!gameState || gameState.error) {
++function drawRadar(v5512Ctx, v4718Canvas, v2726GameState) {
++  if (!v2726GameState || v2726GameState.error) {
      return;
    }
--  if (state.isToggled_r5u) {
+-  if (state.boolIsToggled) {
 -    playerData.minimap.scale.set(1);
 -    playerData.minimap.pivot.set(0, 0);
--    state.isToggled_r5u = false;
+-    state.boolIsToggled = false;
 -    showNotification("🗺️ Minimap restored to normal!");
 -  } else {
 -    playerData.minimap.scale.set(0.5);
 -    playerData.minimap.pivot.set(-70, -45);
--    state.isToggled_r5u = true;
+-    state.boolIsToggled = true;
 -    showNotification("🗺️ Small Minimap enabled!");
 +  const radarSize = 150;
 +  if (dragState.x === null) {
-+    dragState.x = canvas.width - radarSize - 20;
++    dragState.x = v4718Canvas.width - radarSize - 20;
    }
 +  const radarX = dragState.x;
 +  const radarY = dragState.y;
@@ -3809,91 +3894,104 @@ Index: src/ui/radar.js
 +    w: radarSize,
 +    h: radarSize + 22,
 +  };
-+  ctx.fillStyle = "rgba(20,20,20,0.9)";
-+  ctx.beginPath();
-+  ctx.roundRect(radarX, radarY, radarSize, radarSize, 4);
-+  ctx.fill();
-+  ctx.strokeStyle = "#333";
-+  ctx.lineWidth = 1;
-+  ctx.stroke();
-+  ctx.strokeStyle = "rgba(60,60,60,0.5)";
-+  ctx.lineWidth = 0.5;
-+  ctx.beginPath();
-+  ctx.moveTo(radarX + radarSize / 2, radarY);
-+  ctx.lineTo(radarX + radarSize / 2, radarY + radarSize);
-+  ctx.moveTo(radarX, radarY + radarSize / 2);
-+  ctx.lineTo(radarX + radarSize, radarY + radarSize / 2);
-+  ctx.stroke();
++  v5512Ctx.fillStyle = "rgba(20,20,20,0.9)";
++  v5512Ctx.beginPath();
++  v5512Ctx.roundRect(radarX, radarY, radarSize, radarSize, 4);
++  v5512Ctx.fill();
++  v5512Ctx.strokeStyle = "#333";
++  v5512Ctx.lineWidth = 1;
++  v5512Ctx.stroke();
++  v5512Ctx.strokeStyle = "rgba(60,60,60,0.5)";
++  v5512Ctx.lineWidth = 0.5;
++  v5512Ctx.beginPath();
++  v5512Ctx.moveTo(radarX + radarSize / 2, radarY);
++  v5512Ctx.lineTo(radarX + radarSize / 2, radarY + radarSize);
++  v5512Ctx.moveTo(radarX, radarY + radarSize / 2);
++  v5512Ctx.lineTo(radarX + radarSize, radarY + radarSize / 2);
++  v5512Ctx.stroke();
 +  for (
 +    let circleRadiusFactor = 0.25;
 +    circleRadiusFactor <= 1;
 +    circleRadiusFactor += 0.25
 +  ) {
-+    ctx.beginPath();
-+    ctx.arc(
++    v5512Ctx.beginPath();
++    v5512Ctx.arc(
 +      radarX + radarSize / 2,
 +      radarY + radarSize / 2,
 +      (radarSize / 2) * circleRadiusFactor,
 +      0,
 +      Math.PI * 2,
 +    );
-+    ctx.strokeStyle = "rgba(60,60,60," + (0.2 + circleRadiusFactor * 0.1) + ")";
-+    ctx.stroke();
++    v5512Ctx.strokeStyle =
++      "rgba(60,60,60," + (0.2 + circleRadiusFactor * 0.1) + ")";
++    v5512Ctx.stroke();
 +  }
-+  ctx.fillStyle = "#1db954";
-+  ctx.beginPath();
-+  ctx.arc(radarX + radarSize / 2, radarY + radarSize / 2, 4, 0, Math.PI * 2);
-+  ctx.fill();
-+  const espMode = window.espMode;
-+  const entities =
-+    espMode === "players" ? gameState.players || [] : gameState.food || [];
-+  entities.forEach((entityPos) => {
-+    const diffX = entityPos.x - gameState.myPos.x;
-+    const diffY = entityPos.y - gameState.myPos.y;
-+    let renderX = radarX + radarSize / 2 + diffX * radarScale;
-+    let drawY = radarY + radarSize / 2 + diffY * radarScale;
++  v5512Ctx.fillStyle = "#1db954";
++  v5512Ctx.beginPath();
++  v5512Ctx.arc(
++    radarX + radarSize / 2,
++    radarY + radarSize / 2,
++    4,
++    0,
++    Math.PI * 2,
++  );
++  v5512Ctx.fill();
++  const v662bEspMode = window.espMode;
++  const v59c7Entities =
++    v662bEspMode === "players"
++      ? v2726GameState.players || []
++      : v2726GameState.food || [];
++  v59c7Entities.forEach((v58c3EntityPos) => {
++    const v2541DiffX = v58c3EntityPos.x - v2726GameState.myPos.x;
++    const v2506DiffY = v58c3EntityPos.y - v2726GameState.myPos.y;
++    let renderX = radarX + radarSize / 2 + v2541DiffX * radarScale;
++    let drawY = radarY + radarSize / 2 + v2506DiffY * radarScale;
 +    renderX = Math.max(radarX + 2, Math.min(radarX + radarSize - 2, renderX));
 +    drawY = Math.max(radarY + 2, Math.min(radarY + radarSize - 2, drawY));
-+    let markerColor;
++    let v3317MarkerColor;
 +    let markerRadius;
-+    if (espMode === "players") {
-+      markerColor =
-+        entityPos.distance < 500
++    if (v662bEspMode === "players") {
++      v3317MarkerColor =
++        v58c3EntityPos.distance < 500
 +          ? "#ff0000"
-+          : entityPos.distance < 1500
++          : v58c3EntityPos.distance < 1500
 +            ? "#ffff00"
-+            : entityPos.distance < 3000
++            : v58c3EntityPos.distance < 3000
 +              ? "#00ffff"
 +              : "#888";
 +      markerRadius = 3;
 +    } else {
-+      markerColor = "#44cc44";
++      v3317MarkerColor = "#44cc44";
 +      markerRadius = 1.5;
 +    }
 +    if (
 +      window.espTrackedEntityId &&
-+      entityPos.id === window.espTrackedEntityId
++      v58c3EntityPos.id === window.espTrackedEntityId
 +    ) {
-+      markerColor = "#ff00ff";
++      v3317MarkerColor = "#ff00ff";
 +      markerRadius = 4;
 +    }
-+    ctx.fillStyle = markerColor;
-+    ctx.beginPath();
-+    ctx.arc(renderX, drawY, markerRadius, 0, Math.PI * 2);
-+    ctx.fill();
++    v5512Ctx.fillStyle = v3317MarkerColor;
++    v5512Ctx.beginPath();
++    v5512Ctx.arc(renderX, drawY, markerRadius, 0, Math.PI * 2);
++    v5512Ctx.fill();
 +  });
-+  ctx.fillStyle = "rgba(20,20,20,0.9)";
-+  ctx.beginPath();
-+  ctx.roundRect(radarX, radarY + radarSize, radarSize, 22, [0, 0, 4, 4]);
-+  ctx.fill();
-+  ctx.fillStyle = "#888";
-+  ctx.font = "10px monospace";
-+  ctx.fillText("RADAR", radarX + 5, radarY + radarSize + 14);
-+  const finalY =
-+    espMode === "players"
-+      ? "P:" + (gameState.players || []).length
-+      : "F:" + (gameState.food || []).length;
-+  ctx.fillText(finalY, radarX + radarSize - 50, radarY + radarSize + 14);
++  v5512Ctx.fillStyle = "rgba(20,20,20,0.9)";
++  v5512Ctx.beginPath();
++  v5512Ctx.roundRect(radarX, radarY + radarSize, radarSize, 22, [0, 0, 4, 4]);
++  v5512Ctx.fill();
++  v5512Ctx.fillStyle = "#888";
++  v5512Ctx.font = "10px monospace";
++  v5512Ctx.fillText("RADAR", radarX + 5, radarY + radarSize + 14);
++  const v5e5cFinalY =
++    v662bEspMode === "players"
++      ? "P:" + (v2726GameState.players || []).length
++      : "F:" + (v2726GameState.food || []).length;
++  v5512Ctx.fillText(
++    v5e5cFinalY,
++    radarX + radarSize - 50,
++    radarY + radarSize + 14,
++  );
  }
 +function initRadarDrag() {
 +  if (window._radarDragInit) {
@@ -4207,11 +4305,11 @@ Index: src/ui/theme.js
 -      containerElement
 -        .querySelectorAll(".bat")
 -        .forEach((element) => element.remove());
--      for (let i = 0; i < 3; i++) {
--        const spanElement = document.createElement("span");
--        spanElement.className = "bat";
--        spanElement.textContent = "🦇";
--        containerElement.appendChild(spanElement);
+-      for (let v408fI = 0; v408fI < 3; v408fI++) {
+-        const v180cSpanElement = document.createElement("span");
+-        v180cSpanElement.className = "bat";
+-        v180cSpanElement.textContent = "🦇";
+-        containerElement.appendChild(v180cSpanElement);
 +  const setBackgroundImage = () => {
 +    const homeBackground = document.querySelector(".home-bg");
 +    if (homeBackground) {
@@ -4243,7 +4341,7 @@ Index: src/ui/theme.js
 -    const initialValue = injectDeepToolsStyles();
 -    const sessionData = createUpdateHistoryStyles();
 -    const configSettings = injectSettingsPanelStyles();
--    const appContext = injectPlusPanelStyles();
+-    const Context = injectPlusPanelStyles();
 -    applyThemeColors("blue");
 -    applyHomeBackground();
 -    initAdBlocker();
@@ -4267,22 +4365,25 @@ Index: src/utils.js
 ===================================================================
 --- src/utils.js	v1.5
 +++ src/utils.js	v1.6
-@@ -1,4 +1,12 @@
-+import {
-+  getGameState,
-+  getEntityManager,
-+  angle,
-+  gameInstance,
-+  state,
-+} from "./core.js";
+@@ -1,4 +1,6 @@
++import { getGameState, getEntityManager, gameInstance, state } from "./core.js";
 +
  function generateRandomString(length) {
    let resultString = "";
    for (let i = 0; i < length; i++) {
      const randomCodePoint = Math.floor(Math.random() * 1048575 + 65536);
-@@ -18,6 +26,141 @@
-     ...Object.getOwnPropertyNames(Object.getPrototypeOf(targetObject)),
-     ...Object.getOwnPropertyNames(targetObject),
+@@ -12,12 +14,150 @@
+     document.querySelector("canvas") ||
+     document.querySelector("#canvas-container canvas")
+   );
+ }
+-const getAllPropertyNames = (v5b1dTargetObject) => {
++const getAllPropertyNames = (v1423TargetObject) => {
+   return [
+-    ...Object.getOwnPropertyNames(Object.getPrototypeOf(v5b1dTargetObject)),
+-    ...Object.getOwnPropertyNames(v5b1dTargetObject),
++    ...Object.getOwnPropertyNames(Object.getPrototypeOf(v1423TargetObject)),
++    ...Object.getOwnPropertyNames(v1423TargetObject),
    ];
  };
 +function isPlayer(entity) {
@@ -4324,7 +4425,7 @@ Index: src/utils.js
 +function getMyAnimal() {
 +  try {
 +    return getGameState()?.myAnimals?.[0] || null;
-+  } catch (error) {
++  } catch (v422fError) {
 +    return null;
 +  }
 +}
@@ -4333,10 +4434,10 @@ Index: src/utils.js
 +}
 +function getNearbyEntities() {
 +  try {
-+    const rawState = getGameState();
-+    const parsedState = getEntityManager(rawState);
-+    const myAnimal = rawState?.myAnimals?.[0];
-+    if (!parsedState || !myAnimal) {
++    const v22a7RawState = getGameState();
++    const be85ParsedState = getEntityManager(v22a7RawState);
++    const myAnimal = v22a7RawState?.myAnimals?.[0];
++    if (!be85ParsedState || !myAnimal) {
 +      return null;
 +    }
 +    const myX = myAnimal.position._x || myAnimal.position.x;
@@ -4351,47 +4452,50 @@ Index: src/utils.js
 +      players: [],
 +      food: [],
 +    };
-+    const entitiesList = parsedState.entitiesList || [];
-+    entitiesList.forEach((entity) => {
-+      if (!entity || entity.id === myAnimal.id) {
++    const entitiesList = be85ParsedState.entitiesList || [];
++    entitiesList.forEach((v5680Entity) => {
++      if (!v5680Entity || v5680Entity.id === myAnimal.id) {
 +        return;
 +      }
-+      const entityX = entity.position?._x || entity.position?.x;
-+      const entityY = entity.position?._y || entity.position?.y;
++      const entityX = v5680Entity.position?._x || v5680Entity.position?.x;
++      const entityY = v5680Entity.position?._y || v5680Entity.position?.y;
 +      if (entityX == null || entityY == null) {
 +        return;
 +      }
-+      const deltaX = entityX - myX;
-+      const deltaY = entityY - myY;
-+      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-+      const gameData = {
-+        id: entity.id,
++      const v10f2DeltaX = entityX - myX;
++      const v44cdDeltaY = entityY - myY;
++      const v128aDistance = Math.sqrt(
++        v10f2DeltaX * v10f2DeltaX + v44cdDeltaY * v44cdDeltaY,
++      );
++      const v238aGameData = {
++        id: v5680Entity.id,
 +        x: entityX,
 +        y: entityY,
-+        distance: distance,
-+        angle: Math.atan2(deltaY, deltaX),
-+        entity: entity,
++        distance: v128aDistance,
++        angle: Math.atan2(v44cdDeltaY, v10f2DeltaX),
++        entity: v5680Entity,
 +      };
-+      gameData.entities.push(gameData);
-+      if (isPlayer(entity)) {
-+        gameData.players.push(gameData);
++      gameData.entities.push(v238aGameData);
++      if (isPlayer(v5680Entity)) {
++        gameData.players.push(v238aGameData);
 +      } else {
-+        gameData.food.push(gameData);
++        gameData.food.push(v238aGameData);
 +      }
 +    });
 +    gameData.entities.sort(
 +      (entityA, entityB) => entityA.distance - entityB.distance,
 +    );
 +    gameData.players.sort(
-+      (entityA_edv, entityB_f6f) => entityA_edv.distance - entityB_f6f.distance,
++      (v2e08EntityA, v210eEntityB) =>
++        v2e08EntityA.distance - v210eEntityB.distance,
 +    );
 +    gameData.food.sort(
-+      (entityA_e8a, otherItem) => entityA_e8a.distance - otherItem.distance,
++      (v4159EntityA, otherItem) => v4159EntityA.distance - otherItem.distance,
 +    );
 +    return gameData;
-+  } catch (error) {
++  } catch (v4137Error) {
 +    return {
-+      error: error.message,
++      error: v4137Error.message,
 +    };
 +  }
 +}
@@ -4408,7 +4512,7 @@ Index: src/utils.js
 +    if (gameInstance?.viewport?.scale?.x) {
 +      zoomLevel = gameInstance.viewport.scale.x;
 +    }
-+  } catch (error) {}
++  } catch (v53aeError) {}
 +  return zoomLevel;
 +}
  

@@ -1,22 +1,20 @@
 import {
-  currentTime,
   getGameState,
   getEntityManager,
   getFirstAnimalPosition,
   tickInterval,
   deltaThreshold,
-  angle,
   state,
 } from "../core.js";
 import { isPlayer, calculateDistance } from "../utils.js";
 import { simulateMoveAndClick } from "./movement.js";
 import { showToast } from "../ui/interaction.js";
 
-let currentTime_qq5 = 0;
-let currentTime_re6 = 0;
-let entityTrailInterval_jft = null;
+let numCurrentTime = 0;
+let Position = null;
+let globalCurrentTime = 0;
 function autoDodgeLoop() {
-  if (!state.isProcessed_rdh) {
+  if (!state.modIsProcessed) {
     return;
   }
   setTimeout(autoDodgeLoop, 80);
@@ -24,61 +22,63 @@ function autoDodgeLoop() {
     return;
   }
   try {
-    const playerPosition = getFirstAnimalPosition();
-    if (!playerPosition) {
+    const v1057PlayerPosition = getFirstAnimalPosition();
+    if (!v1057PlayerPosition) {
       return;
     }
-    const gameState = getGameState();
-    const entityManager = getEntityManager(gameState);
-    const myAnimal = gameState?.myAnimals?.[0];
-    if (!entityManager || !myAnimal) {
+    const v3223GameState = getGameState();
+    const v2901EntityManager = getEntityManager(v3223GameState);
+    const v1f29MyAnimal = v3223GameState?.myAnimals?.[0];
+    if (!v2901EntityManager || !v1f29MyAnimal) {
       return;
     }
-    const entitiesList = entityManager.entitiesList || [];
+    const c71aEntitiesList = v2901EntityManager.entitiesList || [];
     let nearbyEntities = [];
-    entitiesList.forEach((targetEntity) => {
-      if (!targetEntity || targetEntity.id === myAnimal.id) {
+    c71aEntitiesList.forEach((v2c47TargetEntity) => {
+      if (!v2c47TargetEntity || v2c47TargetEntity.id === v1f29MyAnimal.id) {
         return;
       }
-      if (!isPlayer(targetEntity)) {
+      if (!isPlayer(v2c47TargetEntity)) {
         return;
       }
-      const myY = targetEntity.position?._x || targetEntity.position?.x;
-      const posY = targetEntity.position?._y || targetEntity.position?.y;
-      if (myY == null || posY == null) {
+      const v38c0MyY =
+        v2c47TargetEntity.position?._x || v2c47TargetEntity.position?.x;
+      const v461aPosY =
+        v2c47TargetEntity.position?._y || v2c47TargetEntity.position?.y;
+      if (v38c0MyY == null || v461aPosY == null) {
         return;
       }
       const distanceToTarget = calculateDistance(
-        playerPosition.x,
-        playerPosition.y,
-        myY,
-        posY,
+        v1057PlayerPosition.x,
+        v1057PlayerPosition.y,
+        v38c0MyY,
+        v461aPosY,
       );
       if (distanceToTarget < tickInterval) {
         nearbyEntities.push({
-          x: myY,
-          y: posY,
+          x: v38c0MyY,
+          y: v461aPosY,
           dist: distanceToTarget,
         });
       }
     });
     if (nearbyEntities.length === 0) {
-      state.position = null;
+      Position = null;
       state.counter = 0;
       state.dataList = [];
-      entityTrailInterval_jft = null;
+      state.entityTrailInterval = null;
       return;
     }
-    const currentTime = Date.now();
+    const v2bc0CurrentTime = Date.now();
     let hasMoved = false;
-    if (currentTime - currentTime_re6 > 600) {
-      currentTime_re6 = currentTime;
-      if (state.position) {
+    if (v2bc0CurrentTime - globalCurrentTime > 600) {
+      globalCurrentTime = v2bc0CurrentTime;
+      if (Position) {
         const distFromLastPos = calculateDistance(
-          playerPosition.x,
-          playerPosition.y,
-          state.position.x,
-          state.position.y,
+          v1057PlayerPosition.x,
+          v1057PlayerPosition.y,
+          Position.x,
+          Position.y,
         );
         if (distFromLastPos < 20) {
           state.counter++;
@@ -88,32 +88,34 @@ function autoDodgeLoop() {
           state.dataList = [];
         }
       }
-      state.position = {
-        x: playerPosition.x,
-        y: playerPosition.y,
+      Position = {
+        x: v1057PlayerPosition.x,
+        y: v1057PlayerPosition.y,
       };
     }
     let sumX = 0;
     let sumY = 0;
     nearbyEntities.forEach((sourceEntity) => {
-      const deltaX = playerPosition.x - sourceEntity.x;
-      const deltaY = playerPosition.y - sourceEntity.y;
-      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-      if (distance > 0.01) {
+      const v52fcDeltaX = v1057PlayerPosition.x - sourceEntity.x;
+      const v231bDeltaY = v1057PlayerPosition.y - sourceEntity.y;
+      const v2110Distance = Math.sqrt(
+        v52fcDeltaX * v52fcDeltaX + v231bDeltaY * v231bDeltaY,
+      );
+      if (v2110Distance > 0.01) {
         const distanceRatio = (tickInterval - sourceEntity.dist) / tickInterval;
-        sumX += (deltaX / distance) * distanceRatio;
-        sumY += (deltaY / distance) * distanceRatio;
+        sumX += (v52fcDeltaX / v2110Distance) * distanceRatio;
+        sumY += (v231bDeltaY / v2110Distance) * distanceRatio;
       }
     });
-    let magnitude = Math.sqrt(sumX * sumX + sumY * sumY);
-    if (magnitude < 0.01) {
+    let v4fc5Magnitude = Math.sqrt(sumX * sumX + sumY * sumY);
+    if (v4fc5Magnitude < 0.01) {
       sumX = 1;
       sumY = 0;
-      magnitude = 1;
+      v4fc5Magnitude = 1;
     }
-    sumX /= magnitude;
-    sumY /= magnitude;
-    let angle = Math.atan2(sumY, sumX);
+    sumX /= v4fc5Magnitude;
+    sumY /= v4fc5Magnitude;
+    let v6818Angle = Math.atan2(sumY, sumX);
     if (hasMoved && state.counter >= 1) {
       const anglePresets = [
         Math.PI / 4,
@@ -123,12 +125,13 @@ function autoDodgeLoop() {
         (Math.PI * 3) / 4,
         (-Math.PI * 3) / 4,
       ];
-      let tempAngle = angle;
+      let tempAngle = v6818Angle;
       let maxValue = -Infinity;
       for (const angleOffset of anglePresets) {
-        const adjustedAngle = angle + angleOffset;
+        const adjustedAngle = v6818Angle + angleOffset;
         const isAngleSimilar = state.dataList.some(
-          (currentValue) => Math.abs(currentValue - adjustedAngle) < 0.3,
+          (v3574CurrentValue) =>
+            Math.abs(v3574CurrentValue - adjustedAngle) < 0.3,
         );
         if (isAngleSimilar && state.counter < 5) {
           continue;
@@ -137,10 +140,10 @@ function autoDodgeLoop() {
         const cosAdjustedAngle = Math.cos(adjustedAngle);
         const sinAdjustedAngle = Math.sin(adjustedAngle);
         nearbyEntities.forEach((otherEntity) => {
-          const diffX = otherEntity.x - playerPosition.x;
-          const deltaY_u6o = otherEntity.y - playerPosition.y;
+          const v58e5DiffX = otherEntity.x - v1057PlayerPosition.x;
+          const v3beaDeltaY = otherEntity.y - v1057PlayerPosition.y;
           const totalOffset =
-            cosAdjustedAngle * diffX + sinAdjustedAngle * deltaY_u6o;
+            cosAdjustedAngle * v58e5DiffX + sinAdjustedAngle * v3beaDeltaY;
           currentValue -= totalOffset;
         });
         if (currentValue > maxValue) {
@@ -148,35 +151,36 @@ function autoDodgeLoop() {
           tempAngle = adjustedAngle;
         }
       }
-      angle = tempAngle;
-      state.dataList.push(angle);
+      v6818Angle = tempAngle;
+      state.dataList.push(v6818Angle);
       if (state.dataList.length > 8) {
         state.dataList.shift();
       }
       if (state.counter >= 5) {
-        angle = angle + (Math.random() > 0.5 ? Math.PI / 2 : -Math.PI / 2);
+        v6818Angle =
+          v6818Angle + (Math.random() > 0.5 ? Math.PI / 2 : -Math.PI / 2);
         state.counter = 0;
         state.dataList = [];
       }
     }
-    entityTrailInterval_jft = angle;
-    const angle_p9p = playerPosition.x + Math.cos(angle) * 2000;
-    const angle_q62 = playerPosition.y + Math.sin(angle) * 2000;
-    const angle_q0o = currentTime - currentTime_qq5 > deltaThreshold;
-    if (angle_q0o) {
-      currentTime_qq5 = currentTime;
+    state.entityTrailInterval = v6818Angle;
+    const v3f83Angle = v1057PlayerPosition.x + Math.cos(v6818Angle) * 2000;
+    const v5224V3f83Angle = v1057PlayerPosition.y + Math.sin(v6818Angle) * 2000;
+    const v3f83V3f83Angle = v2bc0CurrentTime - numCurrentTime > deltaThreshold;
+    if (v3f83V3f83Angle) {
+      numCurrentTime = v2bc0CurrentTime;
     }
-    simulateMoveAndClick(angle_p9p, angle_q62, angle_q0o);
+    simulateMoveAndClick(v3f83Angle, v5224V3f83Angle, v3f83V3f83Angle);
   } catch (data) {}
 }
 function enableAutoDodge() {
   window.autoDodgeEnabled = true;
-  state.position = null;
+  Position = null;
   state.counter = 0;
   state.dataList = [];
-  entityTrailInterval_jft = null;
-  if (!state.isProcessed_rdh) {
-    state.isProcessed_rdh = true;
+  state.entityTrailInterval = null;
+  if (!state.modIsProcessed) {
+    state.modIsProcessed = true;
     autoDodgeLoop();
   }
   showToast("Auto dodge enabled");

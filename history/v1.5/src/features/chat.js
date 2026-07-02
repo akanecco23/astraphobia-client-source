@@ -1,20 +1,21 @@
 import { state } from "../core.js";
 
+let EntityTrailInterval = null;
 function startScheduledTask(taskData, intervalSeconds) {
-  if (state.entityTrailInterval) {
-    clearInterval(state.entityTrailInterval);
+  if (EntityTrailInterval) {
+    clearInterval(EntityTrailInterval);
   }
-  state.isToggled = true;
-  state.entityTrailInterval = setInterval(() => {
+  state.IsToggled = true;
+  EntityTrailInterval = setInterval(() => {
     autoChat(taskData);
   }, intervalSeconds * 1000);
 }
 function stopInterval() {
-  if (state.entityTrailInterval) {
-    clearInterval(state.entityTrailInterval);
-    state.entityTrailInterval = null;
+  if (EntityTrailInterval) {
+    clearInterval(EntityTrailInterval);
+    EntityTrailInterval = null;
   }
-  state.isToggled = false;
+  state.IsToggled = false;
 }
 function autoChat(messageText) {
   const chatInput =
@@ -27,9 +28,9 @@ function autoChat(messageText) {
   }
   chatInput.focus();
   chatInput.value = "";
-  let charIndex = 0;
-  const typeCharacter = () => {
-    if (charIndex >= messageText.length) {
+  let v291aCharIndex = 0;
+  const v147bTypeCharacter = () => {
+    if (v291aCharIndex >= messageText.length) {
       const sendButton =
         document.querySelector(".chat-input button") ||
         document.querySelector('button[aria-label*="send" i]') ||
@@ -54,16 +55,16 @@ function autoChat(messageText) {
       }
       return;
     }
-    chatInput.value += messageText[charIndex];
+    chatInput.value += messageText[v291aCharIndex];
     chatInput.dispatchEvent(
       new InputEvent("input", {
         bubbles: true,
       }),
     );
-    charIndex++;
-    setTimeout(typeCharacter, 25);
+    v291aCharIndex++;
+    setTimeout(v147bTypeCharacter, 25);
   };
-  typeCharacter();
+  v147bTypeCharacter();
 }
 
 export { startScheduledTask, stopInterval, autoChat };

@@ -151,11 +151,11 @@ function applyThemeColors(themeName) {
       containerElement
         .querySelectorAll(".bat")
         .forEach((element) => element.remove());
-      for (let i = 0; i < 3; i++) {
-        const spanElement = document.createElement("span");
-        spanElement.className = "bat";
-        spanElement.textContent = "🦇";
-        containerElement.appendChild(spanElement);
+      for (let v408fI = 0; v408fI < 3; v408fI++) {
+        const v180cSpanElement = document.createElement("span");
+        v180cSpanElement.className = "bat";
+        v180cSpanElement.textContent = "🦇";
+        containerElement.appendChild(v180cSpanElement);
       }
     });
   } else {
@@ -170,7 +170,7 @@ function setBlueTheme() {
     const initialValue = injectDeepToolsStyles();
     const sessionData = createUpdateHistoryStyles();
     const configSettings = injectSettingsPanelStyles();
-    const appContext = injectPlusPanelStyles();
+    const Context = injectPlusPanelStyles();
     applyThemeColors("blue");
     applyHomeBackground();
     initAdBlocker();

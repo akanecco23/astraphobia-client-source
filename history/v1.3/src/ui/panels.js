@@ -1,10 +1,10 @@
 import {
   gameInstance,
   playerData,
-  config,
+  Config,
   radius,
   hookTextEncoder,
-  isProcessed_qlz,
+  boolIsProcessed,
   initHooks,
   disableGameRestrictions,
   state,
@@ -21,9 +21,9 @@ import { handleAnimalAction } from "../features/autofarm.js";
 import { toggleMinimapSize } from "../features/esp.js";
 import { generateRandomString } from "../utils.js";
 
-let isProcessed_s2l = false;
+let appIsProcessed = false;
 const initControlOverlay = () => {
-  if (isProcessed_s2l) {
+  if (appIsProcessed) {
     return;
   }
   function sendActionSequence() {
@@ -65,8 +65,8 @@ const initControlOverlay = () => {
         }
         const visibleFishLevel = playerData.myAnimals[0].visibleFishLevel;
         const fishSettings = {
-          ...config.default,
-          ...config[visibleFishLevel],
+          ...Config.default,
+          ...Config[visibleFishLevel],
         };
         if (myAnimalsHandler.ctrlKey) {
           if (myAnimalsHandler.shiftKey && visibleFishLevel === 107) {
@@ -118,7 +118,7 @@ const initControlOverlay = () => {
       document.getElementById("ctrl-overlay").style.pointerEvents = "none";
     } catch {}
   });
-  isProcessed_s2l = true;
+  appIsProcessed = true;
 };
 function createUpdateHistoryPanel() {
   const historyStyle = document.createElement("style");
@@ -142,26 +142,29 @@ function createUpdateHistoryPanel() {
   };
   let offsetX;
   let offsetY;
-  let isActive = false;
-  let isActive_70l = false;
+  let v7b3eIsActive = false;
+  let v7b3eV7b3eIsActive = false;
   historyPanel.addEventListener("mousedown", (clickEvent) => {
     if (
       ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(clickEvent.target.tagName)
     ) {
       return;
     }
-    isActive = true;
-    isActive_70l = false;
+    v7b3eIsActive = true;
+    v7b3eV7b3eIsActive = false;
     offsetX = clickEvent.clientX - historyPanel.getBoundingClientRect().left;
     offsetY = clickEvent.clientY - historyPanel.getBoundingClientRect().top;
     historyPanel.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
       const deltaX = mouseEvent.clientX - clickEvent.clientX;
       const deltaY = mouseEvent.clientY - clickEvent.clientY;
-      if (!isActive_70l && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isActive_70l = true;
+      if (
+        !v7b3eV7b3eIsActive &&
+        (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)
+      ) {
+        v7b3eV7b3eIsActive = true;
       }
-      if (isActive) {
+      if (v7b3eIsActive) {
         historyPanel.style.left = mouseEvent.clientX - offsetX + "px";
         historyPanel.style.top = mouseEvent.clientY - offsetY + "px";
         historyPanel.style.bottom = "auto";
@@ -169,7 +172,7 @@ function createUpdateHistoryPanel() {
       }
     };
     const handleMouseUp = () => {
-      isActive = false;
+      v7b3eIsActive = false;
       historyPanel.style.transition = "all 0.3s ease";
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
@@ -178,7 +181,7 @@ function createUpdateHistoryPanel() {
     document.addEventListener("mouseup", handleMouseUp);
   });
   historyPanel.addEventListener("click", (interceptEvent) => {
-    if (isActive_70l) {
+    if (v7b3eV7b3eIsActive) {
       interceptEvent.stopImmediatePropagation();
     }
   });
@@ -213,10 +216,10 @@ function createDeepToolsPanel() {
       autoChat(chatMessage);
     }
   };
-  const spoofButton = container.querySelector("#patchBtn");
-  spoofButton.onclick = () => hookTextEncoder(spoofButton);
-  const spoofButton_9m4 = container.querySelector("#spoofBtn");
-  spoofButton_9m4.onclick = () => {
+  const v239eSpoofButton = container.querySelector("#patchBtn");
+  v239eSpoofButton.onclick = () => hookTextEncoder(v239eSpoofButton);
+  const v239eV239eSpoofButton = container.querySelector("#spoofBtn");
+  v239eV239eSpoofButton.onclick = () => {
     const maxLength = generateRandomString(8);
     if (simulateTyping(".play-game .el-input__inner", maxLength)) {
       showNotification("Spoofed name!");
@@ -226,22 +229,22 @@ function createDeepToolsPanel() {
       showNotification("No name input found! Enable special characters first.");
     }
   };
-  const autoChatButton = container.querySelector("#spinBtn");
-  autoChatButton.onclick = () => {
+  const v3b40AutoChatButton = container.querySelector("#spinBtn");
+  v3b40AutoChatButton.onclick = () => {
     toggleMouseSimulation();
-    if (featuresentitytrailState.entityTrailInterval_qpd) {
-      autoChatButton.textContent = "Disable Auto Spin";
-      autoChatButton.style.color = "#27ae60";
+    if (featuresentitytrailState.modEntityTrailInterval) {
+      v3b40AutoChatButton.textContent = "Disable Auto Spin";
+      v3b40AutoChatButton.style.color = "#27ae60";
     } else {
-      autoChatButton.textContent = "Enable Auto Spin";
-      autoChatButton.style.color = "var(--accent)";
+      v3b40AutoChatButton.textContent = "Enable Auto Spin";
+      v3b40AutoChatButton.style.color = "var(--accent)";
     }
   };
   const spinKeyInput = container.querySelector("#spinKeyInput");
   let lastPressedKey = null;
-  spinKeyInput.addEventListener("keydown", (event) => {
-    event.preventDefault();
-    lastPressedKey = event.code || event.key;
+  spinKeyInput.addEventListener("keydown", (v20e9Event) => {
+    v20e9Event.preventDefault();
+    lastPressedKey = v20e9Event.code || v20e9Event.key;
     spinKeyInput.value = lastPressedKey.replace("Key", "").toLowerCase();
   });
   document.addEventListener("keydown", (keyEvent) => {
@@ -252,17 +255,17 @@ function createDeepToolsPanel() {
     ) {
       keyEvent.preventDefault();
       toggleMouseSimulation();
-      if (featuresentitytrailState.entityTrailInterval_qpd) {
-        autoChatButton.textContent = "Disable Auto Spin";
-        autoChatButton.style.color = "#27ae60";
+      if (featuresentitytrailState.modEntityTrailInterval) {
+        v3b40AutoChatButton.textContent = "Disable Auto Spin";
+        v3b40AutoChatButton.style.color = "#27ae60";
       } else {
-        autoChatButton.textContent = "Enable Auto Spin";
-        autoChatButton.style.color = "var(--accent)";
+        v3b40AutoChatButton.textContent = "Enable Auto Spin";
+        v3b40AutoChatButton.style.color = "var(--accent)";
       }
     }
   });
-  const autoChatButton_8fc = container.querySelector("#autoChatBtn");
-  autoChatButton_8fc.onclick = () => {
+  const v3b40V3b40AutoChatButton = container.querySelector("#autoChatBtn");
+  v3b40V3b40AutoChatButton.onclick = () => {
     const chatMessageValue = container.querySelector("#chatMsg").value;
     const delayInput = container.querySelector("#delayInput");
     const delayValue = parseInt(delayInput.value) || 10;
@@ -270,58 +273,63 @@ function createDeepToolsPanel() {
       showNotification("⚠️ Enter a message first!");
       return;
     }
-    if (state.isToggled) {
+    if (state.IsToggled) {
       stopInterval();
-      autoChatButton_8fc.textContent = "Enable Auto Chat";
-      autoChatButton_8fc.style.color = "var(--accent)";
+      v3b40V3b40AutoChatButton.textContent = "Enable Auto Chat";
+      v3b40V3b40AutoChatButton.style.color = "var(--accent)";
     } else {
       startScheduledTask(chatMessageValue, delayValue);
-      autoChatButton_8fc.textContent = "Disable Auto Chat";
-      autoChatButton_8fc.style.color = "#27ae60";
+      v3b40V3b40AutoChatButton.textContent = "Disable Auto Chat";
+      v3b40V3b40AutoChatButton.style.color = "#27ae60";
     }
   };
-  let offsetX;
-  let offsetY;
-  let isActive = false;
-  let isActive_7fb = false;
-  container.addEventListener("mousedown", (clickEvent) => {
+  let v3ad6OffsetX;
+  let v1f8aOffsetY;
+  let v5dbcIsActive = false;
+  let v5dbcV5dbcIsActive = false;
+  container.addEventListener("mousedown", (v1dcbClickEvent) => {
     if (
-      clickEvent.target.tagName === "BUTTON" ||
-      clickEvent.target.tagName === "TEXTAREA" ||
-      clickEvent.target.tagName === "INPUT" ||
-      clickEvent.target.classList.contains("credits")
+      v1dcbClickEvent.target.tagName === "BUTTON" ||
+      v1dcbClickEvent.target.tagName === "TEXTAREA" ||
+      v1dcbClickEvent.target.tagName === "INPUT" ||
+      v1dcbClickEvent.target.classList.contains("credits")
     ) {
       return;
     }
-    isActive = true;
-    isActive_7fb = false;
-    offsetX = clickEvent.clientX - container.getBoundingClientRect().left;
-    offsetY = clickEvent.clientY - container.getBoundingClientRect().top;
+    v5dbcIsActive = true;
+    v5dbcV5dbcIsActive = false;
+    v3ad6OffsetX =
+      v1dcbClickEvent.clientX - container.getBoundingClientRect().left;
+    v1f8aOffsetY =
+      v1dcbClickEvent.clientY - container.getBoundingClientRect().top;
     container.style.transition = "none";
-    const handleMouseMove = (mouseEvent) => {
-      const deltaX = mouseEvent.clientX - clickEvent.clientX;
-      const deltaY = mouseEvent.clientY - clickEvent.clientY;
-      if (!isActive_7fb && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isActive_7fb = true;
+    const v1d4fHandleMouseMove = (v44a7MouseEvent) => {
+      const v58d0DeltaX = v44a7MouseEvent.clientX - v1dcbClickEvent.clientX;
+      const v4af6DeltaY = v44a7MouseEvent.clientY - v1dcbClickEvent.clientY;
+      if (
+        !v5dbcV5dbcIsActive &&
+        (Math.abs(v58d0DeltaX) > 5 || Math.abs(v4af6DeltaY) > 5)
+      ) {
+        v5dbcV5dbcIsActive = true;
       }
-      if (isActive) {
-        container.style.left = mouseEvent.clientX - offsetX + "px";
-        container.style.top = mouseEvent.clientY - offsetY + "px";
+      if (v5dbcIsActive) {
+        container.style.left = v44a7MouseEvent.clientX - v3ad6OffsetX + "px";
+        container.style.top = v44a7MouseEvent.clientY - v1f8aOffsetY + "px";
         container.style.bottom = "auto";
         container.style.right = "auto";
       }
     };
-    const handleMouseUp = () => {
-      isActive = false;
+    const v1606HandleMouseUp = () => {
+      v5dbcIsActive = false;
       container.style.transition = "all 0.3s ease";
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("mousemove", v1d4fHandleMouseMove);
+      document.removeEventListener("mouseup", v1606HandleMouseUp);
     };
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("mousemove", v1d4fHandleMouseMove);
+    document.addEventListener("mouseup", v1606HandleMouseUp);
   });
   container.addEventListener("click", (eventToStop) => {
-    if (isActive_7fb) {
+    if (v5dbcV5dbcIsActive) {
       eventToStop.stopImmediatePropagation();
     }
   });
@@ -332,55 +340,56 @@ function injectPlusPanelStyles() {
   styleElement.textContent =
     "\n      #plus-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n      }\n      #plus-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #plus-panel textarea {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 8px;\n        padding: 10px;\n        transition: all 0.2s ease;\n        font-size: 13px;\n      }\n      #plus-panel textarea:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);\n      }\n      #plus-panel input[type=\"number\"] {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 60px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #plus-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        position: relative;\n        overflow: hidden;\n        width: 100%;\n        margin-bottom: 10px;\n      }\n      #plus-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #plus-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #plus-panel button:hover:not(:disabled) {\n        background: rgba(45, 45, 75, 1);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);\n        color: var(--accent-hover);\n      }\n      #plus-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #plus-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n    ";
   document.head.appendChild(styleElement);
-  const container = document.createElement("div");
-  container.id = "plus-panel";
-  container.style.position = "fixed";
-  container.style.top = "20px";
-  container.style.right = "20px";
-  container.style.color = "var(--text-primary)";
-  container.style.padding = "16px";
-  container.style.borderRadius = "16px";
-  container.style.fontSize = "14px";
-  container.style.zIndex = "99999";
-  container.style.userSelect = "none";
-  container.style.width = "240px";
-  container.style.textAlign = "center";
-  container.style.cursor = "move";
-  container.style.overflow = "hidden";
-  container.innerHTML =
+  const Container = document.createElement("div");
+  Container.id = "plus-panel";
+  Container.style.position = "fixed";
+  Container.style.top = "20px";
+  Container.style.right = "20px";
+  Container.style.color = "var(--text-primary)";
+  Container.style.padding = "16px";
+  Container.style.borderRadius = "16px";
+  Container.style.fontSize = "14px";
+  Container.style.zIndex = "99999";
+  Container.style.userSelect = "none";
+  Container.style.width = "240px";
+  Container.style.textAlign = "center";
+  Container.style.cursor = "move";
+  Container.style.overflow = "hidden";
+  Container.innerHTML =
     '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        ASTRAPHOBIA CLIENT+\n      </div>\n      <div id="plusContent">\n        <button id="thresherBtn">Enable Thresher Super Boost(ctrl + shift and click)(minumum required 2 boost)</button>\n        <button id="astraVisionBtn">Enable Astra-Vision (no-zoom limit, no ink flash or deep darkness)</button>\n        <button id="smallMinimapBtn">Enable Small Minimap</button>\n      </div>\n    ';
-  document.body.appendChild(container);
-  const astraVisionButton = container.querySelector("#thresherBtn");
-  astraVisionButton.onclick = () => {
-    if (isProcessed_s2l) {
+  document.body.appendChild(Container);
+  const v44a0AstraVisionButton = Container.querySelector("#thresherBtn");
+  v44a0AstraVisionButton.onclick = () => {
+    if (appIsProcessed) {
       showNotification("Thresher Super Boost is already active!");
       return;
     }
     initHooks();
-    astraVisionButton.textContent = "Thresher Super Boost Active";
-    astraVisionButton.style.color = "#27ae60";
-    astraVisionButton.disabled = true;
+    v44a0AstraVisionButton.textContent = "Thresher Super Boost Active";
+    v44a0AstraVisionButton.style.color = "#27ae60";
+    v44a0AstraVisionButton.disabled = true;
   };
-  const astraVisionButton_l1x = container.querySelector("#astraVisionBtn");
-  astraVisionButton_l1x.onclick = () => {
-    if (isProcessed_qlz) {
+  const v44a0V44a0AstraVisionButton =
+    Container.querySelector("#astraVisionBtn");
+  v44a0V44a0AstraVisionButton.onclick = () => {
+    if (boolIsProcessed) {
       showNotification("Astra-Vision already enabled!");
       return;
     }
     initHooks();
     disableGameRestrictions();
-    astraVisionButton_l1x.textContent = "Astra-Vision Active";
-    astraVisionButton_l1x.style.color = "#27ae60";
-    astraVisionButton_l1x.disabled = true;
+    v44a0V44a0AstraVisionButton.textContent = "Astra-Vision Active";
+    v44a0V44a0AstraVisionButton.style.color = "#27ae60";
+    v44a0V44a0AstraVisionButton.disabled = true;
     showNotification(
       "👁️ Astra-Vision enabled! (zoom-limit unlocked, no ink-flash or deep darkness effects)",
     );
   };
-  const smallMinimapButton = container.querySelector("#smallMinimapBtn");
+  const smallMinimapButton = Container.querySelector("#smallMinimapBtn");
   smallMinimapButton.onclick = () => {
     initHooks();
     toggleMinimapSize();
-    if (state.isToggled_r45) {
+    if (state.boolIsToggled) {
       smallMinimapButton.textContent = "Disable Small Minimap";
       smallMinimapButton.style.color = "#27ae60";
     } else {
@@ -388,66 +397,69 @@ function injectPlusPanelStyles() {
       smallMinimapButton.style.color = "var(--accent)";
     }
   };
-  let offsetX;
-  let offsetY;
-  let isActive = false;
-  let isActive_zo5 = false;
-  container.addEventListener("mousedown", (event) => {
+  let v3a60OffsetX;
+  let v4035OffsetY;
+  let v5154IsActive = false;
+  let v5154V5154IsActive = false;
+  Container.addEventListener("mousedown", (v57f7Event) => {
     if (
-      event.target.tagName === "BUTTON" ||
-      event.target.tagName === "TEXTAREA" ||
-      event.target.tagName === "INPUT" ||
-      event.target.classList.contains("credits")
+      v57f7Event.target.tagName === "BUTTON" ||
+      v57f7Event.target.tagName === "TEXTAREA" ||
+      v57f7Event.target.tagName === "INPUT" ||
+      v57f7Event.target.classList.contains("credits")
     ) {
       return;
     }
-    isActive = true;
-    isActive_zo5 = false;
-    offsetX = event.clientX - container.getBoundingClientRect().left;
-    offsetY = event.clientY - container.getBoundingClientRect().top;
-    container.style.transition = "none";
-    const handleMouseMove = (mouseEvent) => {
-      const deltaX = mouseEvent.clientX - event.clientX;
-      const deltaY = mouseEvent.clientY - event.clientY;
-      if (!isActive_zo5 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isActive_zo5 = true;
+    v5154IsActive = true;
+    v5154V5154IsActive = false;
+    v3a60OffsetX = v57f7Event.clientX - Container.getBoundingClientRect().left;
+    v4035OffsetY = v57f7Event.clientY - Container.getBoundingClientRect().top;
+    Container.style.transition = "none";
+    const v3f1bHandleMouseMove = (v3ce0MouseEvent) => {
+      const v1f2dDeltaX = v3ce0MouseEvent.clientX - v57f7Event.clientX;
+      const v10dcDeltaY = v3ce0MouseEvent.clientY - v57f7Event.clientY;
+      if (
+        !v5154V5154IsActive &&
+        (Math.abs(v1f2dDeltaX) > 5 || Math.abs(v10dcDeltaY) > 5)
+      ) {
+        v5154V5154IsActive = true;
       }
-      if (isActive) {
-        container.style.left = mouseEvent.clientX - offsetX + "px";
-        container.style.top = mouseEvent.clientY - offsetY + "px";
-        container.style.bottom = "auto";
-        container.style.right = "auto";
+      if (v5154IsActive) {
+        Container.style.left = v3ce0MouseEvent.clientX - v3a60OffsetX + "px";
+        Container.style.top = v3ce0MouseEvent.clientY - v4035OffsetY + "px";
+        Container.style.bottom = "auto";
+        Container.style.right = "auto";
       }
     };
-    const handleMouseUp = () => {
-      isActive = false;
-      container.style.transition = "all 0.3s ease";
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+    const v1d35HandleMouseUp = () => {
+      v5154IsActive = false;
+      Container.style.transition = "all 0.3s ease";
+      document.removeEventListener("mousemove", v3f1bHandleMouseMove);
+      document.removeEventListener("mouseup", v1d35HandleMouseUp);
     };
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("mousemove", v3f1bHandleMouseMove);
+    document.addEventListener("mouseup", v1d35HandleMouseUp);
   });
-  container.addEventListener("click", (event_x5a) => {
-    if (isActive_zo5) {
-      event_x5a.stopImmediatePropagation();
+  Container.addEventListener("click", (v2109Event) => {
+    if (v5154V5154IsActive) {
+      v2109Event.stopImmediatePropagation();
     }
   });
-  return container;
+  return Container;
 }
 function injectSettingsStyles() {
-  const styleElement = document.createElement("style");
-  styleElement.textContent =
+  const v6e7dStyleElement = document.createElement("style");
+  v6e7dStyleElement.textContent =
     "\n      #settings-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n        position: fixed;\n        top: 20px;\n        left: 20px;\n        color: var(--text-primary);\n        padding: 16px;\n        font-size: 14px;\n        z-index: 99999;\n        user-select: none;\n        width: 240px;\n        text-align: center;\n        cursor: move;\n        overflow: hidden;\n      }\n      #settings-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #settings-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        width: 100%;\n        margin-bottom: 10px;\n        position: relative;\n        overflow: hidden;\n      }\n      #settings-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #settings-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #settings-panel button:hover:not(:disabled) {\n        background: rgba(45, 45, 75, 1);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);\n        color: var(--accent-hover);\n      }\n      #settings-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #settings-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #settings-panel .keybind-set, #settings-panel .bg-set {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        margin-bottom: 10px;\n        font-size: 12px;\n      }\n      #settings-panel .keybind-set label, #settings-panel .bg-set label {\n        color: var(--text-primary);\n      }\n      #settings-panel #toggleKeyInput, #settings-panel #bgUrl {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #settings-panel #toggleKeyInput {\n        width: 80px;\n      }\n      #settings-panel #bgUrl {\n        width: 120px;\n      }\n      #settings-panel .section-header {\n        font-weight: bold;\n        color: var(--accent);\n        margin: 12px 0 6px 0;\n        font-size: 13px;\n      }\n    ";
-  document.head.appendChild(styleElement);
-  const container = document.createElement("div");
-  container.id = "settings-panel";
-  container.innerHTML =
+  document.head.appendChild(v6e7dStyleElement);
+  const e13cContainer = document.createElement("div");
+  e13cContainer.id = "settings-panel";
+  e13cContainer.innerHTML =
     '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        SETTINGS\n      </div>\n      <div id="settingsContent">\n        <div class="keybind-set">\n          <label for="toggleKeyInput">Toggle Client:</label>\n          <input type="text" id="toggleKeyInput" placeholder="PRESS" readonly>\n        </div>\n        <div class="section-header">Custom Background</div>\n        <div class="bg-set">\n          <label for="bgUrl">BG URL:</label>\n          <input type="text" id="bgUrl" placeholder="Image/GIF URL">\n        </div>\n        <button id="applyBg">Apply Custom Background</button>\n      </div>\n    ';
-  document.body.appendChild(container);
-  const bgUrlInput = container.querySelector("#bgUrl");
+  document.body.appendChild(e13cContainer);
+  const bgUrlInput = e13cContainer.querySelector("#bgUrl");
   bgUrlInput.value = localStorage.getItem("bgUrl") || "";
-  const applyBgButton = container.querySelector("#applyBg");
+  const applyBgButton = e13cContainer.querySelector("#applyBg");
   applyBgButton.onclick = () => {
     const bgUrl = bgUrlInput.value.trim();
     if (bgUrl === "") {
@@ -455,18 +467,18 @@ function injectSettingsStyles() {
       return;
     }
     localStorage.setItem("bgUrl", bgUrl);
-    let homeBgElement = document.querySelector(".home-bg");
+    let v3242HomeBgElement = document.querySelector(".home-bg");
     const updateBackgroundImage = () => {
-      homeBgElement.style.setProperty(
+      v3242HomeBgElement.style.setProperty(
         "background-image",
         'url("' + bgUrl + '")',
         "important",
       );
     };
-    if (homeBgElement == null) {
+    if (v3242HomeBgElement == null) {
       const pollInterval = setInterval(() => {
-        homeBgElement = document.querySelector(".home-bg");
-        if (homeBgElement != null) {
+        v3242HomeBgElement = document.querySelector(".home-bg");
+        if (v3242HomeBgElement != null) {
           clearInterval(pollInterval);
         }
         updateBackgroundImage();
@@ -476,58 +488,64 @@ function injectSettingsStyles() {
     }
     showNotification("Custom Background applied!");
   };
-  const toggleKeyInputButton = container.querySelector("#toggleKeyInput");
+  const toggleKeyInputButton = e13cContainer.querySelector("#toggleKeyInput");
   toggleKeyInputButton.value = state.activeKey;
-  toggleKeyInputButton.addEventListener("keydown", (event) => {
-    event.preventDefault();
-    state.activeKey = event.key;
+  toggleKeyInputButton.addEventListener("keydown", (v3589Event) => {
+    v3589Event.preventDefault();
+    state.activeKey = v3589Event.key;
     toggleKeyInputButton.value = state.activeKey;
   });
-  let offsetX;
-  let offsetY;
-  let isActive = false;
-  let isActive_why = false;
-  container.addEventListener("mousedown", (event_mvj) => {
+  let v35bcOffsetX;
+  let v9b1bOffsetY;
+  let v4bb6IsActive = false;
+  let v4bb6V4bb6IsActive = false;
+  e13cContainer.addEventListener("mousedown", (v36c8Event) => {
     if (
-      event_mvj.target.tagName === "BUTTON" ||
-      event_mvj.target.tagName === "INPUT" ||
-      event_mvj.target.classList.contains("credits")
+      v36c8Event.target.tagName === "BUTTON" ||
+      v36c8Event.target.tagName === "INPUT" ||
+      v36c8Event.target.classList.contains("credits")
     ) {
       return;
     }
-    isActive = true;
-    isActive_why = false;
-    offsetX = event_mvj.clientX - container.getBoundingClientRect().left;
-    offsetY = event_mvj.clientY - container.getBoundingClientRect().top;
-    container.style.transition = "none";
-    const handleMouseMove = (mouseEvent) => {
-      const deltaX = mouseEvent.clientX - event_mvj.clientX;
-      const deltaY = mouseEvent.clientY - event_mvj.clientY;
-      if (!isActive_why && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isActive_why = true;
+    v4bb6IsActive = true;
+    v4bb6V4bb6IsActive = false;
+    v35bcOffsetX =
+      v36c8Event.clientX - e13cContainer.getBoundingClientRect().left;
+    v9b1bOffsetY =
+      v36c8Event.clientY - e13cContainer.getBoundingClientRect().top;
+    e13cContainer.style.transition = "none";
+    const v3bd4HandleMouseMove = (v11e6MouseEvent) => {
+      const v2573DeltaX = v11e6MouseEvent.clientX - v36c8Event.clientX;
+      const v7802DeltaY = v11e6MouseEvent.clientY - v36c8Event.clientY;
+      if (
+        !v4bb6V4bb6IsActive &&
+        (Math.abs(v2573DeltaX) > 5 || Math.abs(v7802DeltaY) > 5)
+      ) {
+        v4bb6V4bb6IsActive = true;
       }
-      if (isActive) {
-        container.style.left = mouseEvent.clientX - offsetX + "px";
-        container.style.top = mouseEvent.clientY - offsetY + "px";
-        container.style.bottom = "auto";
-        container.style.right = "auto";
+      if (v4bb6IsActive) {
+        e13cContainer.style.left =
+          v11e6MouseEvent.clientX - v35bcOffsetX + "px";
+        e13cContainer.style.top = v11e6MouseEvent.clientY - v9b1bOffsetY + "px";
+        e13cContainer.style.bottom = "auto";
+        e13cContainer.style.right = "auto";
       }
     };
-    const handleMouseUp = () => {
-      isActive = false;
-      container.style.transition = "all 0.3s ease";
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+    const v3872HandleMouseUp = () => {
+      v4bb6IsActive = false;
+      e13cContainer.style.transition = "all 0.3s ease";
+      document.removeEventListener("mousemove", v3bd4HandleMouseMove);
+      document.removeEventListener("mouseup", v3872HandleMouseUp);
     };
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("mousemove", v3bd4HandleMouseMove);
+    document.addEventListener("mouseup", v3872HandleMouseUp);
   });
-  container.addEventListener("click", (event_ns9) => {
-    if (isActive_why) {
-      event_ns9.stopImmediatePropagation();
+  e13cContainer.addEventListener("click", (v5564Event) => {
+    if (v4bb6V4bb6IsActive) {
+      v5564Event.stopImmediatePropagation();
     }
   });
-  return container;
+  return e13cContainer;
 }
 function togglePanels() {
   const deepToolsPanel = document.getElementById("deep-tools-panel");

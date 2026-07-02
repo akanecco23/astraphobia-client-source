@@ -20,10 +20,11 @@ Index: content.js
    angles,
    radius,
    playerData,
--  isProcessed_t1s,
-+  isProcessed_sc5,
-+  isProcessed_qng,
-   config,
+-  sysIsProcessed,
+-  config,
++  boolIsProcessed,
++  appIsProcessed,
++  objConfig,
    state,
  } from "./src/core.js";
  import {
@@ -109,10 +110,10 @@ Index: src/core.js
 +  targetObject[propertyKey] = proxyInstance;
  }
  
- let isProcessed = false;
+ let IsProcessed = false;
 -function setupTextEncoderHook(unusedParam) {
 +function initNetworkHook(config) {
-   if (isProcessed) {
+   if (IsProcessed) {
      return;
    }
    function unescapeString(inputString) {
@@ -200,7 +201,7 @@ Index: src/core.js
      childList: true,
      subtree: true,
    });
-   isProcessed = true;
+   IsProcessed = true;
 -  if (unusedParam) {
 -    unusedParam.textContent = "Special Characters Active";
 -    unusedParam.disabled = true;
@@ -219,14 +220,13 @@ Index: src/core.js
  const angles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
  const radius = 300;
  let gameInstance;
- let appState;
+ let State;
  let playerData;
--let isProcessed_rot = false;
--let isProcessed_t1s = false;
+ let boolIsProcessed = false;
+-let sysIsProcessed = false;
 -const encryptPacketData = (url, terminatorCode, suffix = "") => {
 -  const stringPool = [
-+let isProcessed_sc5 = false;
-+let isProcessed_qng = false;
++let appIsProcessed = false;
 +const encryptPacketData = (options, charCode, suffix = "") => {
 +  const stringTable = [
      "ode",
@@ -243,28 +243,29 @@ Index: src/core.js
      return null;
    }
 -  const plainText = ((text1, text2) => {
-+  const plainText = ((inputString, keyString) => {
++  const plainText = ((v1c68InputString, keyString) => {
      const textEncoder = new TextEncoder();
 -    const encodedText1 = textEncoder[stringPool[5] + stringPool[0]](text1);
 -    const encodedText2 = textEncoder[stringPool[10] + stringPool[7]](text2);
 -    const buffer = new Uint8Array(
 -      encodedText1["l" + stringPool[4] + stringPool[6].slice(0, 2)],
 +    const encodedInput =
-+      textEncoder[stringTable[5] + stringTable[0]](inputString);
++      textEncoder[stringTable[5] + stringTable[0]](v1c68InputString);
 +    const encodedKey = textEncoder[stringTable[10] + stringTable[7]](keyString);
 +    const outputBuffer = new Uint8Array(
 +      encodedInput["l" + stringTable[4] + stringTable[6].slice(0, 2)],
      );
--    for (let i = 0; i < encodedText1.length; i++) {
--      buffer[i] =
--        encodedText1[i] ^
+-    for (let b471I = 0; b471I < encodedText1.length; b471I++) {
+-      buffer[b471I] =
+-        encodedText1[b471I] ^
 -        encodedText2[
-+    for (let i = 0; i < encodedInput.length; i++) {
-+      outputBuffer[i] =
-+        encodedInput[i] ^
-+        encodedKey[
-           i %
+-          b471I %
 -            encodedText2[
++    for (let a364I = 0; a364I < encodedInput.length; a364I++) {
++      outputBuffer[a364I] =
++        encodedInput[a364I] ^
++        encodedKey[
++          a364I %
 +            encodedKey[
                "" +
 -                stringPool[9].toLowerCase() +
@@ -307,33 +308,31 @@ Index: src/core.js
 +  dataView.setUint8(totalBufferSize - 1, charCode);
 +  return arrayBuffer;
  };
- const config = {
+-const config = {
 -  93: {
 -    hasSec: true,
 -    secLoadTime: 750,
 -  },
++const objConfig = {
    107: {
      hasSec: true,
      secLoadTime: 750,
      hasScaling: true,
-@@ -216,125 +214,112 @@
+@@ -216,92 +214,79 @@
      secLoadTime: 500,
      hasScaling: false,
    },
  };
 -const sendPacket = (payload, additionalData = "") => {
--  if (gameInstance && appState && config_skh.socketManager) {
--    gameInstance[config_skh.socketManager].sendBytePacket(
--      encryptPacketData(appState.token, payload, additionalData),
 +const sendPacket = (payload, extraData = "") => {
-+  if (gameInstance && appState && config_qp9.socketManager) {
-+    gameInstance[config_qp9.socketManager].sendBytePacket(
-+      encryptPacketData(appState.token._value, payload, extraData),
+   if (gameInstance && State && Config.socketManager) {
+     gameInstance[Config.socketManager].sendBytePacket(
+-      encryptPacketData(State.token, payload, additionalData),
++      encryptPacketData(State.token._value, payload, extraData),
      );
    }
  };
--const config_skh = {};
-+const config_qp9 = {};
+ const Config = {};
  const currentTime = 0;
 -const initHooks = () => {
 -  const propertyCache = {};
@@ -341,26 +340,27 @@ Index: src/core.js
 -    propertyCache[propertyName] = Reflect[propertyName];
 +const setupAntiDetection = () => {
 +  const storage = {};
-+  for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
-+    storage[propertyKey] = Reflect[propertyKey];
++  for (const v3b38PropertyKey of Object.getOwnPropertyNames(Reflect)) {
++    storage[v3b38PropertyKey] = Reflect[v3b38PropertyKey];
    }
 -  const ProxyConstructor = Proxy;
 +  const ProxyClass = Proxy;
    const lookupGetter = Object.prototype.__lookupGetter__;
--  const wrapWithProxy = (state, url, value) => {
--    const wrappedValue = new ProxyConstructor(state[url], value);
--    stateCache.set(wrappedValue, state[url]);
--    state[url] = wrappedValue;
-+  const wrapWithProxy = (dataStore, storeIndex, storeValue) => {
+-  const v5015WrapWithProxy = (state, v4aaaUrl, value) => {
+-    const wrappedValue = new ProxyConstructor(state[v4aaaUrl], value);
+-    stateCache.set(wrappedValue, state[v4aaaUrl]);
+-    state[v4aaaUrl] = wrappedValue;
++  const v1cefWrapWithProxy = (dataStore, storeIndex, storeValue) => {
 +    const processedValue = new ProxyClass(dataStore[storeIndex], storeValue);
 +    stateCache.set(processedValue, dataStore[storeIndex]);
 +    dataStore[storeIndex] = processedValue;
    };
-   wrapWithProxy(Function.prototype, "toString", {
+-  v5015WrapWithProxy(Function.prototype, "toString", {
 -    apply(thisContext, key, context) {
 -      return propertyCache.apply(
 -        thisContext,
 -        stateCache.get(key) || key,
++  v1cefWrapWithProxy(Function.prototype, "toString", {
 +    apply(context, functionKey, applyArgs) {
 +      return storage.apply(
          context,
@@ -369,14 +369,15 @@ Index: src/core.js
        );
      },
    });
-   wrapWithProxy(window, "Proxy", {
+-  v5015WrapWithProxy(window, "Proxy", {
++  v1cefWrapWithProxy(window, "Proxy", {
      construct(constructor, constructorArgs) {
 -      const instance = propertyCache.construct(constructor, constructorArgs);
 +      const instance = storage.construct(constructor, constructorArgs);
        return instance;
      },
    });
--  wrapWithProxy(ProxyConstructor, "revocable", {
+-  v5015WrapWithProxy(ProxyConstructor, "revocable", {
 -    apply(targetFunction, functionArgs, functionContext) {
 -      const functionResult = propertyCache.apply(
 -        targetFunction,
@@ -384,16 +385,17 @@ Index: src/core.js
 -        functionContext,
 -      );
 -      return functionResult;
-+  wrapWithProxy(ProxyClass, "revocable", {
++  v1cefWrapWithProxy(ProxyClass, "revocable", {
 +    apply(applyContext, applyTarget, applyArgs2) {
 +      const applyResult = storage.apply(applyContext, applyTarget, applyArgs2);
 +      return applyResult;
      },
    });
 -  let lastExecutionTime = 0;
-+  let lastTimestamp = 0;
-   wrapWithProxy(Function.prototype, "bind", {
+-  v5015WrapWithProxy(Function.prototype, "bind", {
 -    apply(targetFunction2, functionArgs2, functionContext2) {
++  let lastTimestamp = 0;
++  v1cefWrapWithProxy(Function.prototype, "bind", {
 +    apply(applyContext2, applyTarget2, applyArgs3) {
        try {
          try {
@@ -428,76 +430,51 @@ Index: src/core.js
 +          const obfuscatedKeys = allKeys.filter((obfuscatedVarName) =>
 +            obfuscatedVarName.startsWith("_0x"),
            );
--          config_skh.setFlash =
-+          config_qp9.setFlash =
+           Config.setFlash =
              Object.getOwnPropertyNames(playerData.__proto__.__proto__)
 -              .filter((obfuscatedName) => obfuscatedName.startsWith("_0x"))
 +              .filter((targetVarName) => targetVarName.startsWith("_0x"))
                .find(
 -                (functionKey) => playerData[functionKey] instanceof Function,
--              ) || config_skh.setFlash;
--          config_skh.terrainManager =
 +                (methodName) => playerData[methodName] instanceof Function,
-+              ) || config_qp9.setFlash;
-+          config_qp9.terrainManager =
+               ) || Config.setFlash;
+           Config.terrainManager =
              obfuscatedKeys.find(
 -              (shadowObjectKey) =>
 -                typeof playerData[shadowObjectKey]?.shadow !== "undefined",
--            ) || config_skh.terrainManager;
--          config_skh.entityManager =
 +              (shadowEntityKey) =>
 +                typeof playerData[shadowEntityKey]?.shadow !== "undefined",
-+            ) || config_qp9.terrainManager;
-+          config_qp9.entityManager =
+             ) || Config.terrainManager;
+           Config.entityManager =
              obfuscatedKeys.find(
                (entitiesListKey) =>
-                 typeof playerData[entitiesListKey]?.entitiesList !==
-                 "undefined",
--            ) || config_skh.entityManager;
--          config_skh.entityManagerProps = {};
-+            ) || config_qp9.entityManager;
-+          config_qp9.entityManagerProps = {};
-           const entityManagerKeys = getAllPropertyNames(
--            playerData[config_skh.entityManager],
-+            playerData[config_qp9.entityManager],
-           );
-           const animalsUpdateInterval = setInterval(() => {
--            config_skh.entityManagerProps.animalsList =
-+            config_qp9.entityManagerProps.animalsList =
+@@ -316,21 +301,21 @@
+             Config.entityManagerProps.animalsList =
                entityManagerKeys
                  .filter((variableName) => variableName.startsWith("_0x"))
                  .find(
 -                  (entityType) =>
--                    typeof playerData?.[config_skh.entityManager]?.[
--                      entityType
 +                  (entityKey) =>
-+                    typeof playerData?.[config_qp9.entityManager]?.[
+                     typeof playerData?.[Config.entityManager]?.[
+-                      entityType
 +                      entityKey
                      ]?.[0] !== "undefined",
--                ) || config_skh.entityManagerProps.animalsList;
-+                ) || config_qp9.entityManagerProps.animalsList;
-             if (
--              typeof config_skh.entityManagerProps.animalsList !== "undefined"
-+              typeof config_qp9.entityManagerProps.animalsList !== "undefined"
-             ) {
+                 ) || Config.entityManagerProps.animalsList;
+             if (typeof Config.entityManagerProps.animalsList !== "undefined") {
                clearInterval(animalsUpdateInterval);
              }
            }, 1000);
--          config_skh.socketManager =
-+          config_qp9.socketManager =
+           Config.socketManager =
              getAllPropertyNames(gameInstance).find(
 -              (packetSenderKey) =>
 -                typeof gameInstance[packetSenderKey]?.sendBytePacket !==
 +              (networkServiceKey) =>
 +                typeof gameInstance[networkServiceKey]?.sendBytePacket !==
                  "undefined",
--            ) || config_skh.socketManager;
-+            ) || config_qp9.socketManager;
+             ) || Config.socketManager;
            try {
-             appState = document
-               .getElementById("app")
-               ._vnode.appContext.config.globalProperties.$simpleState.states.find(
-@@ -351,46 +336,45 @@
+             State = document
+@@ -349,46 +334,45 @@
                  return;
                }
                const myAnimal = playerData.myAnimals[0];
@@ -546,9 +523,8 @@ Index: src/core.js
    });
  };
 -const disableZoomClamp = () => {
--  if (isProcessed_rot) {
 +const applyGameHacks = () => {
-+  if (isProcessed_sc5) {
+   if (boolIsProcessed) {
      return;
    }
 +  if (!playerData) {
@@ -559,18 +535,17 @@ Index: src/core.js
      try {
        gameInstance.viewport.clampZoom({
          minWidth: 0,
-@@ -399,12 +383,26 @@
+@@ -397,12 +381,26 @@
        gameInstance.viewport.plugins.plugins.clamp = null;
        gameInstance.viewport.plugins.plugins["clamp-zoom"] = null;
      } catch {}
    }, 300);
--  isProcessed_rot = true;
 +  try {
-+    if (config_qp9.setFlash) {
-+      playerData[config_qp9.setFlash] = () => {};
++    if (Config.setFlash) {
++      playerData[Config.setFlash] = () => {};
 +    }
-+    if (config_qp9.terrainManager) {
-+      const terrainManager = playerData[config_qp9.terrainManager];
++    if (Config.terrainManager) {
++      const terrainManager = playerData[Config.terrainManager];
 +      if (terrainManager && terrainManager.shadow) {
 +        terrainManager.shadow.setShadowSize(1000000);
 +        terrainManager.shadow.setShadowSize = () => {};
@@ -579,17 +554,32 @@ Index: src/core.js
 +  } catch (url) {
 +    console.error(url);
 +  }
-+  isProcessed_sc5 = true;
+   boolIsProcessed = true;
  };
 -const initGameCheats = () => {
--  if (isProcessed_t1s) {
+-  if (sysIsProcessed) {
 +const initMod = () => {
-+  if (isProcessed_qng) {
++  if (appIsProcessed) {
      return;
    }
    function sendActionSequence() {
      try {
-@@ -461,19 +459,15 @@
+@@ -441,11 +439,11 @@
+         if (!playerData?.myAnimals?.[0]) {
+           return;
+         }
+         const visibleFishLevel = playerData.myAnimals[0].visibleFishLevel;
+-        const fishLevelConfig = {
+-          ...config.default,
+-          ...config[visibleFishLevel],
++        const v363dFishLevelConfig = {
++          ...objConfig.default,
++          ...objConfig[visibleFishLevel],
+         };
+         if (animalsProcessHandler.ctrlKey) {
+           if (animalsProcessHandler.shiftKey && visibleFishLevel === 107) {
+             sendActionSequence();
+@@ -459,37 +457,33 @@
                Math.floor(Math.random() * 1647483648) + 500000000,
              );
              return;
@@ -615,64 +605,71 @@ Index: src/core.js
            }
          } else if (animalsProcessHandler.altKey) {
            handleAnimalAction(
-@@ -487,11 +481,11 @@
+             playerData?.myAnimals?.[0]?._standing
+               ? 41
+-              : Math.floor(fishLevelConfig.secLoadTime / 2),
++              : Math.floor(v363dFishLevelConfig.secLoadTime / 2),
+           );
+         }
+       } catch {}
+     },
      false,
    );
    window.addEventListener(
      "keyup",
--    (event) => {
+-    (v2e3bEvent) => {
 +    (keyboardEvent) => {
        try {
--        if (!event.ctrlKey && !event.altKey) {
+-        if (!v2e3bEvent.ctrlKey && !v2e3bEvent.altKey) {
 +        if (!keyboardEvent.ctrlKey && !keyboardEvent.altKey) {
            document.getElementById("ctrl-overlay").style.pointerEvents = "none";
          }
        } catch {}
      },
-@@ -501,38 +495,40 @@
+@@ -499,38 +493,40 @@
      try {
        document.getElementById("ctrl-overlay").style.pointerEvents = "none";
      } catch {}
    });
--  isProcessed_t1s = true;
-+  isProcessed_qng = true;
+-  sysIsProcessed = true;
++  appIsProcessed = true;
  };
  
 -function initAllPanels() {
--  const mainPanel = createToolsPanel();
--  const historyPanel = createUpdateHistoryPanel();
--  const settingsPanel = initSettingsPanel();
--  const plusPanel = initPlusPanel();
+-  const Panel = createToolsPanel();
+-  const v99a0HistoryPanel = createUpdateHistoryPanel();
+-  const v499bSettingsPanel = initSettingsPanel();
+-  const fffbPlusPanel = initPlusPanel();
 +function initializePanels() {
-+  const mainPanelElement = createDeepToolsPanel();
++  const PanelElement = createDeepToolsPanel();
 +  const historyPanelElement = createUpdateHistoryPanel();
 +  const settingsPanelElement = createSettingsStyles();
 +  const plusPanelElement = createPlusPanel();
 +  applyCustomBackground();
    initAdBlocker();
    return {
--    mainPanel: mainPanel,
--    historyPanel: historyPanel,
--    settingsPanel: settingsPanel,
--    plusPanel: plusPanel,
-+    mainPanel: mainPanelElement,
+-    mainPanel: Panel,
+-    historyPanel: v99a0HistoryPanel,
+-    settingsPanel: v499bSettingsPanel,
+-    plusPanel: fffbPlusPanel,
++    mainPanel: PanelElement,
 +    historyPanel: historyPanelElement,
 +    settingsPanel: settingsPanelElement,
 +    plusPanel: plusPanelElement,
    };
  }
--document.addEventListener("keydown", (keyboardEvent) => {
-+document.addEventListener("keydown", (event) => {
+-document.addEventListener("keydown", (v1656KeyboardEvent) => {
++document.addEventListener("keydown", (v2827Event) => {
    if (
--    keyboardEvent.key === state.activeKey &&
--    !keyboardEvent.repeat &&
--    !keyboardEvent.target.matches("input, textarea, button")
-+    event.key === state.activeKey &&
-+    !event.repeat &&
-+    !event.target.matches("input, textarea, button")
+-    v1656KeyboardEvent.key === state.activeKey &&
+-    !v1656KeyboardEvent.repeat &&
+-    !v1656KeyboardEvent.target.matches("input, textarea, button")
++    v2827Event.key === state.activeKey &&
++    !v2827Event.repeat &&
++    !v2827Event.target.matches("input, textarea, button")
    ) {
--    keyboardEvent.preventDefault();
-+    event.preventDefault();
+-    v1656KeyboardEvent.preventDefault();
++    v2827Event.preventDefault();
      togglePanels();
    }
  });
@@ -686,7 +683,7 @@ Index: src/core.js
  });
  
  export const state = {
-@@ -543,17 +539,18 @@
+@@ -540,17 +536,18 @@
  };
  
  export {
@@ -706,10 +703,11 @@ Index: src/core.js
    angles,
    radius,
    playerData,
--  isProcessed_t1s,
-+  isProcessed_sc5,
-+  isProcessed_qng,
-   config,
+-  sysIsProcessed,
+-  config,
++  boolIsProcessed,
++  appIsProcessed,
++  objConfig,
  };
 Index: src/features/adblock.js
 ===================================================================
@@ -720,7 +718,7 @@ Index: src/features/adblock.js
 +import { showNotification } from "../ui/interaction.js";
  
  function initAdBlocker() {
-   const adSelectors = [
+   const Selectors = [
      "div.ad-block",
 @@ -32,15 +32,15 @@
        leftSidebar.style.overflow = "hidden";
@@ -752,7 +750,7 @@ Index: src/features/antidetection.js
 +import { getGameCanvas } from "../utils.js";
 +
 +function startAntiAfk() {
-+  if (featuresentitytrailState.entityTrailInterval_9sd) {
++  if (featuresentitytrailState.modEntityTrailInterval) {
 +    return;
 +  }
 +  const gameCanvas = getGameCanvas();
@@ -760,15 +758,15 @@ Index: src/features/antidetection.js
 +    showNotification("Game canvas not found!");
 +    return;
 +  }
-+  featuresentitytrailState.entityTrailInterval_9sd = setInterval(() => {
++  featuresentitytrailState.modEntityTrailInterval = setInterval(() => {
 +    const angleDegrees = angles[state.angleIndex];
 +    const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
-+    const offsetX = Math.round(radius * Math.sin(angleRadians));
-+    const offsetY = Math.round(radius * Math.cos(angleRadians));
++    const v37c7OffsetX = Math.round(radius * Math.sin(angleRadians));
++    const v1578OffsetY = Math.round(radius * Math.cos(angleRadians));
 +    gameCanvas.dispatchEvent(
 +      new MouseEvent("pointermove", {
-+        clientX: window.innerWidth / 2 + offsetX,
-+        clientY: window.innerHeight / 2 + offsetY,
++        clientX: window.innerWidth / 2 + v37c7OffsetX,
++        clientY: window.innerHeight / 2 + v1578OffsetY,
 +        bubbles: true,
 +      }),
 +    );
@@ -782,7 +780,8 @@ Index: src/features/autofarm.js
 --- src/features/autofarm.js	v1.1
 +++ src/features/autofarm.js	v1.2
 @@ -1,28 +1,28 @@
- import { playerData, config, sendPacket, state } from "../core.js";
+-import { playerData, config, sendPacket, state } from "../core.js";
++import { playerData, objConfig, sendPacket, state } from "../core.js";
  
 -const handleAnimalAction = (currentValue) => {
 -  const const1 = 1;
@@ -794,9 +793,11 @@ Index: src/features/autofarm.js
 +  const id5 = 5;
    try {
 -    const fishLevelSettings = {
+-      ...config.default,
+-      ...(config[playerData?.myAnimals?.[0]?.visibleFishLevel] || {}),
 +    const fishLevelConfig = {
-       ...config.default,
-       ...(config[playerData?.myAnimals?.[0]?.visibleFishLevel] || {}),
++      ...objConfig.default,
++      ...(objConfig[playerData?.myAnimals?.[0]?.visibleFishLevel] || {}),
      };
 -    if (currentValue < (playerData?.myAnimals?.[0]?._standing ? 40 : 100)) {
 -      return sendPacket(const1);
@@ -823,22 +824,11 @@ Index: src/features/autofarm.js
  };
  
  export { handleAnimalAction };
-Index: src/features/entitytrail.js
-===================================================================
---- src/features/entitytrail.js	v1.1
-+++ src/features/entitytrail.js	v1.2
-@@ -1,5 +1,5 @@
- export const featuresentitytrailState = {
--  entityTrailInterval_rkn: null,
-+  entityTrailInterval_9sd: null,
- };
- 
- export {};
 Index: src/features/movement.js
 ===================================================================
 --- src/features/movement.js	v1.1
 +++ src/features/movement.js	v1.2
-@@ -1,44 +1,18 @@
+@@ -1,33 +1,7 @@
  import { featuresentitytrailState } from "./entitytrail.js";
 -import { angles, radius, state } from "../core.js";
 -import { showToast } from "../ui/interaction.js";
@@ -846,7 +836,7 @@ Index: src/features/movement.js
 +import { startAntiAfk } from "./antidetection.js";
  
 -function startCircularMouseMovement() {
--  if (featuresentitytrailState.entityTrailInterval_rkn) {
+-  if (featuresentitytrailState.modEntityTrailInterval) {
 -    return;
 -  }
 -  const gameCanvas = getGameCanvas();
@@ -854,15 +844,15 @@ Index: src/features/movement.js
 -    showToast("Game canvas not found!");
 -    return;
 -  }
--  featuresentitytrailState.entityTrailInterval_rkn = setInterval(() => {
+-  featuresentitytrailState.modEntityTrailInterval = setInterval(() => {
 -    const angleDegrees = angles[state.angleIndex];
 -    const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
--    const offsetX = Math.round(radius * Math.sin(angleRadians));
--    const offsetY = Math.round(radius * Math.cos(angleRadians));
+-    const v41a7OffsetX = Math.round(radius * Math.sin(angleRadians));
+-    const v541cOffsetY = Math.round(radius * Math.cos(angleRadians));
 -    gameCanvas.dispatchEvent(
 -      new MouseEvent("pointermove", {
--        clientX: window.innerWidth / 2 + offsetX,
--        clientY: window.innerHeight / 2 + offsetY,
+-        clientX: window.innerWidth / 2 + v41a7OffsetX,
+-        clientY: window.innerHeight / 2 + v541cOffsetY,
 -        bubbles: true,
 -      }),
 -    );
@@ -870,17 +860,12 @@ Index: src/features/movement.js
 -  }, 15);
 -}
  function stopEntityTrail() {
--  if (featuresentitytrailState.entityTrailInterval_rkn) {
--    clearInterval(featuresentitytrailState.entityTrailInterval_rkn);
--    featuresentitytrailState.entityTrailInterval_rkn = null;
-+  if (featuresentitytrailState.entityTrailInterval_9sd) {
-+    clearInterval(featuresentitytrailState.entityTrailInterval_9sd);
-+    featuresentitytrailState.entityTrailInterval_9sd = null;
-   }
- }
+   if (featuresentitytrailState.modEntityTrailInterval) {
+     clearInterval(featuresentitytrailState.modEntityTrailInterval);
+     featuresentitytrailState.modEntityTrailInterval = null;
+@@ -36,9 +10,9 @@
  function toggleMouseSimulation() {
--  if (featuresentitytrailState.entityTrailInterval_rkn) {
-+  if (featuresentitytrailState.entityTrailInterval_9sd) {
+   if (featuresentitytrailState.modEntityTrailInterval) {
      stopEntityTrail();
    } else {
 -    startCircularMouseMovement();
@@ -914,7 +899,7 @@ Index: src/ui/interaction.js
          new Event("change", {
            bubbles: true,
          }),
-@@ -22,18 +22,18 @@
+@@ -22,21 +22,21 @@
        );
        setTimeout(() => {}, 100);
        return;
@@ -934,12 +919,46 @@ Index: src/ui/interaction.js
 +  typeNextChar();
    return true;
  }
- function autoTypeChat(textToType) {
+-function autoTypeChat(textToType) {
++function autoTypeChat(v2ae1TextToType) {
    const chatInput =
-@@ -83,20 +83,20 @@
-     setTimeout(typeNextChar, 25);
+     document.querySelector(".chat-input input") ||
+     document.querySelector('input[placeholder*="chat" i]') ||
+     document.querySelector('input[type="text"]');
+@@ -45,11 +45,11 @@
+     return;
+   }
+   chatInput.focus();
+   chatInput.value = "";
+-  let v4b1bCharIndex = 0;
+-  const typeNextChar = () => {
+-    if (v4b1bCharIndex >= textToType.length) {
++  let v57b6CharIndex = 0;
++  const v21fdTypeNextChar = () => {
++    if (v57b6CharIndex >= v2ae1TextToType.length) {
+       const sendButton =
+         document.querySelector(".chat-input button") ||
+         document.querySelector('button[aria-label*="send" i]') ||
+         document.querySelector("button");
+@@ -72,31 +72,31 @@
+         }, 100);
+       }
+       return;
+     }
+-    chatInput.value += textToType[v4b1bCharIndex];
++    chatInput.value += v2ae1TextToType[v57b6CharIndex];
+     chatInput.dispatchEvent(
+       new InputEvent("input", {
+         bubbles: true,
+       }),
+     );
+-    v4b1bCharIndex++;
+-    setTimeout(typeNextChar, 25);
++    v57b6CharIndex++;
++    setTimeout(v21fdTypeNextChar, 25);
    };
-   typeNextChar();
+-  typeNextChar();
++  v21fdTypeNextChar();
  }
 -function showToast(message) {
 -  const toastElement = document.createElement("div");
@@ -970,15 +989,15 @@ Index: src/ui/panels.js
 ===================================================================
 --- src/ui/panels.js	v1.1
 +++ src/ui/panels.js	v1.2
-@@ -1,403 +1,345 @@
+@@ -1,419 +1,355 @@
  import {
    radius,
 -  setupTextEncoderHook,
--  isProcessed_t1s,
+-  sysIsProcessed,
 -  initHooks,
 +  initNetworkHook,
-+  isProcessed_sc5,
-+  isProcessed_qng,
++  boolIsProcessed,
++  appIsProcessed,
 +  setupAntiDetection,
 +  applyGameHacks,
    state,
@@ -1014,8 +1033,8 @@ Index: src/ui/panels.js
    let isHidden = false;
 -  minHistBtn.onclick = (toggleEvent) => {
 -    toggleEvent.stopPropagation();
-+  minHistBtn.onclick = (event) => {
-+    event.stopPropagation();
++  minHistBtn.onclick = (v4253Event) => {
++    v4253Event.stopPropagation();
      isHidden = !isHidden;
      historyContent.style.display = isHidden ? "none" : "block";
      historyPanel.style.height = isHidden ? "50px" : "auto";
@@ -1026,11 +1045,11 @@ Index: src/ui/panels.js
 -  let isDraggingHistory = false;
    let isActive = false;
 -  historyPanel.addEventListener("mousedown", (clickEvent) => {
-+  let isActive_fb8 = false;
-+  historyPanel.addEventListener("mousedown", (event_z21) => {
++  let v4b0aIsActive = false;
++  historyPanel.addEventListener("mousedown", (dbcdEvent) => {
      if (
 -      ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(clickEvent.target.tagName)
-+      ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(event_z21.target.tagName)
++      ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(dbcdEvent.target.tagName)
      ) {
        return;
      }
@@ -1039,19 +1058,19 @@ Index: src/ui/panels.js
 -    offsetX = clickEvent.clientX - historyPanel.getBoundingClientRect().left;
 -    offsetY = clickEvent.clientY - historyPanel.getBoundingClientRect().top;
 +    isActive = true;
-+    isActive_fb8 = false;
-+    offsetX = event_z21.clientX - historyPanel.getBoundingClientRect().left;
-+    offsetY = event_z21.clientY - historyPanel.getBoundingClientRect().top;
++    v4b0aIsActive = false;
++    offsetX = dbcdEvent.clientX - historyPanel.getBoundingClientRect().left;
++    offsetY = dbcdEvent.clientY - historyPanel.getBoundingClientRect().top;
      historyPanel.style.transition = "none";
      const handleMouseMove = (mouseEvent) => {
 -      const deltaX = mouseEvent.clientX - clickEvent.clientX;
 -      const deltaY = mouseEvent.clientY - clickEvent.clientY;
 -      if (!isActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
 -        isActive = true;
-+      const deltaX = mouseEvent.clientX - event_z21.clientX;
-+      const deltaY = mouseEvent.clientY - event_z21.clientY;
-+      if (!isActive_fb8 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-+        isActive_fb8 = true;
++      const deltaX = mouseEvent.clientX - dbcdEvent.clientX;
++      const deltaY = mouseEvent.clientY - dbcdEvent.clientY;
++      if (!v4b0aIsActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
++        v4b0aIsActive = true;
        }
 -      if (isDraggingHistory) {
 +      if (isActive) {
@@ -1075,12 +1094,12 @@ Index: src/ui/panels.js
 -    document.addEventListener("mouseup", stopDraggingTools);
 +    document.addEventListener("mouseup", handleMouseUp);
    });
--  historyPanel.addEventListener("click", (event) => {
+-  historyPanel.addEventListener("click", (v52f9Event) => {
 -    if (isActive) {
--      event.stopImmediatePropagation();
-+  historyPanel.addEventListener("click", (event_cbo) => {
-+    if (isActive_fb8) {
-+      event_cbo.stopImmediatePropagation();
+-      v52f9Event.stopImmediatePropagation();
++  historyPanel.addEventListener("click", (v2e7fEvent) => {
++    if (v4b0aIsActive) {
++      v2e7fEvent.stopImmediatePropagation();
      }
    });
    return historyPanel;
@@ -1110,6 +1129,13 @@ Index: src/ui/panels.js
 -  document.body.appendChild(toolsPanel);
 -  const minPanel = toolsPanel.querySelector("#minPanel");
 -  const panelContent = toolsPanel.querySelector("#panelContent");
+-  let v5e19IsHidden = false;
+-  minPanel.onclick = (v2a6cEvent) => {
+-    v2a6cEvent.stopPropagation();
+-    v5e19IsHidden = !v5e19IsHidden;
+-    panelContent.style.display = v5e19IsHidden ? "none" : "block";
+-    toolsPanel.style.height = v5e19IsHidden ? "50px" : "auto";
+-    minPanel.textContent = v5e19IsHidden ? "+" : "−";
 +function createDeepToolsPanel() {
 +  const deepToolsStyle = document.createElement("style");
 +  deepToolsStyle.textContent =
@@ -1135,14 +1161,13 @@ Index: src/ui/panels.js
 +  document.body.appendChild(container);
 +  const minPanel = container.querySelector("#minPanel");
 +  const panelContent = container.querySelector("#panelContent");
-   let isHidden = false;
-   minPanel.onclick = (event) => {
-     event.stopPropagation();
-     isHidden = !isHidden;
-     panelContent.style.display = isHidden ? "none" : "block";
--    toolsPanel.style.height = isHidden ? "50px" : "auto";
-+    container.style.height = isHidden ? "50px" : "auto";
-     minPanel.textContent = isHidden ? "+" : "−";
++  let v3d2cIsHidden = false;
++  minPanel.onclick = (v3bfaEvent) => {
++    v3bfaEvent.stopPropagation();
++    v3d2cIsHidden = !v3d2cIsHidden;
++    panelContent.style.display = v3d2cIsHidden ? "none" : "block";
++    container.style.height = v3d2cIsHidden ? "50px" : "auto";
++    minPanel.textContent = v3d2cIsHidden ? "+" : "−";
    };
 -  toolsPanel.querySelector("#sendBtn").onclick = () => {
 -    const chatMessage = toolsPanel.querySelector("#chatMsg").value;
@@ -1154,8 +1179,8 @@ Index: src/ui/panels.js
    };
 -  const spoofBtn = toolsPanel.querySelector("#patchBtn");
 -  spoofBtn.onclick = () => setupTextEncoderHook(spoofBtn);
--  const spoofBtn_o7w = toolsPanel.querySelector("#spoofBtn");
--  spoofBtn_o7w.onclick = () => {
+-  const v4a5eSpoofBtn = toolsPanel.querySelector("#spoofBtn");
+-  v4a5eSpoofBtn.onclick = () => {
 -    const generatedValue = generateRandomString(8);
 -    if (simulateTyping(".play-game .el-input__inner", generatedValue)) {
 -      showToast("Spoofed name!");
@@ -1163,8 +1188,8 @@ Index: src/ui/panels.js
 -      showToast("Spoofed tribe name!");
 +  const spoofButton = container.querySelector("#patchBtn");
 +  spoofButton.onclick = () => initNetworkHook(spoofButton);
-+  const spoofButton_iul = container.querySelector("#spoofBtn");
-+  spoofButton_iul.onclick = () => {
++  const v2136SpoofButton = container.querySelector("#spoofBtn");
++  v2136SpoofButton.onclick = () => {
 +    const maxLength = generateRandomString(8);
 +    if (simulateTyping(".play-game .el-input__inner", maxLength)) {
 +      showNotification("Spoofed name!");
@@ -1180,10 +1205,9 @@ Index: src/ui/panels.js
 +  const autoChatButton = container.querySelector("#spinBtn");
 +  autoChatButton.onclick = () => {
      toggleMouseSimulation();
--    if (featuresentitytrailState.entityTrailInterval_rkn) {
+     if (featuresentitytrailState.modEntityTrailInterval) {
 -      autoChatBtn.textContent = "Disable Auto Spin";
 -      autoChatBtn.style.color = "#4dff4d";
-+    if (featuresentitytrailState.entityTrailInterval_9sd) {
 +      autoChatButton.textContent = "Disable Auto Spin";
 +      autoChatButton.style.color = "#27ae60";
      } else {
@@ -1205,21 +1229,20 @@ Index: src/ui/panels.js
      spinKeyInput.value = lastPressedKey.replace("Key", "").toLowerCase();
    });
 -  document.addEventListener("keydown", (keyEvent) => {
-+  document.addEventListener("keydown", (event_3l4) => {
++  document.addEventListener("keydown", (v1dedEvent) => {
      if (
        lastPressedKey &&
 -      keyEvent.code === lastPressedKey &&
 -      !keyEvent.target.matches("input, textarea, button")
-+      event_3l4.code === lastPressedKey &&
-+      !event_3l4.target.matches("input, textarea, button")
++      v1dedEvent.code === lastPressedKey &&
++      !v1dedEvent.target.matches("input, textarea, button")
      ) {
 -      keyEvent.preventDefault();
-+      event_3l4.preventDefault();
++      v1dedEvent.preventDefault();
        toggleMouseSimulation();
--      if (featuresentitytrailState.entityTrailInterval_rkn) {
+       if (featuresentitytrailState.modEntityTrailInterval) {
 -        autoChatBtn.textContent = "Disable Auto Spin";
 -        autoChatBtn.style.color = "#4dff4d";
-+      if (featuresentitytrailState.entityTrailInterval_9sd) {
 +        autoChatButton.textContent = "Disable Auto Spin";
 +        autoChatButton.style.color = "#27ae60";
        } else {
@@ -1230,12 +1253,12 @@ Index: src/ui/panels.js
        }
      }
    });
--  const autoChatBtn_o0p = toolsPanel.querySelector("#autoChatBtn");
--  autoChatBtn_o0p.onclick = () => {
+-  const v5557AutoChatBtn = toolsPanel.querySelector("#autoChatBtn");
+-  v5557AutoChatBtn.onclick = () => {
 -    const chatMessageText = toolsPanel.querySelector("#chatMsg").value;
 -    const delayInput = toolsPanel.querySelector("#delayInput");
-+  const autoChatButton_joo = container.querySelector("#autoChatBtn");
-+  autoChatButton_joo.onclick = () => {
++  const v2ffaAutoChatButton = container.querySelector("#autoChatBtn");
++  v2ffaAutoChatButton.onclick = () => {
 +    const chatMessageText = container.querySelector("#chatMsg").value;
 +    const delayInput = container.querySelector("#delayInput");
      const delayValue = parseInt(delayInput.value) || 10;
@@ -1244,91 +1267,101 @@ Index: src/ui/panels.js
 +      showNotification("⚠️ Enter a message first!");
        return;
      }
-     if (state.isToggled) {
+     if (state.IsToggled) {
        stopInterval();
--      autoChatBtn_o0p.textContent = "Enable Auto Chat";
--      autoChatBtn_o0p.style.color = "#ff4d4d";
-+      autoChatButton_joo.textContent = "Enable Auto Chat";
-+      autoChatButton_joo.style.color = "#e74c3c";
+-      v5557AutoChatBtn.textContent = "Enable Auto Chat";
+-      v5557AutoChatBtn.style.color = "#ff4d4d";
++      v2ffaAutoChatButton.textContent = "Enable Auto Chat";
++      v2ffaAutoChatButton.style.color = "#e74c3c";
      } else {
        startScheduledTask(chatMessageText, delayValue);
--      autoChatBtn_o0p.textContent = "Disable Auto Chat";
--      autoChatBtn_o0p.style.color = "#4dff4d";
-+      autoChatButton_joo.textContent = "Disable Auto Chat";
-+      autoChatButton_joo.style.color = "#27ae60";
+-      v5557AutoChatBtn.textContent = "Disable Auto Chat";
+-      v5557AutoChatBtn.style.color = "#4dff4d";
++      v2ffaAutoChatButton.textContent = "Disable Auto Chat";
++      v2ffaAutoChatButton.style.color = "#27ae60";
      }
    };
-   let offsetX;
-   let offsetY;
+-  let v1a4dOffsetX;
+-  let v1d07OffsetY;
 -  let isDraggingTools = false;
-   let isActive = false;
--  toolsPanel.addEventListener("mousedown", (uiEvent) => {
-+  let isActive_jtk = false;
-+  container.addEventListener("mousedown", (event_2uf) => {
+-  let v5d2aIsActive = false;
+-  toolsPanel.addEventListener("mousedown", (Event) => {
++  let v1985OffsetX;
++  let v12c5OffsetY;
++  let v3a7fIsActive = false;
++  let v41e7IsActive = false;
++  container.addEventListener("mousedown", (v1573Event) => {
      if (
--      uiEvent.target.tagName === "BUTTON" ||
--      uiEvent.target.tagName === "TEXTAREA" ||
--      uiEvent.target.tagName === "INPUT" ||
--      uiEvent.target.classList.contains("credits")
-+      event_2uf.target.tagName === "BUTTON" ||
-+      event_2uf.target.tagName === "TEXTAREA" ||
-+      event_2uf.target.tagName === "INPUT" ||
-+      event_2uf.target.classList.contains("credits")
+-      Event.target.tagName === "BUTTON" ||
+-      Event.target.tagName === "TEXTAREA" ||
+-      Event.target.tagName === "INPUT" ||
+-      Event.target.classList.contains("credits")
++      v1573Event.target.tagName === "BUTTON" ||
++      v1573Event.target.tagName === "TEXTAREA" ||
++      v1573Event.target.tagName === "INPUT" ||
++      v1573Event.target.classList.contains("credits")
      ) {
        return;
      }
 -    isDraggingTools = true;
--    isActive = false;
--    offsetX = uiEvent.clientX - toolsPanel.getBoundingClientRect().left;
--    offsetY = uiEvent.clientY - toolsPanel.getBoundingClientRect().top;
+-    v5d2aIsActive = false;
+-    v1a4dOffsetX = Event.clientX - toolsPanel.getBoundingClientRect().left;
+-    v1d07OffsetY = Event.clientY - toolsPanel.getBoundingClientRect().top;
 -    toolsPanel.style.transition = "none";
-+    isActive = true;
-+    isActive_jtk = false;
-+    offsetX = event_2uf.clientX - container.getBoundingClientRect().left;
-+    offsetY = event_2uf.clientY - container.getBoundingClientRect().top;
+-    const v84edHandleMouseMove = (v4554MouseEvent) => {
+-      const v5869DeltaX = v4554MouseEvent.clientX - Event.clientX;
+-      const v2ab5DeltaY = v4554MouseEvent.clientY - Event.clientY;
++    v3a7fIsActive = true;
++    v41e7IsActive = false;
++    v1985OffsetX = v1573Event.clientX - container.getBoundingClientRect().left;
++    v12c5OffsetY = v1573Event.clientY - container.getBoundingClientRect().top;
 +    container.style.transition = "none";
-     const handleMouseMove = (mouseEvent) => {
--      const deltaX = mouseEvent.clientX - uiEvent.clientX;
--      const deltaY = mouseEvent.clientY - uiEvent.clientY;
--      if (!isActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
--        isActive = true;
-+      const deltaX = mouseEvent.clientX - event_2uf.clientX;
-+      const deltaY = mouseEvent.clientY - event_2uf.clientY;
-+      if (!isActive_jtk && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-+        isActive_jtk = true;
++    const v4387HandleMouseMove = (v448cMouseEvent) => {
++      const v5b68DeltaX = v448cMouseEvent.clientX - v1573Event.clientX;
++      const v2a22DeltaY = v448cMouseEvent.clientY - v1573Event.clientY;
+       if (
+-        !v5d2aIsActive &&
+-        (Math.abs(v5869DeltaX) > 5 || Math.abs(v2ab5DeltaY) > 5)
++        !v41e7IsActive &&
++        (Math.abs(v5b68DeltaX) > 5 || Math.abs(v2a22DeltaY) > 5)
+       ) {
+-        v5d2aIsActive = true;
++        v41e7IsActive = true;
        }
 -      if (isDraggingTools) {
--        toolsPanel.style.left = mouseEvent.clientX - offsetX + "px";
--        toolsPanel.style.top = mouseEvent.clientY - offsetY + "px";
+-        toolsPanel.style.left = v4554MouseEvent.clientX - v1a4dOffsetX + "px";
+-        toolsPanel.style.top = v4554MouseEvent.clientY - v1d07OffsetY + "px";
 -        toolsPanel.style.bottom = "auto";
 -        toolsPanel.style.right = "auto";
-+      if (isActive) {
-+        container.style.left = mouseEvent.clientX - offsetX + "px";
-+        container.style.top = mouseEvent.clientY - offsetY + "px";
++      if (v3a7fIsActive) {
++        container.style.left = v448cMouseEvent.clientX - v1985OffsetX + "px";
++        container.style.top = v448cMouseEvent.clientY - v12c5OffsetY + "px";
 +        container.style.bottom = "auto";
 +        container.style.right = "auto";
        }
      };
--    const stopDraggingTools = () => {
+-    const v34a5StopDraggingTools = () => {
 -      isDraggingTools = false;
 -      toolsPanel.style.transition = "all 0.3s cubic-bezier(0.23, 1, 0.32, 1)";
-+    const handleMouseUp = () => {
-+      isActive = false;
+-      document.removeEventListener("mousemove", v84edHandleMouseMove);
+-      document.removeEventListener("mouseup", v34a5StopDraggingTools);
++    const v5038HandleMouseUp = () => {
++      v3a7fIsActive = false;
 +      container.style.transition = "all 0.3s ease";
-       document.removeEventListener("mousemove", handleMouseMove);
--      document.removeEventListener("mouseup", stopDraggingTools);
-+      document.removeEventListener("mouseup", handleMouseUp);
++      document.removeEventListener("mousemove", v4387HandleMouseMove);
++      document.removeEventListener("mouseup", v5038HandleMouseUp);
      };
-     document.addEventListener("mousemove", handleMouseMove);
--    document.addEventListener("mouseup", stopDraggingTools);
-+    document.addEventListener("mouseup", handleMouseUp);
+-    document.addEventListener("mousemove", v84edHandleMouseMove);
+-    document.addEventListener("mouseup", v34a5StopDraggingTools);
++    document.addEventListener("mousemove", v4387HandleMouseMove);
++    document.addEventListener("mouseup", v5038HandleMouseUp);
    });
 -  toolsPanel.addEventListener("click", (propagationEvent) => {
--    if (isActive) {
+-    if (v5d2aIsActive) {
 -      propagationEvent.stopImmediatePropagation();
-+  container.addEventListener("click", (event_5g4) => {
-+    if (isActive_jtk) {
-+      event_5g4.stopImmediatePropagation();
++  container.addEventListener("click", (v5baaEvent) => {
++    if (v41e7IsActive) {
++      v5baaEvent.stopImmediatePropagation();
      }
    });
 -  return toolsPanel;
@@ -1359,49 +1392,53 @@ Index: src/ui/panels.js
 -  document.body.appendChild(plusPanelElement);
 -  const minPlusBtn = plusPanelElement.querySelector("#minPlus");
 -  const plusContent = plusPanelElement.querySelector("#plusContent");
+-  let v5229IsHidden = false;
+-  minPlusBtn.onclick = (eventHandler) => {
+-    eventHandler.stopPropagation();
+-    v5229IsHidden = !v5229IsHidden;
+-    plusContent.style.display = v5229IsHidden ? "none" : "block";
+-    plusPanelElement.style.height = v5229IsHidden ? "50px" : "auto";
+-    minPlusBtn.textContent = v5229IsHidden ? "+" : "−";
 +function createPlusPanel() {
 +  const plusPanelStyle = document.createElement("style");
 +  plusPanelStyle.textContent =
 +    "\n      #plus-panel {\n        font-family: 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n        border: 1px solid #333;\n        background: #1e1e1e;\n      }\n      #plus-panel:hover {\n        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n      }\n      #plus-panel textarea {\n        background: #2d2d2d;\n        border: 1px solid #444;\n        color: #e0e0e0;\n        border-radius: 6px;\n        padding: 8px;\n        transition: border-color 0.2s;\n        font-size: 13px;\n      }\n      #plus-panel textarea:focus {\n        outline: none;\n        border-color: #e74c3c;\n        box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);\n      }\n      #plus-panel input[type=\"number\"] {\n        background: #2d2d2d;\n        border: 1px solid #444;\n        color: #e0e0e0;\n        border-radius: 4px;\n        padding: 4px;\n        width: 60px;\n        text-align: center;\n      }\n      #plus-panel button {\n        background: #2d2d2d;\n        color: #e74c3c;\n        border: 1px solid #444;\n        border-radius: 6px;\n        padding: 8px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        width: 100%;\n        margin-bottom: 8px;\n      }\n      #plus-panel button:hover:not(:disabled) {\n        background: #3d3d3d;\n        border-color: #e74c3c;\n        transform: translateY(-1px);\n        box-shadow: 0 2px 6px rgba(231, 76, 60, 0.2);\n      }\n      #plus-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);\n      }\n      #plus-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #plus-panel button.min-btn {\n        background: none;\n        border: none;\n        color: #e74c3c;\n        font-size: 18px;\n        cursor: pointer;\n        position: absolute;\n        top: 30%;\n        right: 5px;\n        transform: translateY(-50%);\n        z-index: 1;\n        transition: color 0.2s ease;\n        width: 20px;\n        height: 20px;\n        line-height: 20px;\n      }\n      #plus-panel button.min-btn:hover {\n        color: #f39c12;\n      }\n    ";
 +  document.head.appendChild(plusPanelStyle);
-+  const container = document.createElement("div");
-+  container.id = "plus-panel";
-+  container.style.position = "fixed";
-+  container.style.top = "20px";
-+  container.style.right = "20px";
-+  container.style.color = "#e0e0e0";
-+  container.style.padding = "14px";
-+  container.style.borderRadius = "8px";
-+  container.style.fontSize = "14px";
-+  container.style.zIndex = "99999";
-+  container.style.userSelect = "none";
-+  container.style.width = "220px";
-+  container.style.textAlign = "center";
-+  container.style.cursor = "move";
-+  container.style.overflow = "hidden";
-+  container.innerHTML =
++  const v18aeContainer = document.createElement("div");
++  v18aeContainer.id = "plus-panel";
++  v18aeContainer.style.position = "fixed";
++  v18aeContainer.style.top = "20px";
++  v18aeContainer.style.right = "20px";
++  v18aeContainer.style.color = "#e0e0e0";
++  v18aeContainer.style.padding = "14px";
++  v18aeContainer.style.borderRadius = "8px";
++  v18aeContainer.style.fontSize = "14px";
++  v18aeContainer.style.zIndex = "99999";
++  v18aeContainer.style.userSelect = "none";
++  v18aeContainer.style.width = "220px";
++  v18aeContainer.style.textAlign = "center";
++  v18aeContainer.style.cursor = "move";
++  v18aeContainer.style.overflow = "hidden";
++  v18aeContainer.innerHTML =
 +    '\n      <div style="font-weight:600; margin-bottom:10px; color:#e74c3c; position: relative; height: 40px; line-height: 40px; padding-right: 25px;">\n        ASTRAPHOBIA CLIENT\n        <button class="min-btn" id="minPlus">−</button>\n      </div>\n      <div id="plusContent">\n        <button id="thresherBtn">Enable Thresher Super Boost(ctrl + shift and click)(minumum required 2 boost)</button>\n        <button id="astraVisionBtn">Enable Astra-Vision (no-zoom limit, no ink flash or deep darkness)</button>\n      </div>\n    ';
-+  document.body.appendChild(container);
-+  const minPlusBtn = container.querySelector("#minPlus");
-+  const plusContent = container.querySelector("#plusContent");
-   let isHidden = false;
--  minPlusBtn.onclick = (eventHandler) => {
--    eventHandler.stopPropagation();
-+  minPlusBtn.onclick = (event) => {
-+    event.stopPropagation();
-     isHidden = !isHidden;
-     plusContent.style.display = isHidden ? "none" : "block";
--    plusPanelElement.style.height = isHidden ? "50px" : "auto";
-+    container.style.height = isHidden ? "50px" : "auto";
-     minPlusBtn.textContent = isHidden ? "+" : "−";
++  document.body.appendChild(v18aeContainer);
++  const minPlusBtn = v18aeContainer.querySelector("#minPlus");
++  const plusContent = v18aeContainer.querySelector("#plusContent");
++  let v4e99IsHidden = false;
++  minPlusBtn.onclick = (v57c7Event) => {
++    v57c7Event.stopPropagation();
++    v4e99IsHidden = !v4e99IsHidden;
++    plusContent.style.display = v4e99IsHidden ? "none" : "block";
++    v18aeContainer.style.height = v4e99IsHidden ? "50px" : "auto";
++    minPlusBtn.textContent = v4e99IsHidden ? "+" : "−";
    };
 -  const thresherBtn = plusPanelElement.querySelector("#thresherBtn");
 -  thresherBtn.onclick = () => {
--    if (isProcessed_t1s) {
+-    if (sysIsProcessed) {
 -      showToast("Thresher Super Boost is already active!");
-+  const astraVisionBtn = container.querySelector("#thresherBtn");
++  const astraVisionBtn = v18aeContainer.querySelector("#thresherBtn");
 +  astraVisionBtn.onclick = () => {
-+    if (isProcessed_qng) {
++    if (appIsProcessed) {
 +      showNotification("Thresher Super Boost is already active!");
        return;
      }
@@ -1414,54 +1451,60 @@ Index: src/ui/panels.js
 +    astraVisionBtn.style.color = "#27ae60";
 +    astraVisionBtn.disabled = true;
    };
--  let offsetX;
--  let offsetY;
+-  let v2e9cOffsetX;
+-  let ad63OffsetY;
 -  let isDraggingPlusPanel = false;
--  let isActive = false;
--  plusPanelElement.addEventListener("mousedown", (clickEvent) => {
+-  let v34bdIsActive = false;
+-  plusPanelElement.addEventListener("mousedown", (v3c14ClickEvent) => {
 -    if (
--      clickEvent.target.tagName === "BUTTON" ||
--      clickEvent.target.tagName === "TEXTAREA" ||
--      clickEvent.target.tagName === "INPUT" ||
--      clickEvent.target.classList.contains("credits")
+-      v3c14ClickEvent.target.tagName === "BUTTON" ||
+-      v3c14ClickEvent.target.tagName === "TEXTAREA" ||
+-      v3c14ClickEvent.target.tagName === "INPUT" ||
+-      v3c14ClickEvent.target.classList.contains("credits")
 -    ) {
-+  const astraVisionBtn_fg7 = container.querySelector("#astraVisionBtn");
-+  astraVisionBtn_fg7.onclick = () => {
-+    if (isProcessed_sc5) {
++  const v3fd4AstraVisionBtn = v18aeContainer.querySelector("#astraVisionBtn");
++  v3fd4AstraVisionBtn.onclick = () => {
++    if (boolIsProcessed) {
 +      showNotification("Astra-Vision already enabled!");
        return;
      }
 -    isDraggingPlusPanel = true;
--    isActive = false;
--    offsetX =
--      clickEvent.clientX - plusPanelElement.getBoundingClientRect().left;
--    offsetY = clickEvent.clientY - plusPanelElement.getBoundingClientRect().top;
+-    v34bdIsActive = false;
+-    v2e9cOffsetX =
+-      v3c14ClickEvent.clientX - plusPanelElement.getBoundingClientRect().left;
+-    ad63OffsetY =
+-      v3c14ClickEvent.clientY - plusPanelElement.getBoundingClientRect().top;
 -    plusPanelElement.style.transition = "none";
--    const handleMouseMove = (mouseEvent) => {
--      const deltaX = mouseEvent.clientX - clickEvent.clientX;
--      const deltaY = mouseEvent.clientY - clickEvent.clientY;
--      if (!isActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
--        isActive = true;
+-    const v36e7HandleMouseMove = (e428MouseEvent) => {
+-      const v1504DeltaX = e428MouseEvent.clientX - v3c14ClickEvent.clientX;
+-      const v5d75DeltaY = e428MouseEvent.clientY - v3c14ClickEvent.clientY;
+-      if (
+-        !v34bdIsActive &&
+-        (Math.abs(v1504DeltaX) > 5 || Math.abs(v5d75DeltaY) > 5)
+-      ) {
+-        v34bdIsActive = true;
 -      }
 -      if (isDraggingPlusPanel) {
--        plusPanelElement.style.left = mouseEvent.clientX - offsetX + "px";
--        plusPanelElement.style.top = mouseEvent.clientY - offsetY + "px";
+-        plusPanelElement.style.left =
+-          e428MouseEvent.clientX - v2e9cOffsetX + "px";
+-        plusPanelElement.style.top =
+-          e428MouseEvent.clientY - ad63OffsetY + "px";
 -        plusPanelElement.style.bottom = "auto";
 -        plusPanelElement.style.right = "auto";
 -      }
 -    };
--    const stopDraggingTools = () => {
+-    const v213dStopDraggingTools = () => {
 -      isDraggingPlusPanel = false;
 -      plusPanelElement.style.transition =
 -        "all 0.3s cubic-bezier(0.23, 1, 0.32, 1)";
--      document.removeEventListener("mousemove", handleMouseMove);
--      document.removeEventListener("mouseup", stopDraggingTools);
+-      document.removeEventListener("mousemove", v36e7HandleMouseMove);
+-      document.removeEventListener("mouseup", v213dStopDraggingTools);
 -    };
--    document.addEventListener("mousemove", handleMouseMove);
--    document.addEventListener("mouseup", stopDraggingTools);
+-    document.addEventListener("mousemove", v36e7HandleMouseMove);
+-    document.addEventListener("mouseup", v213dStopDraggingTools);
 -  });
 -  plusPanelElement.addEventListener("click", (inputEvent) => {
--    if (isActive) {
+-    if (v34bdIsActive) {
 -      inputEvent.stopImmediatePropagation();
 -    }
 -  });
@@ -1480,106 +1523,129 @@ Index: src/ui/panels.js
 -  const minSettingsBtn = settingsPanelElement.querySelector("#minSettings");
 -  const settingsContent =
 -    settingsPanelElement.querySelector("#settingsContent");
--  let isHidden = false;
--  minSettingsBtn.onclick = (toggleEvent) => {
--    toggleEvent.stopPropagation();
--    isHidden = !isHidden;
--    settingsContent.style.display = isHidden ? "none" : "block";
--    settingsPanelElement.style.height = isHidden ? "50px" : "auto";
--    minSettingsBtn.textContent = isHidden ? "+" : "−";
+-  let v5de0IsHidden = false;
+-  minSettingsBtn.onclick = (v5abaToggleEvent) => {
+-    v5abaToggleEvent.stopPropagation();
+-    v5de0IsHidden = !v5de0IsHidden;
+-    settingsContent.style.display = v5de0IsHidden ? "none" : "block";
+-    settingsPanelElement.style.height = v5de0IsHidden ? "50px" : "auto";
+-    minSettingsBtn.textContent = v5de0IsHidden ? "+" : "−";
 +    setupAntiDetection();
 +    applyGameHacks();
-+    astraVisionBtn_fg7.textContent = "Astra-Vision Active";
-+    astraVisionBtn_fg7.style.color = "#27ae60";
-+    astraVisionBtn_fg7.disabled = true;
++    v3fd4AstraVisionBtn.textContent = "Astra-Vision Active";
++    v3fd4AstraVisionBtn.style.color = "#27ae60";
++    v3fd4AstraVisionBtn.disabled = true;
 +    showNotification(
 +      "👁️ Astra-Vision enabled! (zoom-limit unlocked, no ink-flash or deep darkness effects)",
 +    );
    };
 -  const toggleKeyInput = settingsPanelElement.querySelector("#toggleKeyInput");
 -  toggleKeyInput.value = state.activeKey;
--  toggleKeyInput.addEventListener("keydown", (keyEvent) => {
--    keyEvent.preventDefault();
--    state.activeKey = keyEvent.key;
+-  toggleKeyInput.addEventListener("keydown", (v13e5KeyEvent) => {
+-    v13e5KeyEvent.preventDefault();
+-    state.activeKey = v13e5KeyEvent.key;
 -    toggleKeyInput.value = state.activeKey;
 -  });
-   let offsetX;
-   let offsetY;
+-  let v1938OffsetX;
+-  let v1ebfOffsetY;
 -  let isDraggingSettingsPanel = false;
-   let isActive = false;
--  settingsPanelElement.addEventListener("mousedown", (clickEvent) => {
-+  let isActive_gcu = false;
-+  container.addEventListener("mousedown", (clickEvent) => {
+-  let v2426IsActive = false;
+-  settingsPanelElement.addEventListener("mousedown", (v21cbClickEvent) => {
++  let v3e3bOffsetX;
++  let v3748OffsetY;
++  let v5540IsActive = false;
++  let v5e22IsActive = false;
++  v18aeContainer.addEventListener("mousedown", (clickEvent) => {
      if (
-       clickEvent.target.tagName === "BUTTON" ||
+-      v21cbClickEvent.target.tagName === "BUTTON" ||
+-      v21cbClickEvent.target.tagName === "INPUT" ||
+-      v21cbClickEvent.target.classList.contains("credits")
++      clickEvent.target.tagName === "BUTTON" ||
 +      clickEvent.target.tagName === "TEXTAREA" ||
-       clickEvent.target.tagName === "INPUT" ||
-       clickEvent.target.classList.contains("credits")
++      clickEvent.target.tagName === "INPUT" ||
++      clickEvent.target.classList.contains("credits")
      ) {
        return;
      }
 -    isDraggingSettingsPanel = true;
--    isActive = false;
--    offsetX =
--      clickEvent.clientX - settingsPanelElement.getBoundingClientRect().left;
--    offsetY =
--      clickEvent.clientY - settingsPanelElement.getBoundingClientRect().top;
+-    v2426IsActive = false;
+-    v1938OffsetX =
+-      v21cbClickEvent.clientX -
+-      settingsPanelElement.getBoundingClientRect().left;
+-    v1ebfOffsetY =
+-      v21cbClickEvent.clientY -
+-      settingsPanelElement.getBoundingClientRect().top;
 -    settingsPanelElement.style.transition = "none";
-+    isActive = true;
-+    isActive_gcu = false;
-+    offsetX = clickEvent.clientX - container.getBoundingClientRect().left;
-+    offsetY = clickEvent.clientY - container.getBoundingClientRect().top;
-+    container.style.transition = "none";
-     const handleMouseMove = (mouseEvent) => {
-       const deltaX = mouseEvent.clientX - clickEvent.clientX;
-       const deltaY = mouseEvent.clientY - clickEvent.clientY;
--      if (!isActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
--        isActive = true;
-+      if (!isActive_gcu && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-+        isActive_gcu = true;
+-    const v4602HandleMouseMove = (v6d9dMouseEvent) => {
+-      const v4ec3DeltaX = v6d9dMouseEvent.clientX - v21cbClickEvent.clientX;
+-      const v3d61DeltaY = v6d9dMouseEvent.clientY - v21cbClickEvent.clientY;
++    v5540IsActive = true;
++    v5e22IsActive = false;
++    v3e3bOffsetX =
++      clickEvent.clientX - v18aeContainer.getBoundingClientRect().left;
++    v3748OffsetY =
++      clickEvent.clientY - v18aeContainer.getBoundingClientRect().top;
++    v18aeContainer.style.transition = "none";
++    const v1ebfHandleMouseMove = (v4a1fMouseEvent) => {
++      const v5d23DeltaX = v4a1fMouseEvent.clientX - clickEvent.clientX;
++      const v1c1fDeltaY = v4a1fMouseEvent.clientY - clickEvent.clientY;
+       if (
+-        !v2426IsActive &&
+-        (Math.abs(v4ec3DeltaX) > 5 || Math.abs(v3d61DeltaY) > 5)
++        !v5e22IsActive &&
++        (Math.abs(v5d23DeltaX) > 5 || Math.abs(v1c1fDeltaY) > 5)
+       ) {
+-        v2426IsActive = true;
++        v5e22IsActive = true;
        }
 -      if (isDraggingSettingsPanel) {
--        settingsPanelElement.style.left = mouseEvent.clientX - offsetX + "px";
--        settingsPanelElement.style.top = mouseEvent.clientY - offsetY + "px";
+-        settingsPanelElement.style.left =
+-          v6d9dMouseEvent.clientX - v1938OffsetX + "px";
+-        settingsPanelElement.style.top =
+-          v6d9dMouseEvent.clientY - v1ebfOffsetY + "px";
 -        settingsPanelElement.style.bottom = "auto";
 -        settingsPanelElement.style.right = "auto";
-+      if (isActive) {
-+        container.style.left = mouseEvent.clientX - offsetX + "px";
-+        container.style.top = mouseEvent.clientY - offsetY + "px";
-+        container.style.bottom = "auto";
-+        container.style.right = "auto";
++      if (v5540IsActive) {
++        v18aeContainer.style.left =
++          v4a1fMouseEvent.clientX - v3e3bOffsetX + "px";
++        v18aeContainer.style.top =
++          v4a1fMouseEvent.clientY - v3748OffsetY + "px";
++        v18aeContainer.style.bottom = "auto";
++        v18aeContainer.style.right = "auto";
        }
      };
--    const stopDraggingTools = () => {
+-    const v9601StopDraggingTools = () => {
 -      isDraggingSettingsPanel = false;
 -      settingsPanelElement.style.transition =
 -        "all 0.3s cubic-bezier(0.23, 1, 0.32, 1)";
-+    const handleMouseUp = () => {
-+      isActive = false;
-+      container.style.transition = "all 0.3s ease";
-       document.removeEventListener("mousemove", handleMouseMove);
--      document.removeEventListener("mouseup", stopDraggingTools);
-+      document.removeEventListener("mouseup", handleMouseUp);
+-      document.removeEventListener("mousemove", v4602HandleMouseMove);
+-      document.removeEventListener("mouseup", v9601StopDraggingTools);
++    const v1767HandleMouseUp = () => {
++      v5540IsActive = false;
++      v18aeContainer.style.transition = "all 0.3s ease";
++      document.removeEventListener("mousemove", v1ebfHandleMouseMove);
++      document.removeEventListener("mouseup", v1767HandleMouseUp);
      };
-     document.addEventListener("mousemove", handleMouseMove);
--    document.addEventListener("mouseup", stopDraggingTools);
-+    document.addEventListener("mouseup", handleMouseUp);
+-    document.addEventListener("mousemove", v4602HandleMouseMove);
+-    document.addEventListener("mouseup", v9601StopDraggingTools);
++    document.addEventListener("mousemove", v1ebfHandleMouseMove);
++    document.addEventListener("mouseup", v1767HandleMouseUp);
    });
--  settingsPanelElement.addEventListener("click", (event) => {
--    if (isActive) {
--      event.stopImmediatePropagation();
-+  container.addEventListener("click", (keyboardEvent) => {
-+    if (isActive_gcu) {
-+      keyboardEvent.stopImmediatePropagation();
+-  settingsPanelElement.addEventListener("click", (v23c5Event) => {
+-    if (v2426IsActive) {
+-      v23c5Event.stopImmediatePropagation();
++  v18aeContainer.addEventListener("click", (v33cbKeyboardEvent) => {
++    if (v5e22IsActive) {
++      v33cbKeyboardEvent.stopImmediatePropagation();
      }
    });
 -  return settingsPanelElement;
-+  return container;
++  return v18aeContainer;
  }
  function togglePanels() {
    const deepToolsPanel = document.getElementById("deep-tools-panel");
    const updateHistoryPanel = document.getElementById("update-history");
-@@ -412,9 +354,8 @@
+@@ -428,9 +364,8 @@
  }
  
  export {
@@ -1595,7 +1661,7 @@ Index: src/ui/theme.js
 ===================================================================
 --- src/ui/theme.js	v1.1
 +++ src/ui/theme.js	v1.2
-@@ -0,0 +1,134 @@
+@@ -0,0 +1,141 @@
 +import { showNotification } from "./interaction.js";
 +import { radius, state } from "../core.js";
 +
@@ -1629,14 +1695,14 @@ Index: src/ui/theme.js
 +  styleElement.textContent =
 +    "\n      #settings-panel {\n        font-family: 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n        border: 1px solid #333;\n        background: #1e1e1e;\n        position: fixed;\n        top: 20px;\n        left: 20px;\n        color: #e0e0e0;\n        padding: 14px;\n        border-radius: 8px;\n        font-size: 14px;\n        z-index: 99999;\n        user-select: none;\n        width: 220px;\n        text-align: center;\n        cursor: move;\n        overflow: hidden;\n      }\n      #settings-panel:hover {\n        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n      }\n      #settings-panel button {\n        background: #2d2d2d;\n        color: #e74c3c;\n        border: 1px solid #444;\n        border-radius: 6px;\n        padding: 8px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        width: 100%;\n        margin-bottom: 8px;\n      }\n      #settings-panel button:hover:not(:disabled) {\n        background: #3d3d3d;\n        border-color: #e74c3c;\n        transform: translateY(-1px);\n        box-shadow: 0 2px 6px rgba(231, 76, 60, 0.2);\n      }\n      #settings-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);\n      }\n      #settings-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #settings-panel button.min-btn {\n        background: none;\n        border: none;\n        color: #e74c3c;\n        font-size: 18px;\n        cursor: pointer;\n        position: absolute;\n        top: 30%;\n        right: 5px;\n        transform: translateY(-50%);\n        z-index: 1;\n        transition: color 0.2s ease;\n        width: 20px;\n        height: 20px;\n        line-height: 20px;\n      }\n      #settings-panel button.min-btn:hover {\n        color: #f39c12;\n      }\n      #settings-panel .keybind-set, #settings-panel .bg-set {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        margin-bottom: 8px;\n        font-size: 12px;\n      }\n      #settings-panel .keybind-set label, #settings-panel .bg-set label {\n        color: #e0e0e0;\n      }\n      #settings-panel #toggleKeyInput, #settings-panel #bgUrl {\n        background: #2d2d2d;\n        border: 1px solid #444;\n        color: #e0e0e0;\n        border-radius: 4px;\n        padding: 4px;\n        text-align: center;\n      }\n      #settings-panel #toggleKeyInput {\n        width: 80px;\n      }\n      #settings-panel #bgUrl {\n        width: 120px;\n      }\n      #settings-panel .section-header {\n        font-weight: bold;\n        color: #e74c3c;\n        margin: 10px 0 5px 0;\n        font-size: 13px;\n      }\n    ";
 +  document.head.appendChild(styleElement);
-+  const container = document.createElement("div");
-+  container.id = "settings-panel";
-+  container.innerHTML =
++  const v4420Container = document.createElement("div");
++  v4420Container.id = "settings-panel";
++  v4420Container.innerHTML =
 +    '\n      <div style="font-weight:600; margin-bottom:10px; color:#e74c3c; position: relative; height: 40px; line-height: 40px; padding-right: 25px;">\n        SETTINGS\n        <button class="min-btn" id="minSettings">−</button>\n      </div>\n      <div id="settingsContent">\n        <div class="keybind-set">\n          <label for="toggleKeyInput">Toggle Client:</label>\n          <input type="text" id="toggleKeyInput" placeholder="Press key..." readonly>\n        </div>\n        <div class="section-header">Custom Background</div>\n        <div class="bg-set">\n          <label for="bgUrl">BG URL:</label>\n          <input type="text" id="bgUrl" placeholder="Image/GIF URL">\n        </div>\n        <button id="applyBg">Apply Custom Background</button>\n      </div>\n    ';
-+  document.body.appendChild(container);
-+  const bgUrlInput = container.querySelector("#bgUrl");
++  document.body.appendChild(v4420Container);
++  const bgUrlInput = v4420Container.querySelector("#bgUrl");
 +  bgUrlInput.value = localStorage.getItem("bgUrl") || "";
-+  const applyBgButton = container.querySelector("#applyBg");
++  const applyBgButton = v4420Container.querySelector("#applyBg");
 +  applyBgButton.onclick = () => {
 +    const bgUrl = bgUrlInput.value.trim();
 +    if (bgUrl === "") {
@@ -1644,18 +1710,18 @@ Index: src/ui/theme.js
 +      return;
 +    }
 +    localStorage.setItem("bgUrl", bgUrl);
-+    let homeBgElement = document.querySelector(".home-bg");
++    let v562fHomeBgElement = document.querySelector(".home-bg");
 +    const applyBackgroundImageSecondary = () => {
-+      homeBgElement.style.setProperty(
++      v562fHomeBgElement.style.setProperty(
 +        "background-image",
 +        'url("' + bgUrl + '")',
 +        "important",
 +      );
 +    };
-+    if (homeBgElement == null) {
++    if (v562fHomeBgElement == null) {
 +      const pollInterval = setInterval(() => {
-+        homeBgElement = document.querySelector(".home-bg");
-+        if (homeBgElement != null) {
++        v562fHomeBgElement = document.querySelector(".home-bg");
++        if (v562fHomeBgElement != null) {
 +          clearInterval(pollInterval);
 +        }
 +        applyBackgroundImageSecondary();
@@ -1665,68 +1731,95 @@ Index: src/ui/theme.js
 +    }
 +    showNotification("Custom Background applied!");
 +  };
-+  const minimizeSettingsButton = container.querySelector("#minSettings");
-+  const settingsContent = container.querySelector("#settingsContent");
-+  let isHidden = false;
-+  minimizeSettingsButton.onclick = (event) => {
-+    event.stopPropagation();
-+    isHidden = !isHidden;
-+    settingsContent.style.display = isHidden ? "none" : "block";
-+    container.style.height = isHidden ? "50px" : "auto";
-+    minimizeSettingsButton.textContent = isHidden ? "+" : "−";
++  const minimizeSettingsButton = v4420Container.querySelector("#minSettings");
++  const settingsContent = v4420Container.querySelector("#settingsContent");
++  let v1683IsHidden = false;
++  minimizeSettingsButton.onclick = (v5c3cEvent) => {
++    v5c3cEvent.stopPropagation();
++    v1683IsHidden = !v1683IsHidden;
++    settingsContent.style.display = v1683IsHidden ? "none" : "block";
++    v4420Container.style.height = v1683IsHidden ? "50px" : "auto";
++    minimizeSettingsButton.textContent = v1683IsHidden ? "+" : "−";
 +  };
-+  const toggleKeyInput = container.querySelector("#toggleKeyInput");
++  const toggleKeyInput = v4420Container.querySelector("#toggleKeyInput");
 +  toggleKeyInput.value = state.activeKey;
-+  toggleKeyInput.addEventListener("keydown", (keyEvent) => {
-+    keyEvent.preventDefault();
-+    state.activeKey = keyEvent.key;
++  toggleKeyInput.addEventListener("keydown", (v5322KeyEvent) => {
++    v5322KeyEvent.preventDefault();
++    state.activeKey = v5322KeyEvent.key;
 +    toggleKeyInput.value = state.activeKey;
 +  });
-+  let offsetX;
-+  let offsetY;
-+  let isActive = false;
-+  let isActive_rs1 = false;
-+  container.addEventListener("mousedown", (clickEvent) => {
++  let v1e01OffsetX;
++  let v392aOffsetY;
++  let v1cb5IsActive = false;
++  let v46f1IsActive = false;
++  v4420Container.addEventListener("mousedown", (v314eClickEvent) => {
 +    if (
-+      clickEvent.target.tagName === "BUTTON" ||
-+      clickEvent.target.tagName === "INPUT" ||
-+      clickEvent.target.classList.contains("credits")
++      v314eClickEvent.target.tagName === "BUTTON" ||
++      v314eClickEvent.target.tagName === "INPUT" ||
++      v314eClickEvent.target.classList.contains("credits")
 +    ) {
 +      return;
 +    }
-+    isActive = true;
-+    isActive_rs1 = false;
-+    offsetX = clickEvent.clientX - container.getBoundingClientRect().left;
-+    offsetY = clickEvent.clientY - container.getBoundingClientRect().top;
-+    container.style.transition = "none";
-+    const handleMouseMove = (mouseEvent) => {
-+      const deltaX = mouseEvent.clientX - clickEvent.clientX;
-+      const deltaY = mouseEvent.clientY - clickEvent.clientY;
-+      if (!isActive_rs1 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-+        isActive_rs1 = true;
++    v1cb5IsActive = true;
++    v46f1IsActive = false;
++    v1e01OffsetX =
++      v314eClickEvent.clientX - v4420Container.getBoundingClientRect().left;
++    v392aOffsetY =
++      v314eClickEvent.clientY - v4420Container.getBoundingClientRect().top;
++    v4420Container.style.transition = "none";
++    const v15dcHandleMouseMove = (v2ba8MouseEvent) => {
++      const v90eeDeltaX = v2ba8MouseEvent.clientX - v314eClickEvent.clientX;
++      const v433eDeltaY = v2ba8MouseEvent.clientY - v314eClickEvent.clientY;
++      if (
++        !v46f1IsActive &&
++        (Math.abs(v90eeDeltaX) > 5 || Math.abs(v433eDeltaY) > 5)
++      ) {
++        v46f1IsActive = true;
 +      }
-+      if (isActive) {
-+        container.style.left = mouseEvent.clientX - offsetX + "px";
-+        container.style.top = mouseEvent.clientY - offsetY + "px";
-+        container.style.bottom = "auto";
-+        container.style.right = "auto";
++      if (v1cb5IsActive) {
++        v4420Container.style.left =
++          v2ba8MouseEvent.clientX - v1e01OffsetX + "px";
++        v4420Container.style.top =
++          v2ba8MouseEvent.clientY - v392aOffsetY + "px";
++        v4420Container.style.bottom = "auto";
++        v4420Container.style.right = "auto";
 +      }
 +    };
-+    const handleMouseUp = () => {
-+      isActive = false;
-+      container.style.transition = "all 0.3s ease";
-+      document.removeEventListener("mousemove", handleMouseMove);
-+      document.removeEventListener("mouseup", handleMouseUp);
++    const ea22HandleMouseUp = () => {
++      v1cb5IsActive = false;
++      v4420Container.style.transition = "all 0.3s ease";
++      document.removeEventListener("mousemove", v15dcHandleMouseMove);
++      document.removeEventListener("mouseup", ea22HandleMouseUp);
 +    };
-+    document.addEventListener("mousemove", handleMouseMove);
-+    document.addEventListener("mouseup", handleMouseUp);
++    document.addEventListener("mousemove", v15dcHandleMouseMove);
++    document.addEventListener("mouseup", ea22HandleMouseUp);
 +  });
-+  container.addEventListener("click", (propagationEvent) => {
-+    if (isActive_rs1) {
++  v4420Container.addEventListener("click", (propagationEvent) => {
++    if (v46f1IsActive) {
 +      propagationEvent.stopImmediatePropagation();
 +    }
 +  });
-+  return container;
++  return v4420Container;
 +}
 +
 +export { applyCustomBackground, createSettingsStyles };
+Index: src/utils.js
+===================================================================
+--- src/utils.js	v1.1
++++ src/utils.js	v1.2
+@@ -12,12 +12,12 @@
+     document.querySelector("canvas") ||
+     document.querySelector("#canvas-container canvas")
+   );
+ }
+-const getAllPropertyNames = (v23d9TargetObject) => {
++const getAllPropertyNames = (v39e0TargetObject) => {
+   return [
+-    ...Object.getOwnPropertyNames(Object.getPrototypeOf(v23d9TargetObject)),
+-    ...Object.getOwnPropertyNames(v23d9TargetObject),
++    ...Object.getOwnPropertyNames(Object.getPrototypeOf(v39e0TargetObject)),
++    ...Object.getOwnPropertyNames(v39e0TargetObject),
+   ];
+ };
+ 
+ export { generateRandomString, getGameCanvas, getAllPropertyNames };

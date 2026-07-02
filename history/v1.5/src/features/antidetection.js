@@ -4,7 +4,7 @@ import { angles, radius, state } from "../core.js";
 import { getGameCanvas } from "../utils.js";
 
 function startAntiAfk() {
-  if (featuresentitytrailState.entityTrailInterval_s4i) {
+  if (featuresentitytrailState.appEntityTrailInterval) {
     return;
   }
   const gameCanvas = getGameCanvas();
@@ -12,15 +12,15 @@ function startAntiAfk() {
     showNotification("Game canvas not found!");
     return;
   }
-  featuresentitytrailState.entityTrailInterval_s4i = setInterval(() => {
+  featuresentitytrailState.appEntityTrailInterval = setInterval(() => {
     const angleDegrees = angles[state.angleIndex];
     const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
-    const offsetX = Math.round(radius * Math.sin(angleRadians));
-    const offsetY = Math.round(radius * Math.cos(angleRadians));
+    const v54bdOffsetX = Math.round(radius * Math.sin(angleRadians));
+    const v2219OffsetY = Math.round(radius * Math.cos(angleRadians));
     gameCanvas.dispatchEvent(
       new MouseEvent("pointermove", {
-        clientX: window.innerWidth / 2 + offsetX,
-        clientY: window.innerHeight / 2 + offsetY,
+        clientX: window.innerWidth / 2 + v54bdOffsetX,
+        clientY: window.innerHeight / 2 + v2219OffsetY,
         bubbles: true,
       }),
     );

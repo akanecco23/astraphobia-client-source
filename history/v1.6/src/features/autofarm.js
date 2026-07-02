@@ -1,13 +1,11 @@
 import {
-  currentTime,
   radius,
   timeoutLimit,
   maxFailCount,
   getGameState,
   getEntityManager,
-  isAreaSkipped_sc8,
+  modIsAreaSkipped,
   getFirstAnimalPosition,
-  angle,
   initAutoFarm,
   state,
 } from "../core.js";
@@ -34,40 +32,42 @@ window.autoFarmSkipIds = new Set();
 window.autoFarmSkipClearTime = 0;
 window.autoFarmSkipAreas = [];
 
-const offsetValue_tz2 = 400;
-const tickInterval_sco = 600;
+const OffsetValue = 400;
+const TickInterval = 600;
 function isAreaSkipped(x, y) {
-  const currentTime = Date.now();
+  const v39acCurrentTime = Date.now();
   window.autoFarmSkipAreas = window.autoFarmSkipAreas.filter(
-    (currentTime) => currentTime - currentTime.time < timeoutLimit,
+    (v13e5CurrentTime) =>
+      v39acCurrentTime - v13e5CurrentTime.time < timeoutLimit,
   );
   return window.autoFarmSkipAreas.some(
     (circle) => calculateDistance(x, y, circle.x, circle.y) < circle.radius,
   );
 }
-function handleFarmFailure(x, y) {
-  const currentTime = Date.now();
+function handleFarmFailure(v1bc0X, v1a0cY) {
+  const v1cf7CurrentTime = Date.now();
   window.autoFarmSkipAreas = window.autoFarmSkipAreas.filter(
-    (currentTime) => currentTime - currentTime.time < timeoutLimit,
+    (v4a43CurrentTime) =>
+      v1cf7CurrentTime - v4a43CurrentTime.time < timeoutLimit,
   );
   let existingArea = window.autoFarmSkipAreas.find(
-    (position) =>
-      calculateDistance(x, y, state.position.x, state.position.y) <
-      offsetValue_tz2,
+    (v3df3Position) =>
+      calculateDistance(v1bc0X, v1a0cY, v3df3Position.x, v3df3Position.y) <
+      OffsetValue,
   );
   if (existingArea) {
     existingArea.failCount++;
-    existingArea.time = currentTime;
+    existingArea.time = v1cf7CurrentTime;
     if (existingArea.failCount >= maxFailCount) {
       existingArea.skipped = true;
       showToast("Skipping unreachable food area");
     }
   } else {
     window.autoFarmSkipAreas.push({
-      x: x,
-      y: y,
-      radius: offsetValue_tz2,
-      time: currentTime,
+      x: v1bc0X,
+      y: v1a0cY,
+      radius: OffsetValue,
+      time: v1cf7CurrentTime,
       failCount: 1,
       skipped: false,
     });
@@ -76,106 +76,123 @@ function handleFarmFailure(x, y) {
 function findClosestFarmable(farmRange) {
   farmRange = farmRange || window.autoFarmRange;
   try {
-    const gameState = getGameState();
-    const worldData = getEntityManager(gameState);
-    const playerAnimal = gameState?.myAnimals?.[0];
+    const v286cGameState = getGameState();
+    const worldData = getEntityManager(v286cGameState);
+    const playerAnimal = v286cGameState?.myAnimals?.[0];
     if (!worldData || !playerAnimal) {
       return null;
     }
     const playerX = playerAnimal.position._x || playerAnimal.position.x;
     const playerY = playerAnimal.position._y || playerAnimal.position.y;
-    const entities = worldData.entitiesList || [];
+    const v52a6Entities = worldData.entitiesList || [];
     let closestEntity = null;
     let minDistance = Infinity;
-    entities.forEach((targetEntity) => {
-      if (!targetEntity || targetEntity.id === playerAnimal.id) {
+    v52a6Entities.forEach((v4a18TargetEntity) => {
+      if (!v4a18TargetEntity || v4a18TargetEntity.id === playerAnimal.id) {
         return;
       }
-      if (window.autoFarmSkipIds.has(targetEntity.id)) {
+      if (window.autoFarmSkipIds.has(v4a18TargetEntity.id)) {
         return;
       }
-      const myY = targetEntity.position?._x || targetEntity.position?.x;
-      const posY = targetEntity.position?._y || targetEntity.position?.y;
-      if (myY == null || posY == null) {
+      const v27c8MyY =
+        v4a18TargetEntity.position?._x || v4a18TargetEntity.position?.x;
+      const v28caPosY =
+        v4a18TargetEntity.position?._y || v4a18TargetEntity.position?.y;
+      if (v27c8MyY == null || v28caPosY == null) {
         return;
       }
-      if (isPlayer(targetEntity)) {
+      if (isPlayer(v4a18TargetEntity)) {
         return;
       }
-      if (isAreaSkipped_sc8(myY, posY)) {
+      if (modIsAreaSkipped(v27c8MyY, v28caPosY)) {
         return;
       }
-      const distance = calculateDistance(playerX, playerY, myY, posY);
-      if (distance < minDistance && distance < farmRange) {
-        minDistance = distance;
+      const v1d58Distance = calculateDistance(
+        playerX,
+        playerY,
+        v27c8MyY,
+        v28caPosY,
+      );
+      if (v1d58Distance < minDistance && v1d58Distance < farmRange) {
+        minDistance = v1d58Distance;
         closestEntity = {
-          id: targetEntity.id,
-          x: myY,
-          y: posY,
-          distance: distance,
-          entity: targetEntity,
+          id: v4a18TargetEntity.id,
+          x: v27c8MyY,
+          y: v28caPosY,
+          distance: v1d58Distance,
+          entity: v4a18TargetEntity,
         };
       }
     });
     return closestEntity;
-  } catch (error) {
+  } catch (b76cError) {
     return null;
   }
 }
-function getFarmableEntities(farmRange) {
-  farmRange = farmRange || window.autoFarmRange;
+function getFarmableEntities(v2ebbFarmRange) {
+  v2ebbFarmRange = v2ebbFarmRange || window.autoFarmRange;
   try {
-    const gameState = getGameState();
-    const worldData = getEntityManager(gameState);
-    const playerAnimal = gameState?.myAnimals?.[0];
-    if (!worldData || !playerAnimal) {
+    const v4e0dGameState = getGameState();
+    const v3570WorldData = getEntityManager(v4e0dGameState);
+    const v50dbPlayerAnimal = v4e0dGameState?.myAnimals?.[0];
+    if (!v3570WorldData || !v50dbPlayerAnimal) {
       return [];
     }
-    const playerX = playerAnimal.position._x || playerAnimal.position.x;
-    const playerY = playerAnimal.position._y || playerAnimal.position.y;
-    const entities = worldData.entitiesList || [];
+    const v2d86PlayerX =
+      v50dbPlayerAnimal.position._x || v50dbPlayerAnimal.position.x;
+    const v3903PlayerY =
+      v50dbPlayerAnimal.position._y || v50dbPlayerAnimal.position.y;
+    const v4086Entities = v3570WorldData.entitiesList || [];
     const farmableList = [];
-    entities.forEach((targetEntity) => {
-      if (!targetEntity || targetEntity.id === playerAnimal.id) {
+    v4086Entities.forEach((v467bTargetEntity) => {
+      if (!v467bTargetEntity || v467bTargetEntity.id === v50dbPlayerAnimal.id) {
         return;
       }
-      if (window.autoFarmSkipIds.has(targetEntity.id)) {
+      if (window.autoFarmSkipIds.has(v467bTargetEntity.id)) {
         return;
       }
-      const posX = targetEntity.position?._x || targetEntity.position?.x;
-      const posY = targetEntity.position?._y || targetEntity.position?.y;
-      if (posX == null || posY == null) {
+      const v1818PosX =
+        v467bTargetEntity.position?._x || v467bTargetEntity.position?.x;
+      const v209fPosY =
+        v467bTargetEntity.position?._y || v467bTargetEntity.position?.y;
+      if (v1818PosX == null || v209fPosY == null) {
         return;
       }
-      if (isPlayer(targetEntity)) {
+      if (isPlayer(v467bTargetEntity)) {
         return;
       }
-      if (isAreaSkipped_sc8(posX, posY)) {
+      if (modIsAreaSkipped(v1818PosX, v209fPosY)) {
         return;
       }
-      const distance = calculateDistance(playerX, playerY, posX, posY);
-      if (distance < farmRange) {
+      const v4664Distance = calculateDistance(
+        v2d86PlayerX,
+        v3903PlayerY,
+        v1818PosX,
+        v209fPosY,
+      );
+      if (v4664Distance < v2ebbFarmRange) {
         farmableList.push({
-          id: targetEntity.id,
-          x: posX,
-          y: posY,
-          distance: distance,
-          entity: targetEntity,
+          id: v467bTargetEntity.id,
+          x: v1818PosX,
+          y: v209fPosY,
+          distance: v4664Distance,
+          entity: v467bTargetEntity,
         });
       }
     });
     farmableList.sort(
-      (entityA, entityB) => entityA.distance - entityB.distance,
+      (v3407EntityA, v1492EntityB) =>
+        v3407EntityA.distance - v1492EntityB.distance,
     );
     return farmableList;
-  } catch (error) {
+  } catch (d2b2Error) {
     return [];
   }
 }
-function findOptimalFarmPosition(clusterRadius, farmRange) {
+function findOptimalFarmPosition(clusterRadius, v5362FarmRange) {
   clusterRadius = clusterRadius || 500;
-  farmRange = farmRange || window.autoFarmRange;
-  const farmables = getFarmableEntities(farmRange);
+  v5362FarmRange = v5362FarmRange || window.autoFarmRange;
+  const farmables = getFarmableEntities(v5362FarmRange);
   if (farmables.length === 0) {
     return null;
   }
@@ -183,8 +200,8 @@ function findOptimalFarmPosition(clusterRadius, farmRange) {
   let maxCount = 0;
   farmables.forEach((calculateAveragePosition) => {
     let elementCount = 0;
-    let sumX = 0;
-    let sumY = 0;
+    let v6a21SumX = 0;
+    let v5516SumY = 0;
     farmables.forEach((targetPosition) => {
       if (
         calculateDistance(
@@ -195,15 +212,15 @@ function findOptimalFarmPosition(clusterRadius, farmRange) {
         ) < clusterRadius
       ) {
         elementCount++;
-        sumX += targetPosition.x;
-        sumY += targetPosition.y;
+        v6a21SumX += targetPosition.x;
+        v5516SumY += targetPosition.y;
       }
     });
     if (elementCount > maxCount) {
       maxCount = elementCount;
       bestPosition = {
-        x: sumX / elementCount,
-        y: sumY / elementCount,
+        x: v6a21SumX / elementCount,
+        y: v5516SumY / elementCount,
         foodCount: elementCount,
       };
     }
@@ -213,41 +230,50 @@ function findOptimalFarmPosition(clusterRadius, farmRange) {
 function getNearbyAvoidEntities(avoidDistance) {
   avoidDistance = avoidDistance || window.autoFarmAvoidDistance;
   try {
-    const gameState = getGameState();
-    const worldData = getEntityManager(gameState);
-    const playerAnimal = gameState?.myAnimals?.[0];
-    if (!worldData || !playerAnimal) {
+    const v342eGameState = getGameState();
+    const v4c53WorldData = getEntityManager(v342eGameState);
+    const f07aPlayerAnimal = v342eGameState?.myAnimals?.[0];
+    if (!v4c53WorldData || !f07aPlayerAnimal) {
       return [];
     }
-    const playerX = playerAnimal.position._x || playerAnimal.position.x;
-    const playerY = playerAnimal.position._y || playerAnimal.position.y;
-    const entities = worldData.entitiesList || [];
+    const v5ed8PlayerX =
+      f07aPlayerAnimal.position._x || f07aPlayerAnimal.position.x;
+    const v2a18PlayerY =
+      f07aPlayerAnimal.position._y || f07aPlayerAnimal.position.y;
+    const v3a21Entities = v4c53WorldData.entitiesList || [];
     const avoidList = [];
-    entities.forEach((targetObject) => {
-      if (!targetObject || targetObject.id === playerAnimal.id) {
+    v3a21Entities.forEach((v587dTargetObject) => {
+      if (!v587dTargetObject || v587dTargetObject.id === f07aPlayerAnimal.id) {
         return;
       }
-      const myY = targetObject.position?._x || targetObject.position?.x;
-      const posY = targetObject.position?._y || targetObject.position?.y;
-      if (myY == null || posY == null) {
+      const v33d0MyY =
+        v587dTargetObject.position?._x || v587dTargetObject.position?.x;
+      const v544aPosY =
+        v587dTargetObject.position?._y || v587dTargetObject.position?.y;
+      if (v33d0MyY == null || v544aPosY == null) {
         return;
       }
-      if (!isPlayer(targetObject)) {
+      if (!isPlayer(v587dTargetObject)) {
         return;
       }
-      const calculatedDistance = calculateDistance(playerX, playerY, myY, posY);
+      const calculatedDistance = calculateDistance(
+        v5ed8PlayerX,
+        v2a18PlayerY,
+        v33d0MyY,
+        v544aPosY,
+      );
       if (calculatedDistance < avoidDistance) {
         avoidList.push({
-          id: targetObject.id,
-          x: myY,
-          y: posY,
+          id: v587dTargetObject.id,
+          x: v33d0MyY,
+          y: v544aPosY,
           distance: calculatedDistance,
         });
       }
     });
     avoidList.sort((itemA, itemB) => itemA.distance - itemB.distance);
     return avoidList;
-  } catch (error) {
+  } catch (v1a2aError) {
     return [];
   }
 }
@@ -275,16 +301,18 @@ function calculateAvoidanceVector() {
   let avoidX = 0;
   let avoidY = 0;
   nearbyPlayers.forEach((avoidancePoint) => {
-    const deltaX = localPlayer.x - avoidancePoint.x;
-    const deltaY = localPlayer.y - avoidancePoint.y;
+    const v4fe7DeltaX = localPlayer.x - avoidancePoint.x;
+    const v1d29DeltaY = localPlayer.y - avoidancePoint.y;
     const clampedAvoidDistance = Math.max(avoidancePoint.distance, 50);
     const avoidanceFactor =
       (window.autoFarmAvoidDistance - clampedAvoidDistance) /
       window.autoFarmAvoidDistance;
-    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-    if (distance > 0) {
-      avoidX += (deltaX / distance) * avoidanceFactor * 500;
-      avoidY += (deltaY / distance) * avoidanceFactor * 500;
+    const c71eDistance = Math.sqrt(
+      v4fe7DeltaX * v4fe7DeltaX + v1d29DeltaY * v1d29DeltaY,
+    );
+    if (c71eDistance > 0) {
+      avoidX += (v4fe7DeltaX / c71eDistance) * avoidanceFactor * 500;
+      avoidY += (v1d29DeltaY / c71eDistance) * avoidanceFactor * 500;
     }
   });
   return {
@@ -292,16 +320,16 @@ function calculateAvoidanceVector() {
     y: avoidY,
   };
 }
-let currentTime_sky = 0;
+let mainCurrentTime = 0;
 function simulateEvolveKeyPress() {
   if (!window.autoFarmEvolve) {
     return;
   }
   const now = Date.now();
-  if (now - currentTime_sky < 5000) {
+  if (now - mainCurrentTime < 5000) {
     return;
   }
-  currentTime_sky = now;
+  mainCurrentTime = now;
   const gameElement = getGameCanvas();
   const randomDigit = Math.floor(Math.random() * 9) + 1;
   const digitString = String(randomDigit);
@@ -313,40 +341,43 @@ function simulateEvolveKeyPress() {
     bubbles: true,
     cancelable: true,
   };
-  [window, document, document.body, gameElement].forEach((targetElement) => {
-    if (!targetElement) {
-      return;
-    }
-    try {
-      targetElement.dispatchEvent(
-        new KeyboardEvent("keydown", keyboardEventInit),
-      );
-      setTimeout(() => {
-        targetElement.dispatchEvent(
-          new KeyboardEvent("keyup", keyboardEventInit),
+  [window, document, document.body, gameElement].forEach(
+    (v135bTargetElement) => {
+      if (!v135bTargetElement) {
+        return;
+      }
+      try {
+        v135bTargetElement.dispatchEvent(
+          new KeyboardEvent("keydown", keyboardEventInit),
         );
-      }, 50);
-    } catch (context) {}
-  });
+        setTimeout(() => {
+          v135bTargetElement.dispatchEvent(
+            new KeyboardEvent("keyup", keyboardEventInit),
+          );
+        }, 50);
+      } catch (context) {}
+    },
+  );
 }
-let isToggled_rg1 = false;
-let currentTime_r36 = 0;
+let appIsToggled = false;
+let Angle = 0;
+let modCurrentTime = 0;
 function checkAntiStuck(currentPos) {
-  const now = Date.now();
-  if (now - state.counter_tkq < 1500) {
+  const v4793Now = Date.now();
+  if (v4793Now - state.modCounter < 1500) {
     return false;
   }
-  state.counter_tkq = now;
-  if (state.position_t9s) {
+  state.modCounter = v4793Now;
+  if (state.modPosition) {
     const dist = calculateDistance(
       currentPos.x,
       currentPos.y,
-      state.position_t9s.x,
-      state.position_t9s.y,
+      state.modPosition.x,
+      state.modPosition.y,
     );
     if (dist < 25) {
-      state.counter_sm3++;
-      if (state.counter_sm3 >= 1 && window.autoFarmCurrentTarget) {
+      state.numCounter++;
+      if (state.numCounter >= 1 && window.autoFarmCurrentTarget) {
         handleFarmFailure(
           window.autoFarmCurrentTarget.x,
           window.autoFarmCurrentTarget.y,
@@ -354,10 +385,10 @@ function checkAntiStuck(currentPos) {
         window.autoFarmSkipIds.add(window.autoFarmCurrentTarget.id);
         window.autoFarmCurrentTarget = null;
         window.autoFarmTargetStartTime = 0;
-        state.counter_sm3 = 0;
+        state.numCounter = 0;
       }
-      if (state.counter_sm3 >= 2) {
-        state.counter_sm3 = 0;
+      if (state.numCounter >= 2) {
+        state.numCounter = 0;
         window.autoFarmCurrentTarget = null;
         window.autoFarmTargetStartTime = 0;
         const randomAngle = Math.random() * Math.PI * 2;
@@ -367,44 +398,44 @@ function checkAntiStuck(currentPos) {
         return true;
       }
     } else {
-      state.counter_sm3 = 0;
+      state.numCounter = 0;
     }
   }
-  state.position_t9s = {
+  state.modPosition = {
     x: currentPos.x,
     y: currentPos.y,
   };
   return false;
 }
 function generatePatrolPoints() {
-  const localPlayer = getFirstAnimalPosition();
-  if (!localPlayer) {
+  const v4942LocalPlayer = getFirstAnimalPosition();
+  if (!v4942LocalPlayer) {
     return;
   }
   const patrolRadius = 2000;
   const pointCount = 6;
   window.autoFarmPatrolPoints = [];
-  for (let i = 0; i < pointCount; i++) {
-    const angle = (Math.PI * 2 * i) / pointCount;
+  for (let ffe3I = 0; ffe3I < pointCount; ffe3I++) {
+    const v40f0Angle = (Math.PI * 2 * ffe3I) / pointCount;
     window.autoFarmPatrolPoints.push({
-      x: localPlayer.x + Math.cos(angle) * patrolRadius,
-      y: localPlayer.y + Math.sin(angle) * patrolRadius,
+      x: v4942LocalPlayer.x + Math.cos(v40f0Angle) * patrolRadius,
+      y: v4942LocalPlayer.y + Math.sin(v40f0Angle) * patrolRadius,
     });
   }
   window.autoFarmPatrolIndex = 0;
 }
 function autoFarmUpdate() {
   if (!window.autoFarmActive) {
-    isToggled_rg1 = false;
+    appIsToggled = false;
     return;
   }
-  const now = Date.now();
-  if (now - window.autoFarmSkipClearTime > 15000) {
+  const v2a82Now = Date.now();
+  if (v2a82Now - window.autoFarmSkipClearTime > 15000) {
     window.autoFarmSkipIds.clear();
-    window.autoFarmSkipClearTime = now;
+    window.autoFarmSkipClearTime = v2a82Now;
   }
   if (window.autoFarmCurrentTarget && window.autoFarmTargetStartTime > 0) {
-    if (now - window.autoFarmTargetStartTime > 1000) {
+    if (v2a82Now - window.autoFarmTargetStartTime > 1000) {
       handleFarmFailure(
         window.autoFarmCurrentTarget.x,
         window.autoFarmCurrentTarget.y,
@@ -417,10 +448,10 @@ function autoFarmUpdate() {
     }
   }
   try {
-    const localPlayer = getFirstAnimalPosition();
-    if (!localPlayer) {
+    const v3269LocalPlayer = getFirstAnimalPosition();
+    if (!v3269LocalPlayer) {
       window.autoFarmActive = false;
-      isToggled_rg1 = false;
+      appIsToggled = false;
       const farmButton = document.getElementById("autoFarmBtn");
       if (farmButton) {
         farmButton.textContent = "Auto Farm";
@@ -431,7 +462,7 @@ function autoFarmUpdate() {
     if (Math.random() < 0.015) {
       simulateEvolveKeyPress();
     }
-    if (checkAntiStuck(localPlayer)) {
+    if (checkAntiStuck(v3269LocalPlayer)) {
       setTimeout(autoFarmUpdate, 100);
       return;
     }
@@ -439,26 +470,26 @@ function autoFarmUpdate() {
     const shouldAvoid =
       Math.abs(avoidanceVector.x) > 100 || Math.abs(avoidanceVector.y) > 100;
     if (shouldAvoid && window.autoFarmAvoidPlayers) {
-      const targetX = localPlayer.x + avoidanceVector.x;
-      const targetY = localPlayer.y + avoidanceVector.y;
+      const v37b1TargetX = v3269LocalPlayer.x + avoidanceVector.x;
+      const v4051TargetY = v3269LocalPlayer.y + avoidanceVector.y;
       const isBoosting =
-        window.autoFarmBoost && now - state.counter_agp > tickInterval_sco;
+        window.autoFarmBoost && v2a82Now - state.Counter > TickInterval;
       if (isBoosting) {
-        state.counter_agp = now;
+        state.Counter = v2a82Now;
       }
-      simulateMoveAndClick(targetX, targetY, isBoosting);
+      simulateMoveAndClick(v37b1TargetX, v4051TargetY, isBoosting);
       setTimeout(autoFarmUpdate, 60);
       return;
     }
-    let finalX = null;
-    let finalY = null;
-    let minDistance = Infinity;
+    let v2cffFinalX = null;
+    let v556bFinalY = null;
+    let v13a2MinDistance = Infinity;
     if (window.autoFarmMode === "nearest") {
       const nearestTarget = findClosestFarmable();
       if (nearestTarget) {
-        finalX = nearestTarget.x + avoidanceVector.x * 0.3;
-        finalY = nearestTarget.y + avoidanceVector.y * 0.3;
-        minDistance = nearestTarget.distance;
+        v2cffFinalX = nearestTarget.x + avoidanceVector.x * 0.3;
+        v556bFinalY = nearestTarget.y + avoidanceVector.y * 0.3;
+        v13a2MinDistance = nearestTarget.distance;
         if (
           !window.autoFarmCurrentTarget ||
           window.autoFarmCurrentTarget.id !== nearestTarget.id
@@ -467,75 +498,75 @@ function autoFarmUpdate() {
             window.autoFarmStats.collected++;
           }
           window.autoFarmCurrentTarget = nearestTarget;
-          window.autoFarmTargetStartTime = now;
-          state.counter_sm3 = 0;
+          window.autoFarmTargetStartTime = v2a82Now;
+          state.numCounter = 0;
         }
         if (nearestTarget.distance < 40) {
-          finalX += (Math.random() - 0.5) * 80;
-          finalY += (Math.random() - 0.5) * 80;
+          v2cffFinalX += (Math.random() - 0.5) * 80;
+          v556bFinalY += (Math.random() - 0.5) * 80;
         }
       } else {
         window.autoFarmCurrentTarget = null;
         window.autoFarmTargetStartTime = 0;
-        if (now - currentTime_r36 > 2500) {
-          angle = Math.random() * Math.PI * 2;
-          currentTime_r36 = now;
+        if (v2a82Now - modCurrentTime > 2500) {
+          Angle = Math.random() * Math.PI * 2;
+          modCurrentTime = v2a82Now;
         }
-        finalX = localPlayer.x + Math.cos(angle) * 1000;
-        finalY = localPlayer.y + Math.sin(angle) * 1000;
-        minDistance = 1000;
+        v2cffFinalX = v3269LocalPlayer.x + Math.cos(Angle) * 1000;
+        v556bFinalY = v3269LocalPlayer.y + Math.sin(Angle) * 1000;
+        v13a2MinDistance = 1000;
       }
     } else if (window.autoFarmMode === "cluster") {
       const foodSource = findOptimalFarmPosition(500, window.autoFarmRange);
       if (foodSource && foodSource.foodCount >= 2) {
-        finalX = foodSource.x + avoidanceVector.x * 0.3;
-        finalY = foodSource.y + avoidanceVector.y * 0.3;
-        minDistance = calculateDistance(
-          localPlayer.x,
-          localPlayer.y,
+        v2cffFinalX = foodSource.x + avoidanceVector.x * 0.3;
+        v556bFinalY = foodSource.y + avoidanceVector.y * 0.3;
+        v13a2MinDistance = calculateDistance(
+          v3269LocalPlayer.x,
+          v3269LocalPlayer.y,
           foodSource.x,
           foodSource.y,
         );
       } else {
-        const nearbyTarget = findClosestFarmable();
-        if (nearbyTarget) {
-          finalX = nearbyTarget.x;
-          finalY = nearbyTarget.y;
-          minDistance = nearbyTarget.distance;
+        const v5d64NearbyTarget = findClosestFarmable();
+        if (v5d64NearbyTarget) {
+          v2cffFinalX = v5d64NearbyTarget.x;
+          v556bFinalY = v5d64NearbyTarget.y;
+          v13a2MinDistance = v5d64NearbyTarget.distance;
           if (
             !window.autoFarmCurrentTarget ||
-            window.autoFarmCurrentTarget.id !== nearbyTarget.id
+            window.autoFarmCurrentTarget.id !== v5d64NearbyTarget.id
           ) {
-            window.autoFarmCurrentTarget = nearbyTarget;
-            window.autoFarmTargetStartTime = now;
+            window.autoFarmCurrentTarget = v5d64NearbyTarget;
+            window.autoFarmTargetStartTime = v2a82Now;
           }
         } else {
           window.autoFarmCurrentTarget = null;
           window.autoFarmTargetStartTime = 0;
-          if (now - currentTime_r36 > 2500) {
-            angle = Math.random() * Math.PI * 2;
-            currentTime_r36 = now;
+          if (v2a82Now - modCurrentTime > 2500) {
+            Angle = Math.random() * Math.PI * 2;
+            modCurrentTime = v2a82Now;
           }
-          finalX = localPlayer.x + Math.cos(angle) * 1000;
-          finalY = localPlayer.y + Math.sin(angle) * 1000;
-          minDistance = 1000;
+          v2cffFinalX = v3269LocalPlayer.x + Math.cos(Angle) * 1000;
+          v556bFinalY = v3269LocalPlayer.y + Math.sin(Angle) * 1000;
+          v13a2MinDistance = 1000;
         }
       }
     } else if (window.autoFarmMode === "patrol") {
       if (window.autoFarmPatrolPoints.length === 0) {
         generatePatrolPoints();
       }
-      const nearbyTarget_5dl = findClosestFarmable(800);
-      if (nearbyTarget_5dl) {
-        finalX = nearbyTarget_5dl.x;
-        finalY = nearbyTarget_5dl.y;
-        minDistance = nearbyTarget_5dl.distance;
+      const v5d64V5d64NearbyTarget = findClosestFarmable(800);
+      if (v5d64V5d64NearbyTarget) {
+        v2cffFinalX = v5d64V5d64NearbyTarget.x;
+        v556bFinalY = v5d64V5d64NearbyTarget.y;
+        v13a2MinDistance = v5d64V5d64NearbyTarget.distance;
         if (
           !window.autoFarmCurrentTarget ||
-          window.autoFarmCurrentTarget.id !== nearbyTarget_5dl.id
+          window.autoFarmCurrentTarget.id !== v5d64V5d64NearbyTarget.id
         ) {
-          window.autoFarmCurrentTarget = nearbyTarget_5dl;
-          window.autoFarmTargetStartTime = now;
+          window.autoFarmCurrentTarget = v5d64V5d64NearbyTarget;
+          window.autoFarmTargetStartTime = v2a82Now;
         }
       } else {
         window.autoFarmCurrentTarget = null;
@@ -543,46 +574,47 @@ function autoFarmUpdate() {
         const currentPatrolPoint =
           window.autoFarmPatrolPoints[window.autoFarmPatrolIndex];
         if (currentPatrolPoint) {
-          minDistance = calculateDistance(
-            localPlayer.x,
-            localPlayer.y,
+          v13a2MinDistance = calculateDistance(
+            v3269LocalPlayer.x,
+            v3269LocalPlayer.y,
             currentPatrolPoint.x,
             currentPatrolPoint.y,
           );
-          if (minDistance < 200) {
+          if (v13a2MinDistance < 200) {
             window.autoFarmPatrolIndex =
               (window.autoFarmPatrolIndex + 1) %
               window.autoFarmPatrolPoints.length;
           }
-          finalX = currentPatrolPoint.x;
-          finalY = currentPatrolPoint.y;
+          v2cffFinalX = currentPatrolPoint.x;
+          v556bFinalY = currentPatrolPoint.y;
         }
       }
     }
-    if (finalX != null && finalY != null) {
-      const angle = minDistance > 350;
-      const angle_6iu = now - state.counter_agp > tickInterval_sco;
-      const angle_6jy = window.autoFarmBoost && angle && angle_6iu;
-      if (angle_6jy) {
-        state.counter_agp = now;
+    if (v2cffFinalX != null && v556bFinalY != null) {
+      const v463eAngle = v13a2MinDistance > 350;
+      const v4857V463eAngle = v2a82Now - state.Counter > TickInterval;
+      const v463eV463eAngle =
+        window.autoFarmBoost && v463eAngle && v4857V463eAngle;
+      if (v463eV463eAngle) {
+        state.Counter = v2a82Now;
       }
-      simulateMoveAndClick(finalX, finalY, angle_6jy);
+      simulateMoveAndClick(v2cffFinalX, v556bFinalY, v463eV463eAngle);
     }
-  } catch (data) {
-    console.error("[AutoFarm] Error:", data);
+  } catch (v4630Data) {
+    console.error("[AutoFarm] Error:", v4630Data);
   }
   setTimeout(autoFarmUpdate, 60);
 }
 function startAutoFarmLoop() {
-  if (isToggled_rg1) {
+  if (appIsToggled) {
     return;
   }
-  isToggled_rg1 = true;
+  appIsToggled = true;
   autoFarmUpdate();
 }
 function stopAutoFarm() {
   window.autoFarmActive = false;
-  isToggled_rg1 = false;
+  appIsToggled = false;
   const elapsedTime = (
     (Date.now() - window.autoFarmStats.startTime) /
     1000
@@ -595,18 +627,18 @@ function stopAutoFarm() {
       "s",
   );
 }
-document.addEventListener("keydown", (event_7o7) => {
-  if (event_7o7.target.matches("input,textarea,select")) {
+document.addEventListener("keydown", (v6b14Event) => {
+  if (v6b14Event.target.matches("input,textarea,select")) {
     return;
   }
-  if (event_7o7.key === "F5") {
-    event_7o7.preventDefault();
+  if (v6b14Event.key === "F5") {
+    v6b14Event.preventDefault();
     if (window.autoFarmActive) {
       stopAutoFarm();
-      const farmBtn = document.getElementById("autoFarmBtn");
-      if (farmBtn) {
-        farmBtn.textContent = "Auto Farm";
-        farmBtn.classList.remove("toggle-on");
+      const v3b29FarmBtn = document.getElementById("autoFarmBtn");
+      if (v3b29FarmBtn) {
+        v3b29FarmBtn.textContent = "Auto Farm";
+        v3b29FarmBtn.classList.remove("toggle-on");
       }
     } else {
       const farmModeSelect = document.getElementById("farmModeSelect");

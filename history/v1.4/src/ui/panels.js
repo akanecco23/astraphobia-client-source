@@ -1,9 +1,9 @@
 import {
   gameInstance,
   playerData,
-  config,
+  objConfig,
   radius,
-  isProcessed_jat,
+  boolIsProcessed,
   setupProxyHooks,
   disableGameRestrictions,
   state,
@@ -13,9 +13,9 @@ import { toggleMinimapSize } from "../features/esp.js";
 import { showNotification } from "./interaction.js";
 import { setTheme } from "./theme.js";
 
-let isProcessed_sue = false;
+let mainIsProcessed = false;
 const initControlOverlay = () => {
-  if (isProcessed_sue) {
+  if (mainIsProcessed) {
     return;
   }
   function sendActionSequence() {
@@ -56,9 +56,9 @@ const initControlOverlay = () => {
           return;
         }
         const visibleFishLevel = playerData.myAnimals[0].visibleFishLevel;
-        const fishLevelConfig = {
-          ...config.default,
-          ...config[visibleFishLevel],
+        const v3369FishLevelConfig = {
+          ...objConfig.default,
+          ...objConfig[visibleFishLevel],
         };
         if (callbackParam.ctrlKey) {
           if (callbackParam.shiftKey && visibleFishLevel === 107) {
@@ -87,7 +87,7 @@ const initControlOverlay = () => {
           handleAnimalAction(
             playerData?.myAnimals?.[0]?._standing
               ? 41
-              : Math.floor(fishLevelConfig.secLoadTime / 2),
+              : Math.floor(v3369FishLevelConfig.secLoadTime / 2),
           );
         }
       } catch {}
@@ -96,9 +96,9 @@ const initControlOverlay = () => {
   );
   window.addEventListener(
     "keyup",
-    (event) => {
+    (v42d2Event) => {
       try {
-        if (!event.ctrlKey && !event.altKey) {
+        if (!v42d2Event.ctrlKey && !v42d2Event.altKey) {
           document.getElementById("ctrl-overlay").style.pointerEvents = "none";
         }
       } catch {}
@@ -110,7 +110,7 @@ const initControlOverlay = () => {
       document.getElementById("ctrl-overlay").style.pointerEvents = "none";
     } catch {}
   });
-  isProcessed_sue = true;
+  mainIsProcessed = true;
 };
 function setupUpdateHistory() {
   const historyStyle = document.createElement("style");
@@ -125,8 +125,8 @@ function setupUpdateHistory() {
   const minHistBtn = historyPanel.querySelector("#minHist");
   const historyContent = historyPanel.querySelector("#historyContent");
   let isHidden = false;
-  minHistBtn.onclick = (event) => {
-    event.stopPropagation();
+  minHistBtn.onclick = (v22f6Event) => {
+    v22f6Event.stopPropagation();
     isHidden = !isHidden;
     historyContent.style.display = isHidden ? "none" : "block";
     historyPanel.style.height = isHidden ? "60px" : "auto";
@@ -135,7 +135,7 @@ function setupUpdateHistory() {
   let offsetX;
   let offsetY;
   let isActive = false;
-  let isActive_eqo = false;
+  let v1c9eIsActive = false;
   historyPanel.addEventListener("mousedown", (clickEvent) => {
     if (
       ["BUTTON", "INPUT", "TEXTAREA", "A"].includes(clickEvent.target.tagName)
@@ -143,15 +143,15 @@ function setupUpdateHistory() {
       return;
     }
     isActive = true;
-    isActive_eqo = false;
+    v1c9eIsActive = false;
     offsetX = clickEvent.clientX - historyPanel.getBoundingClientRect().left;
     offsetY = clickEvent.clientY - historyPanel.getBoundingClientRect().top;
     historyPanel.style.transition = "none";
     const handleMouseMove = (mouseEvent) => {
       const deltaX = mouseEvent.clientX - clickEvent.clientX;
       const deltaY = mouseEvent.clientY - clickEvent.clientY;
-      if (!isActive_eqo && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isActive_eqo = true;
+      if (!v1c9eIsActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+        v1c9eIsActive = true;
       }
       if (isActive) {
         historyPanel.style.left = mouseEvent.clientX - offsetX + "px";
@@ -170,7 +170,7 @@ function setupUpdateHistory() {
     document.addEventListener("mouseup", handleMouseUp);
   });
   historyPanel.addEventListener("click", (inputEvent) => {
-    if (isActive_eqo) {
+    if (v1c9eIsActive) {
       inputEvent.stopImmediatePropagation();
     }
   });
@@ -181,27 +181,27 @@ function injectPlusPanelStyles() {
   styleElement.textContent =
     "\n      #plus-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n      }\n      #plus-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #plus-panel textarea {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 8px;\n        padding: 10px;\n        transition: all 0.2s ease;\n        font-size: 13px;\n      }\n      #plus-panel textarea:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);\n      }\n      #plus-panel input[type=\"number\"] {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 60px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #plus-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        position: relative;\n        overflow: hidden;\n        width: 100%;\n        margin-bottom: 10px;\n      }\n      #plus-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #plus-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #plus-panel button:hover:not(:disabled) {\n        background: var(--hover-bg);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2);\n        color: var(--accent-hover);\n      }\n      #plus-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #plus-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n    ";
   document.head.appendChild(styleElement);
-  const container = document.createElement("div");
-  container.id = "plus-panel";
-  container.style.position = "fixed";
-  container.style.top = "20px";
-  container.style.right = "20px";
-  container.style.color = "var(--text-primary)";
-  container.style.padding = "16px";
-  container.style.borderRadius = "16px";
-  container.style.fontSize = "14px";
-  container.style.zIndex = "99999";
-  container.style.userSelect = "none";
-  container.style.width = "240px";
-  container.style.textAlign = "center";
-  container.style.cursor = "move";
-  container.style.overflow = "hidden";
-  container.innerHTML =
+  const v2a84Container = document.createElement("div");
+  v2a84Container.id = "plus-panel";
+  v2a84Container.style.position = "fixed";
+  v2a84Container.style.top = "20px";
+  v2a84Container.style.right = "20px";
+  v2a84Container.style.color = "var(--text-primary)";
+  v2a84Container.style.padding = "16px";
+  v2a84Container.style.borderRadius = "16px";
+  v2a84Container.style.fontSize = "14px";
+  v2a84Container.style.zIndex = "99999";
+  v2a84Container.style.userSelect = "none";
+  v2a84Container.style.width = "240px";
+  v2a84Container.style.textAlign = "center";
+  v2a84Container.style.cursor = "move";
+  v2a84Container.style.overflow = "hidden";
+  v2a84Container.innerHTML =
     '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        ASTRAPHOBIA CLIENT+\n      </div>\n      <div id="plusContent">\n        <button id="thresherBtn">Enable Thresher Super Boost(ctrl + shift and click)(minumum required 2 boost)</button>\n        <button id="astraVisionBtn">Enable Astra-Vision (no-zoom limit, no ink flash or deep darkness)</button>\n        <button id="smallMinimapBtn">Enable Small Minimap</button>\n      </div>\n    ';
-  document.body.appendChild(container);
-  const astraVisionButton = container.querySelector("#thresherBtn");
+  document.body.appendChild(v2a84Container);
+  const astraVisionButton = v2a84Container.querySelector("#thresherBtn");
   astraVisionButton.onclick = () => {
-    if (isProcessed_sue) {
+    if (mainIsProcessed) {
       showNotification("Thresher Super Boost is already active!");
       return;
     }
@@ -211,27 +211,28 @@ function injectPlusPanelStyles() {
     astraVisionButton.style.opacity = "0.6";
     astraVisionButton.disabled = true;
   };
-  const astraVisionButton_6kf = container.querySelector("#astraVisionBtn");
-  astraVisionButton_6kf.onclick = () => {
-    if (isProcessed_jat) {
+  const v5d8eAstraVisionButton =
+    v2a84Container.querySelector("#astraVisionBtn");
+  v5d8eAstraVisionButton.onclick = () => {
+    if (boolIsProcessed) {
       showNotification("Astra-Vision already enabled!");
       return;
     }
     setupProxyHooks();
     disableGameRestrictions();
-    astraVisionButton_6kf.textContent = "Astra-Vision Active";
-    astraVisionButton_6kf.style.color = "var(--accent)";
-    astraVisionButton_6kf.style.opacity = "0.6";
-    astraVisionButton_6kf.disabled = true;
+    v5d8eAstraVisionButton.textContent = "Astra-Vision Active";
+    v5d8eAstraVisionButton.style.color = "var(--accent)";
+    v5d8eAstraVisionButton.style.opacity = "0.6";
+    v5d8eAstraVisionButton.disabled = true;
     showNotification(
       "👁️ Astra-Vision enabled! (zoom-limit unlocked, no ink-flash or deep darkness effects)",
     );
   };
-  const smallMinimapButton = container.querySelector("#smallMinimapBtn");
+  const smallMinimapButton = v2a84Container.querySelector("#smallMinimapBtn");
   smallMinimapButton.onclick = () => {
     setupProxyHooks();
     toggleMinimapSize();
-    if (state.isToggled_qpw) {
+    if (state.boolIsToggled) {
       smallMinimapButton.textContent = "Disable Small Minimap";
       smallMinimapButton.style.color = "var(--accent)";
       smallMinimapButton.style.opacity = "0.6";
@@ -243,64 +244,68 @@ function injectPlusPanelStyles() {
   };
   let relativeX;
   let relativeY;
-  let isActive = false;
-  let isActive_7am = false;
-  container.addEventListener("mousedown", (event) => {
+  let v31c5IsActive = false;
+  let v53d9IsActive = false;
+  v2a84Container.addEventListener("mousedown", (v4bfaEvent) => {
     if (
-      event.target.tagName === "BUTTON" ||
-      event.target.tagName === "TEXTAREA" ||
-      event.target.tagName === "INPUT" ||
-      event.target.classList.contains("credits")
+      v4bfaEvent.target.tagName === "BUTTON" ||
+      v4bfaEvent.target.tagName === "TEXTAREA" ||
+      v4bfaEvent.target.tagName === "INPUT" ||
+      v4bfaEvent.target.classList.contains("credits")
     ) {
       return;
     }
-    isActive = true;
-    isActive_7am = false;
-    relativeX = event.clientX - container.getBoundingClientRect().left;
-    relativeY = event.clientY - container.getBoundingClientRect().top;
-    container.style.transition = "none";
-    const handleMouseMove = (mouseEvent) => {
-      const deltaX = mouseEvent.clientX - event.clientX;
-      const deltaY = mouseEvent.clientY - event.clientY;
-      if (!isActive_7am && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isActive_7am = true;
+    v31c5IsActive = true;
+    v53d9IsActive = false;
+    relativeX =
+      v4bfaEvent.clientX - v2a84Container.getBoundingClientRect().left;
+    relativeY = v4bfaEvent.clientY - v2a84Container.getBoundingClientRect().top;
+    v2a84Container.style.transition = "none";
+    const v5b3cHandleMouseMove = (v15cdMouseEvent) => {
+      const v3976DeltaX = v15cdMouseEvent.clientX - v4bfaEvent.clientX;
+      const v2c0bDeltaY = v15cdMouseEvent.clientY - v4bfaEvent.clientY;
+      if (
+        !v53d9IsActive &&
+        (Math.abs(v3976DeltaX) > 5 || Math.abs(v2c0bDeltaY) > 5)
+      ) {
+        v53d9IsActive = true;
       }
-      if (isActive) {
-        container.style.left = mouseEvent.clientX - relativeX + "px";
-        container.style.top = mouseEvent.clientY - relativeY + "px";
-        container.style.bottom = "auto";
-        container.style.right = "auto";
+      if (v31c5IsActive) {
+        v2a84Container.style.left = v15cdMouseEvent.clientX - relativeX + "px";
+        v2a84Container.style.top = v15cdMouseEvent.clientY - relativeY + "px";
+        v2a84Container.style.bottom = "auto";
+        v2a84Container.style.right = "auto";
       }
     };
-    const handleMouseUp = () => {
-      isActive = false;
-      container.style.transition = "all 0.3s ease";
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+    const v5e63HandleMouseUp = () => {
+      v31c5IsActive = false;
+      v2a84Container.style.transition = "all 0.3s ease";
+      document.removeEventListener("mousemove", v5b3cHandleMouseMove);
+      document.removeEventListener("mouseup", v5e63HandleMouseUp);
     };
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("mousemove", v5b3cHandleMouseMove);
+    document.addEventListener("mouseup", v5e63HandleMouseUp);
   });
-  container.addEventListener("click", (event_pbf) => {
-    if (isActive_7am) {
-      event_pbf.stopImmediatePropagation();
+  v2a84Container.addEventListener("click", (v4d4cEvent) => {
+    if (v53d9IsActive) {
+      v4d4cEvent.stopImmediatePropagation();
     }
   });
-  return container;
+  return v2a84Container;
 }
 function injectSettingsStyles() {
-  const styleElement = document.createElement("style");
-  styleElement.textContent =
+  const v52efStyleElement = document.createElement("style");
+  v52efStyleElement.textContent =
     "\n      #settings-panel {\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        transition: all 0.3s ease;\n        box-shadow: var(--shadow);\n        border: 1px solid var(--border);\n        background: var(--bg-primary);\n        backdrop-filter: blur(20px);\n        border-radius: 16px;\n        position: fixed;\n        top: 20px;\n        left: 20px;\n        color: var(--text-primary);\n        padding: 16px;\n        font-size: 14px;\n        z-index: 99999;\n        user-select: none;\n        width: 240px;\n        text-align: center;\n        cursor: move;\n        overflow: hidden;\n      }\n      #settings-panel:hover {\n        box-shadow: var(--shadow-hover);\n        transform: translateY(-2px);\n      }\n      #settings-panel button {\n        background: var(--bg-secondary);\n        color: var(--accent);\n        border: 1px solid var(--border);\n        border-radius: 8px;\n        padding: 10px 0;\n        font-weight: 500;\n        font-size: 13px;\n        cursor: pointer;\n        transition: all 0.2s ease;\n        letter-spacing: 0.5px;\n        width: 100%;\n        margin-bottom: 10px;\n        position: relative;\n        overflow: hidden;\n      }\n      #settings-panel button::before {\n        content: '';\n        position: absolute;\n        top: 0;\n        left: -100%;\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.2), transparent);\n        transition: left 0.5s;\n      }\n      #settings-panel button:hover:not(:disabled)::before {\n        left: 100%;\n      }\n      #settings-panel button:hover:not(:disabled) {\n        background: var(--hover-bg);\n        border-color: var(--accent);\n        transform: translateY(-1px);\n        box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2);\n        color: var(--accent-hover);\n      }\n      #settings-panel button:active:not(:disabled) {\n        transform: translateY(0);\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);\n      }\n      #settings-panel button:disabled {\n        opacity: 0.5;\n        cursor: not-allowed;\n        transform: none;\n        box-shadow: none;\n      }\n      #settings-panel .keybind-set, #settings-panel .bg-set {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        margin-bottom: 10px;\n        font-size: 12px;\n      }\n      #settings-panel .keybind-set label, #settings-panel .bg-set label {\n        color: var(--text-primary);\n      }\n      #settings-panel #toggleKeyInput, #settings-panel #bgUrl {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        text-align: center;\n        transition: all 0.2s ease;\n      }\n      #settings-panel #toggleKeyInput {\n        width: 80px;\n      }\n      #settings-panel #bgUrl {\n        width: 120px;\n      }\n      #settings-panel .section-header {\n        font-weight: bold;\n        color: var(--accent);\n        margin: 12px 0 6px 0;\n        font-size: 13px;\n      }\n      #settings-panel select {\n        background: var(--bg-secondary);\n        border: 1px solid var(--border);\n        color: var(--text-primary);\n        border-radius: 6px;\n        padding: 6px;\n        width: 100%;\n        margin-bottom: 10px;\n        transition: all 0.2s ease;\n      }\n      #settings-panel select:focus {\n        outline: none;\n        border-color: var(--accent);\n        box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);\n      }\n    ";
-  document.head.appendChild(styleElement);
-  const container = document.createElement("div");
-  container.id = "settings-panel";
-  container.innerHTML =
+  document.head.appendChild(v52efStyleElement);
+  const v12e2Container = document.createElement("div");
+  v12e2Container.id = "settings-panel";
+  v12e2Container.innerHTML =
     '\n      <div style="font-weight:600; margin-bottom:12px; color:var(--accent); height: 40px; line-height: 40px;">\n        SETTINGS\n      </div>\n      <div id="settingsContent">\n        <div class="keybind-set">\n          <label for="toggleKeyInput">Toggle Client:</label>\n          <input type="text" id="toggleKeyInput" placeholder="PRESS" readonly>\n        </div>\n        <div class="section-header">Custom Background</div>\n        <div class="bg-set">\n          <label for="bgUrl">BG URL:</label>\n          <input type="text" id="bgUrl" placeholder="Image/GIF URL">\n        </div>\n        <button id="applyBg">Apply Custom Background</button>\n        <div class="section-header">Themes</div>\n        <select id="themeSelect">\n          <option value="blue">Blue (Default)</option>\n          <option value="red">Red</option>\n          <option value="green">Green</option>\n        </select>\n      </div>\n    ';
-  document.body.appendChild(container);
-  const bgUrlInput = container.querySelector("#bgUrl");
+  document.body.appendChild(v12e2Container);
+  const bgUrlInput = v12e2Container.querySelector("#bgUrl");
   bgUrlInput.value = localStorage.getItem("bgUrl") || "";
-  const applyBgButton = container.querySelector("#applyBg");
+  const applyBgButton = v12e2Container.querySelector("#applyBg");
   applyBgButton.onclick = () => {
     const bgUrl = bgUrlInput.value.trim();
     if (bgUrl === "") {
@@ -308,18 +313,18 @@ function injectSettingsStyles() {
       return;
     }
     localStorage.setItem("bgUrl", bgUrl);
-    let homeBgElement = document.querySelector(".home-bg");
+    let v4c32HomeBgElement = document.querySelector(".home-bg");
     const updateBackgroundImage = () => {
-      homeBgElement.style.setProperty(
+      v4c32HomeBgElement.style.setProperty(
         "background-image",
         'url("' + bgUrl + '")',
         "important",
       );
     };
-    if (homeBgElement == null) {
+    if (v4c32HomeBgElement == null) {
       const pollInterval = setInterval(() => {
-        homeBgElement = document.querySelector(".home-bg");
-        if (homeBgElement != null) {
+        v4c32HomeBgElement = document.querySelector(".home-bg");
+        if (v4c32HomeBgElement != null) {
           clearInterval(pollInterval);
         }
         updateBackgroundImage();
@@ -329,7 +334,7 @@ function injectSettingsStyles() {
     }
     showNotification("Custom Background applied!");
   };
-  const themeSelect = container.querySelector("#themeSelect");
+  const themeSelect = v12e2Container.querySelector("#themeSelect");
   const angle = localStorage.getItem("theme") || "blue";
   themeSelect.value = angle;
   setTheme(angle);
@@ -337,58 +342,63 @@ function injectSettingsStyles() {
     setTheme(themeChangeEvent.target.value);
     showNotification("Theme changed to " + themeChangeEvent.target.value);
   };
-  const toggleKeyInput = container.querySelector("#toggleKeyInput");
+  const toggleKeyInput = v12e2Container.querySelector("#toggleKeyInput");
   toggleKeyInput.value = state.activeKey;
-  toggleKeyInput.addEventListener("keydown", (keyboardEvent) => {
-    keyboardEvent.preventDefault();
-    state.activeKey = keyboardEvent.key;
+  toggleKeyInput.addEventListener("keydown", (v321fKeyboardEvent) => {
+    v321fKeyboardEvent.preventDefault();
+    state.activeKey = v321fKeyboardEvent.key;
     toggleKeyInput.value = state.activeKey;
   });
-  let offsetX;
-  let offsetY;
-  let isActive = false;
-  let isActive_qyt = false;
-  container.addEventListener("mousedown", (uiEvent) => {
+  let cc3aOffsetX;
+  let v86fbOffsetY;
+  let v15afIsActive = false;
+  let v5d62IsActive = false;
+  v12e2Container.addEventListener("mousedown", (Event) => {
     if (
-      uiEvent.target.tagName === "BUTTON" ||
-      uiEvent.target.tagName === "INPUT" ||
-      uiEvent.target.classList.contains("credits")
+      Event.target.tagName === "BUTTON" ||
+      Event.target.tagName === "INPUT" ||
+      Event.target.classList.contains("credits")
     ) {
       return;
     }
-    isActive = true;
-    isActive_qyt = false;
-    offsetX = uiEvent.clientX - container.getBoundingClientRect().left;
-    offsetY = uiEvent.clientY - container.getBoundingClientRect().top;
-    container.style.transition = "none";
-    const handleMouseMove = (mouseEvent) => {
-      const deltaX = mouseEvent.clientX - uiEvent.clientX;
-      const deltaY = mouseEvent.clientY - uiEvent.clientY;
-      if (!isActive_qyt && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isActive_qyt = true;
+    v15afIsActive = true;
+    v5d62IsActive = false;
+    cc3aOffsetX = Event.clientX - v12e2Container.getBoundingClientRect().left;
+    v86fbOffsetY = Event.clientY - v12e2Container.getBoundingClientRect().top;
+    v12e2Container.style.transition = "none";
+    const v1632HandleMouseMove = (v3a77MouseEvent) => {
+      const v3d6cDeltaX = v3a77MouseEvent.clientX - Event.clientX;
+      const v1acfDeltaY = v3a77MouseEvent.clientY - Event.clientY;
+      if (
+        !v5d62IsActive &&
+        (Math.abs(v3d6cDeltaX) > 5 || Math.abs(v1acfDeltaY) > 5)
+      ) {
+        v5d62IsActive = true;
       }
-      if (isActive) {
-        container.style.left = mouseEvent.clientX - offsetX + "px";
-        container.style.top = mouseEvent.clientY - offsetY + "px";
-        container.style.bottom = "auto";
-        container.style.right = "auto";
+      if (v15afIsActive) {
+        v12e2Container.style.left =
+          v3a77MouseEvent.clientX - cc3aOffsetX + "px";
+        v12e2Container.style.top =
+          v3a77MouseEvent.clientY - v86fbOffsetY + "px";
+        v12e2Container.style.bottom = "auto";
+        v12e2Container.style.right = "auto";
       }
     };
-    const handleMouseUp = () => {
-      isActive = false;
-      container.style.transition = "all 0.3s ease";
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+    const v27d4HandleMouseUp = () => {
+      v15afIsActive = false;
+      v12e2Container.style.transition = "all 0.3s ease";
+      document.removeEventListener("mousemove", v1632HandleMouseMove);
+      document.removeEventListener("mouseup", v27d4HandleMouseUp);
     };
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("mousemove", v1632HandleMouseMove);
+    document.addEventListener("mouseup", v27d4HandleMouseUp);
   });
-  container.addEventListener("click", (interceptedEvent) => {
-    if (isActive_qyt) {
+  v12e2Container.addEventListener("click", (interceptedEvent) => {
+    if (v5d62IsActive) {
       interceptedEvent.stopImmediatePropagation();
     }
   });
-  return container;
+  return v12e2Container;
 }
 function togglePanels() {
   const deepToolsPanel = document.getElementById("deep-tools-panel");

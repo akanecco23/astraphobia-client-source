@@ -2,13 +2,13 @@ import { featuresentitytrailState } from "./entitytrail.js";
 import { startAntiAfk } from "./antidetection.js";
 
 function stopEntityTrail() {
-  if (featuresentitytrailState.entityTrailInterval_s4i) {
-    clearInterval(featuresentitytrailState.entityTrailInterval_s4i);
-    featuresentitytrailState.entityTrailInterval_s4i = null;
+  if (featuresentitytrailState.appEntityTrailInterval) {
+    clearInterval(featuresentitytrailState.appEntityTrailInterval);
+    featuresentitytrailState.appEntityTrailInterval = null;
   }
 }
 function toggleMouseSimulation() {
-  if (featuresentitytrailState.entityTrailInterval_s4i) {
+  if (featuresentitytrailState.appEntityTrailInterval) {
     stopEntityTrail();
   } else {
     startAntiAfk();

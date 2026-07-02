@@ -1,10 +1,4 @@
-import {
-  getGameState,
-  getEntityManager,
-  angle,
-  gameInstance,
-  state,
-} from "./core.js";
+import { getGameState, getEntityManager, gameInstance, state } from "./core.js";
 
 function generateRandomString(length) {
   let resultString = "";
@@ -21,10 +15,10 @@ function getGameCanvas() {
     document.querySelector("#canvas-container canvas")
   );
 }
-const getAllPropertyNames = (targetObject) => {
+const getAllPropertyNames = (v1423TargetObject) => {
   return [
-    ...Object.getOwnPropertyNames(Object.getPrototypeOf(targetObject)),
-    ...Object.getOwnPropertyNames(targetObject),
+    ...Object.getOwnPropertyNames(Object.getPrototypeOf(v1423TargetObject)),
+    ...Object.getOwnPropertyNames(v1423TargetObject),
   ];
 };
 function isPlayer(entity) {
@@ -66,7 +60,7 @@ function isPlayer(entity) {
 function getMyAnimal() {
   try {
     return getGameState()?.myAnimals?.[0] || null;
-  } catch (error) {
+  } catch (v422fError) {
     return null;
   }
 }
@@ -75,10 +69,10 @@ function calculateDistance(x1, y1, x2, y2) {
 }
 function getNearbyEntities() {
   try {
-    const rawState = getGameState();
-    const parsedState = getEntityManager(rawState);
-    const myAnimal = rawState?.myAnimals?.[0];
-    if (!parsedState || !myAnimal) {
+    const v22a7RawState = getGameState();
+    const be85ParsedState = getEntityManager(v22a7RawState);
+    const myAnimal = v22a7RawState?.myAnimals?.[0];
+    if (!be85ParsedState || !myAnimal) {
       return null;
     }
     const myX = myAnimal.position._x || myAnimal.position.x;
@@ -93,47 +87,50 @@ function getNearbyEntities() {
       players: [],
       food: [],
     };
-    const entitiesList = parsedState.entitiesList || [];
-    entitiesList.forEach((entity) => {
-      if (!entity || entity.id === myAnimal.id) {
+    const entitiesList = be85ParsedState.entitiesList || [];
+    entitiesList.forEach((v5680Entity) => {
+      if (!v5680Entity || v5680Entity.id === myAnimal.id) {
         return;
       }
-      const entityX = entity.position?._x || entity.position?.x;
-      const entityY = entity.position?._y || entity.position?.y;
+      const entityX = v5680Entity.position?._x || v5680Entity.position?.x;
+      const entityY = v5680Entity.position?._y || v5680Entity.position?.y;
       if (entityX == null || entityY == null) {
         return;
       }
-      const deltaX = entityX - myX;
-      const deltaY = entityY - myY;
-      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-      const gameData = {
-        id: entity.id,
+      const v10f2DeltaX = entityX - myX;
+      const v44cdDeltaY = entityY - myY;
+      const v128aDistance = Math.sqrt(
+        v10f2DeltaX * v10f2DeltaX + v44cdDeltaY * v44cdDeltaY,
+      );
+      const v238aGameData = {
+        id: v5680Entity.id,
         x: entityX,
         y: entityY,
-        distance: distance,
-        angle: Math.atan2(deltaY, deltaX),
-        entity: entity,
+        distance: v128aDistance,
+        angle: Math.atan2(v44cdDeltaY, v10f2DeltaX),
+        entity: v5680Entity,
       };
-      gameData.entities.push(gameData);
-      if (isPlayer(entity)) {
-        gameData.players.push(gameData);
+      gameData.entities.push(v238aGameData);
+      if (isPlayer(v5680Entity)) {
+        gameData.players.push(v238aGameData);
       } else {
-        gameData.food.push(gameData);
+        gameData.food.push(v238aGameData);
       }
     });
     gameData.entities.sort(
       (entityA, entityB) => entityA.distance - entityB.distance,
     );
     gameData.players.sort(
-      (entityA_edv, entityB_f6f) => entityA_edv.distance - entityB_f6f.distance,
+      (v2e08EntityA, v210eEntityB) =>
+        v2e08EntityA.distance - v210eEntityB.distance,
     );
     gameData.food.sort(
-      (entityA_e8a, otherItem) => entityA_e8a.distance - otherItem.distance,
+      (v4159EntityA, otherItem) => v4159EntityA.distance - otherItem.distance,
     );
     return gameData;
-  } catch (error) {
+  } catch (v4137Error) {
     return {
-      error: error.message,
+      error: v4137Error.message,
     };
   }
 }
@@ -150,7 +147,7 @@ function getZoomLevel() {
     if (gameInstance?.viewport?.scale?.x) {
       zoomLevel = gameInstance.viewport.scale.x;
     }
-  } catch (error) {}
+  } catch (v53aeError) {}
   return zoomLevel;
 }
 

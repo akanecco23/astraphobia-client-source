@@ -4,7 +4,7 @@ import { angles, radius, state } from "../core.js";
 import { getGameCanvas } from "../utils.js";
 
 function startAntiAfkMouseMovement() {
-  if (featuresentitytrailState.entityTrailInterval_qn3) {
+  if (featuresentitytrailState.globalEntityTrailInterval) {
     return;
   }
   const gameCanvas = getGameCanvas();
@@ -12,15 +12,15 @@ function startAntiAfkMouseMovement() {
     showNotification("Game canvas not found!");
     return;
   }
-  featuresentitytrailState.entityTrailInterval_qn3 = setInterval(() => {
+  featuresentitytrailState.globalEntityTrailInterval = setInterval(() => {
     const angleDegrees = angles[state.angleIndex];
     const angleRadians = (Math.PI * 2 * angleDegrees) / 360;
-    const offsetX = Math.round(radius * Math.sin(angleRadians));
-    const offsetY = Math.round(radius * Math.cos(angleRadians));
+    const v49baOffsetX = Math.round(radius * Math.sin(angleRadians));
+    const v57eeOffsetY = Math.round(radius * Math.cos(angleRadians));
     gameCanvas.dispatchEvent(
       new MouseEvent("pointermove", {
-        clientX: window.innerWidth / 2 + offsetX,
-        clientY: window.innerHeight / 2 + offsetY,
+        clientX: window.innerWidth / 2 + v49baOffsetX,
+        clientY: window.innerHeight / 2 + v57eeOffsetY,
         bubbles: true,
       }),
     );
@@ -28,13 +28,13 @@ function startAntiAfkMouseMovement() {
   }, 15);
 }
 function stopEntityTrail() {
-  if (featuresentitytrailState.entityTrailInterval_qn3) {
-    clearInterval(featuresentitytrailState.entityTrailInterval_qn3);
-    featuresentitytrailState.entityTrailInterval_qn3 = null;
+  if (featuresentitytrailState.globalEntityTrailInterval) {
+    clearInterval(featuresentitytrailState.globalEntityTrailInterval);
+    featuresentitytrailState.globalEntityTrailInterval = null;
   }
 }
 function toggleMouseSimulation() {
-  if (featuresentitytrailState.entityTrailInterval_qn3) {
+  if (featuresentitytrailState.globalEntityTrailInterval) {
     stopEntityTrail();
   } else {
     startAntiAfkMouseMovement();

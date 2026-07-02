@@ -27,7 +27,7 @@ import {
 import {
   renderEspOverlay,
   trackPlayer,
-  toggleEsp_tia,
+  mainToggleEsp,
 } from "./features/esp.js";
 import { setTheme, initHomeBackground, injectStyles } from "./ui/theme.js";
 import { setupPatrolPoints, autoFarmLoop } from "./features/autofarm.js";
@@ -36,10 +36,9 @@ import { showNotification } from "./ui/interaction.js";
 import { initAdBlocker } from "./features/adblock.js";
 import { initRadarDragging } from "./ui/radar.js";
 let stateCache = new WeakMap();
-let currentTime = 0;
-let isProcessed_r5u = false;
+let boolIsProcessed = false;
 function hookTextEncoder() {
-  if (isProcessed_r5u) {
+  if (boolIsProcessed) {
     return;
   }
   function unescapeString(inputString) {
@@ -144,16 +143,16 @@ function hookTextEncoder() {
     childList: true,
     subtree: true,
   });
-  isProcessed_r5u = true;
+  boolIsProcessed = true;
   showNotification("Special characters enabled");
 }
 const angles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
 const radius = 300;
 const offsetValue = 400;
 let gameInstance;
-let appState;
+let State;
 let playerData;
-const config = {};
+const Config = {};
 function getGameState() {
   try {
     if (playerData && playerData.myAnimals && playerData.myAnimals.length > 0) {
@@ -163,14 +162,14 @@ function getGameState() {
     if (!states) {
       return playerData || null;
     }
-    for (let i = 0; i < states.length; i++) {
-      if (states[i]?.gameScene?.myAnimals) {
-        return states[i].gameScene;
+    for (let v564eI = 0; v564eI < states.length; v564eI++) {
+      if (states[v564eI]?.gameScene?.myAnimals) {
+        return states[v564eI].gameScene;
       }
-      if (states[i]?.gameManager) {
-        for (const managerKey of Object.keys(states[i].gameManager)) {
-          if (states[i].gameManager[managerKey]?.myAnimals) {
-            return states[i].gameManager[managerKey];
+      if (states[v564eI]?.gameManager) {
+        for (const managerKey of Object.keys(states[v564eI].gameManager)) {
+          if (states[v564eI].gameManager[managerKey]?.myAnimals) {
+            return states[v564eI].gameManager[managerKey];
           }
         }
       }
@@ -190,8 +189,8 @@ function getEntityManager(gameState) {
   if (window.__cachedEM) {
     return window.__cachedEM;
   }
-  if (config.entityManager) {
-    const entityManager = gameState[config.entityManager];
+  if (Config.entityManager) {
+    const entityManager = gameState[Config.entityManager];
     if (entityManager) {
       window.__cachedEM = entityManager;
       return entityManager;
@@ -215,30 +214,34 @@ function getFirstAnimalPosition() {
   try {
     const animal = getGameState();
     const position = animal?.myAnimals?.[0];
-    if (!state.position) {
+    if (!position) {
       return null;
     }
     return {
-      x: state.position.position._x ?? state.position.position.x,
-      y: state.position.position._y ?? state.position.position.y,
+      x: position.position._x ?? position.position.x,
+      y: position.position._y ?? position.position.y,
     };
-  } catch (error) {
+  } catch (e443Error) {
     return null;
   }
 }
-function getEntityPosition(entity) {
-  if (!entity || !entity.position) {
+function getEntityPosition(v4e1dEntity) {
+  if (!v4e1dEntity || !v4e1dEntity.position) {
     return null;
   }
   return {
     x:
-      entity.position._x !== undefined ? entity.position._x : entity.position.x,
+      v4e1dEntity.position._x !== undefined
+        ? v4e1dEntity.position._x
+        : v4e1dEntity.position.x,
     y:
-      entity.position._y !== undefined ? entity.position._y : entity.position.y,
+      v4e1dEntity.position._y !== undefined
+        ? v4e1dEntity.position._y
+        : v4e1dEntity.position.y,
   };
 }
-function calculateDirection(entity) {
-  if (!entity) {
+function calculateDirection(v5635Entity) {
+  if (!v5635Entity) {
     return {
       dirX: 1,
       dirY: 0,
@@ -246,12 +249,13 @@ function calculateDirection(entity) {
   }
   let dirX = 0;
   let dirY = 0;
-  if (entity.velocity) {
-    dirX = entity.velocity._x || entity.velocity.x || 0;
-    dirY = entity.velocity._y || entity.velocity.y || 0;
+  if (v5635Entity.velocity) {
+    dirX = v5635Entity.velocity._x || v5635Entity.velocity.x || 0;
+    dirY = v5635Entity.velocity._y || v5635Entity.velocity.y || 0;
   }
   if (Math.abs(dirX) < 0.01 && Math.abs(dirY) < 0.01) {
-    const angle = entity.rotation || entity.angle || entity._rotation || 0;
+    const angle =
+      v5635Entity.rotation || v5635Entity.angle || v5635Entity._rotation || 0;
     dirX = Math.cos(angle);
     dirY = Math.sin(angle);
   }
@@ -268,44 +272,48 @@ function calculateDirection(entity) {
     dirY: dirY,
   };
 }
-let isProcessed_l68 = false;
+let sysIsProcessed = false;
 function startEntityTrail() {
-  if (featuresentitytrailState.entityTrailInterval_skd) {
-    clearInterval(featuresentitytrailState.entityTrailInterval_skd);
-    featuresentitytrailState.entityTrailInterval_skd = null;
+  if (featuresentitytrailState.modEntityTrailInterval) {
+    clearInterval(featuresentitytrailState.modEntityTrailInterval);
+    featuresentitytrailState.modEntityTrailInterval = null;
   }
-  featuresentitytrailState.entityTrailInterval_skd = setInterval(() => {
+  featuresentitytrailState.modEntityTrailInterval = setInterval(() => {
     if (!window.entityTrailEnabled || !window.entityTrailTargetId) {
       return;
     }
-    const targetEntityId = getEntityById(window.entityTrailTargetId);
-    if (!targetEntityId) {
-      const gameData = getNearbyEntities();
-      if (gameData && gameData.players && gameData.players.length > 0) {
-        window.entityTrailTargetId = gameData.players[0].id;
+    const v1f13TargetEntityId = getEntityById(window.entityTrailTargetId);
+    if (!v1f13TargetEntityId) {
+      const v1f7aGameData = getNearbyEntities();
+      if (
+        v1f7aGameData &&
+        v1f7aGameData.players &&
+        v1f7aGameData.players.length > 0
+      ) {
+        window.entityTrailTargetId = v1f7aGameData.players[0].id;
       }
       return;
     }
-    const targetEntity = getEntityPosition(targetEntityId);
-    if (!targetEntity) {
+    const v5a5eTargetEntity = getEntityPosition(v1f13TargetEntityId);
+    if (!v5a5eTargetEntity) {
       return;
     }
-    const lastTrailPoint =
+    const d540LastTrailPoint =
       window.entityTrailHistory[window.entityTrailHistory.length - 1];
     if (
-      lastTrailPoint &&
+      d540LastTrailPoint &&
       calculateDistance(
-        lastTrailPoint.x,
-        lastTrailPoint.y,
-        targetEntity.x,
-        targetEntity.y,
+        d540LastTrailPoint.x,
+        d540LastTrailPoint.y,
+        v5a5eTargetEntity.x,
+        v5a5eTargetEntity.y,
       ) < 5
     ) {
       return;
     }
     window.entityTrailHistory.push({
-      x: targetEntity.x,
-      y: targetEntity.y,
+      x: v5a5eTargetEntity.x,
+      y: v5a5eTargetEntity.y,
       time: Date.now(),
     });
     if (window.entityTrailHistory.length > window.entityTrailMaxLength) {
@@ -324,7 +332,6 @@ const tickInterval = 600;
 const deltaThreshold = 800;
 const maxFailCount = 2;
 const timeoutLimit = 20000;
-let angle = 0;
 function startAutoFarm(farmMode) {
   window.autoFarmMode = farmMode || "nearest";
   window.autoFarmActive = true;
@@ -335,35 +342,35 @@ function startAutoFarm(farmMode) {
   window.autoFarmSkipIds.clear();
   window.autoFarmSkipAreas = [];
   window.autoFarmSkipClearTime = Date.now();
-  state.position_qml = null;
-  state.counter_rvr = 0;
-  state.counter_r46 = 0;
-  state.counter_sce = 0;
+  state.modPosition = null;
+  state.numCounter = 0;
+  state.modCounter = 0;
+  state.Counter = 0;
   if (farmMode === "patrol") {
     setupPatrolPoints();
   }
   showNotification("Auto farm started (" + window.autoFarmMode + ")");
-  if (!state.isToggled_sv3) {
-    state.isToggled_sv3 = true;
+  if (!state.sysIsToggled) {
+    state.sysIsToggled = true;
     autoFarmLoop();
   }
 }
-let isProcessed_shm = false;
+let modIsProcessed = false;
 const initAntiTamper = () => {
-  if (isProcessed_shm) {
+  if (modIsProcessed) {
     return;
   }
-  isProcessed_shm = true;
+  modIsProcessed = true;
   const cache = {};
   for (const reflectMethod of Object.getOwnPropertyNames(Reflect)) {
     cache[reflectMethod] = Reflect[reflectMethod];
   }
   const Proxy = Proxy;
   const lookupGetter = Object.prototype.__lookupGetter__;
-  const wrapProperty = (target, url, value) => {
-    const instance = new Proxy(target[url], value);
-    stateCache.set(instance, target[url]);
-    target[url] = instance;
+  const wrapProperty = (v1d0cTarget, url, value) => {
+    const instance = new Proxy(v1d0cTarget[url], value);
+    stateCache.set(instance, v1d0cTarget[url]);
+    v1d0cTarget[url] = instance;
   };
   wrapProperty(Function.prototype, "toString", {
     apply(thisArg, argsKey, callContext) {
@@ -403,31 +410,31 @@ const initAntiTamper = () => {
           const obfuscatedPropertyNames = propertyNames.filter((varName) =>
             varName.startsWith("_0x"),
           );
-          config.setFlash =
+          Config.setFlash =
             Object.getOwnPropertyNames(playerData.__proto__.__proto__)
               .filter((propName) => propName.startsWith("_0x"))
               .find(
                 (methodName) => playerData[methodName] instanceof Function,
-              ) || config.setFlash;
-          config.terrainManager =
+              ) || Config.setFlash;
+          Config.terrainManager =
             obfuscatedPropertyNames.find(
               (shadowEntityKey) =>
                 typeof playerData[shadowEntityKey]?.shadow !== "undefined",
-            ) || config.terrainManager;
-          config.entityManager =
+            ) || Config.terrainManager;
+          Config.entityManager =
             obfuscatedPropertyNames.find(
               (entitiesListKey) =>
                 typeof playerData[entitiesListKey]?.entitiesList !==
                 "undefined",
-            ) || config.entityManager;
-          config.socketManager =
+            ) || Config.entityManager;
+          Config.socketManager =
             getAllPropertyNames(gameInstance).find(
               (networkClientKey) =>
                 typeof gameInstance[networkClientKey]?.sendBytePacket !==
                 "undefined",
-            ) || config.socketManager;
+            ) || Config.socketManager;
           try {
-            appState = document
+            State = document
               .getElementById("app")
               ._vnode.appContext.config.globalProperties.$simpleState.states.find(
                 (gameStore) => gameStore._storeMeta.id === "game",
@@ -474,12 +481,12 @@ const initAntiTamper = () => {
     },
   });
 };
-let isProcessed_sse = false;
+let v4ac9IsProcessed = false;
 function initializeApp() {
-  if (isProcessed_sse) {
+  if (v4ac9IsProcessed) {
     return;
   }
-  isProcessed_sse = true;
+  v4ac9IsProcessed = true;
   setTimeout(() => {
     injectStyles();
     setTheme(localStorage.getItem("theme") || "grey");
@@ -494,29 +501,29 @@ function initializeApp() {
     initRadarDragging();
     renderEspOverlay();
     renderOverlayLoop();
-    isProcessed_l68 = true;
+    sysIsProcessed = true;
     updateLockOnTarget();
-    state.isProcessed_rdv = true;
+    state.v1becIsProcessed = true;
     autoDodgeLoop();
   }, 1000);
 }
 document.addEventListener(
   "keydown",
-  (event) => {
-    if (event.target.matches("input,textarea,select,[contenteditable]")) {
+  (v58ceEvent) => {
+    if (v58ceEvent.target.matches("input,textarea,select,[contenteditable]")) {
       return;
     }
-    if (event.repeat) {
+    if (v58ceEvent.repeat) {
       return;
     }
-    if (event.key.toLowerCase() === state.keyQ.toLowerCase()) {
-      event.preventDefault();
-      event.stopPropagation();
+    if (v58ceEvent.key.toLowerCase() === state.keyQ.toLowerCase()) {
+      v58ceEvent.preventDefault();
+      v58ceEvent.stopPropagation();
       moveMouseToSide("left");
     }
-    if (event.key.toLowerCase() === state.keyE.toLowerCase()) {
-      event.preventDefault();
-      event.stopPropagation();
+    if (v58ceEvent.key.toLowerCase() === state.keyE.toLowerCase()) {
+      v58ceEvent.preventDefault();
+      v58ceEvent.stopPropagation();
       moveMouseToSide("right");
     }
   },
@@ -524,15 +531,15 @@ document.addEventListener(
 );
 document.addEventListener(
   "keydown",
-  (event_69q) => {
-    if (event_69q.target.matches("input,textarea,select,[contenteditable]")) {
+  (v3c73Event) => {
+    if (v3c73Event.target.matches("input,textarea,select,[contenteditable]")) {
       return;
     }
-    if (event_69q.repeat) {
+    if (v3c73Event.repeat) {
       return;
     }
-    if (event_69q.key.toLowerCase() === window.lockKey.toLowerCase()) {
-      event_69q.preventDefault();
+    if (v3c73Event.key.toLowerCase() === window.lockKey.toLowerCase()) {
+      v3c73Event.preventDefault();
       toggleLock();
     }
   },
@@ -540,47 +547,47 @@ document.addEventListener(
 );
 document.addEventListener(
   "keydown",
-  (event_4og) => {
-    if (event_4og.target.matches("input,textarea,select,[contenteditable]")) {
+  (v1922Event) => {
+    if (v1922Event.target.matches("input,textarea,select,[contenteditable]")) {
       return;
     }
-    if (event_4og.repeat) {
+    if (v1922Event.repeat) {
       return;
     }
     const entityTraceKey = window.entityTraceKey.toLowerCase();
-    const lowercaseKey = event_4og.key.toLowerCase();
-    const lowercaseCode = event_4og.code.toLowerCase();
+    const lowercaseKey = v1922Event.key.toLowerCase();
+    const lowercaseCode = v1922Event.code.toLowerCase();
     if (
       lowercaseKey === entityTraceKey ||
       lowercaseCode === entityTraceKey ||
       lowercaseCode === "key" + entityTraceKey
     ) {
-      event_4og.preventDefault();
+      v1922Event.preventDefault();
       toggleEntityTrail();
     }
   },
   true,
 );
-document.addEventListener("keydown", (event_6k3) => {
-  if (event_6k3.target.matches("input,textarea,select")) {
+document.addEventListener("keydown", (v580aEvent) => {
+  if (v580aEvent.target.matches("input,textarea,select")) {
     return;
   }
-  if (event_6k3.key === "F3") {
-    event_6k3.preventDefault();
+  if (v580aEvent.key === "F3") {
+    v580aEvent.preventDefault();
     trackPlayer();
   }
-  if (event_6k3.key === "F4") {
-    event_6k3.preventDefault();
-    toggleEsp_tia();
+  if (v580aEvent.key === "F4") {
+    v580aEvent.preventDefault();
+    mainToggleEsp();
   }
 });
-document.addEventListener("keydown", (keyboardEvent) => {
+document.addEventListener("keydown", (v38c8KeyboardEvent) => {
   if (
-    keyboardEvent.key === state.activeKey &&
-    !keyboardEvent.repeat &&
-    !keyboardEvent.target.matches("input,textarea,button,select")
+    v38c8KeyboardEvent.key === state.activeKey &&
+    !v38c8KeyboardEvent.repeat &&
+    !v38c8KeyboardEvent.target.matches("input,textarea,button,select")
   ) {
-    keyboardEvent.preventDefault();
+    v38c8KeyboardEvent.preventDefault();
     togglePanelsVisibility();
   }
 });
@@ -592,23 +599,20 @@ window.addEventListener("load", () => {
 });
 export const state = {
   currentTrackId: "",
-  isProcessed: false,
-  entityTrailInterval: null,
-  isToggled: false,
+  IsToggled: false,
   angleIndex: 0,
   keyQ: "q",
   keyE: "e",
-  isProcessed_rnh: false,
-  isToggled_r8c: false,
-  isProcessed_rdv: false,
-  position: null,
+  appIsProcessed: false,
+  boolIsToggled: false,
+  v1becIsProcessed: false,
   counter: 0,
   dataList: [],
-  counter_sce: 0,
-  isToggled_sv3: false,
-  position_qml: null,
-  counter_rvr: 0,
-  counter_r46: 0,
+  Counter: 0,
+  sysIsToggled: false,
+  modPosition: null,
+  numCounter: 0,
+  modCounter: 0,
   activeKey: "Shift",
 };
 export {
@@ -623,18 +627,16 @@ export {
   initAntiTamper,
   initializeApp,
   stateCache,
-  currentTime,
   angles,
   radius,
   offsetValue,
   gameInstance,
   playerData,
-  config,
-  isProcessed_l68,
+  Config,
+  sysIsProcessed,
   dragState,
   tickInterval,
   deltaThreshold,
   maxFailCount,
   timeoutLimit,
-  angle,
 };

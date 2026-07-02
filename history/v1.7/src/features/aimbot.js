@@ -1,8 +1,7 @@
 import {
   getFirstAnimalPosition,
   getEntityPosition,
-  isProcessed_l68,
-  angle,
+  sysIsProcessed,
   getGameState,
   getEntityManager,
   tickInterval,
@@ -21,7 +20,7 @@ import { updateLockButtonUI } from "../ui/radar.js";
 import { simulateClick } from "./movement.js";
 
 function updateLockOnTarget() {
-  if (!isProcessed_l68) {
+  if (!sysIsProcessed) {
     return;
   }
   requestAnimationFrame(updateLockOnTarget);
@@ -79,9 +78,9 @@ function updateLockOnTarget() {
     let offsetY = relativeY * smoothingFactor;
     const offsetDistance = Math.sqrt(offsetX * offsetX + offsetY * offsetY);
     if (offsetDistance > maxRadius) {
-      const angle = maxRadius / offsetDistance;
-      offsetX *= angle;
-      offsetY *= angle;
+      const v2fcbAngle = maxRadius / offsetDistance;
+      offsetX *= v2fcbAngle;
+      offsetY *= v2fcbAngle;
     }
     canvasElement.dispatchEvent(
       new MouseEvent("pointermove", {
@@ -99,12 +98,16 @@ function toggleLock() {
     window.lockTargetId = null;
     showNotification("Lock released");
   } else {
-    const gameState = getNearbyEntities();
-    if (gameState && gameState.players && gameState.players.length > 0) {
+    const v237bGameState = getNearbyEntities();
+    if (
+      v237bGameState &&
+      v237bGameState.players &&
+      v237bGameState.players.length > 0
+    ) {
       window.lockEnabled = true;
-      window.lockTargetId = gameState.players[0].id;
+      window.lockTargetId = v237bGameState.players[0].id;
       const targetName =
-        gameState.players[0].entity?.name || "ID:" + window.lockTargetId;
+        v237bGameState.players[0].entity?.name || "ID:" + window.lockTargetId;
       showNotification("Locked: " + targetName);
     } else {
       showNotification("No players to lock on");
@@ -112,38 +115,40 @@ function toggleLock() {
   }
   updateLockButtonUI();
 }
-function movePointerToTarget(targetX, targetY, shouldClick) {
-  const canvas = getGameCanvas();
-  if (!canvas) {
+function movePointerToTarget(v4b7bTargetX, targetY, shouldClick) {
+  const v6517Canvas = getGameCanvas();
+  if (!v6517Canvas) {
     return;
   }
-  const localPlayer = getFirstAnimalPosition();
-  if (!localPlayer) {
+  const v5850LocalPlayer = getFirstAnimalPosition();
+  if (!v5850LocalPlayer) {
     return;
   }
-  const rect = canvas.getBoundingClientRect();
-  const centerX = rect.left + rect.width / 2;
-  const centerY = rect.top + rect.height / 2;
-  const diffX = targetX - localPlayer.x;
-  const diffY = targetY - localPlayer.y;
-  const distance = Math.sqrt(diffX * diffX + diffY * diffY);
+  const v2501Rect = v6517Canvas.getBoundingClientRect();
+  const v2193CenterX = v2501Rect.left + v2501Rect.width / 2;
+  const v4698CenterY = v2501Rect.top + v2501Rect.height / 2;
+  const v93dcDiffX = v4b7bTargetX - v5850LocalPlayer.x;
+  const v5ce3DiffY = targetY - v5850LocalPlayer.y;
+  const v1162Distance = Math.sqrt(
+    v93dcDiffX * v93dcDiffX + v5ce3DiffY * v5ce3DiffY,
+  );
   let multiplier = 1;
-  if (distance > 5000) {
+  if (v1162Distance > 5000) {
     multiplier = 3;
-  } else if (distance > 2000) {
+  } else if (v1162Distance > 2000) {
     multiplier = 2;
-  } else if (distance > 1000) {
+  } else if (v1162Distance > 1000) {
     multiplier = 1.5;
-  } else if (distance > 500) {
+  } else if (v1162Distance > 500) {
     multiplier = 1.2;
-  } else if (distance < 50) {
+  } else if (v1162Distance < 50) {
     multiplier = 0.5;
-  } else if (distance < 150) {
+  } else if (v1162Distance < 150) {
     multiplier = 0.8;
   }
-  let adjustedX = diffX * multiplier;
-  let adjustedY = diffY * multiplier;
-  const maxOffset = Math.min(rect.width, rect.height) * 0.85;
+  let adjustedX = v93dcDiffX * multiplier;
+  let adjustedY = v5ce3DiffY * multiplier;
+  const maxOffset = Math.min(v2501Rect.width, v2501Rect.height) * 0.85;
   const currentOffset = Math.sqrt(
     adjustedX * adjustedX + adjustedY * adjustedY,
   );
@@ -152,9 +157,9 @@ function movePointerToTarget(targetX, targetY, shouldClick) {
     adjustedX *= scaleFactor;
     adjustedY *= scaleFactor;
   }
-  const finalX = centerX + adjustedX;
-  const finalY = centerY + adjustedY;
-  canvas.dispatchEvent(
+  const finalX = v2193CenterX + adjustedX;
+  const finalY = v4698CenterY + adjustedY;
+  v6517Canvas.dispatchEvent(
     new MouseEvent("pointermove", {
       clientX: finalX,
       clientY: finalY,
@@ -166,10 +171,11 @@ function movePointerToTarget(targetX, targetY, shouldClick) {
     simulateClick(finalX, finalY);
   }
 }
-let currentTime_iij = 0;
-let currentTime_sbn = 0;
+let numCurrentTime = 0;
+let Position = null;
+let sysCurrentTime = 0;
 function autoDodgeLoop() {
-  if (!state.isProcessed_rdv) {
+  if (!state.v1becIsProcessed) {
     return;
   }
   setTimeout(autoDodgeLoop, 80);
@@ -177,66 +183,66 @@ function autoDodgeLoop() {
     return;
   }
   try {
-    const localPlayer = getFirstAnimalPosition();
-    if (!localPlayer) {
+    const v542aLocalPlayer = getFirstAnimalPosition();
+    if (!v542aLocalPlayer) {
       return;
     }
-    const gameState = getGameState();
-    const worldData = getEntityManager(gameState);
-    const myAnimal = gameState?.myAnimals?.[0];
-    if (!worldData || !myAnimal) {
+    const v5914GameState = getGameState();
+    const worldData = getEntityManager(v5914GameState);
+    const v4838MyAnimal = v5914GameState?.myAnimals?.[0];
+    if (!worldData || !v4838MyAnimal) {
       return;
     }
     let nearbyEntities = [];
-    (worldData.entitiesList || []).forEach((targetEntity) => {
+    (worldData.entitiesList || []).forEach((v2d5fTargetEntity) => {
       if (
-        !targetEntity ||
-        targetEntity.id === myAnimal.id ||
-        !isPlayer(targetEntity)
+        !v2d5fTargetEntity ||
+        v2d5fTargetEntity.id === v4838MyAnimal.id ||
+        !isPlayer(v2d5fTargetEntity)
       ) {
         return;
       }
-      const myY =
-        targetEntity.position?._x !== undefined
-          ? targetEntity.position._x
-          : targetEntity.position?.x;
-      const posY =
-        targetEntity.position?._y !== undefined
-          ? targetEntity.position._y
-          : targetEntity.position?.y;
-      if (myY == null || posY == null) {
+      const v3422MyY =
+        v2d5fTargetEntity.position?._x !== undefined
+          ? v2d5fTargetEntity.position._x
+          : v2d5fTargetEntity.position?.x;
+      const v5edePosY =
+        v2d5fTargetEntity.position?._y !== undefined
+          ? v2d5fTargetEntity.position._y
+          : v2d5fTargetEntity.position?.y;
+      if (v3422MyY == null || v5edePosY == null) {
         return;
       }
       const distanceToTarget = calculateDistance(
-        localPlayer.x,
-        localPlayer.y,
-        myY,
-        posY,
+        v542aLocalPlayer.x,
+        v542aLocalPlayer.y,
+        v3422MyY,
+        v5edePosY,
       );
       if (distanceToTarget < tickInterval) {
         nearbyEntities.push({
-          x: myY,
-          y: posY,
+          x: v3422MyY,
+          y: v5edePosY,
           dist: distanceToTarget,
         });
       }
     });
     if (nearbyEntities.length === 0) {
-      state.position = null;
+      Position = null;
       state.counter = 0;
       state.dataList = [];
       return;
     }
     const now = Date.now();
     let isDodging = false;
-    if (now - currentTime_sbn > 600) {
-      currentTime_sbn = now;
-      if (state.position) {
+    if (now - sysCurrentTime > 600) {
+      sysCurrentTime = now;
+      if (Position) {
         const distFromLastPos = calculateDistance(
-          localPlayer.x,
-          localPlayer.y,
-          state.position.x,
-          state.position.y,
+          v542aLocalPlayer.x,
+          v542aLocalPlayer.y,
+          Position.x,
+          Position.y,
         );
         if (distFromLastPos < 20) {
           state.counter++;
@@ -246,32 +252,34 @@ function autoDodgeLoop() {
           state.dataList = [];
         }
       }
-      state.position = {
-        x: localPlayer.x,
-        y: localPlayer.y,
+      Position = {
+        x: v542aLocalPlayer.x,
+        y: v542aLocalPlayer.y,
       };
     }
     let sumX = 0;
     let sumY = 0;
-    nearbyEntities.forEach((point) => {
-      const deltaX = localPlayer.x - point.x;
-      const deltaY = localPlayer.y - point.y;
-      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-      if (distance > 0.01) {
-        const distanceRatio = (tickInterval - point.dist) / tickInterval;
-        sumX += (deltaX / distance) * distanceRatio;
-        sumY += (deltaY / distance) * distanceRatio;
+    nearbyEntities.forEach((v25f7Point) => {
+      const v5738DeltaX = v542aLocalPlayer.x - v25f7Point.x;
+      const v5e53DeltaY = v542aLocalPlayer.y - v25f7Point.y;
+      const v1134Distance = Math.sqrt(
+        v5738DeltaX * v5738DeltaX + v5e53DeltaY * v5e53DeltaY,
+      );
+      if (v1134Distance > 0.01) {
+        const distanceRatio = (tickInterval - v25f7Point.dist) / tickInterval;
+        sumX += (v5738DeltaX / v1134Distance) * distanceRatio;
+        sumY += (v5e53DeltaY / v1134Distance) * distanceRatio;
       }
     });
-    let magnitude = Math.sqrt(sumX * sumX + sumY * sumY);
-    if (magnitude < 0.01) {
+    let v2ea9Magnitude = Math.sqrt(sumX * sumX + sumY * sumY);
+    if (v2ea9Magnitude < 0.01) {
       sumX = 1;
       sumY = 0;
-      magnitude = 1;
+      v2ea9Magnitude = 1;
     }
-    sumX /= magnitude;
-    sumY /= magnitude;
-    let angle = Math.atan2(sumY, sumX);
+    sumX /= v2ea9Magnitude;
+    sumY /= v2ea9Magnitude;
+    let v112dAngle = Math.atan2(sumY, sumX);
     if (isDodging && state.counter >= 1) {
       const anglePresets = [
         Math.PI / 4,
@@ -281,58 +289,58 @@ function autoDodgeLoop() {
         (Math.PI * 3) / 4,
         (-Math.PI * 3) / 4,
       ];
-      let targetAngle = angle;
+      let v2a4dTargetAngle = v112dAngle;
       let maxProjection = -Infinity;
       for (const angleOffset of anglePresets) {
-        const rotatedAngle = angle + angleOffset;
+        const rotatedAngle = v112dAngle + angleOffset;
         if (
           state.dataList.some(
-            (myY_7x0) => Math.abs(myY_7x0 - rotatedAngle) < 0.3,
+            (v2f0fMyY) => Math.abs(v2f0fMyY - rotatedAngle) < 0.3,
           ) &&
           state.counter < 5
         ) {
           continue;
         }
         let projection = 0;
-        nearbyEntities.forEach((entity) => {
+        nearbyEntities.forEach((v5a2eEntity) => {
           projection -=
-            Math.cos(rotatedAngle) * (entity.x - localPlayer.x) +
-            Math.sin(rotatedAngle) * (entity.y - localPlayer.y);
+            Math.cos(rotatedAngle) * (v5a2eEntity.x - v542aLocalPlayer.x) +
+            Math.sin(rotatedAngle) * (v5a2eEntity.y - v542aLocalPlayer.y);
         });
         if (projection > maxProjection) {
           maxProjection = projection;
-          targetAngle = rotatedAngle;
+          v2a4dTargetAngle = rotatedAngle;
         }
       }
-      angle = targetAngle;
-      state.dataList.push(angle);
+      v112dAngle = v2a4dTargetAngle;
+      state.dataList.push(v112dAngle);
       if (state.dataList.length > 8) {
         state.dataList.shift();
       }
       if (state.counter >= 5) {
-        angle += Math.random() > 0.5 ? Math.PI / 2 : -Math.PI / 2;
+        v112dAngle += Math.random() > 0.5 ? Math.PI / 2 : -Math.PI / 2;
         state.counter = 0;
         state.dataList = [];
       }
     }
-    const angle_qxb = now - currentTime_iij > deltaThreshold;
-    if (angle_qxb) {
-      currentTime_iij = now;
+    const v10f3Angle = now - numCurrentTime > deltaThreshold;
+    if (v10f3Angle) {
+      numCurrentTime = now;
     }
     movePointerToTarget(
-      localPlayer.x + Math.cos(angle) * 2000,
-      localPlayer.y + Math.sin(angle) * 2000,
-      angle_qxb,
+      v542aLocalPlayer.x + Math.cos(v112dAngle) * 2000,
+      v542aLocalPlayer.y + Math.sin(v112dAngle) * 2000,
+      v10f3Angle,
     );
-  } catch (data) {}
+  } catch (v43cbData) {}
 }
 function enableAutoDodge() {
   window.autoDodgeEnabled = true;
-  state.position = null;
+  Position = null;
   state.counter = 0;
   state.dataList = [];
-  if (!state.isProcessed_rdv) {
-    state.isProcessed_rdv = true;
+  if (!state.v1becIsProcessed) {
+    state.v1becIsProcessed = true;
     autoDodgeLoop();
   }
   showNotification("Auto dodge enabled");

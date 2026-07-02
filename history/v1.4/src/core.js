@@ -21,9 +21,9 @@ function wrapPropertyWithProxy(targetObject, propertyKey, proxyHandler) {
   targetObject[propertyKey] = proxyValue;
 }
 
-let isProcessed = false;
+let IsProcessed = false;
 function initPacketInterceptor(config) {
-  if (isProcessed) {
+  if (IsProcessed) {
     return;
   }
   function unescapeString(inputString) {
@@ -128,7 +128,7 @@ function initPacketInterceptor(config) {
     childList: true,
     subtree: true,
   });
-  isProcessed = true;
+  IsProcessed = true;
   if (config) {
     config.textContent = "Special Characters Active";
     config.disabled = true;
@@ -141,9 +141,9 @@ function initPacketInterceptor(config) {
 const angles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
 const radius = 300;
 let gameInstance;
-let appState;
+let State;
 let playerData;
-let isProcessed_jat = false;
+let boolIsProcessed = false;
 
 const encryptPacketData = (url, byteValue, suffix = "") => {
   const stringPool = [
@@ -172,11 +172,11 @@ const encryptPacketData = (url, byteValue, suffix = "") => {
     const byteBuffer = new Uint8Array(
       firstEncodedBytes["l" + stringPool[4] + stringPool[6].slice(0, 2)],
     );
-    for (let i = 0; i < firstEncodedBytes.length; i++) {
-      byteBuffer[i] =
-        firstEncodedBytes[i] ^
+    for (let v8d6bI = 0; v8d6bI < firstEncodedBytes.length; v8d6bI++) {
+      byteBuffer[v8d6bI] =
+        firstEncodedBytes[v8d6bI] ^
         secondEncodedBytes[
-          i %
+          v8d6bI %
             secondEncodedBytes[
               "" +
                 stringPool[9].toLowerCase() +
@@ -202,7 +202,7 @@ const encryptPacketData = (url, byteValue, suffix = "") => {
   dataView.setUint8(totalBufferSize - 1, byteValue);
   return buffer;
 };
-const config = {
+const objConfig = {
   107: {
     hasSec: true,
     secLoadTime: 750,
@@ -215,18 +215,18 @@ const config = {
   },
 };
 const sendPacket = (payload, metadata = "") => {
-  if (gameInstance && appState && config_rl9.socketManager) {
-    gameInstance[config_rl9.socketManager].sendBytePacket(
-      encryptPacketData(appState.token._value, payload, metadata),
+  if (gameInstance && State && Config.socketManager) {
+    gameInstance[Config.socketManager].sendBytePacket(
+      encryptPacketData(State.token._value, payload, metadata),
     );
   }
 };
-const config_rl9 = {};
+const Config = {};
 const currentTime = 0;
 const setupProxyHooks = () => {
   const propertyCache = {};
-  for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
-    propertyCache[propertyKey] = Reflect[propertyKey];
+  for (const ed4fPropertyKey of Object.getOwnPropertyNames(Reflect)) {
+    propertyCache[ed4fPropertyKey] = Reflect[ed4fPropertyKey];
   }
   const ProxyConstructor = Proxy;
   const lookupGetter = Object.prototype.__lookupGetter__;
@@ -239,10 +239,10 @@ const setupProxyHooks = () => {
     contextMap[contextKey] = contextInstance;
   };
   wrapWithProxy(Function.prototype, "toString", {
-    apply(thisArg, propertyKey, applyParams) {
+    apply(thisArg, d56ePropertyKey, applyParams) {
       return propertyCache.apply(
         thisArg,
-        stateCache.get(propertyKey) || propertyKey,
+        stateCache.get(d56ePropertyKey) || d56ePropertyKey,
         applyParams,
       );
     },
@@ -254,8 +254,8 @@ const setupProxyHooks = () => {
     },
   });
   wrapWithProxy(ProxyConstructor, "revocable", {
-    apply(context, args, options) {
-      const data = propertyCache.apply(context, args, options);
+    apply(b39bContext, args, options) {
+      const data = propertyCache.apply(b39bContext, args, options);
       return data;
     },
   });
@@ -281,53 +281,51 @@ const setupProxyHooks = () => {
           const obfuscatedKeys = allKeys.filter((obfuscatedVarName) =>
             obfuscatedVarName.startsWith("_0x"),
           );
-          config_rl9.setFlash =
+          Config.setFlash =
             Object.getOwnPropertyNames(playerData.__proto__.__proto__)
               .filter((obfuscatedPropName) =>
                 obfuscatedPropName.startsWith("_0x"),
               )
               .find(
                 (functionKey) => playerData[functionKey] instanceof Function,
-              ) || config_rl9.setFlash;
-          config_rl9.terrainManager =
+              ) || Config.setFlash;
+          Config.terrainManager =
             obfuscatedKeys.find(
               (shadowObjectKey) =>
                 typeof playerData[shadowObjectKey]?.shadow !== "undefined",
-            ) || config_rl9.terrainManager;
-          config_rl9.entityManager =
+            ) || Config.terrainManager;
+          Config.entityManager =
             obfuscatedKeys.find(
               (entitiesListKey) =>
                 typeof playerData[entitiesListKey]?.entitiesList !==
                 "undefined",
-            ) || config_rl9.entityManager;
-          config_rl9.entityManagerProps = {};
+            ) || Config.entityManager;
+          Config.entityManagerProps = {};
           const entityManagerKeys = getAllPropertyNames(
-            playerData[config_rl9.entityManager],
+            playerData[Config.entityManager],
           );
           const animalsListInterval = setInterval(() => {
-            config_rl9.entityManagerProps.animalsList =
+            Config.entityManagerProps.animalsList =
               entityManagerKeys
                 .filter((variableName) => variableName.startsWith("_0x"))
                 .find(
                   (entityName) =>
-                    typeof playerData?.[config_rl9.entityManager]?.[
+                    typeof playerData?.[Config.entityManager]?.[
                       entityName
                     ]?.[0] !== "undefined",
-                ) || config_rl9.entityManagerProps.animalsList;
-            if (
-              typeof config_rl9.entityManagerProps.animalsList !== "undefined"
-            ) {
+                ) || Config.entityManagerProps.animalsList;
+            if (typeof Config.entityManagerProps.animalsList !== "undefined") {
               clearInterval(animalsListInterval);
             }
           }, 1000);
-          config_rl9.socketManager =
+          Config.socketManager =
             getAllPropertyNames(gameInstance).find(
               (networkClientKey) =>
                 typeof gameInstance[networkClientKey]?.sendBytePacket !==
                 "undefined",
-            ) || config_rl9.socketManager;
+            ) || Config.socketManager;
           try {
-            appState = document
+            State = document
               .getElementById("app")
               ._vnode.appContext.config.globalProperties.$simpleState.states.find(
                 (gameStore) => gameStore._storeMeta.id === "game",
@@ -374,7 +372,7 @@ const setupProxyHooks = () => {
   });
 };
 const disableGameRestrictions = () => {
-  if (isProcessed_jat) {
+  if (boolIsProcessed) {
     return;
   }
   if (!playerData) {
@@ -392,20 +390,20 @@ const disableGameRestrictions = () => {
     } catch {}
   }, 300);
   try {
-    if (config_rl9.setFlash) {
-      playerData[config_rl9.setFlash] = () => {};
+    if (Config.setFlash) {
+      playerData[Config.setFlash] = () => {};
     }
-    if (config_rl9.terrainManager) {
-      const terrainManager = playerData[config_rl9.terrainManager];
+    if (Config.terrainManager) {
+      const terrainManager = playerData[Config.terrainManager];
       if (terrainManager && terrainManager.shadow) {
         terrainManager.shadow.setShadowSize(1000000);
         terrainManager.shadow.setShadowSize = () => {};
       }
     }
-  } catch (url_6bc) {
-    console.error(url_6bc);
+  } catch (v3f3bUrl) {
+    console.error(v3f3bUrl);
   }
-  isProcessed_jat = true;
+  boolIsProcessed = true;
 };
 function setupToolsPanel() {
   const toolsStyle = document.createElement("style");
@@ -438,8 +436,8 @@ function setupToolsPanel() {
   };
   const spoofButton = container.querySelector("#patchBtn");
   spoofButton.onclick = () => initPacketInterceptor(spoofButton);
-  const spoofButton_x76 = container.querySelector("#spoofBtn");
-  spoofButton_x76.onclick = () => {
+  const v44d3SpoofButton = container.querySelector("#spoofBtn");
+  v44d3SpoofButton.onclick = () => {
     const randomValue = generateRandomString(8);
     if (simulateTyping(".play-game .el-input__inner", randomValue)) {
       showNotification("Spoofed name!");
@@ -452,7 +450,7 @@ function setupToolsPanel() {
   const autoChatButton = container.querySelector("#spinBtn");
   autoChatButton.onclick = () => {
     toggleMouseSimulation();
-    if (featuresentitytrailState.entityTrailInterval_qn3) {
+    if (featuresentitytrailState.globalEntityTrailInterval) {
       autoChatButton.textContent = "Disable Auto Spin";
       autoChatButton.style.color = "var(--accent)";
       autoChatButton.style.opacity = "0.6";
@@ -469,15 +467,15 @@ function setupToolsPanel() {
     lastPressedKey = keyboardEvent.code || keyboardEvent.key;
     spinKeyInput.value = lastPressedKey.replace("Key", "").toLowerCase();
   });
-  document.addEventListener("keydown", (keyboardEvent_epo) => {
+  document.addEventListener("keydown", (v8307KeyboardEvent) => {
     if (
       lastPressedKey &&
-      keyboardEvent_epo.code === lastPressedKey &&
-      !keyboardEvent_epo.target.matches("input, textarea, button")
+      v8307KeyboardEvent.code === lastPressedKey &&
+      !v8307KeyboardEvent.target.matches("input, textarea, button")
     ) {
-      keyboardEvent_epo.preventDefault();
+      v8307KeyboardEvent.preventDefault();
       toggleMouseSimulation();
-      if (featuresentitytrailState.entityTrailInterval_qn3) {
+      if (featuresentitytrailState.globalEntityTrailInterval) {
         autoChatButton.textContent = "Disable Auto Spin";
         autoChatButton.style.color = "var(--accent)";
         autoChatButton.style.opacity = "0.6";
@@ -488,96 +486,101 @@ function setupToolsPanel() {
       }
     }
   });
-  const autoChatButton_wym = container.querySelector("#autoChatBtn");
-  autoChatButton_wym.onclick = () => {
-    const chatMessage_sbd = container.querySelector("#chatMsg").value;
+  const v3d6fAutoChatButton = container.querySelector("#autoChatBtn");
+  v3d6fAutoChatButton.onclick = () => {
+    const v3cc7ChatMessage = container.querySelector("#chatMsg").value;
     const delayInput = container.querySelector("#delayInput");
     const delayValue = parseInt(delayInput.value) || 10;
-    if (!chatMessage_sbd) {
+    if (!v3cc7ChatMessage) {
       showNotification("⚠️ Enter a message first!");
       return;
     }
-    if (state.isToggled) {
+    if (state.IsToggled) {
       stopInterval();
-      autoChatButton_wym.textContent = "Enable Auto Chat";
-      autoChatButton_wym.style.color = "var(--accent)";
-      autoChatButton_wym.style.opacity = "1";
+      v3d6fAutoChatButton.textContent = "Enable Auto Chat";
+      v3d6fAutoChatButton.style.color = "var(--accent)";
+      v3d6fAutoChatButton.style.opacity = "1";
     } else {
-      startScheduledTask(chatMessage_sbd, delayValue);
-      autoChatButton_wym.textContent = "Disable Auto Chat";
-      autoChatButton_wym.style.color = "var(--accent)";
-      autoChatButton_wym.style.opacity = "0.6";
+      startScheduledTask(v3cc7ChatMessage, delayValue);
+      v3d6fAutoChatButton.textContent = "Disable Auto Chat";
+      v3d6fAutoChatButton.style.color = "var(--accent)";
+      v3d6fAutoChatButton.style.opacity = "0.6";
     }
   };
-  let offsetX;
-  let offsetY;
-  let isActive = false;
-  let isActive_xm1 = false;
-  container.addEventListener("mousedown", (clickEvent) => {
+  let dd64OffsetX;
+  let v1593OffsetY;
+  let v52bdIsActive = false;
+  let v38aaIsActive = false;
+  container.addEventListener("mousedown", (v9e36ClickEvent) => {
     if (
-      clickEvent.target.tagName === "BUTTON" ||
-      clickEvent.target.tagName === "TEXTAREA" ||
-      clickEvent.target.tagName === "INPUT" ||
-      clickEvent.target.classList.contains("credits")
+      v9e36ClickEvent.target.tagName === "BUTTON" ||
+      v9e36ClickEvent.target.tagName === "TEXTAREA" ||
+      v9e36ClickEvent.target.tagName === "INPUT" ||
+      v9e36ClickEvent.target.classList.contains("credits")
     ) {
       return;
     }
-    isActive = true;
-    isActive_xm1 = false;
-    offsetX = clickEvent.clientX - container.getBoundingClientRect().left;
-    offsetY = clickEvent.clientY - container.getBoundingClientRect().top;
+    v52bdIsActive = true;
+    v38aaIsActive = false;
+    dd64OffsetX =
+      v9e36ClickEvent.clientX - container.getBoundingClientRect().left;
+    v1593OffsetY =
+      v9e36ClickEvent.clientY - container.getBoundingClientRect().top;
     container.style.transition = "none";
-    const handleMouseMove = (mouseEvent) => {
-      const deltaX = mouseEvent.clientX - clickEvent.clientX;
-      const deltaY = mouseEvent.clientY - clickEvent.clientY;
-      if (!isActive_xm1 && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isActive_xm1 = true;
+    const v5e48HandleMouseMove = (v3381MouseEvent) => {
+      const v4006DeltaX = v3381MouseEvent.clientX - v9e36ClickEvent.clientX;
+      const v26fdDeltaY = v3381MouseEvent.clientY - v9e36ClickEvent.clientY;
+      if (
+        !v38aaIsActive &&
+        (Math.abs(v4006DeltaX) > 5 || Math.abs(v26fdDeltaY) > 5)
+      ) {
+        v38aaIsActive = true;
       }
-      if (isActive) {
-        container.style.left = mouseEvent.clientX - offsetX + "px";
-        container.style.top = mouseEvent.clientY - offsetY + "px";
+      if (v52bdIsActive) {
+        container.style.left = v3381MouseEvent.clientX - dd64OffsetX + "px";
+        container.style.top = v3381MouseEvent.clientY - v1593OffsetY + "px";
         container.style.bottom = "auto";
         container.style.right = "auto";
       }
     };
-    const handleMouseUp = () => {
-      isActive = false;
+    const v403eHandleMouseUp = () => {
+      v52bdIsActive = false;
       container.style.transition = "all 0.3s ease";
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("mousemove", v5e48HandleMouseMove);
+      document.removeEventListener("mouseup", v403eHandleMouseUp);
     };
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("mousemove", v5e48HandleMouseMove);
+    document.addEventListener("mouseup", v403eHandleMouseUp);
   });
-  container.addEventListener("click", (event) => {
-    if (isActive_xm1) {
-      event.stopImmediatePropagation();
+  container.addEventListener("click", (v1043Event) => {
+    if (v38aaIsActive) {
+      v1043Event.stopImmediatePropagation();
     }
   });
   return container;
 }
 
 function initializePanels() {
-  const mainPanelElement = setupToolsPanel();
+  const PanelElement = setupToolsPanel();
   const historyPanelElement = setupUpdateHistory();
   const settingsPanelElement = injectSettingsStyles();
   const plusPanelElement = injectPlusPanelStyles();
   initBackgroundImage();
   initAdBlocker();
   return {
-    mainPanel: mainPanelElement,
+    mainPanel: PanelElement,
     historyPanel: historyPanelElement,
     settingsPanel: settingsPanelElement,
     plusPanel: plusPanelElement,
   };
 }
-document.addEventListener("keydown", (event) => {
+document.addEventListener("keydown", (v4369Event) => {
   if (
-    event.key === state.activeKey &&
-    !event.repeat &&
-    !event.target.matches("input, textarea, button")
+    v4369Event.key === state.activeKey &&
+    !v4369Event.repeat &&
+    !v4369Event.target.matches("input, textarea, button")
   ) {
-    event.preventDefault();
+    v4369Event.preventDefault();
     togglePanels();
   }
 });
@@ -590,10 +593,9 @@ window.addEventListener("load", () => {
 });
 
 export const state = {
-  entityTrailInterval: null,
-  isToggled: false,
+  IsToggled: false,
   angleIndex: 0,
-  isToggled_qpw: false,
+  boolIsToggled: false,
   activeKey: "Shift",
 };
 
@@ -610,6 +612,6 @@ export {
   radius,
   gameInstance,
   playerData,
-  isProcessed_jat,
-  config,
+  boolIsProcessed,
+  objConfig,
 };

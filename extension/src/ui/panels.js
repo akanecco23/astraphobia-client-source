@@ -1,7 +1,7 @@
 import {
   radius,
   setupTextEncoderHook,
-  isProcessed_t1s,
+  sysIsProcessed,
   initHooks,
   state,
 } from "../core.js";
@@ -68,9 +68,9 @@ function createUpdateHistoryPanel() {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", stopDraggingTools);
   });
-  historyPanel.addEventListener("click", (event) => {
+  historyPanel.addEventListener("click", (v52f9Event) => {
     if (isActive) {
-      event.stopImmediatePropagation();
+      v52f9Event.stopImmediatePropagation();
     }
   });
   return historyPanel;
@@ -100,13 +100,13 @@ function createToolsPanel() {
   document.body.appendChild(toolsPanel);
   const minPanel = toolsPanel.querySelector("#minPanel");
   const panelContent = toolsPanel.querySelector("#panelContent");
-  let isHidden = false;
-  minPanel.onclick = (event) => {
-    event.stopPropagation();
-    isHidden = !isHidden;
-    panelContent.style.display = isHidden ? "none" : "block";
-    toolsPanel.style.height = isHidden ? "50px" : "auto";
-    minPanel.textContent = isHidden ? "+" : "−";
+  let v5e19IsHidden = false;
+  minPanel.onclick = (v2a6cEvent) => {
+    v2a6cEvent.stopPropagation();
+    v5e19IsHidden = !v5e19IsHidden;
+    panelContent.style.display = v5e19IsHidden ? "none" : "block";
+    toolsPanel.style.height = v5e19IsHidden ? "50px" : "auto";
+    minPanel.textContent = v5e19IsHidden ? "+" : "−";
   };
   toolsPanel.querySelector("#sendBtn").onclick = () => {
     const chatMessage = toolsPanel.querySelector("#chatMsg").value;
@@ -116,8 +116,8 @@ function createToolsPanel() {
   };
   const spoofBtn = toolsPanel.querySelector("#patchBtn");
   spoofBtn.onclick = () => setupTextEncoderHook(spoofBtn);
-  const spoofBtn_o7w = toolsPanel.querySelector("#spoofBtn");
-  spoofBtn_o7w.onclick = () => {
+  const v4a5eSpoofBtn = toolsPanel.querySelector("#spoofBtn");
+  v4a5eSpoofBtn.onclick = () => {
     const generatedValue = generateRandomString(8);
     if (simulateTyping(".play-game .el-input__inner", generatedValue)) {
       showToast("Spoofed name!");
@@ -130,7 +130,7 @@ function createToolsPanel() {
   const autoChatBtn = toolsPanel.querySelector("#spinBtn");
   autoChatBtn.onclick = () => {
     toggleMouseSimulation();
-    if (featuresentitytrailState.entityTrailInterval_rkn) {
+    if (featuresentitytrailState.modEntityTrailInterval) {
       autoChatBtn.textContent = "Disable Auto Spin";
       autoChatBtn.style.color = "#4dff4d";
     } else {
@@ -153,7 +153,7 @@ function createToolsPanel() {
     ) {
       keyEvent.preventDefault();
       toggleMouseSimulation();
-      if (featuresentitytrailState.entityTrailInterval_rkn) {
+      if (featuresentitytrailState.modEntityTrailInterval) {
         autoChatBtn.textContent = "Disable Auto Spin";
         autoChatBtn.style.color = "#4dff4d";
       } else {
@@ -162,8 +162,8 @@ function createToolsPanel() {
       }
     }
   });
-  const autoChatBtn_o0p = toolsPanel.querySelector("#autoChatBtn");
-  autoChatBtn_o0p.onclick = () => {
+  const v5557AutoChatBtn = toolsPanel.querySelector("#autoChatBtn");
+  v5557AutoChatBtn.onclick = () => {
     const chatMessageText = toolsPanel.querySelector("#chatMsg").value;
     const delayInput = toolsPanel.querySelector("#delayInput");
     const delayValue = parseInt(delayInput.value) || 10;
@@ -171,58 +171,61 @@ function createToolsPanel() {
       showToast("⚠️ Enter a message first!");
       return;
     }
-    if (state.isToggled) {
+    if (state.IsToggled) {
       stopInterval();
-      autoChatBtn_o0p.textContent = "Enable Auto Chat";
-      autoChatBtn_o0p.style.color = "#ff4d4d";
+      v5557AutoChatBtn.textContent = "Enable Auto Chat";
+      v5557AutoChatBtn.style.color = "#ff4d4d";
     } else {
       startScheduledTask(chatMessageText, delayValue);
-      autoChatBtn_o0p.textContent = "Disable Auto Chat";
-      autoChatBtn_o0p.style.color = "#4dff4d";
+      v5557AutoChatBtn.textContent = "Disable Auto Chat";
+      v5557AutoChatBtn.style.color = "#4dff4d";
     }
   };
-  let offsetX;
-  let offsetY;
+  let v1a4dOffsetX;
+  let v1d07OffsetY;
   let isDraggingTools = false;
-  let isActive = false;
-  toolsPanel.addEventListener("mousedown", (uiEvent) => {
+  let v5d2aIsActive = false;
+  toolsPanel.addEventListener("mousedown", (Event) => {
     if (
-      uiEvent.target.tagName === "BUTTON" ||
-      uiEvent.target.tagName === "TEXTAREA" ||
-      uiEvent.target.tagName === "INPUT" ||
-      uiEvent.target.classList.contains("credits")
+      Event.target.tagName === "BUTTON" ||
+      Event.target.tagName === "TEXTAREA" ||
+      Event.target.tagName === "INPUT" ||
+      Event.target.classList.contains("credits")
     ) {
       return;
     }
     isDraggingTools = true;
-    isActive = false;
-    offsetX = uiEvent.clientX - toolsPanel.getBoundingClientRect().left;
-    offsetY = uiEvent.clientY - toolsPanel.getBoundingClientRect().top;
+    v5d2aIsActive = false;
+    v1a4dOffsetX = Event.clientX - toolsPanel.getBoundingClientRect().left;
+    v1d07OffsetY = Event.clientY - toolsPanel.getBoundingClientRect().top;
     toolsPanel.style.transition = "none";
-    const handleMouseMove = (mouseEvent) => {
-      const deltaX = mouseEvent.clientX - uiEvent.clientX;
-      const deltaY = mouseEvent.clientY - uiEvent.clientY;
-      if (!isActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isActive = true;
+    const v84edHandleMouseMove = (v4554MouseEvent) => {
+      const v5869DeltaX = v4554MouseEvent.clientX - Event.clientX;
+      const v2ab5DeltaY = v4554MouseEvent.clientY - Event.clientY;
+      if (
+        !v5d2aIsActive &&
+        (Math.abs(v5869DeltaX) > 5 || Math.abs(v2ab5DeltaY) > 5)
+      ) {
+        v5d2aIsActive = true;
       }
       if (isDraggingTools) {
-        toolsPanel.style.left = mouseEvent.clientX - offsetX + "px";
-        toolsPanel.style.top = mouseEvent.clientY - offsetY + "px";
+        toolsPanel.style.left = v4554MouseEvent.clientX - v1a4dOffsetX + "px";
+        toolsPanel.style.top = v4554MouseEvent.clientY - v1d07OffsetY + "px";
         toolsPanel.style.bottom = "auto";
         toolsPanel.style.right = "auto";
       }
     };
-    const stopDraggingTools = () => {
+    const v34a5StopDraggingTools = () => {
       isDraggingTools = false;
       toolsPanel.style.transition = "all 0.3s cubic-bezier(0.23, 1, 0.32, 1)";
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", stopDraggingTools);
+      document.removeEventListener("mousemove", v84edHandleMouseMove);
+      document.removeEventListener("mouseup", v34a5StopDraggingTools);
     };
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", stopDraggingTools);
+    document.addEventListener("mousemove", v84edHandleMouseMove);
+    document.addEventListener("mouseup", v34a5StopDraggingTools);
   });
   toolsPanel.addEventListener("click", (propagationEvent) => {
-    if (isActive) {
+    if (v5d2aIsActive) {
       propagationEvent.stopImmediatePropagation();
     }
   });
@@ -253,17 +256,17 @@ function initPlusPanel() {
   document.body.appendChild(plusPanelElement);
   const minPlusBtn = plusPanelElement.querySelector("#minPlus");
   const plusContent = plusPanelElement.querySelector("#plusContent");
-  let isHidden = false;
+  let v5229IsHidden = false;
   minPlusBtn.onclick = (eventHandler) => {
     eventHandler.stopPropagation();
-    isHidden = !isHidden;
-    plusContent.style.display = isHidden ? "none" : "block";
-    plusPanelElement.style.height = isHidden ? "50px" : "auto";
-    minPlusBtn.textContent = isHidden ? "+" : "−";
+    v5229IsHidden = !v5229IsHidden;
+    plusContent.style.display = v5229IsHidden ? "none" : "block";
+    plusPanelElement.style.height = v5229IsHidden ? "50px" : "auto";
+    minPlusBtn.textContent = v5229IsHidden ? "+" : "−";
   };
   const thresherBtn = plusPanelElement.querySelector("#thresherBtn");
   thresherBtn.onclick = () => {
-    if (isProcessed_t1s) {
+    if (sysIsProcessed) {
       showToast("Thresher Super Boost is already active!");
       return;
     }
@@ -272,50 +275,56 @@ function initPlusPanel() {
     thresherBtn.style.color = "#4dff4d";
     thresherBtn.disabled = true;
   };
-  let offsetX;
-  let offsetY;
+  let v2e9cOffsetX;
+  let ad63OffsetY;
   let isDraggingPlusPanel = false;
-  let isActive = false;
-  plusPanelElement.addEventListener("mousedown", (clickEvent) => {
+  let v34bdIsActive = false;
+  plusPanelElement.addEventListener("mousedown", (v3c14ClickEvent) => {
     if (
-      clickEvent.target.tagName === "BUTTON" ||
-      clickEvent.target.tagName === "TEXTAREA" ||
-      clickEvent.target.tagName === "INPUT" ||
-      clickEvent.target.classList.contains("credits")
+      v3c14ClickEvent.target.tagName === "BUTTON" ||
+      v3c14ClickEvent.target.tagName === "TEXTAREA" ||
+      v3c14ClickEvent.target.tagName === "INPUT" ||
+      v3c14ClickEvent.target.classList.contains("credits")
     ) {
       return;
     }
     isDraggingPlusPanel = true;
-    isActive = false;
-    offsetX =
-      clickEvent.clientX - plusPanelElement.getBoundingClientRect().left;
-    offsetY = clickEvent.clientY - plusPanelElement.getBoundingClientRect().top;
+    v34bdIsActive = false;
+    v2e9cOffsetX =
+      v3c14ClickEvent.clientX - plusPanelElement.getBoundingClientRect().left;
+    ad63OffsetY =
+      v3c14ClickEvent.clientY - plusPanelElement.getBoundingClientRect().top;
     plusPanelElement.style.transition = "none";
-    const handleMouseMove = (mouseEvent) => {
-      const deltaX = mouseEvent.clientX - clickEvent.clientX;
-      const deltaY = mouseEvent.clientY - clickEvent.clientY;
-      if (!isActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isActive = true;
+    const v36e7HandleMouseMove = (e428MouseEvent) => {
+      const v1504DeltaX = e428MouseEvent.clientX - v3c14ClickEvent.clientX;
+      const v5d75DeltaY = e428MouseEvent.clientY - v3c14ClickEvent.clientY;
+      if (
+        !v34bdIsActive &&
+        (Math.abs(v1504DeltaX) > 5 || Math.abs(v5d75DeltaY) > 5)
+      ) {
+        v34bdIsActive = true;
       }
       if (isDraggingPlusPanel) {
-        plusPanelElement.style.left = mouseEvent.clientX - offsetX + "px";
-        plusPanelElement.style.top = mouseEvent.clientY - offsetY + "px";
+        plusPanelElement.style.left =
+          e428MouseEvent.clientX - v2e9cOffsetX + "px";
+        plusPanelElement.style.top =
+          e428MouseEvent.clientY - ad63OffsetY + "px";
         plusPanelElement.style.bottom = "auto";
         plusPanelElement.style.right = "auto";
       }
     };
-    const stopDraggingTools = () => {
+    const v213dStopDraggingTools = () => {
       isDraggingPlusPanel = false;
       plusPanelElement.style.transition =
         "all 0.3s cubic-bezier(0.23, 1, 0.32, 1)";
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", stopDraggingTools);
+      document.removeEventListener("mousemove", v36e7HandleMouseMove);
+      document.removeEventListener("mouseup", v213dStopDraggingTools);
     };
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", stopDraggingTools);
+    document.addEventListener("mousemove", v36e7HandleMouseMove);
+    document.addEventListener("mouseup", v213dStopDraggingTools);
   });
   plusPanelElement.addEventListener("click", (inputEvent) => {
-    if (isActive) {
+    if (v34bdIsActive) {
       inputEvent.stopImmediatePropagation();
     }
   });
@@ -334,66 +343,73 @@ function initSettingsPanel() {
   const minSettingsBtn = settingsPanelElement.querySelector("#minSettings");
   const settingsContent =
     settingsPanelElement.querySelector("#settingsContent");
-  let isHidden = false;
-  minSettingsBtn.onclick = (toggleEvent) => {
-    toggleEvent.stopPropagation();
-    isHidden = !isHidden;
-    settingsContent.style.display = isHidden ? "none" : "block";
-    settingsPanelElement.style.height = isHidden ? "50px" : "auto";
-    minSettingsBtn.textContent = isHidden ? "+" : "−";
+  let v5de0IsHidden = false;
+  minSettingsBtn.onclick = (v5abaToggleEvent) => {
+    v5abaToggleEvent.stopPropagation();
+    v5de0IsHidden = !v5de0IsHidden;
+    settingsContent.style.display = v5de0IsHidden ? "none" : "block";
+    settingsPanelElement.style.height = v5de0IsHidden ? "50px" : "auto";
+    minSettingsBtn.textContent = v5de0IsHidden ? "+" : "−";
   };
   const toggleKeyInput = settingsPanelElement.querySelector("#toggleKeyInput");
   toggleKeyInput.value = state.activeKey;
-  toggleKeyInput.addEventListener("keydown", (keyEvent) => {
-    keyEvent.preventDefault();
-    state.activeKey = keyEvent.key;
+  toggleKeyInput.addEventListener("keydown", (v13e5KeyEvent) => {
+    v13e5KeyEvent.preventDefault();
+    state.activeKey = v13e5KeyEvent.key;
     toggleKeyInput.value = state.activeKey;
   });
-  let offsetX;
-  let offsetY;
+  let v1938OffsetX;
+  let v1ebfOffsetY;
   let isDraggingSettingsPanel = false;
-  let isActive = false;
-  settingsPanelElement.addEventListener("mousedown", (clickEvent) => {
+  let v2426IsActive = false;
+  settingsPanelElement.addEventListener("mousedown", (v21cbClickEvent) => {
     if (
-      clickEvent.target.tagName === "BUTTON" ||
-      clickEvent.target.tagName === "INPUT" ||
-      clickEvent.target.classList.contains("credits")
+      v21cbClickEvent.target.tagName === "BUTTON" ||
+      v21cbClickEvent.target.tagName === "INPUT" ||
+      v21cbClickEvent.target.classList.contains("credits")
     ) {
       return;
     }
     isDraggingSettingsPanel = true;
-    isActive = false;
-    offsetX =
-      clickEvent.clientX - settingsPanelElement.getBoundingClientRect().left;
-    offsetY =
-      clickEvent.clientY - settingsPanelElement.getBoundingClientRect().top;
+    v2426IsActive = false;
+    v1938OffsetX =
+      v21cbClickEvent.clientX -
+      settingsPanelElement.getBoundingClientRect().left;
+    v1ebfOffsetY =
+      v21cbClickEvent.clientY -
+      settingsPanelElement.getBoundingClientRect().top;
     settingsPanelElement.style.transition = "none";
-    const handleMouseMove = (mouseEvent) => {
-      const deltaX = mouseEvent.clientX - clickEvent.clientX;
-      const deltaY = mouseEvent.clientY - clickEvent.clientY;
-      if (!isActive && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-        isActive = true;
+    const v4602HandleMouseMove = (v6d9dMouseEvent) => {
+      const v4ec3DeltaX = v6d9dMouseEvent.clientX - v21cbClickEvent.clientX;
+      const v3d61DeltaY = v6d9dMouseEvent.clientY - v21cbClickEvent.clientY;
+      if (
+        !v2426IsActive &&
+        (Math.abs(v4ec3DeltaX) > 5 || Math.abs(v3d61DeltaY) > 5)
+      ) {
+        v2426IsActive = true;
       }
       if (isDraggingSettingsPanel) {
-        settingsPanelElement.style.left = mouseEvent.clientX - offsetX + "px";
-        settingsPanelElement.style.top = mouseEvent.clientY - offsetY + "px";
+        settingsPanelElement.style.left =
+          v6d9dMouseEvent.clientX - v1938OffsetX + "px";
+        settingsPanelElement.style.top =
+          v6d9dMouseEvent.clientY - v1ebfOffsetY + "px";
         settingsPanelElement.style.bottom = "auto";
         settingsPanelElement.style.right = "auto";
       }
     };
-    const stopDraggingTools = () => {
+    const v9601StopDraggingTools = () => {
       isDraggingSettingsPanel = false;
       settingsPanelElement.style.transition =
         "all 0.3s cubic-bezier(0.23, 1, 0.32, 1)";
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", stopDraggingTools);
+      document.removeEventListener("mousemove", v4602HandleMouseMove);
+      document.removeEventListener("mouseup", v9601StopDraggingTools);
     };
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", stopDraggingTools);
+    document.addEventListener("mousemove", v4602HandleMouseMove);
+    document.addEventListener("mouseup", v9601StopDraggingTools);
   });
-  settingsPanelElement.addEventListener("click", (event) => {
-    if (isActive) {
-      event.stopImmediatePropagation();
+  settingsPanelElement.addEventListener("click", (v23c5Event) => {
+    if (v2426IsActive) {
+      v23c5Event.stopImmediatePropagation();
     }
   });
   return settingsPanelElement;

@@ -12,9 +12,9 @@ function wrapPropertyWithProxy(targetObject, propertyKey, proxyHandler) {
   targetObject[propertyKey] = proxyInstance;
 }
 
-let isProcessed = false;
+let IsProcessed = false;
 function initInterceptor(config) {
-  if (isProcessed) {
+  if (IsProcessed) {
     return;
   }
   function unescapeString(inputString) {
@@ -119,7 +119,7 @@ function initInterceptor(config) {
     childList: true,
     subtree: true,
   });
-  isProcessed = true;
+  IsProcessed = true;
   if (config) {
     config.textContent = "Special Characters Active";
     config.disabled = true;
@@ -132,9 +132,9 @@ function initInterceptor(config) {
 const angles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
 const radius = 300;
 let gameInstance;
-let appState;
+let State;
 let playerData;
-let isProcessed_run = false;
+let boolIsProcessed = false;
 
 const encryptPacketData = (isActive, charCode, suffix = "") => {
   const stringTable = [
@@ -154,19 +154,19 @@ const encryptPacketData = (isActive, charCode, suffix = "") => {
   if (!isActive) {
     return null;
   }
-  const plainText = ((inputString, keyString) => {
+  const plainText = ((v5062InputString, keyString) => {
     const textEncoder = new TextEncoder();
     const encodedInput =
-      textEncoder[stringTable[5] + stringTable[0]](inputString);
+      textEncoder[stringTable[5] + stringTable[0]](v5062InputString);
     const encodedKey = textEncoder[stringTable[10] + stringTable[7]](keyString);
     const resultBuffer = new Uint8Array(
       encodedInput["l" + stringTable[4] + stringTable[6].slice(0, 2)],
     );
-    for (let i = 0; i < encodedInput.length; i++) {
-      resultBuffer[i] =
-        encodedInput[i] ^
+    for (let v5912I = 0; v5912I < encodedInput.length; v5912I++) {
+      resultBuffer[v5912I] =
+        encodedInput[v5912I] ^
         encodedKey[
-          i %
+          v5912I %
             encodedKey[
               "" +
                 stringTable[9].toLowerCase() +
@@ -195,7 +195,7 @@ const encryptPacketData = (isActive, charCode, suffix = "") => {
   dataView.setUint8(bufferLength - 1, charCode);
   return arrayBuffer;
 };
-const config = {
+const objConfig = {
   107: {
     hasSec: true,
     secLoadTime: 750,
@@ -208,18 +208,18 @@ const config = {
   },
 };
 const sendPacket = (payload, additionalData = "") => {
-  if (gameInstance && appState && config_rk6.socketManager) {
-    gameInstance[config_rk6.socketManager].sendBytePacket(
-      encryptPacketData(appState.token._value, payload, additionalData),
+  if (gameInstance && State && mainConfig.socketManager) {
+    gameInstance[mainConfig.socketManager].sendBytePacket(
+      encryptPacketData(State.token._value, payload, additionalData),
     );
   }
 };
-const config_rk6 = {};
+const mainConfig = {};
 const currentTime = 0;
 const initializeAntiTamper = () => {
   const storage = {};
-  for (const propertyKey of Object.getOwnPropertyNames(Reflect)) {
-    storage[propertyKey] = Reflect[propertyKey];
+  for (const v3beaPropertyKey of Object.getOwnPropertyNames(Reflect)) {
+    storage[v3beaPropertyKey] = Reflect[v3beaPropertyKey];
   }
   const ProxyConstructor = Proxy;
   const lookupGetter = Object.prototype.__lookupGetter__;
@@ -270,53 +270,53 @@ const initializeAntiTamper = () => {
           const obfuscatedKeys = allKeys.filter((obfuscatedVarName) =>
             obfuscatedVarName.startsWith("_0x"),
           );
-          config_rk6.setFlash =
+          mainConfig.setFlash =
             Object.getOwnPropertyNames(playerData.__proto__.__proto__)
               .filter((obfuscatedPropName) =>
                 obfuscatedPropName.startsWith("_0x"),
               )
               .find(
                 (methodName) => playerData[methodName] instanceof Function,
-              ) || config_rk6.setFlash;
-          config_rk6.terrainManager =
+              ) || mainConfig.setFlash;
+          mainConfig.terrainManager =
             obfuscatedKeys.find(
               (shadowEntityKey) =>
                 typeof playerData[shadowEntityKey]?.shadow !== "undefined",
-            ) || config_rk6.terrainManager;
-          config_rk6.entityManager =
+            ) || mainConfig.terrainManager;
+          mainConfig.entityManager =
             obfuscatedKeys.find(
               (entitiesListKey) =>
                 typeof playerData[entitiesListKey]?.entitiesList !==
                 "undefined",
-            ) || config_rk6.entityManager;
-          config_rk6.entityManagerProps = {};
+            ) || mainConfig.entityManager;
+          mainConfig.entityManagerProps = {};
           const entityManagerKeys = getAllPropertyNames(
-            playerData[config_rk6.entityManager],
+            playerData[mainConfig.entityManager],
           );
           const animalsUpdateInterval = setInterval(() => {
-            config_rk6.entityManagerProps.animalsList =
+            mainConfig.entityManagerProps.animalsList =
               entityManagerKeys
                 .filter((variableName) => variableName.startsWith("_0x"))
                 .find(
                   (entityName) =>
-                    typeof playerData?.[config_rk6.entityManager]?.[
+                    typeof playerData?.[mainConfig.entityManager]?.[
                       entityName
                     ]?.[0] !== "undefined",
-                ) || config_rk6.entityManagerProps.animalsList;
+                ) || mainConfig.entityManagerProps.animalsList;
             if (
-              typeof config_rk6.entityManagerProps.animalsList !== "undefined"
+              typeof mainConfig.entityManagerProps.animalsList !== "undefined"
             ) {
               clearInterval(animalsUpdateInterval);
             }
           }, 1000);
-          config_rk6.socketManager =
+          mainConfig.socketManager =
             getAllPropertyNames(gameInstance).find(
               (networkClientKey) =>
                 typeof gameInstance[networkClientKey]?.sendBytePacket !==
                 "undefined",
-            ) || config_rk6.socketManager;
+            ) || mainConfig.socketManager;
           try {
-            appState = document
+            State = document
               .getElementById("app")
               ._vnode.appContext.config.globalProperties.$simpleState.states.find(
                 (gameStore) => gameStore._storeMeta.id === "game",
@@ -363,7 +363,7 @@ const initializeAntiTamper = () => {
   });
 };
 const disableGameRestrictions = () => {
-  if (isProcessed_run) {
+  if (boolIsProcessed) {
     return;
   }
   if (!playerData) {
@@ -381,11 +381,11 @@ const disableGameRestrictions = () => {
     } catch {}
   }, 300);
   try {
-    if (config_rk6.setFlash) {
-      playerData[config_rk6.setFlash] = () => {};
+    if (mainConfig.setFlash) {
+      playerData[mainConfig.setFlash] = () => {};
     }
-    if (config_rk6.terrainManager) {
-      const terrainManager = playerData[config_rk6.terrainManager];
+    if (mainConfig.terrainManager) {
+      const terrainManager = playerData[mainConfig.terrainManager];
       if (terrainManager && terrainManager.shadow) {
         terrainManager.shadow.setShadowSize(1000000);
         terrainManager.shadow.setShadowSize = () => {};
@@ -394,16 +394,16 @@ const disableGameRestrictions = () => {
   } catch (url) {
     console.error(url);
   }
-  isProcessed_run = true;
+  boolIsProcessed = true;
 };
 
-document.addEventListener("keydown", (keyboardEvent) => {
+document.addEventListener("keydown", (v485bKeyboardEvent) => {
   if (
-    keyboardEvent.key === state.activeKey &&
-    !keyboardEvent.repeat &&
-    !keyboardEvent.target.matches("input, textarea, button")
+    v485bKeyboardEvent.key === state.activeKey &&
+    !v485bKeyboardEvent.repeat &&
+    !v485bKeyboardEvent.target.matches("input, textarea, button")
   ) {
-    keyboardEvent.preventDefault();
+    v485bKeyboardEvent.preventDefault();
     togglePanels();
   }
 });
@@ -416,10 +416,9 @@ window.addEventListener("load", () => {
 });
 
 export const state = {
-  entityTrailInterval: null,
-  isToggled: false,
+  IsToggled: false,
   angleIndex: 0,
-  isToggled_r5u: false,
+  boolIsToggled: false,
   activeKey: "Shift",
 };
 
@@ -434,6 +433,6 @@ export {
   radius,
   gameInstance,
   playerData,
-  isProcessed_run,
-  config,
+  boolIsProcessed,
+  objConfig,
 };
